@@ -3,7 +3,7 @@ create database dbus;
 CREATE USER dbus IDENTIFIED BY '你的密码';
 
 GRANT ALL ON dbus.* TO dbus@'%' IDENTIFIED BY '你的密码';
-GRANT select on schemaName.tableName   TO dbus; 
+GRANT select on schemaName1.tableName1   TO dbus; 
 
 flush privileges;
 
