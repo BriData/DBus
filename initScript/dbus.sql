@@ -1,8 +1,11 @@
 create database dbus;
 
+-- dbus密码可由dba指定
 CREATE USER dbus IDENTIFIED BY '你的密码';
 
 GRANT ALL ON dbus.* TO dbus@'%' IDENTIFIED BY '你的密码';
+
+-- schemaName1.tableName1 是需要同步的表名
 GRANT select on schemaName1.tableName1   TO dbus; 
 
 flush privileges;
