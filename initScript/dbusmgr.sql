@@ -1,8 +1,7 @@
 create database dbusmgr;
 
-CREATE USER dbusmgr IDENTIFIED BY 'jNXbcK&*ms2hmvRI';
+CREATE USER dbusmgr IDENTIFIED BY 'dmVvY9bibMGBGD3X';
 
--- dbusmgr密码可由dba指定
 GRANT ALL ON dbusmgr.* TO dbusmgr@'%' IDENTIFIED BY 'dmVvY9bibMGBGD3X';
 
 flush privileges;
