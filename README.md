@@ -22,12 +22,15 @@ DBus专注于数据的收集及实时数据流计算，通过简单灵活的配�
 全套DBus包含诸多组件（Canal，zk，kafka，storm，mysql，influxdb，grafana），为了简单化，我们准备了All in One 包，包含了预先安装数据和一键启动脚本， 但influxdb，mysql需要预先安装。 具体请参考：https://github.com/BriData/DBus/wiki/QuickStart
 
 # 相关文档
-详细介绍 DBus请参考 [wiki](https://github.com/BriData/DBus/wiki)，
+详细介绍 DBus请参考 [wiki](https://github.com/BriData/DBus/wiki)
+
 常见问题可参考 [FAQ](https://github.com/BriData/DBus/wiki/FAQ)
+
 系统介绍参考 [System Architecture](https://github.com/BriData/DBus/wiki/System-Architecture)
 
 # 相关资料:
 与宜信Wormhole项目搭配使用将是最佳选择。
+
 可参考：[如何基于日志，同步实现数据的一致性和实时抽取?](http://dbaplus.cn/news-21-872-1.html)
 
 # 相关开源
@@ -35,12 +38,8 @@ DBus专注于数据的收集及实时数据流计算，通过简单灵活的配�
 
 # 交流和问题反馈
 邮件交流：  bridata@163.com
+
 提交issue ： https://github.com/BriData/DBus/issues
+
 微信群：
-
-
-
-
-
-
-
+![weixi](https://github.com/BriData/DBus/blob/master/img/0weixi.png)
