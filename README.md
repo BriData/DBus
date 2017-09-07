@@ -19,7 +19,7 @@ DBus 实时数据总线：是宜信公司技术研发中心Bridata团体开发�
 DBus专注于数据的收集及实时数据流计算，通过简单灵活的配置，以无侵入的方式对源端数据进行采集，采用高可用的流式计算框架，对公司各个IT系统在业务流程中产生的数据进行汇聚，经过转换处理后成为统一JSON的数据格式（UMS），提供给不同数据使用方订阅和消费，充当数仓平台、大数据分析平台、实时报表和实时营销等业务的数据源。
 
 # 快速开始
-全套DBus包含诸多组件（Canal，zk，kafka，storm，mysql，influxdb，grafana），为了简单化，我们准备了All in One 包，包含了预先安装数据和一键启动脚本， 但influxdb，mysql需要预先安装。 具体请参考：https://github.com/BriData/DBus/wiki/QuickStart
+全套DBus使用了诸多组件（Canal，zk，kafka，storm，mysql，influxdb，grafana），为了简单化，我们准备了All in One 包，包含了预先安装数据和一键启动脚本， 但mysql需要预先安装。 具体请参考：https://github.com/BriData/DBus/wiki/QuickStart
 
 # 相关文档
 详细介绍 DBus请参考 [wiki](https://github.com/BriData/DBus/wiki)
@@ -27,6 +27,24 @@ DBus专注于数据的收集及实时数据流计算，通过简单灵活的配�
 常见问题可参考 [FAQ](https://github.com/BriData/DBus/wiki/FAQ)
 
 系统介绍参考 [System Architecture](https://github.com/BriData/DBus/wiki/System-Architecture)
+
+# 相关依赖部件说明：
+| 名称       | 版本号  | 说明 |
+| ----------|--------|-----|
+| Canal     | v1.0.22 | DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7 |
+| Zookeeper | v3.4.6+ | 用于构建整个系统和提供配置通知等 |
+| Kafka     | v0.10   | 用于存储相关数据和消息，提供订阅和发布的能力 |
+| Storm     | v1.0.1  | 用于提供DBus流式计算 |
+| Influxdb  | v0.13.0 | 用于记录实时监控数据 |
+| Grafana   | v4.2.0  | 用于展示监控信息 |
+| Sqoop     | v1.44   | DBus内部包含部分sqoop分片代码，并做一定修改，具体请参考wiki中说明 |
+| Mysql     | v5.6，v5.7  | 存储DBus管理相关信息 |
+
+
+
+# 限制：
+* 被同步的Mysql blog需要是row模式
+* 考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob, 即如果表中有这样类型的数据会直接被替换为空。
 
 # 相关资料:
 与宜信Wormhole项目搭配使用将是最佳选择。
