@@ -19,7 +19,7 @@ DBus 实时数据总线：是宜信公司技术研发中心Bridata团体开发�
 DBus专注于数据的收集及实时数据流计算，通过简单灵活的配置，以无侵入的方式对源端数据进行采集，采用高可用的流式计算框架，对公司各个IT系统在业务流程中产生的数据进行汇聚，经过转换处理后成为统一JSON的数据格式（UMS），提供给不同数据使用方订阅和消费，充当数仓平台、大数据分析平台、实时报表和实时营销等业务的数据源。
 
 # 快速开始
-全套DBus使用了诸多组件（Canal，zk，kafka，storm，mysql，influxdb，grafana），为了简单化，我们准备了All in One 包，包含了预先安装数据和一键启动脚本， 但mysql需要预先安装。 具体请参考：https://github.com/BriData/DBus/wiki/QuickStart
+全套DBus使用了诸多组件（Canal，zk，kafka，storm，mysql，influxdb，grafana），为了简单化，我们准备了All in One 包，包含了预先安装数据和一键启动脚本，具体请参考：https://github.com/BriData/DBus/wiki/QuickStart
 
 # 相关文档
 详细介绍 DBus请参考 [wiki](https://github.com/BriData/DBus/wiki)
