@@ -1,0 +1,386 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2017 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+package com.creditease.dbus.spout;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.storm.spout.SpoutOutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.topology.base.BaseRichSpout;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.common.DBHelper;
+import com.creditease.dbus.common.DataPullConstants;
+import com.creditease.dbus.common.FullPullHelper;
+import com.creditease.dbus.common.TopoKillingStatus;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.Constants.ZkTopoConfForFullPull;
+import com.creditease.dbus.commons.ZkService;
+import com.creditease.dbus.commons.exception.InitializationException;
+
+/**
+ * 读取kafka数据的Spout实现 Created by Shrimp on 16/6/2.
+ */
+public class DataShardsSplittingSpout extends BaseRichSpout {
+    private Logger LOG = LoggerFactory.getLogger(getClass());
+    private static final long serialVersionUID = 1L;
+    // 用来发射数据的工具类
+    private SpoutOutputCollector collector;
+
+    private String zkConnect;
+    private String topologyId;
+    //是否是独立拉全量
+    private boolean isGlobal;
+    private String zkMonitorRootNodePath;
+    private String dsName;
+
+    private final String zkTopoRoot = Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_SPLITTING_PROPS_ROOT;
+    private String fullPullSrcTopic = "";
+
+    private int flowedMsgCount = 0;
+    private int emittedCount = 0;
+    private int processedCount = 0;
+
+    //停服处理
+    private int stopFlag = TopoKillingStatus.RUNNING.status;
+    private String stopRecord = null;
+
+    private long startTime = 0;
+
+    private Map confMap;
+
+    private Consumer<String, byte[]> consumer;
+    ZkService zkService = null;
+    private int MAX_FLOW_THRESHOLD;
+    Properties commonProps;
+
+
+    /**
+     * 初始化collector
+     */
+    @Override
+    public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+        this.collector = collector;
+        this.zkConnect = (String) conf.get(Constants.StormConfigKey.ZKCONNECT);
+        this.topologyId = (String) conf.get(Constants.StormConfigKey.FULL_SPLITTER_TOPOLOGY_ID);
+        this.isGlobal = this.topologyId.toLowerCase().indexOf(ZkTopoConfForFullPull.GLOBAL_FULLPULLER_TOPO_PREFIX) != -1 ? true : false;
+        if (this.isGlobal) {
+            this.zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT_GLOBAL;
+        } else {
+            this.zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT;
+        }
+        LOG.info("topologyId:{} zkConnect:{} zkTopoRoot:{}", topologyId, zkConnect, zkTopoRoot);
+        try {
+            loadRunningConf(null);
+
+            // 检查是否有遗留未决的拉取任务。如果有，resolve（发resume消息通知给appender，并在zk上记录，且将监测到的pending任务写日志，方便排查问题）。
+            // 对于已经resolve的pending任务，将其移出pending队列，以免造成无限重复处理。
+            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, null,
+                    DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new InitializationException();
+        }
+        LOG.info("Topology {} is started!", topologyId);
+    }
+
+    /**
+     * 在SpoutTracker类中被调用，每调用一次就可以向storm集群中发射一条数据（一个tuple元组），该方法会被不停的调用
+     */
+    @Override
+    public void nextTuple() {
+        // 限流
+        if (flowedMsgCount >= MAX_FLOW_THRESHOLD) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(10);
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage(), e);
+            }
+            return;
+        }
+
+
+        //通过命令删除topology的功能，可能可以移除
+        if (stopFlag > TopoKillingStatus.RUNNING.status) {
+            if (stopFlag == TopoKillingStatus.STOPPING.status) {
+                try {
+                    long timeout = System.currentTimeMillis() - startTime;
+                    String toposKillWaitTimeout = commonProps
+                            .getProperty(Constants.ZkTopoConfForFullPull.TOPOS_KILL_WAIT_TIMEOUT);
+                    long toposKillWaitTimeConf = toposKillWaitTimeout == null
+                            ? Constants.ZkTopoConfForFullPull.TOPOS_KILL_WAIT_TIMEOUT_DEFAULT_VAL
+                            : Long.valueOf(toposKillWaitTimeout);
+                    if (emittedCount == processedCount || timeout / 1000 >= toposKillWaitTimeConf) {
+                        // 获取Retry等待时间配置
+                        String toposKillWaitTimeForRetries = commonProps
+                                .getProperty(Constants.ZkTopoConfForFullPull.TOPOS_KILL_WAIT_TIME_FOR_RETRIES);
+                        long toposKillWaitTimeForRetriesConf = toposKillWaitTimeForRetries == null
+                                ? Constants.ZkTopoConfForFullPull.TOPOS_KILL_WAIT_TIME_FOR_RETRIES_DEFAULT_VAL
+                                : Long.valueOf(toposKillWaitTimeForRetries);
+                        // 适当延迟一会发送stop通知msg，以避免retry的情况下，stop指令先到达
+                        Thread.sleep(toposKillWaitTimeForRetriesConf * 1000);
+
+                        collector.emit(new Values(stopRecord), stopRecord);
+                        stopFlag = TopoKillingStatus.READY_FOR_KILL.status;
+
+                        consumer.commitSync();
+                    }
+                } catch (Exception e) {
+                    LOG.error("DataShardsSplittingSpout处理停服命令异常！", e);
+                }
+            }
+            return;
+        }
+
+        try {
+            ConsumerRecords<String, byte[]> records = consumer.poll(0);
+            // 判断是否有数据被读取
+            if (records.isEmpty()) {
+                return;
+            }
+            // 按记录进行处理
+            for (ConsumerRecord<String, byte[]> record : records) {
+                String key = record.key();
+                if (null == key) {
+                    continue;
+                }
+
+                String msg = new String(record.value());
+                try {
+                    if (key.equals(DataPullConstants.COMMAND_FULL_PULL_RELOAD_CONF)) {
+                        loadRunningConf(msg);
+                        LOG.info("Received conf reloading request: {}", msg);
+                        collector.emit(new Values(msg));
+                        LOG.info("Conf for SplittingSpout is reloaded successfully!");
+
+                    } else if (key.equals(DataPullConstants.COMMAND_FULL_PULL_STOP)) {
+                        stopFlag = TopoKillingStatus.STOPPING.status;
+                        startTime = System.currentTimeMillis();
+                        // 不跟踪消息的处理状态，即不会调用ack或者fail
+                        collector.emit(new Values(msg));
+                    } else if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
+                        String dataSourceInfo = msg;
+                        //处理消息
+                        LOG.info("Received full pull request: {}", dataSourceInfo);
+                        flowedMsgCount++;
+                        // 每次拉取都要进行批次号加1处理。这条语句的位置不要变动。
+                        msg = increseBatchNo(msg);
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, msg,
+                                DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
+                        //创建zk节点并在zk节点上输出拉取信息
+                        FullPullHelper.startPullReport(zkService, msg);
+                        collector.emit(new Values(msg), record);
+                        emittedCount++;
+                    } else {
+                        LOG.info("Ignore other command: {}", key);
+                    }
+
+                } catch (Exception e) {
+                    String errorMsg = "Exception happened when processing topic on " + fullPullSrcTopic
+                            + ". Exception Info:" + e.getMessage();
+                    LOG.error(errorMsg, e);
+
+                    if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
+                        String dataSourceInfo = msg;
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,
+                                DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
+                        FullPullHelper.finishPullReport(zkService, dataSourceInfo,
+                                FullPullHelper.getCurrentTimeStampString(), Constants.DataTableStatus.DATA_STATUS_ABORT,
+                                errorMsg);
+                    }
+                    throw e;
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Splitting encountered exception.", e);
+            throw e;
+        }
+    }
+
+    /**
+     * 定义字段id，该id在简单模式下没有用处，但在按照字段分组的模式下有很大的用处。
+     * 该declarer变量有很大作用，我们还可以调用declarer.declareStream();来定义stramId，
+     * 该id可以用来定义更加复杂的流拓扑结构
+     */
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+        declarer.declare(new Fields("source"));
+    }
+
+    @Override
+    public void ack(Object msgId) {
+        try {
+            if (msgId != null && ConsumerRecord.class.isInstance(msgId)) {
+                ConsumerRecord<String, byte[]> record = getMessageId(msgId);
+                this.flowedMsgCount--;
+            }
+            processedCount++;
+            super.ack(msgId);
+        } catch (Exception e) {
+            LOG.error("DataSplittingSpout:Ack throwed exception!", e);
+        }
+    }
+
+    @Override
+    public void fail(Object msgId) {
+        try {
+            if (msgId != null && ConsumerRecord.class.isInstance(msgId)) {
+                ConsumerRecord<String, byte[]> record = getMessageId(msgId);
+                this.flowedMsgCount--;
+            }
+            processedCount++;
+            super.fail(msgId);
+        } catch (Exception e) {
+            LOG.error("DataSplittingSpout:Fail ack throwed exception!", e);
+        }
+    }
+
+    private <T> T getMessageId(Object msgId) {
+        return (T) msgId;
+    }
+
+    private String increseBatchNo(String dataSourceInfo) {
+        JSONObject wrapperObj = JSONObject.parseObject(dataSourceInfo);
+        JSONObject payloadObj = wrapperObj.getJSONObject("payload");
+        int dbusDatasourceId = payloadObj.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_DATA_SOURCE_ID);
+        String targetTableName = payloadObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
+        String schemaName = payloadObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
+
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet ret = null;
+        String version = "";
+        String batchNo = "";
+        String sql = "";
+        try {
+            conn = DBHelper.getMysqlConnection();
+            // 批次号是否加1标志位。如果没有此标志位(旧版消息没有)，将其置为true，表示要对批次号进行加1。
+            if (!payloadObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO)) {
+                payloadObj.put(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO, true);
+            }
+            if (payloadObj.getBooleanValue(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO)) {
+                // 增批次号标志位为true时执行。（传统的与增量有互动的全量拉取，每次拉取都需要增批次号。）
+                sql = "update t_data_tables set batch_id = batch_id + 1 " +
+                        "where ds_id = ? " +
+                        "and schema_name = ? " +
+                        "and table_name = ?";
+                pst = conn.prepareStatement(sql);
+                pst.setInt(1, dbusDatasourceId);
+                pst.setString(2, schemaName);
+                pst.setString(3, targetTableName);
+                pst.execute();
+            }
+
+            sql = "SELECT batch_id FROM t_data_tables " +
+                    "where ds_id = ? " +
+                    "and schema_name = ? " +
+                    "and table_name = ? ";
+
+            pst = conn.prepareStatement(sql);
+            pst.setInt(1, dbusDatasourceId);
+            pst.setString(2, schemaName);
+            pst.setString(3, targetTableName);
+            ret = pst.executeQuery();// 执行语句，得到结果集
+            while (ret.next()) {
+               batchNo = ret.getString("batch_id");
+            }
+
+            // 获取version，后续会写入zk
+            sql = "SELECT mv.version FROM t_data_tables dt, t_meta_version mv " +
+                    "where dt.ds_id = ? " +
+                    "and dt.schema_name = ? " +
+                    "and dt.table_name = ? " +
+                    "and dt.ver_id = mv.id";
+
+            pst = conn.prepareStatement(sql);
+            pst.setInt(1, dbusDatasourceId);
+            pst.setString(2, schemaName);
+            pst.setString(3, targetTableName);
+            // 执行语句，得到结果集
+            ret = pst.executeQuery();
+            while (ret.next()) {
+               version = ret.getString("version");
+            }
+
+        } catch (Exception e) {
+            LOG.error("Exception happened when try to get newest version from mysql db. Exception Info:", e);
+        } finally {
+            try {
+                if (ret != null) {
+                    ret.close();
+                }
+                if (pst != null) {
+                    pst.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOG.error("Exception Info:", e);
+            }
+        }
+
+        try {
+            payloadObj.put(DataPullConstants.FullPullInterfaceJson.VERSION_KEY, version);
+            payloadObj.put(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY, batchNo);
+            wrapperObj.put(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY, payloadObj);
+            return wrapperObj.toJSONString();
+        } catch (Exception e) {
+            LOG.error("Apply new version failed.");
+        }
+
+        return dataSourceInfo;
+    }
+
+    private void loadRunningConf(String reloadMsgJson) {
+        String notifyEvtName = reloadMsgJson == null ? "loaded" : "reloaded";
+        try {
+            //加载zk中的配置信息
+            this.confMap = FullPullHelper.loadConfProps(zkConnect, topologyId, zkTopoRoot, Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC);
+            this.MAX_FLOW_THRESHOLD = (Integer) confMap.get(FullPullHelper.RUNNING_CONF_KEY_MAX_FLOW_THRESHOLD);
+            LOG.info("MAX_FLOW_THRESHOLD is {} on DataShardsSplittingSpout.loadRunningConf", MAX_FLOW_THRESHOLD);
+            this.commonProps = (Properties) confMap.get(FullPullHelper.RUNNING_CONF_KEY_COMMON);
+            this.dsName = commonProps.getProperty(Constants.ZkTopoConfForFullPull.DATASOURCE_NAME);
+            this.fullPullSrcTopic = commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC);
+            this.consumer = (Consumer<String, byte[]>) confMap.get(FullPullHelper.RUNNING_CONF_KEY_CONSUMER);
+            this.zkService = (ZkService) confMap.get(FullPullHelper.RUNNING_CONF_KEY_ZK_SERVICE);
+
+            LOG.info("Running Config is " + notifyEvtName + " successfully for DataShardsSplittingSpout!");
+        } catch (Exception e) {
+            LOG.error(notifyEvtName + "ing running configuration encountered Exception!", e);
+        } finally {
+            FullPullHelper.saveReloadStatus(reloadMsgJson, "splitting-spout", true, zkConnect);
+        }
+    }
+    }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.TopologyMapper">
+    <resultMap id="avroSchema" type="com.creditease.dbus.ws.domain.StormTopology">
+        <id property="id" column="id"/>
+        <result property="dsId" column="ds_id"/>
+        <result property="dsName" column="ds_name"/>
+        <result property="topologyName" column="topology_name"/>
+        <result property="jarName" column="jar_name"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="search" resultMap="avroSchema">
+        select t.*, ds.ds_name from t_storm_topology t, t_dbus_datasource ds where t.ds_id = ds.id
+        <if test="dsId != null"> and t.ds_id = #{dsId}</if>
+        order by t.ds_id asc
+    </select>
+
+    <insert id="insert">
+         insert into t_storm_topology
+        (ds_id,
+        topology_name,
+        jar_name,
+        update_time)
+        values
+        (#{dsId},
+        #{topologyName},
+        #{jarName},
+        current_timestamp())
+    </insert>
+</mapper>

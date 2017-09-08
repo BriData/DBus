@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.DataSchemaMapper">
+    <resultMap id="dataschema" type="com.creditease.dbus.ws.domain.DataSchema">
+        <id property="id" column="id"/>
+        <id property="dsId" column="ds_id"/>
+        <result property="dsType" column="ds_type"/>
+        <result property="dsName" column="ds_name"/>
+        <result property="schemaName" column="schema_name"/>
+        <result property="status" column="status"/>
+        <result property="srcTopic" column="src_topic"/>
+        <result property="targetTopic" column="target_topic"/>
+        <result property="createTime" column="create_time"/>
+        <result property="description" column="description"/>
+    </resultMap>
+
+
+    <select id="search" resultMap="dataschema">
+        select s.*, ds.ds_name ,ds.ds_type from t_data_schema s, t_dbus_datasource ds where s.ds_id = ds.id
+        <if test="dsId != null"> and s.ds_id = #{dsId}</if>
+        <if test="text != null"> and s.schema_name like "%"#{text}"%" </if>
+        order by s.create_time desc
+    </select>
+
+
+    <select id="findAll" resultMap="dataschema">
+        select * from t_data_schema
+    </select>
+
+    <select id="findAllAll" resultMap="dataschema">
+        select s.*, ds.ds_name ,ds.ds_type from t_data_schema s, t_dbus_datasource ds where s.ds_id = ds.id
+        <if test="dsId != null"> and s.ds_id = #{dsId}</if>
+        <if test="text != null"> and s.schema_name like "%"#{text}"%" </if>
+        order by s.create_time desc
+    </select>
+
+    <select id="findByDsId" resultMap="dataschema">
+        select * from t_data_schema where ds_id = #{dsId}
+    </select>
+
+    <select id="findById" resultMap="dataschema">
+        select * from t_data_schema where id = #{id}
+    </select>
+
+    <!--通过DataSchema名字，查询DataSchema信息，模糊查询-->
+    <select id="findBySchemaName" resultMap="dataschema">
+        select * from t_data_schema where schema_name LiKE "%"#{schemaName}"%"
+    </select>
+    <!--通过dsId和schemaName查询DataSchema信息，模糊查询-->
+    <select id="getDataSchemaBydsIdAndschemaName" resultMap="dataschema">
+        select * from t_data_schema where ds_id = #{dsId} and  schema_name LiKE "%"#{schemaName}"%"
+    </select>
+
+    <!--插入DataSchema信息-->
+    <insert id="insert">
+        insert into t_data_schema
+        (ds_id,
+        schema_name,
+        status,
+        src_topic,
+        target_topic,
+        create_time,
+        description)
+        values
+        (#{dsId},
+        #{schemaName},
+        #{status},
+        #{srcTopic},
+        #{targetTopic},
+        current_timestamp(),
+        #{description})
+
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+    </insert>
+
+<!--更新DataSchema信息-->
+    <update id="update">
+        update t_data_schema set
+        <if test="dsId != 0">ds_id = #{dsId},</if>
+        <if test="schemaName != null">schema_name = #{schemaName},</if>
+        <if test="status != null">status = #{status},</if>
+        <if test="srcTopic  != null">src_topic = #{srcTopic},</if>
+        <if test="targetTopic != null">target_topic = #{targetTopic},</if>
+        <if test="description != null">description = #{description},</if>
+        create_time = current_timestamp()
+        where ds_id =#{dsId} and schema_name = #{schemaName}
+    </update>
+
+
+<!--改变DataSchema状态-->
+    <update id="changeStatus">
+        update t_data_schema
+        set status    = #{status},
+        create_time    = current_timestamp()
+        where id = #{id}
+    </update>
+
+
+
+</mapper>

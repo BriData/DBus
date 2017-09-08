@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>pom</packaging>
+    <modules>
+        <module>dbus-stream-common</module>
+        <module>dbus-stream-mysql</module>
+        <module>dbus-stream-main</module>
+    </modules>
+
+    <parent>
+        <groupId>com.creditease.dbus</groupId>
+        <artifactId>dbus-main</artifactId>
+        <version>0.3.0</version>
+    </parent>
+    <artifactId>dbus-stream_1.3</artifactId>
+
+
+</project>

@@ -1,0 +1,46 @@
+
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>bin</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <moduleSets>
+        <moduleSet>
+
+            <!-- Enable access to all projects in the current multimodule build! -->
+            <useAllReactorProjects>true</useAllReactorProjects>
+
+            <!-- Now, select which projects to include in this module-set. -->
+            <includes>
+                <include>com.creditease.dbus:dbus-ws</include>
+                <include>com.creditease.dbus:httpserver</include>
+            </includes>
+
+            <binaries>
+                <outputDirectory>${file.separator}lib</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+    </moduleSets>
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}..${file.separator}conf</directory>
+            <outputDirectory>conf</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}..${file.separator}bin</directory>
+            <outputDirectory>${file.separator}</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}..${file.separator}manager</directory>
+            <outputDirectory>manager</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}..${file.separator}web${file.separator}dist</directory>
+            <outputDirectory>html</outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>

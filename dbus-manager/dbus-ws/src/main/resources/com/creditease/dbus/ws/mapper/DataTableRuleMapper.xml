@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.DataTableRuleMapper">
+    <resultMap id="dataTableRule" type="com.creditease.dbus.ws.domain.DataTableRule">
+        <id property="id" column="id"/>
+        <result property="tableId" column="table_id"/>
+        <result property="order" column="order_"/>
+        <result property="type" column="type"/>
+        <result property="column" column="column_"/>
+        <result property="re" column="re"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+
+
+    <select id="getDataTableRule" resultMap="dataTableRule">
+        select * from t_log_rule where table_id = #{tableId} order by order_
+    </select>
+
+    <insert id="insertDataTableRule">
+        insert into t_log_rule
+        ( table_id, order_, type, column_, re) values(
+        #{tableId},#{order},#{type},#{column},#{re})
+    </insert>
+
+    <delete id="deleteDataTableRule">
+        DELETE FROM t_log_rule WHERE table_id = #{tableId}
+    </delete>
+</mapper>

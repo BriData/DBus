@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.TableMetaMapper">
+
+    <resultMap id="version" type="com.creditease.dbus.ws.domain.TableMeta">
+        <id property="id" column="id"/>
+        <result property="verId" column="ver_id"/>
+        <result property="columnName" column="column_name"/>
+        <result property="columnId" column="column_id"/>
+        <result property="originalSer" column="original_ser"/>
+        <result property="dataType" column="data_type"/>
+        <result property="dataLength" column="data_length"/>
+        <result property="dataPrecision" column="data_precision"/>
+        <result property="dataScale" column="data_scale"/>
+        <result property="nullable" column="nullable"/>
+        <result property="isPk" column="is_pk"/>
+        <result property="pkPosition" column="pk_position"/>
+        <result property="alterTime" column="alter_time"/>
+
+    </resultMap>
+
+    <insert id="insert">
+        insert into t_table_meta
+        (ver_id,
+        column_name,
+        column_id,
+        original_ser,
+        data_type,
+        data_length,
+        data_precision,
+        data_scale,
+        nullable,
+        is_pk,
+        pk_position,
+        alter_time)
+        values
+        (#{verId},
+        #{columnName},
+        #{columnId},
+        #{originalSer},
+        #{dataType},
+        #{dataLength},
+        #{dataPrecision},
+        #{dataScale},
+        #{nullable},
+        #{isPk},
+        #{pkPosition},
+        current_timestamp())
+    </insert>
+
+</mapper>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.DataSourceMapper">
+    <resultMap id="datasource" type="com.creditease.dbus.ws.domain.DbusDataSource">
+        <id property="id" column="id"/>
+        <result property="dsName" column="ds_name"/>
+        <result property="dsType" column="ds_type"/>
+        <result property="status" column="status"/>
+        <result property="dsDesc" column="ds_desc"/>
+        <result property="topic" column="topic"/>
+        <result property="ctrlTopic" column="ctrl_topic"/>
+        <result property="schemaTopic" column="schema_topic"/>
+        <result property="splitTopic" column="split_topic"/>
+        <result property="masterURL" column="master_url"/>
+        <result property="slaveURL" column="slave_url"/>
+        <result property="dbusUser" column="dbus_user"/>
+        <result property="dbusPassword" column="dbus_pwd"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="datasource">
+        select * from t_dbus_datasource
+    </select>
+
+    <select id="findById" resultMap="datasource">
+        select * from t_dbus_datasource where id = #{id}
+    </select>
+
+    <select id="findByDsName" resultMap="datasource">
+        select * from t_dbus_datasource where ds_name = #{dsName}
+    </select>
+
+    <select id="search" resultMap="datasource">
+        select * from  t_dbus_datasource
+        <if test="text != null">where ds_name like "%"#{text}"%"</if>
+        order by update_time desc
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into t_dbus_datasource
+          (ds_name,
+           ds_type,
+           status,
+           ds_desc,
+           topic,
+           ctrl_topic,
+           schema_topic,
+           split_topic,
+           master_url,
+           slave_url,
+           dbus_user,
+           dbus_pwd,
+           update_time)
+        values
+          (#{dsName},
+           #{dsType},
+           #{status},
+           #{dsDesc},
+           #{topic},
+           #{ctrlTopic},
+           #{schemaTopic},
+           #{splitTopic},
+           #{masterURL},
+           #{slaveURL},
+           #{dbusUser},
+           #{dbusPassword},
+           current_timestamp())
+    </insert>
+
+    <update id="update">
+        update t_dbus_datasource set
+        <if test="dsType != null">ds_type = #{dsType},</if>
+        <if test="status != null">status = #{status},</if>
+        <if test="dsDesc != null">ds_desc = #{dsDesc},</if>
+        <if test="topic  != null">topic = #{topic},</if>
+        <if test="ctrlTopic != null">ctrl_topic = #{ctrlTopic},</if>
+        <if test="schemaTopic != null">schema_topic = #{schemaTopic},</if>
+        <if test="splitTopic != null">split_topic = #{splitTopic},</if>
+        <if test="masterURL != null">master_url = #{masterURL},</if>
+        <if test="slaveURL != null">slave_url = #{slaveURL},</if>
+        <if test="dbusUser != null">dbus_user = #{dbusUser},</if>
+        <if test="dbusPassword != null">dbus_pwd = #{dbusPassword},</if>
+        update_time = current_timestamp()
+        where id = #{id}
+    </update>
+
+    <update id="changeStatus">
+        update t_dbus_datasource
+          set status       = #{status},
+              update_time  = current_timestamp()
+        where id = #{id}
+    </update>
+</mapper>

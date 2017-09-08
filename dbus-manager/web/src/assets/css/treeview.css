@@ -1,0 +1,295 @@
+.viewer{
+    font-size: 12px;
+    padding: 14px;
+    color: #799dfd;
+    min-height: 250px;
+    width: 50%;
+    display: inline-block;
+    vertical-align: top;
+    float:left;
+    margin-left: 4px;
+    /*right: 0px*/
+}
+.saveNodeButton{
+    float: right;
+    padding-right: 5px;
+    font-size: initial;
+    margin: 3px;
+}
+.contextMenuItem{
+    padding-left:22px;
+}
+/*
+.ant-tabs {
+    border:1px solid #bebebe;
+}*/
+.paneView{
+    width: 98%;
+    height: 655px;
+    border: 1px solid rgba(95,95,95,.34);
+    padding-top: 25px;
+    margin: 5px;
+    background-color: white;
+    padding-left: 15px;
+}
+.ant-tabs:not(.ant-tabs-vertical)>.ant-tabs-content {
+    width: 100%;
+    border: 1px solid #e0dede;
+    margin-top: -16px;
+    height: 668px;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+.ant-form-item {
+    margin-bottom: 8px;
+}
+label {
+    padding-right: 10px;
+    font-size: small;
+    width: 150px;
+}
+.nodeInfoInput {
+    font-size: 13px;
+    outline: 0 !important;
+    box-shadow: none !important;
+    width: 250px;
+    height: 30px;
+    padding-left: 10px;
+}
+/*
+.nodeSaveButton{
+    margin: 2px;
+    border-radius: 5px;
+    border: 1px solid rgba(0,0,0,.2);
+}
+.nodeSaveIcon{
+    font-size: 25px;
+    color: rgba(51, 122, 183, 0.84);
+}
+*/
+.ant-tree {
+    padding: 8px;
+    font-size: 14px;
+}
+.ant-tree li {
+    padding: 0px 0;
+    margin: 0px;
+    list-style: none;
+    white-space: nowrap;
+    outline: 0;
+}
+@media (min-width: 768px){
+    .ant-col-sm-14 {
+        display: block;
+        width: 100%;
+    }
+}
+.ant-tree li .ant-tree-node-content-wrapper {
+    display: inline-block;
+    /* padding: 3px 5px; */
+    border-radius: 2px;
+    margin: 0;
+    cursor: pointer;
+    text-decoration: none;
+    vertical-align: top;
+    color: rgba(0,0,0,.65);
+    transition: all .3s ease;
+}
+.ant-tree-title {
+    display:inline-block;
+    padding-right:10px;
+}
+/*
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-switcher-noop:after {
+    font-size: 12px;
+    font-size: 12px\9;
+    transform: scale(1) rotate(0deg);
+    -ms-filter: "progid:DXImageTransform.Microsoft.Matrix(sizingMethod='auto expand', M11=1, M12=0, M21=0, M22=1)";
+    zoom: 1;
+    display: inline-block;
+    font-family: anticon;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    content: url("../img/cross_line_small.png");
+    vertical-align: baseline;
+    font-weight: 400;
+    transition: transform .3s;
+    padding:4px
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-switcher_close:after {
+    font-size: 12px;
+    font-size: 12px\9;
+    transform: scale(1) rotate(0deg);
+    -ms-filter: "progid:DXImageTransform.Microsoft.Matrix(sizingMethod='auto expand', M11=1, M12=0, M21=0, M22=1)";
+    zoom: 1;
+    display: inline-block;
+    font-family: anticon;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    content: url("../img/plus_center_small.png");
+    vertical-align: baseline;
+    font-weight: 400;
+    transition: transform .3s;
+    padding-top: 4px;
+    padding-right: 3px;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-switcher_open:after {
+    font-size: 12px;
+    font-size: 12px\9;
+    transform: scale(1) rotate(0deg);
+    -ms-filter: "progid:DXImageTransform.Microsoft.Matrix(sizingMethod='auto expand', M11=1, M12=0, M21=0, M22=1)";
+    zoom: 1;
+    display: inline-block;
+    font-family: anticon;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    content: url("../img/minus_center_small.png");
+    vertical-align: baseline;
+    font-weight: 400;
+    transition: transform .3s;
+    padding-top: 4px;
+    padding-right: 3px;
+}
+.ant-tree.ant-tree-show-line li:not(:last-child):before {
+    content: " ";
+    width: 1px;
+     //border-left: 1px solid #d9d9d9;
+    height: 100%;
+    position: absolute;
+    left: 12px;
+    margin: 18px 0;
+}
+.ant-tree li {
+    padding: 4px 0;
+    margin: 0;
+    list-style: none;
+    white-space: nowrap;
+    outline: 0;
+    background: url(../img/line_conn.png) 0  0 repeat-y;
+}
+*/
+/*
+.ant-tree li span.ant-tree-iconEle, .ant-tree li span.ant-tree-switcher {
+    margin: 0;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    border: 0 none;
+    cursor: pointer;
+    outline: none;
+    text-align: center;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-bottom_close:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -126px -42px no-repeat scroll;
+
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-center_close:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -126px -21px no-repeat scroll;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-noline_close:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -126px -84px no-repeat scroll;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-roots_close:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -126px -63px no-repeat scroll;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-bottom_open:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -105px -42px no-repeat scroll;
+
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-center_open:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -105px -21px no-repeat scroll;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-noline_open:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -105px -84px no-repeat scroll;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-roots_open:after{
+    vertical-align: middle;
+    margin:0; padding: 0; width:21px; height:21px;
+    background: url("../img/metro.png") -105px -63px no-repeat scroll;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-bottom_close:after, .ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-center_close:after, .ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-noline_close:after, .ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-roots_close:after {
+    font-family: none;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-bottom_open:after, .ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-center_open:after, .ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-noline_open:after, .ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-roots_open:after {
+    font-family: none;
+}
+*/
+
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-switcher-noop:after {
+    font-size: 12px;
+    font-size: 12px\9;
+    transform: scale(1) rotate(0deg);
+    -ms-filter: "progid:DXImageTransform.Microsoft.Matrix(sizingMethod='auto expand', M11=1, M12=0, M21=0, M22=1)";
+    zoom: 1;
+    display: inline-block;
+    font-family: anticon;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    content: none;
+    vertical-align: baseline;
+    font-weight: 400;
+    transition: transform .3s;
+    /*background: url('../img/metro.png') no-repeat -128px 0;*/
+}
+.ant-tree li span.ant-tree-iconEle, .ant-tree li span.ant-tree-switcher {
+    margin: 0;
+    width: 24px;
+    /* height: 24px; */
+    line-height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    border: 0 none;
+    cursor: pointer;
+    outline: none;
+    text-align: center;
+}
+.ant-tree.ant-tree-show-line li:not(:last-child):before {
+    content: " ";
+    width: 1px;
+    /*border-left: 1px solid #d9d9d9;*/
+    height: 100%;
+    position: absolute;
+    left: 12px;
+    margin: 18px 0;
+}
+.ant-tree.ant-tree-show-line li:not(:last-child):before {
+    content: " ";
+    width: 1px;
+    border-left: none !important;
+    height: 100%;
+    position: absolute;
+    left: 12px;
+    margin: 18px 0;
+}
+.ant-tree-iconEle::after {
+    content: url("../img/file.png");
+}
+.ant-tree-iconEle.ant-tree-icon__open::after {
+    content: url("../img/folder_open.png");
+}
+.ant-tree-iconEle.ant-tree-icon__close::after {
+    content: url("../img/folder_close.png");
+}
+
+/*content: "\E662";
+content: "\E699";
+content: "\E664";*/

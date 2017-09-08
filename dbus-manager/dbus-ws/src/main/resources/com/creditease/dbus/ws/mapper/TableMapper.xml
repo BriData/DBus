@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.TableMapper">
+    <resultMap id="table" type="com.creditease.dbus.ws.domain.DataTable">
+        <id property="id" column="id"/>
+        <result property="dsID" column="ds_id"/>
+        <result property="dsName" column="ds_name"/>
+        <result property="dsType" column="ds_type"/>
+        <result property="schemaID" column="schema_id"/>
+        <result property="schemaName" column="schema_name"/>
+        <result property="tableName" column="table_name"/>
+        <result property="physicalTableRegex" column="physical_table_regex"/>
+        <result property="outputTopic" column="output_topic"/>
+        <result property="verID" column="ver_id"/>
+        <result property="version" column="version"/>
+        <result property="innerVersion" column="inner_version"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="metaChangeFlg" column="meta_change_flg"/>
+        <result property="masterUrl" column="master_url"/>
+        <result property="slaveUrl" column="slave_url"/>
+        <result property="dbusUser" column="dbus_user"/>
+        <result property="dbusPassword" column="dbus_pwd"/>
+        <result property="verChangeHistory" column="ver_change_history"/>
+        <result property="verChangeNoticeFlg" column="ver_change_notice_flg"/>
+        <result property="outputBeforeUpdateFlg" column="output_before_update_flg"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="table">
+        select * from t_data_tables
+    </select>
+
+    <select id="findTablesNoVer" resultMap="table">
+        select * from t_data_tables t1 ,t_dbus_datasource t2 where t1.ds_id = t2.id and t1.ver_id is null and t1.schema_id = #{schemaId}
+    </select>
+
+    <select id="findById" resultMap="table">
+        select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.id = #{id}
+    </select>
+
+    <select id="findByStatus" resultMap="table">
+        select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.status = #{status}
+    </select>
+
+    <select id="findByDsID" resultMap="table">
+        select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t2.id = #{dsID}
+    </select>
+
+    <select id="findBySchemaID" resultMap="table">
+        select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.schema_id = #{schemaID}
+    </select>
+    <!--通过schemaName获取tables-->
+    <select id="findByDsIdAndSchemaName" resultMap="table">
+        select * from t_data_tables t1 where t1.ds_id = #{dsID} and t1.schema_name = #{schemaName}
+    </select>
+
+    <select id="findByTableName" resultMap="table">
+        select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.table_name LIKE  "%"#{tableName}"%"
+    </select>
+<!--
+    <select id="findBySchemaAndName" resultMap="table">
+        select * from t_data_tables where schema_id = #{schemaID} AND table_name LIKE  "%"#{tableName}"%"
+    </select>
+
+    <select id="findByDsAndName" resultMap="table">
+        select * from t_data_tables where ds_id = #{dsID} AND table_name LIKE  "%"#{tableName}"%"
+    </select>
+-->
+    <select id="search" resultMap="table">
+        select t1.*, t2.ds_name,t2.ds_type, t3.version, t3.inner_version from t_data_tables t1 left join t_dbus_datasource t2 on t1.ds_id = t2.id left join t_meta_version t3 on t1.ver_id = t3.id
+        where 1=1
+        <if test ="dsID != null"> and t1.ds_id = #{dsID}</if>
+        <if test ="schemaName != null"> and t1.schema_name like "%"#{schemaName}"%"</if>
+        <if test = "tableName != null"> and t1.table_name like  "%"#{tableName}"%" </if>
+        order by t1.create_time desc
+    </select>
+
+    <select id="findTables" resultMap="table">
+        select t1.*, t2.ds_name, t2.ds_type,t3.version, t3.inner_version from t_data_tables t1, t_dbus_datasource t2, t_meta_version t3 where t1.ds_id = t2.id and t1.ver_id = t3.id
+        <if test ="dsID != null"> and t1.ds_id = #{dsID}</if>
+        <if test ="schemaName != null"> and t1.schema_name = #{schemaName}</if>
+        <if test = "tableName != null"> and t1.table_name like  "%"#{tableName}"%"</if>
+    </select>
+
+    <insert id="insert">
+        insert into t_data_tables
+        (ds_id,
+        schema_id,
+        schema_name,
+        table_name,
+        physical_table_regex,
+        output_topic,
+        ver_id,
+        status,
+        create_time)
+        values
+        (#{dsID},
+        #{schemaID},
+        #{schemaName},
+        #{tableName},
+        #{physicalTableRegex},
+        #{outputTopic},
+        #{verID},
+        #{status},
+        current_timestamp())
+    </insert>
+
+    <update id="update">
+        update t_data_tables set
+        <if test="dsID != null">ds_id = #{dsID},</if>
+        <if test="schemaID != null">schema_id = #{schemaID},</if>
+        <if test="schemaName != null">schema_name = #{schemaName},</if>
+        <if test="tableName  != null">table_name = #{tableName},</if>
+        <if test="physicalTableRegex != null">physical_table_regex = #{physicalTableRegex},</if>
+        <if test="outputBeforeUpdateFlg != null">output_before_update_flg = #{outputBeforeUpdateFlg},</if>
+        <if test="verID != null">ver_id = #{verID},</if>
+        <if test="status != null">status = #{status},</if>
+        create_time = current_timestamp()
+        where id = #{id}
+    </update>
+
+    <update id="changeStatus">
+        update t_data_tables
+        set status = #{status}
+        where id = #{id}
+    </update>
+
+    <update id="confirmVerChange">
+        update t_data_tables
+        set ver_change_history = null, ver_change_notice_flg = 0, create_time = create_time
+        where id = #{id}
+    </update>
+</mapper>

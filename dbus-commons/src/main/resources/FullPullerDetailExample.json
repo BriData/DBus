@@ -1,0 +1,10 @@
+{
+  "UpdateTime": "2016-04-11 00:00:08.000",
+  "CreateTime": "2016-04-11 00:00:00.000",
+  "StartTime": "2016-04-11 00:00:05.000",
+  "EndTime": "",
+  "ErrorMsg": "",
+  "TotalCount": 110513,
+  "FinishedCount": 8000,
+  "Partitions": 12,
+}

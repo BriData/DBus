@@ -1,0 +1,11 @@
+{
+  "id": 12345,
+  "type": "dispatcher_reload_config",
+  "ts": "2016-04-11 12:23:34.345123",
+  "from": "xxx-topology-id",
+  "payload" : {
+    "keyA" : "valueA",
+    "keyB" : "valueB",
+    "keyC" : "valueC"
+  }
+}

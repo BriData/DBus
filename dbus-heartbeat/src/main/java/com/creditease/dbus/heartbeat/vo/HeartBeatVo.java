@@ -1,0 +1,285 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2017 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+package com.creditease.dbus.heartbeat.vo;
+
+import java.io.Serializable;
+import java.util.Map;
+
+public class HeartBeatVo implements Serializable {
+
+    /**
+     * serialVersionUID
+     */
+    private static final long serialVersionUID = -4849126266520972270L;
+
+    /** heartbeat频率  */
+    private Long heartbeatInterval;
+
+    private Long checkInterval;
+
+    private Long checkFullPullInterval;
+
+    private Long alarmTtl;
+
+    private Integer maxAlarmCnt;
+
+    private Long heartBeatTimeout;
+
+    private Map<String, Map<String, String>> heartBeatTimeoutAdditional;
+
+    private Long fullPullTimeout;
+
+    private String leaderPath;
+
+    private String controlPath;
+
+    private String monitorPath;
+
+    private String monitorFullPullPath;
+
+    private Long lifeInterval;
+
+    private Long correcteValue;
+
+    private Long fullPullCorrecteValue;
+
+    private Long fullPullSliceMaxPending;
+
+    private String excludeSchema;
+
+    private Integer fullPullOldVersionCnt;
+
+    private Integer deleteFullPullOldVersionInterval;
+
+    private Integer checkPointPerHeartBeatCnt;
+
+    private String adminSMSNo;
+
+    private String adminUseSMS;
+
+    private String adminEmail;
+
+    private String adminUseEmail;
+
+    private Map<String, Map<String, String>> additionalNotify;
+
+    public Long getHeartbeatInterval() {
+        return heartbeatInterval;
+    }
+
+    public void setHeartbeatInterval(Long heartbeatInterval) {
+        this.heartbeatInterval = heartbeatInterval;
+    }
+
+    public Long getCheckInterval() {
+        return checkInterval;
+    }
+
+    public void setCheckInterval(Long checkInterval) {
+        this.checkInterval = checkInterval;
+    }
+
+    public Long getAlarmTtl() {
+        return alarmTtl;
+    }
+
+    public void setAlarmTtl(Long alarmTtl) {
+        this.alarmTtl = alarmTtl;
+    }
+
+    public Integer getMaxAlarmCnt() {
+        return maxAlarmCnt;
+    }
+
+    public void setMaxAlarmCnt(Integer maxAlarmCnt) {
+        this.maxAlarmCnt = maxAlarmCnt;
+    }
+
+    public String getLeaderPath() {
+        return leaderPath;
+    }
+
+    public void setLeaderPath(String leaderPath) {
+        this.leaderPath = leaderPath;
+    }
+
+    public String getControlPath() {
+        return controlPath;
+    }
+
+    public void setControlPath(String controlPath) {
+        this.controlPath = controlPath;
+    }
+
+    public String getMonitorPath() {
+        return monitorPath;
+    }
+
+    public void setMonitorPath(String monitorPath) {
+        this.monitorPath = monitorPath;
+    }
+
+    public Long getHeartBeatTimeout() {
+        return heartBeatTimeout;
+    }
+
+    public void setHeartBeatTimeout(Long heartBeatTimeout) {
+        this.heartBeatTimeout = heartBeatTimeout;
+    }
+
+    public Map<String, Map<String, String>> getHeartBeatTimeoutAdditional() {
+        return heartBeatTimeoutAdditional;
+    }
+
+    public void setHeartBeatTimeoutAdditional(Map<String, Map<String, String>> heartBeatTimeoutAdditional) {
+        this.heartBeatTimeoutAdditional = heartBeatTimeoutAdditional;
+    }
+
+    public Long getLifeInterval() {
+        return lifeInterval;
+    }
+
+    public void setLifeInterval(Long lifeInterval) {
+        this.lifeInterval = lifeInterval;
+    }
+
+    public Long getCorrecteValue() {
+        return correcteValue;
+    }
+
+    public void setCorrecteValue(Long correcteValue) {
+        this.correcteValue = correcteValue;
+    }
+
+    public String getMonitorFullPullPath() {
+        return monitorFullPullPath;
+    }
+
+    public void setMonitorFullPullPath(String monitorFullPullPath) {
+        this.monitorFullPullPath = monitorFullPullPath;
+    }
+
+    public Long getCheckFullPullInterval() {
+        return checkFullPullInterval;
+    }
+
+    public void setCheckFullPullInterval(Long checkFullPullInterval) {
+        this.checkFullPullInterval = checkFullPullInterval;
+    }
+
+    public Long getFullPullTimeout() {
+        return fullPullTimeout;
+    }
+
+    public void setFullPullTimeout(Long fullPullTimeout) {
+        this.fullPullTimeout = fullPullTimeout;
+    }
+
+    public Long getFullPullCorrecteValue() {
+        return fullPullCorrecteValue;
+    }
+
+    public void setFullPullCorrecteValue(Long fullPullCorrecteValue) {
+        this.fullPullCorrecteValue = fullPullCorrecteValue;
+    }
+
+    public Long getFullPullSliceMaxPending() {
+        return fullPullSliceMaxPending;
+    }
+
+    public void setFullPullSliceMaxPending(Long fullPullSliceMaxPending) {
+        this.fullPullSliceMaxPending = fullPullSliceMaxPending;
+    }
+
+    public String getExcludeSchema() {
+        return excludeSchema;
+    }
+
+    public void setExcludeSchema(String excludeSchema) {
+        this.excludeSchema = excludeSchema;
+    }
+
+    public Integer getFullPullOldVersionCnt() {
+        return fullPullOldVersionCnt;
+    }
+
+    public void setFullPullOldVersionCnt(Integer fullPullOldVersionCnt) {
+        this.fullPullOldVersionCnt = fullPullOldVersionCnt;
+    }
+
+    public Integer getDeleteFullPullOldVersionInterval() {
+        return deleteFullPullOldVersionInterval;
+    }
+
+    public void setDeleteFullPullOldVersionInterval(
+            Integer deleteFullPullOldVersionInterval) {
+        this.deleteFullPullOldVersionInterval = deleteFullPullOldVersionInterval;
+    }
+
+    public Integer getCheckPointPerHeartBeatCnt() {
+        return checkPointPerHeartBeatCnt;
+    }
+
+    public void setCheckPointPerHeartBeatCnt(Integer checkPointPerHeartBeatCnt) {
+        this.checkPointPerHeartBeatCnt = checkPointPerHeartBeatCnt;
+    }
+
+    public String getAdminSMSNo() {
+        return adminSMSNo;
+    }
+
+    public void setAdminSMSNo(String adminSMSNo) {
+        this.adminSMSNo = adminSMSNo;
+    }
+
+    public String getAdminUseSMS() {
+        return adminUseSMS;
+    }
+
+    public void setAdminUseSMS(String adminUseSMS) {
+        this.adminUseSMS = adminUseSMS;
+    }
+
+    public String getAdminEmail() {
+        return adminEmail;
+    }
+
+    public void setAdminEmail(String adminEmail) {
+        this.adminEmail = adminEmail;
+    }
+
+    public String getAdminUseEmail() {
+        return adminUseEmail;
+    }
+
+    public void setAdminUseEmail(String adminUseEmail) {
+        this.adminUseEmail = adminUseEmail;
+    }
+
+    public Map<String, Map<String, String>> getAdditionalNotify() {
+        return additionalNotify;
+    }
+
+    public void setAdditionalNotify(
+            Map<String, Map<String, String>> additionalNotify) {
+        this.additionalNotify = additionalNotify;
+    }
+}
