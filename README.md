@@ -47,12 +47,12 @@ DBus专注于数据的收集及实时数据流计算，通过简单灵活的配�
 * 考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob, 即如果表中有这样类型的数据会直接被替换为空。
 
 # 相关资料:
-与宜信Wormhole项目搭配使用将是最佳选择。
+与宜信[Wormhole](https://edp963.github.io/wormhole/)项目搭配使用将是最佳选择。
 
 可参考：[如何基于日志，同步实现数据的一致性和实时抽取?](http://dbaplus.cn/news-21-872-1.html)
 
 # 相关开源
-宜信wormhole
+宜信[Wormhole](https://edp963.github.io/wormhole/)
 
 # 交流和问题反馈
 邮件交流：  bridata@163.com
