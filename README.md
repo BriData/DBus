@@ -55,7 +55,7 @@ DBus专注于数据的收集及实时数据流计算，通过简单灵活的配�
 宜信[Wormhole](https://edp963.github.io/wormhole/)
 
 # 交流和问题反馈
-邮件交流：  bridata@163.com
+邮件交流：  bridata@126.com
 
 提交issue ： https://github.com/BriData/DBus/issues
 
