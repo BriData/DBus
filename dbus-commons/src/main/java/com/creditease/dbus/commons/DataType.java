@@ -95,6 +95,7 @@ public enum DataType {
             case "TINYINT UNSIGNED":
             case "BIT":
             case "SMALLINT":
+            case "SMALLINT UNSIGNED":
             case "MEDIUMINT":
             case "INT":
             case "YEAR":
