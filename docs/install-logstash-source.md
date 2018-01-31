@@ -217,7 +217,7 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 
 ### 2.2 数据源配置修改
 
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用。
+因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
 * **修改数据源信息：**点击modify按钮进行修改。
    ![img/install-logstash-source/install-logstash-source-modify-ds-1.png](img/install-logstash-source/install-logstash-source-modify-ds-1.png)
