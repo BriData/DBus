@@ -1,3 +1,7 @@
+### 项目主页
+
+[https://bridata.github.io/DBus/](https://bridata.github.io/DBus/)
+
 ### 背景
 
 企业中大量业务数据保存在各个业务系统数据库中，过去通常的同步数据的方法有很多种，比如：
@@ -31,7 +35,7 @@ DBus的主要潜在客户包括：
 
 ### 相关文档
 
-详细介绍 DBus请参考 [wiki](docs/index.md)
+详细介绍 DBus请参考  https://bridata.github.io/DBus/
 
 常见问题可参考 [FAQ](docs/more-faq.md)
 
