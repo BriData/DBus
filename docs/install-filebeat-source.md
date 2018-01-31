@@ -135,7 +135,7 @@ filebeat-6.1.0-linux-x86_64]$ 2018/01/25 09:12:48.287446 beat.go:436: INFO Home 
 
 ### 1.4. 心跳脚本和crontab说明
 
-   DBus提供了心跳shell脚本[点击下载](dbus-main/init-scripts/dbus-agent-heartbeat/dbus-agent-heartbeat.tar.gz)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
+   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/releases)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
 
 * **心跳脚本目录** 
 
@@ -293,7 +293,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
    ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 ### 2.3. 配置规则
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考[日志规则配置说明](/config-table.md)）**
+* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考：(docs/config-table.md)）**
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
