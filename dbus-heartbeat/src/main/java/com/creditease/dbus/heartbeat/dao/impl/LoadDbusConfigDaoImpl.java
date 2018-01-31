@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,17 +29,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.dao.ILoadDbusConfigDao;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DBUtil;
-import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
 import com.creditease.dbus.heartbeat.vo.DsVo;
+import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
 import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
+
+import org.apache.commons.lang.StringUtils;
 
 public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
 
@@ -53,6 +53,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append("     slave_url,");
         sql.append("     dbus_user,");
         sql.append("     dbus_pwd,");
+        sql.append("     IFNULL(ds_partition, '0') ds_partition,");
         sql.append("     ctrl_topic");
         sql.append(" from ");
         sql.append("     t_dbus_datasource ");
@@ -78,7 +79,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
                 vo.setPassword(rs.getString("dbus_pwd"));
                 vo.setType(rs.getString("ds_type"));
                 vo.setKey(rs.getString("ds_name"));
-                vo.setCtrlTopic("ctrl_topic");
+                vo.setDsPartition(rs.getString("ds_partition"));
+                vo.setCtrlTopic(rs.getString("ctrl_topic"));
                 if (StringUtils.equals(Constants.CONFIG_DB_TYPE_ORA, vo.getType())) {
                     vo.setDriverClass(Constants.DB_DRIVER_CLASS_ORA);
                 } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_MYSQL, vo.getType())) {
@@ -101,6 +103,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         StringBuilder sql = new StringBuilder();
         sql.append(" select ");
         sql.append("     dbus.ds_name,");
+        sql.append("     IFNULL(dbus.ds_partition, '0') ds_partition,");
         sql.append("     tds.schema_name,");
         sql.append("     tdt.table_name");
         sql.append(" from ");
@@ -131,10 +134,11 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             while (rs.next()) {
                 MonitorNodeVo vo = new MonitorNodeVo();
                 vo.setDsName(rs.getString("ds_name"));
+                vo.setDsPartition(rs.getString("ds_partition"));
                 vo.setSchema(rs.getString("schema_name"));
                 vo.setTableName(rs.getString("table_name"));
                 if(!isContainedByExcludeSchema(excludeSchema,vo.getDsName(),vo.getSchema()))
-                	list.add(vo);
+                    list.add(vo);
             }
         } catch (Exception e) {
             LoggerFactory.getLogger().error("[db-LoadDbusConfigDao]", e);
@@ -182,13 +186,13 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             rs = ps.executeQuery();
             Set<String> excludeSchema = getExcludeDbSchema(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             while (rs.next()) {
-            	TargetTopicVo vo = new TargetTopicVo();
-            	vo.setDsName(rs.getString("ds_name"));
-            	vo.setSchemaName(rs.getString("schema_name"));
-            	vo.setTableName(rs.getString("table_name"));
-            	vo.setTargetTopic(rs.getString("output_topic"));
-            	if(!isContainedByExcludeSchema(excludeSchema,vo.getDsName(),vo.getSchemaName()))
-            		list.add(vo);
+                TargetTopicVo vo = new TargetTopicVo();
+                vo.setDsName(rs.getString("ds_name"));
+                vo.setSchemaName(rs.getString("schema_name"));
+                vo.setTableName(rs.getString("table_name"));
+                vo.setTargetTopic(rs.getString("output_topic"));
+                if(!isContainedByExcludeSchema(excludeSchema,vo.getDsName(),vo.getSchemaName()))
+                    list.add(vo);
             }
         } catch (Exception e) {
             LoggerFactory.getLogger().error("[db-LoadDbusConfigDao]", e);
@@ -202,19 +206,19 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
     }
 
     private Set<String> getExcludeDbSchema(String excludeSchema){
-    	String[] schema = StringUtils.split(excludeSchema, ",");
-    	Set<String> schemaSet = new HashSet<String>();
-    	schemaSet.addAll(Arrays.asList(schema));
-    	return schemaSet;
+        String[] schema = StringUtils.split(excludeSchema, ",");
+        Set<String> schemaSet = new HashSet<String>();
+        schemaSet.addAll(Arrays.asList(schema));
+        return schemaSet;
     }
 
     private boolean isContainedByExcludeSchema(Set<String> excludeSchema, String dbName, String schemaName){
-    	if(excludeSchema==null)
-    		return false;
-    	String dbSchema = StringUtils.join(new String[]{dbName,schemaName},".");
-    	if(excludeSchema.contains(dbSchema)||excludeSchema.contains(schemaName))
-    		return true;
-    	return false;
+        if(excludeSchema==null)
+            return false;
+        String dbSchema = StringUtils.join(new String[]{dbName,schemaName},".");
+        if(excludeSchema.contains(dbSchema)||excludeSchema.contains(schemaName))
+            return true;
+        return false;
     }
 
 }

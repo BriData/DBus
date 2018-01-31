@@ -1,0 +1,130 @@
+{
+  "type" : "record",
+  "name" : "DB_FULL_PULL_REQUESTS",
+  "namespace" : "DBUS",
+  "fields" : [ {
+    "name" : "table",
+    "type" : "string"
+  }, {
+    "name" : "op_type",
+    "type" : "string"
+  }, {
+    "name" : "op_ts",
+    "type" : "string"
+  }, {
+    "name" : "current_ts",
+    "type" : "string"
+  }, {
+    "name" : "pos",
+    "type" : "string"
+  }, {
+    "name" : "primary_keys",
+    "type" : {
+      "type" : "array",
+      "items" : "string"
+    }
+  }, {
+    "name" : "tokens",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "default" : { }
+  }, {
+    "name" : "before",
+    "type" : [ "null", {
+      "type" : "record",
+      "name" : "columns",
+      "fields" : [ {
+        "name" : "SEQNO",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SEQNO_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "SCHEMA_NAME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SCHEMA_NAME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "TABLE_NAME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "TABLE_NAME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "SCN_NO",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SCN_NO_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "SPLIT_COL",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SPLIT_COL_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "SPLIT_BOUNDING_QUERY",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SPLIT_BOUNDING_QUERY_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PULL_TARGET_COLS",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PULL_TARGET_COLS_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PULL_REQ_CREATE_TIME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PULL_REQ_CREATE_TIME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PULL_START_TIME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PULL_START_TIME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PULL_END_TIME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PULL_END_TIME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PULL_STATUS",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PULL_STATUS_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PULL_REMARK",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PULL_REMARK_isMissing",
+        "type" : "boolean"
+      } ]
+    } ],
+    "default" : null
+  }, {
+    "name" : "after",
+    "type" : [ "null", "columns" ],
+    "default" : null
+  } ]
+}

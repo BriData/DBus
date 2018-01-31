@@ -1,0 +1,448 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INDB",
+      "label": "inDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    },
+    {
+      "name": "VAR_DS",
+      "type": "constant",
+      "label": "ds",
+      "value": "heartbeat_log_filebeat",
+      "description": ""
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "3.1.1"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    }
+  ],
+  "id": null,
+  "title": "Heartbeat_log_filebeat",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INDB}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 1,
+          "isNew": true,
+          "legend": {
+            "avg": true,
+            "current": false,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "成功计数",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "hide": false,
+              "measurement": "dbus_statistic",
+              "policy": "default",
+              "query": "SELECT \"count\" FROM \"dbus_statistic\" WHERE \"table\" =~ /^$table$/ AND \"type\" =~ /^$type$/ AND \"ds\" =~ /^$ds$/ AND $timeFilter",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "count"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "table",
+                  "operator": "=~",
+                  "value": "/^$table$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "type",
+                  "operator": "=~",
+                  "value": "/^$type$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "ds",
+                  "operator": "=~",
+                  "value": "/^$ds$/"
+                }
+              ]
+            },
+            {
+              "alias": "missting计数",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "hide": true,
+              "measurement": "dbus_statistic",
+              "policy": "default",
+              "query": "SELECT \"count\" FROM \"dbus_statistic\" WHERE \"table\" =~ /^$table$/ AND \"type\" =~ /^$type$/ AND \"ds\" =~ /^$ds$/ AND $timeFilter",
+              "rawQuery": false,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "warningCount"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "table",
+                  "operator": "=~",
+                  "value": "/^$table$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "type",
+                  "operator": "=~",
+                  "value": "/^$type$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "ds",
+                  "operator": "=~",
+                  "value": "/^$ds$/"
+                }
+              ]
+            },
+            {
+              "alias": "错误计数",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "measurement": "dbus_statistic",
+              "policy": "default",
+              "query": "SELECT \"count\" FROM \"dbus_statistic\" WHERE \"table\" =~ /^$table$/ AND \"type\" =~ /^$type$/ AND \"ds\" =~ /^$ds$/ AND $timeFilter",
+              "rawQuery": false,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "errorCount"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "table",
+                  "operator": "=~",
+                  "value": "/^$table$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "type",
+                  "operator": "=~",
+                  "value": "/^$type$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "ds",
+                  "operator": "=~",
+                  "value": "/^$ds$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "表统计计数",
+          "tooltip": {
+            "msResolution": true,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "title": "Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INDB}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 2,
+          "isNew": true,
+          "legend": {
+            "avg": true,
+            "current": false,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "日志延时",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "measurement": "dbus_statistic",
+              "policy": "default",
+              "query": "SELECT \"count\" FROM \"dbus_statistic\" WHERE \"table\" =~ /^$table$/ AND \"type\" =~ /^$type$/ AND $timeFilter",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "latency"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "table",
+                  "operator": "=~",
+                  "value": "/^$table$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "type",
+                  "operator": "=~",
+                  "value": "/^$type$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "延时",
+          "tooltip": {
+            "msResolution": true,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "value": "${VAR_DS}",
+          "text": "${VAR_DS}"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "ds",
+        "options": [
+          {
+            "value": "${VAR_DS}",
+            "text": "${VAR_DS}"
+          }
+        ],
+        "query": "${VAR_DS}",
+        "refresh": 0,
+        "type": "constant"
+      },
+      {
+        "current": {},
+        "datasource": "${DS_INDB}",
+        "hide": 1,
+        "includeAll": false,
+        "multi": false,
+        "name": "table",
+        "options": [],
+        "query": "SHOW TAG VALUES WITH KEY = \"table\"  WHERE ds =~ /^$ds$/",
+        "refresh": 1,
+        "regex": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {},
+        "datasource": "${DS_INDB}",
+        "hide": 0,
+        "includeAll": true,
+        "multi": false,
+        "name": "type",
+        "options": [],
+        "query": "SHOW TAG VALUES WITH KEY = \"type\"  WHERE ds =~ /^$ds$/",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "1m",
+  "schemaVersion": 12,
+  "version": 3,
+  "links": [],
+  "gnetId": null
+}

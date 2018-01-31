@@ -7,7 +7,7 @@ var service = require('../lib/service/avro-schema-service');
 router.get('/search', function (req, res) {
     var param = buildParam(req.query, ["dsId", "schemaName", "text", "pageSize", "pageNum"]);
     if (!param.pageSize) {
-        param.pageSize = 10;
+        param.pageSize = 12;
     }
     if (!param.pageNum) {
         param.pageNum = 1;

@@ -77,7 +77,6 @@ var ControlMessage = React.createClass({
         var btn = $(e.target);
         btn.attr("disabled", true);
         var ds = ReactDOM.findDOMNode(this.refs.ds).value;
-
         var ctrlTopic = ReactDOM.findDOMNode(this.refs.ctrlTopic).value;
         var messageType = ReactDOM.findDOMNode(this.refs.messageType).value;
         if(messageType != "HEARTBEAT_RELOAD_CONFIG"){
@@ -93,6 +92,7 @@ var ControlMessage = React.createClass({
             return;
         }
         var message = editor.get();
+        console.log("message： " + JSON.stringify(message));
         store.actions.sendMessage(ds,ctrlTopic,message, messageType,function(msg) {
             btn.removeAttr('disabled');
             alert(msg);
@@ -108,6 +108,10 @@ var ControlMessage = React.createClass({
             }
         });
         ReactDOM.findDOMNode(this.refs.ctrlTopic).value = dsName[1] + "_ctrl";
+        var message = editor.get();
+        message.payload.dsType = dsName[0];
+        message.payload.dsName = dsName[1];
+        store.actions.datasourceChanged(message);
     },
     closeDialogZK:function(){
         store.actions.closeDialogZK();

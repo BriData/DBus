@@ -34,8 +34,8 @@ import java.util.Properties;
 public class Kafka {
     public static void main(String[] args) throws IOException, InterruptedException{
         Properties properties = PropertiesUtils.getProps("consumer.properties");
-        properties.setProperty("client.id","whtestconsumer");
-        properties.setProperty("group.id","whtestconsumer");
+        properties.setProperty("client.id","plain.Log.Reader");
+        properties.setProperty("group.id","plain.Log.Reader");
         properties.setProperty("bootstrap.servers", "localhost:9092");
         //properties.setProperty("auto.offset.reset", "earliest");
 

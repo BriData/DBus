@@ -27,6 +27,10 @@ module.exports = {
         var url = $.url(restUrl, "/datasources/search");
         request.post({url: url, json: param, forever: true}, $.resWrapper(cb));
     },
+    deleteDataSource: function (param, cb) {
+        var url = $.url(restUrl, "/datasources/deleteDataSource");
+        request.get({url: url, json: param, forever: true}, $.resWrapper(cb));
+    },
     searchFromSource: function (param, cb) {
         var url = $.url(restUrl, "/datasources/searchFromSource");
         request({url: url, json: param, forever: true}, $.resWrapper(cb));

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 
+import com.creditease.dbus.commons.PropertiesHolder;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -87,6 +88,9 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
         if (!initialized) {
             // 初始化配置文件
             try {
+                //设置topo类型，用于获取配置信息路径
+                FullPullHelper.setTopologyType(Constants.FULL_SPLITTER_TYPE);
+
                 loadRunningConf(null);
             } catch (Exception e) {
                 throw new InitializationException(e);
@@ -122,8 +126,9 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             } catch (Exception e) {
                 LOG.error("Reloading Conf for SplittingBolt is reloaded failed!");
             }
-        } else if (dataType.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
-            doSplitting(input);
+        } else if (dataType.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
+                   || dataType.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
+            doSplitting(input, dataType);
         } else if (dataType.equals(DataPullConstants.COMMAND_FULL_PULL_STOP)) {
             stopTopo(input);
         } else {
@@ -142,7 +147,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
         
     }
     
-    public void doSplitting(Tuple input) {
+    public void doSplitting(Tuple input, String dataType) {
         String dataSourceInfo = (String) input.getValue(0);
         String errorMsg = "";
         
@@ -175,6 +180,11 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             int totalRows = (int)splitInfoMap.get(Constants.TABLE_SPLITTED_TOTAL_ROWS_KEY);
             //int splitsCount= (int)splitInfoMap.get(Constants.TABLE_SPLITTED_SHARDS_COUNT_KEY);
 
+            JSONObject wrapperObj = JSONObject.parseObject(dataSourceInfo);
+            JSONObject payloadObj = wrapperObj.getJSONObject("payload");
+            String version = payloadObj.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
+            String batchNo = payloadObj.getString(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY);
+
             //分片信息列表
             List<InputSplit> inputSplitList = (List<InputSplit>)splitInfoMap.get(Constants.TABLE_SPLITTED_SHARD_SPLITS_KEY);
             //总共分为多少片
@@ -196,9 +206,12 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
                 wrapperObject.put(DataPullConstants.DATA_CHUNK_SPLIT_INDEX, ++splitIndex);
                 
                 String fullPullMediantTopic = commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_MEDIANT_TOPIC);
-                ProducerRecord record = new ProducerRecord<>(fullPullMediantTopic, DataPullConstants.DATA_EVENT_FULL_PULL_REQ, wrapperObject.toString().getBytes());
+                ProducerRecord record = new ProducerRecord<>(fullPullMediantTopic, dataType, wrapperObject.toString().getBytes());
                 Future<RecordMetadata> future = byteProducer.send(record);
                 producedRecord = future.get();
+                if(splitIndex == 1) {
+                    FullPullHelper.writeSplitStatusToDbManager(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), version, batchNo, splitsCount, totalRows, "splitting");
+                }
                 LOG.info("{}:完成分片，完成第{}片分片, 所属分区：{}", dsKey + "." + inputSplit.getTargetTableName(), splitIndex, inputSplit.getTablePartitionInfo());
             }
             collector.ack(input);
@@ -221,9 +234,11 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             collector.fail(input);
         }finally{
             try {
-                dbManager.close();
+                if (dbManager != null) {
+                    dbManager.close();
+                }
             }  catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("close dbManager error.", e);
             }
         }
     }
@@ -267,10 +282,9 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
 
         String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
-        String dbNameSpace = FullPullHelper.getDbNameSpace(dataSourceInfo);
         // 当前拉取全量对应的具体监控节点的更新
         try {
-            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
             progressObj.setUpdateTime(currentTimeStampString);
             progressObj.setTotalCount(String.valueOf(totalCount));
             progressObj.setPartitions(String.valueOf(totalCount));

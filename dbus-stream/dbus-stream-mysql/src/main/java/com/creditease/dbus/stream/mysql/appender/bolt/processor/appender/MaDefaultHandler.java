@@ -39,6 +39,7 @@ import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
+import com.creditease.dbus.stream.common.appender.meta.MetaFetcherManager;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.creditease.dbus.stream.mysql.appender.protobuf.Support;
@@ -133,25 +134,24 @@ public class MaDefaultHandler implements BoltCommandHandler {
             MetaComparator comparator = new MysqlMetaComparator();
             MetaCompareResult result = comparator.compare(version.getMeta(), metaWrapper);
 
-            // meta信息不兼容则升版本
+
+            /**
+             * meta信息不兼容不升版本，只需要删除重建t_table_meta中的meta信息
+             * 兼容则只需要清除metaChangeFlag
+              */
+
             if (version.getMeta() != null && !result.isCompatible()) {
                 // 发送termination消息
-                sendTermination(version, input);
-                version.nextVer();
                 logger.info("Meta is not compatible");
-                bRet = true;
-            }
-            sendMetaEventWarningMessage(version, metaWrapper, result);
-            version.nextInnerVer();
-            version.setMeta(metaWrapper);
-            version.setOffset(offset);
-            version.setTrailPos(Long.parseLong(msgEntry.getEntryHeader().getPos()));
+                version.setMeta(metaWrapper);
 
-            // 将Version信息和meta信息持久化到mysql
-            DBFacadeManager.getDbFacade().createMetaVersion(version);
+                // 将Version信息和meta信息持久化到mysql
+                DBFacadeManager.getDbFacade().deleteAndInsertTableMeta(version);
+            }
 
             BoltCommandHandlerHelper.clearMetaChangeFlag(header.getSchemaName(), header.getTableName());
             logger.info("New version is:{}", version.toString());
+
         } else if (version == null) {
             MetaVersion metaVer = new MetaVersion();
             MetaWrapper metaWrapper = buildMeta(msgEntry);
@@ -180,7 +180,7 @@ public class MaDefaultHandler implements BoltCommandHandler {
         return bRet;
     }
 
-    private MetaWrapper buildMeta(MessageEntry msgEntry) {
+    private MetaWrapper buildMeta(MessageEntry msgEntry) throws Exception {
         MetaWrapper metaWrapper = new MetaWrapper();
         EntryHeader header = msgEntry.getEntryHeader();
         RowData rowData = msgEntry.getMsgColumn().getRowDataLst().get(0);
@@ -188,10 +188,11 @@ public class MaDefaultHandler implements BoltCommandHandler {
         for (Column column : columns) {
             MetaWrapper.MetaCell cell = new MetaWrapper.MetaCell();
             cell.setColumnName(column.getName());
+            cell.setOriginalColumnName(cell.getColumnName());
             cell.setDataType(Support.getColumnType(column));
-            int[] ret = Support.getColumnLengthAndPrecision(column);
+            long[] ret = Support.getColumnLengthAndPrecision(column);
             cell.setDataLength(ret[0]);
-            cell.setDataPrecision(ret[1]);
+            cell.setDataPrecision((int) ret[1]);
             cell.setDataScale(0);
             cell.setIsPk(column.getIsKey() ? "Y" : "N");
             cell.setNullAble("N");
@@ -202,6 +203,29 @@ public class MaDefaultHandler implements BoltCommandHandler {
             cell.setVirtualColumn("NO");
             metaWrapper.addMetaCell(cell);
         }
+
+        /**
+         * 从源端获取列的注释信息，这里列信息有可能不一致
+         * 只赋值一致的部分，不一致的部分没办法处理
+         * 即需要将数据生成的metaWrapper中的注释填充为sourceMetaWrapper的注释
+         */
+        MetaWrapper sourceMetaWrapper = MetaFetcherManager.getMysqlMetaFetcher().fetch(header.getSchemaName(), header.getTableName(), -9999);
+        for(MetaWrapper.MetaCell cell : metaWrapper.getColumns()) {
+            String columnName = cell.getColumnName();
+            MetaWrapper.MetaCell sourceCell = sourceMetaWrapper.get(columnName);
+            // 可能源端已经不存在该列了
+            if(sourceCell == null) continue;
+            // TODO: 2017/9/22
+            /**
+             * dataType和precision如何设置
+             */
+            cell.setDataLength(sourceCell.getDataLength());
+            cell.setDataPrecision(sourceCell.getDataPrecision());
+            cell.setDataScale(sourceCell.getDataScale());
+            cell.setNullAble(sourceCell.getNullAble());
+            cell.setComments(sourceCell.getComments());
+        }
+
         return metaWrapper;
     }
 
@@ -219,6 +243,7 @@ public class MaDefaultHandler implements BoltCommandHandler {
         //BoltCommandHandlerHelper.changeDataTableStatus(ver.getSchema(), ver.getTable(), DataTable.STATUS_ABORT);
     }
 
+    @SuppressWarnings("unused")
     private void sendMetaEventWarningMessage(MetaVersion ver, MetaWrapper newMeta, MetaCompareResult result) {
         sender.sendMessage(ver, newMeta, result);
     }

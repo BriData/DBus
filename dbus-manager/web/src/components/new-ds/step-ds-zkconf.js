@@ -7,6 +7,7 @@ var StepCursor = require('./step-cursor')
 var ZkTree = require('../common/tree/zk-tree')
 var FreeScrollBar = require('react-free-scrollbar')
 var styles = require('../common/tree/styles')
+var utils = require('../common/utils')
 
 var DsZkConf = React.createClass({
   mixins: [Reflux.listenTo(store, '_onStatusChange')],
@@ -23,8 +24,11 @@ var DsZkConf = React.createClass({
   },
   // 下一步
   nextStep: function () {
-    console.log("this.state.dsName: " + this.state.dsType);
-    this.props.history.pushState({ dsName:this.state.dsName,dsType:this.state.dsType}, '/nds-step/nds-start-topos');
+    var dsType = this.state.dsType;
+    if(dsType.startsWith("log")) {
+      dsType = utils.logProcessor;
+    }
+    this.props.history.pushState({ dsName:this.state.dsName,dsType:dsType}, '/nds-step/nds-start-topos');
   },
   passParam:function () {
     var params = this.props.location.state;
@@ -46,12 +50,12 @@ var DsZkConf = React.createClass({
       <div className='row body'>
         <button type='button' className='btn btn-default' onClick={this.cloneFromTemplates} style={{ marginTop:'16px', marginLeft:'20px' }}>Clone ZkConf From Templates</button><br />
         <B.Button
-          bsSize='sm'
-          bsStyle='warning' style={{ float:'right', marginRight:'68px' }}
-          onClick={this.nextStep}>
-      Next
-      </B.Button>
-          <ZkTree data={zkConfTree} node={this.state.cursor} />
+            bsSize='sm'
+            bsStyle='warning' style={{ float:'right', marginRight:'68px' }}
+            onClick={this.nextStep}>
+          Next
+        </B.Button>
+        <ZkTree data={zkConfTree} node={this.state.cursor} />
       </div>
     </div>)
   }

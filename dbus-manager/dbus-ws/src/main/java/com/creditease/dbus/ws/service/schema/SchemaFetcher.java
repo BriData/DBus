@@ -36,15 +36,13 @@ public abstract class SchemaFetcher {
         this.ds = ds;
     }
 
-    public abstract String buildQuery(Object... args);
-    public abstract String fillParameters(PreparedStatement statement, Map<String, Object> params) throws Exception;
+    public abstract String buildQuery();
 
-    public List<DataSchema> fetchSchema(Map<String, Object> params) throws Exception {
+    public List<DataSchema> fetchSchema() throws Exception {
         try {
-            PreparedStatement statement = conn.prepareStatement(buildQuery(params));
-            fillParameters(statement, params);
+            PreparedStatement statement = conn.prepareStatement(buildQuery());
             ResultSet resultSet = statement.executeQuery();
-                return buildResultMySQLAndOracle(resultSet);
+            return buildResultMySQLAndOracle(resultSet);
         } finally {
             if (!conn.isClosed()) {
                 conn.close();

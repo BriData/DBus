@@ -20,12 +20,13 @@
 
 package com.creditease.dbus.stream.common.appender.bean;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by Shrimp on 16/6/15.
  */
-public class TabSchema {
+public class TabSchema implements Serializable {
     private Long id;
     private Long dsId;
     private String schema;

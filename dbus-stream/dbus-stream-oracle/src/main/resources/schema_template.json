@@ -1,0 +1,46 @@
+{
+  "type" : "record",
+  "name" : "%s",
+  "namespace" : "%s",
+  "fields" : [ {
+    "name" : "table",
+    "type" : "string"
+  }, {
+    "name" : "op_type",
+    "type" : "string"
+  }, {
+    "name" : "op_ts",
+    "type" : "string"
+  }, {
+    "name" : "current_ts",
+    "type" : "string"
+  }, {
+    "name" : "pos",
+    "type" : "string"
+  }, {
+    "name" : "primary_keys",
+    "type" : {
+      "type" : "array",
+      "items" : "string"
+    }
+  }, {
+    "name" : "tokens",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "default" : { }
+  }, {
+    "name" : "before",
+    "type" : [ "null", {
+      "type" : "record",
+      "name" : "columns",
+      "fields" : [%s]
+    } ],
+    "default" : null
+  }, {
+    "name" : "after",
+    "type" : [ "null", "columns" ],
+    "default" : null
+  } ]
+}

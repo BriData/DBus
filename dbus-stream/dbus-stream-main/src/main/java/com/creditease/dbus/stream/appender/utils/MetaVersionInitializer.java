@@ -21,17 +21,17 @@
 package com.creditease.dbus.stream.appender.utils;
 
 import avro.shaded.com.google.common.collect.Sets;
-import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.creditease.dbus.commons.MetaWrapper;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
+import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.bean.TabSchema;
 import com.creditease.dbus.stream.common.appender.meta.MetaFetcherException;
 import com.creditease.dbus.stream.common.appender.meta.MetaFetcherManager;
-import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
+import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
+import com.creditease.dbus.stream.common.appender.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,35 +50,53 @@ public class MetaVersionInitializer {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void initialize(DbusDatasourceType dsType) throws Exception {
-    	// 通过数据库加载schema列表
+        // 通过数据库加载schema列表
         List<TabSchema> schemaList = DBFacadeManager.getDbFacade().queryDataSchemas(Utils.getDatasource().getId());
 
         // 过滤掉没有配置的schema
         filter(schemaList);
-    	if(DbusDatasourceType.ORACLE == dsType){
+        if(DbusDatasourceType.ORACLE == dsType){
 
             // 支持reload操作
             MetaFetcherManager.reset();
 
-	        for (TabSchema schema : schemaList) {
-	            reloadVersions(DBFacadeManager.getDbFacade().queryDataTables(schema.getId()));
-	        }
-    	}else{
-    		for (TabSchema schema : schemaList) {
-    			List<DataTable> dts = DBFacadeManager.getDbFacade().queryDataTables(schema.getId());
-    			for(DataTable dt : dts){
-    				MetaVersion metaVer = DBFacadeManager.getDbFacade().queryMetaVersion(dt.getDsId(), dt.getSchema(), dt.getTableName());
-    				if(metaVer==null){
-    					MetaVersion ver = new MetaVersion();
-    					ver.setTableId(dt.getId());
-    					ver.setDsId(dt.getDsId());
-    					ver.setSchema(dt.getSchema());
-    					ver.setTable(dt.getTableName());
-    					DBFacadeManager.getDbFacade().createMetaVersion(ver);
-    				}
-    			}
-    		}
-    	}
+            for (TabSchema schema : schemaList) {
+                reloadVersions(DBFacadeManager.getDbFacade().queryDataTables(schema.getId()));
+            }
+        }else if(DbusDatasourceType.MYSQL == dsType){
+            for (TabSchema schema : schemaList) {
+                List<DataTable> dts = DBFacadeManager.getDbFacade().queryDataTables(schema.getId());
+                for(DataTable dt : dts){
+                    MetaVersion metaVer = DBFacadeManager.getDbFacade().queryMetaVersion(dt.getDsId(), dt.getSchema(), dt.getTableName());
+                    if(metaVer==null){
+                        MetaVersion ver = new MetaVersion();
+                        ver.setTableId(dt.getId());
+                        ver.setDsId(dt.getDsId());
+                        ver.setSchema(dt.getSchema());
+                        ver.setTable(dt.getTableName());
+                        ver.setMeta(MetaFetcherManager.getMysqlMetaFetcher().fetch(dt.getSchema(), dt.getTableName(), -999));
+                        DBFacadeManager.getDbFacade().createMetaVersion(ver);
+                    }
+                }
+            }
+        }else if(DbusDatasourceType.MONGO == dsType){
+            //TODO 因为MongoDB并没有meta和version之类的东西，因此此处是否是可以不用定义，还是需要加其他的呢
+            for (TabSchema schema : schemaList) {
+                List<DataTable> dts = DBFacadeManager.getDbFacade().queryDataTables(schema.getId());
+                for(DataTable dt : dts){
+                    MetaVersion metaVer = DBFacadeManager.getDbFacade().queryMetaVersion(dt.getDsId(), dt.getSchema(), dt.getTableName());
+                    if(metaVer==null){
+                        MetaVersion ver = new MetaVersion();
+                        ver.setTableId(dt.getId());
+                        ver.setDsId(dt.getDsId());
+                        ver.setSchema(dt.getSchema());
+                        ver.setTable(dt.getTableName());
+                        //ver.setMeta(MetaFetcherManager.getMysqlMetaFetcher().fetch(dt.getSchema(), dt.getTableName(), -999));
+                        DBFacadeManager.getDbFacade().createMetaVersion(ver);
+                    }
+                }
+            }
+        }
     }
     
     private void reloadVersions(List<DataTable> list) throws Exception {
@@ -94,7 +112,7 @@ public class MetaVersionInitializer {
                     if (v == null) {
                         // 初始化加载
                         int initVersion = -999;
-                        MetaWrapper wrapper = MetaFetcherManager.getFetcher().fetch(schema, tableName, initVersion);
+                        MetaWrapper wrapper = MetaFetcherManager.getOraMetaFetcher().fetch(schema, tableName, initVersion);
                         v = new MetaVersion();
                         v.setSchema(schema);
                         v.setTable(tableName);

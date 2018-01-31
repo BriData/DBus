@@ -63,7 +63,6 @@ var store = Reflux.createStore({
                 alert("删除结点失败");
                 return;
             }
-            alert("删除结点成功");
             //self.trigger(self.state);
             let parentPath = expandPath.substr(0, expandPath.lastIndexOf("/"));
             $.get(utils.builPath("zk/loadLevelOfPath"), {path:parentPath}, function(result) {

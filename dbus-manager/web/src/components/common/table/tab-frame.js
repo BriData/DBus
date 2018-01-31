@@ -18,11 +18,13 @@ TableFrame.Header = React.createClass({
             <div className="header container-fluid">
                 <div className="row">
                     <h4 className="col-xs-12">
-                        { this.props.title }
+                        <span className="title-text">
+                            { this.props.title }
+                        </span>
+                        <span className="pull-right elements">
+                            { this.props.children }
+                        </span>
                     </h4>
-                    <div className="pull-right elements">
-                        { this.props.children }
-                    </div>
                 </div>
             </div>
         );

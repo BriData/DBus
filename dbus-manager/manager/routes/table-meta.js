@@ -22,47 +22,70 @@ router.post('/createScript', function(req, res) {
     });
     res.json({status: 200,content: content});
 });
+router.get('/listPlainlogTable', function(req, res) {
+    var param = req.query;
+    service.listPlainlogTable(param, function(err, response) {
+        if(err) {
+            res.json({status: 500, message: err.message});
+            return;
+        }
+        res.json({status: 200, data: response.body});
+    })
+});
+
+router.get('/createPlainlogTable', function(req, res) {
+    var param = req.query;
+    service.createPlainlogTable(param, function(err, response) {
+        if(err) {
+            res.json({status: 500, message: err.message});
+            return;
+        }
+        res.json({status: 200, data: response.body});
+    })
+});
+
+router.get('/createPlainlogSchemaAndTable', function(req, res) {
+    var param = req.query;
+    service.createPlainlogSchemaAndTable(param, function(err, response) {
+        if(err) {
+            res.json({status: 500, message: err.message});
+            return;
+        }
+        res.json({status: 200, data: response.body});
+    })
+});
 
 router.get('/listTable', function (req, res) {
     var param = helper.buildParam(req.query, ["dsID","dsName", "schemaName"]);
-    // if (!param.pageSize) {
-    //     param.pageSize = 10;
-    // }
-    // if (!param.pageNum) {
-    //     param.pageNum = 1;
-    // }
 
     helper.listTables(param).then(function (data) {
-        var tablesName = data.tablesName;
+        var sourceTables = data.tablesName;
         var methods = [];
-        var schemaNameParam = [];
-        schemaNameParam.push({dsID:param["dsID"], schemaName:param["schemaName"]});
         //先从管理库中查询出指定dsId和schemaName的所有表
-        methods.push(tableService.listManagerTables(schemaNameParam[0]));
+        methods.push(tableService.listManagerTables({dsID:param["dsID"], schemaName:param["schemaName"]}));
 
-        for (var key in tablesName) {
-            methods.push(service.listTableField(tablesName[key]));
-        }
+        methods.push(service.listTableField({sourceTables: sourceTables}));
 
         Promise.all(methods).then(function (dataList) {
             try {
                 var managerTables = JSON.parse(dataList[0]);
-                var dataListLength = dataList.length;
-                var tablesField = [];
-                var incompatibleColumn = '';
-                var columnName = '';
+                var sourceTableMetas = dataList[1];
+                var returnTableInfo = [];
 
-                for(var i = 1; i < dataListLength; i++)
+                for(var i = 0; i < sourceTables.length; i++)
                 {
-                    var length = JSON.parse(dataList[i]).length;
-                    var name = tablesName[i-1].tableName;
+                    var meta = sourceTableMetas[i];
+                    var metaLength = meta.length;
+                    var sourceTableName = sourceTables[i].tableName;
                     var __ckbox_checked__ = false;
                     var __disabled__ = false;
+                    var ignoreColumnName = '';
+                    var incompatibleColumn = '';
                     var physicalTableRegex = '';
                     var outputTopic = '';
                     for( var j = 0; j < managerTables.length; j++)
                     {
-                        if(name == managerTables[j].tableName)
+                        if(sourceTableName == managerTables[j].tableName)
                         {
                             __ckbox_checked__ = true;
                             __disabled__ = true;
@@ -71,33 +94,28 @@ router.get('/listTable', function (req, res) {
                             break;
                         }
                     }
-                    if(length > 0)
+                    if(metaLength > 0)
                     {
-                        var data = JSON.parse(dataList[i]);
-                        columnName = '';
-                        incompatibleColumn = '';
-                        for(var index in data)
+                        for(var index in meta)
                         {
-                            columnName += data[index].columnName + '/' + data[index].dataType + ' ';
-                            if(data[index].incompatibleColumn)
+                            ignoreColumnName += meta[index].columnName + '/' + meta[index].dataType + ' ';
+                            if(meta[index].incompatibleColumn)
                             {
-                                incompatibleColumn += data[index].incompatibleColumn + ' ';
-                            }
-                            else {
-                                incompatibleColumn =  '无 ';
+                                incompatibleColumn += meta[index].incompatibleColumn + ' ';
                             }
                         }
-                        tablesField.push({tableName:tablesName[i-1].tableName,physicalTableRegex:physicalTableRegex,
-                            outputTopic:outputTopic,columnName:columnName,incompatibleColumn:incompatibleColumn,
+                        if (incompatibleColumn == '') incompatibleColumn = '无';
+                        returnTableInfo.push({tableName:sourceTables[i].tableName,physicalTableRegex:physicalTableRegex,
+                            outputTopic:outputTopic,columnName:ignoreColumnName,incompatibleColumn:incompatibleColumn,
                             __ckbox_checked__:__ckbox_checked__, __disabled__:__disabled__});
                     }
                     else {
-                        tablesField.push({tableName:tablesName[i-1].tableName,
+                        returnTableInfo.push({tableName:sourceTables[i].tableName,
                             physicalTableRegex:physicalTableRegex,outputTopic:outputTopic,
                             columnName:'无',incompatibleColumn:'无',__ckbox_checked__:__ckbox_checked__, __disabled__:__disabled__});
                     }
                 }
-                res.json({status: 200,data: tablesField});
+                res.json({status: 200,data: returnTableInfo});
 
             } catch (error) {
                 logger.error("Error occurred while process tableField :%j.\n Error message -- %s \n%s", dataList, error.message, error.stack);

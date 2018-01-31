@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.creditease.dbus.enums.DbusDatasourceType;
 import org.apache.commons.collections.CollectionUtils;
 
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
@@ -41,7 +42,7 @@ import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
 
 /**
  * 加载DataSource和Schema的信息
- * 
+ *
  * @author Liang.Ma
  * @version 1.0
  */
@@ -61,8 +62,16 @@ public class LoadDbConfigHandler extends AbstractHandler {
         if (CollectionUtils.isNotEmpty(dsVos)) {
             ConcurrentHashMap<String, DsVo> cmap = new ConcurrentHashMap<String, DsVo>();
             for (JdbcVo conf : dsVos) {
+                if (DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_LOGSTASH)
+                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_LOGSTASH_JSON)
+                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_UMS)
+                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.MONGO)
+                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_FLUME)
+                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_FILEBEAT)) {
+                    cmap.put(conf.getKey(), (DsVo) conf);
+                    continue;
+                }
                 DataSourceContainer.getInstance().register(conf);
-                cmap.put(conf.getKey(), (DsVo) conf);
             }
             HeartBeatConfigContainer.getInstance().setCmap(cmap);
         }
@@ -79,7 +88,7 @@ public class LoadDbConfigHandler extends AbstractHandler {
         Set<TargetTopicVo> topics = resource.load();
         /*for(TargetTopicVo topic : topics){
         	LoggerFactory.getLogger().info("[db-LoadDbusConfigDao] topic:{} ",topic.toString());
-        }*/    
+        }*/
         HeartBeatConfigContainer.getInstance().setTargetTopic(topics);
     }
 

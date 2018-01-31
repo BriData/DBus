@@ -20,7 +20,7 @@
 
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 
 import java.io.Serializable;
 
@@ -28,5 +28,5 @@ import java.io.Serializable;
  * Created by Shrimp on 16/6/21.
  */
 public interface RecordProcessor<K, V> extends Serializable {
-    void process(ConsumerRecord<K, V> record, Object... args);
+    void process(DBusConsumerRecord<K, V> record, Object... args);
 }

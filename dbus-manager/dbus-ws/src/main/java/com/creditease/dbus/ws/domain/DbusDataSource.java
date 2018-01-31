@@ -67,6 +67,8 @@ public class DbusDataSource implements Serializable {
 
     private Date updateTime;
 
+    private String dsPartition;
+
 
     public Long getId() {
         return id;
@@ -178,5 +180,13 @@ public class DbusDataSource implements Serializable {
 
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public String getDsPartition() {
+        return dsPartition;
+    }
+
+    public void setDsPartition(String dsPartition) {
+        this.dsPartition = dsPartition;
     }
 }

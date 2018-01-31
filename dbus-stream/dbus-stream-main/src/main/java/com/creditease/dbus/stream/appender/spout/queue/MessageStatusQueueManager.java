@@ -20,7 +20,7 @@
 
 package com.creditease.dbus.stream.appender.spout.queue;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +47,11 @@ public class MessageStatusQueueManager {
         queueMap = new HashMap<>();
     }
 
-    public void addMessage(ConsumerRecord<String, byte[]> record) {
+    public void addMessage(DBusConsumerRecord<String, byte[]> record) {
         getQueue(buildKey(record)).add(record);
     }
 
-    public ConsumerRecord<String, byte[]> okAndGetCommitPoint(ConsumerRecord<String, byte[]> record) {
+    public DBusConsumerRecord<String, byte[]> okAndGetCommitPoint(DBusConsumerRecord<String, byte[]> record) {
         MessageStatusQueue queue = getQueue(buildKey(record));
         QueueElement element = queue.getQueueElement(record.offset());
         if(element == null) {
@@ -64,17 +64,17 @@ public class MessageStatusQueueManager {
 
         QueueElement e = queue.commitPoint();
         if (e == null) {
-            logger.warn("commit point was not found.");
+            logger.debug("commit point was not found.");
             return null;
         }
         return e.getRecord();
     }
 
-    public void committed(ConsumerRecord<String, byte[]> record) {
+    public void committed(DBusConsumerRecord<String, byte[]> record) {
         getQueue(buildKey(record)).popOKElements();
     }
 
-    public ConsumerRecord<String, byte[]> failAndGetSeekPoint(ConsumerRecord<String, byte[]> record) {
+    public DBusConsumerRecord<String, byte[]> failAndGetSeekPoint(DBusConsumerRecord<String, byte[]> record) {
         MessageStatusQueue queue = getQueue(buildKey(record));
         QueueElement element = queue.getQueueElement(record.offset());
         if(element == null) {
@@ -97,13 +97,13 @@ public class MessageStatusQueueManager {
      * @param record
      * @return
      */
-    public boolean isAllMessageProcessed(ConsumerRecord<String, byte[]> record) {
+    public boolean isAllMessageProcessed(DBusConsumerRecord<String, byte[]> record) {
         MessageStatusQueue queue = getQueue(buildKey(record));
         logger.info("queue size:{} while an event arrived.",queue.size());
         return queue.isEmpty();
     }
 
-    private String buildKey(ConsumerRecord<String, byte[]> record) {
+    private String buildKey(DBusConsumerRecord<String, byte[]> record) {
         return record.topic() + "-" + record.partition();
     }
 

@@ -23,6 +23,7 @@ package com.creditease.dbus.heartbeat.handler.impl;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 
+import com.creditease.dbus.heartbeat.vo.ZkVo;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -44,7 +45,7 @@ public class LeaderElectHandler extends AbstractHandler {
     public void process() {
         try {
             CuratorFramework _curator = CuratorContainer.getInstance().getCurator();
-            HeartBeatVo conf = HeartBeatConfigContainer.getInstance().getHbConf();
+            ZkVo conf = HeartBeatConfigContainer.getInstance().getZkConf();
             CuratorContainer.getInstance().createZkNode(conf.getLeaderPath());
 
             // 获取进程ID和服务器hostName
@@ -70,9 +71,6 @@ public class LeaderElectHandler extends AbstractHandler {
 
             ll.start();
             ll.await();
-            // 注册控制事件
-            CuratorContainer.getInstance().createZkNode(conf.getControlPath());
-            _curator.getData().usingWatcher(WatcherType.CONTROL).forPath(conf.getControlPath());
         } catch (Exception e) {
             throw new RuntimeException("选举leader时发生错误!", e);
         }

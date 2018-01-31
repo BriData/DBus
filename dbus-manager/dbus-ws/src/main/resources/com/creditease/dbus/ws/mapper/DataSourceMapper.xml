@@ -19,6 +19,7 @@
         <result property="dbusUser" column="dbus_user"/>
         <result property="dbusPassword" column="dbus_pwd"/>
         <result property="updateTime" column="update_time"/>
+        <result property="dsPartition" column="ds_partition"/>
     </resultMap>
 
     <select id="findAll" resultMap="datasource">
@@ -83,6 +84,7 @@
         <if test="slaveURL != null">slave_url = #{slaveURL},</if>
         <if test="dbusUser != null">dbus_user = #{dbusUser},</if>
         <if test="dbusPassword != null">dbus_pwd = #{dbusPassword},</if>
+        <if test="dsPartition != null">ds_partition = #{dsPartition},</if>
         update_time = current_timestamp()
         where id = #{id}
     </update>
@@ -93,4 +95,13 @@
               update_time  = current_timestamp()
         where id = #{id}
     </update>
+
+    <delete id="deleteByDsId">
+        delete td,ts,tt,tv,tm from t_dbus_datasource td
+        left join t_data_schema ts on td.id = ts.ds_id
+        left join t_data_tables tt on ts.id = tt.schema_id
+        left join t_meta_version tv on tt.id = tv.table_id
+        left join t_table_meta tm on tv.id = tm.ver_id
+        where td.id = #{id}
+    </delete>
 </mapper>

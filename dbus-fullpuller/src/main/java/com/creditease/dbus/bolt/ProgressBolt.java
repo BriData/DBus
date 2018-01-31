@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import com.creditease.dbus.commons.PropertiesHolder;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -79,6 +80,8 @@ public class ProgressBolt extends BaseRichBolt {
         } else {
             this.zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT;
         }
+        //设置topo类型，用于获取配置信息路径
+        FullPullHelper.setTopologyType(Constants.FULL_PULLER_TYPE);
 
         loadRunningConf(null);
     }
@@ -86,7 +89,7 @@ public class ProgressBolt extends BaseRichBolt {
     public void execute(Tuple input) {
         String dsKey = null;
         String dataSourceInfo = null;
-        String dbNameSpace = null;
+        String progressInfoNodePath = null;
         try {
             JSONObject jsonObj = (JSONObject) input.getValueByField("progressInfo");
             dataSourceInfo = jsonObj.getString(DataPullConstants.DATA_SOURCE_INFO);
@@ -107,7 +110,7 @@ public class ProgressBolt extends BaseRichBolt {
                 return;
             }
 
-            dbNameSpace = jsonObj.getString(DataPullConstants.DATA_SOURCE_NAME_SPACE);
+            progressInfoNodePath = jsonObj.getString(DataPullConstants.DATA_MONITOR_ZK_PATH);
             long dealRows = Long.parseLong(jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_ROWS));
             long finishedCount = Long.parseLong(jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_COUNT));
             String totalRows = jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_TOTAL_ROWS);
@@ -115,33 +118,35 @@ public class ProgressBolt extends BaseRichBolt {
             String totalPartitions = jsonObj.getString(DataPullConstants.DATA_CHUNK_COUNT);
 
             dsKey = FullPullHelper.getDataSourceKey(JSONObject.parseObject(dataSourceInfo));
-            ProgressInfo objProgInfo = getProgressInfo(dsKey, dbNameSpace, totalRows, startSecs, totalPartitions);
+            ProgressInfo objProgInfo = getProgressInfo(dsKey, progressInfoNodePath, totalRows, startSecs, totalPartitions);
             setProgressInfo(objProgInfo, dealRows, finishedCount);
+
+            FullPullHelper.writeFullPullingStatusToDbMgr(dataSourceInfo, "", finishedCount, dealRows, "pulling");
+
             if (isFinished(objProgInfo)) {
                 //如果取不到progress信息或者已经出现错误，跳过后来的tuple数据
-                ProgressInfo progressInfo = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+                ProgressInfo progressInfo = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
                 if (progressInfo.getErrorMsg() != null) {
                     //如果出错的话，
                     // 1 就不设置ending状态了, 写一下结束时间
                     // 2 不发结束报告
                     objProgInfo.setEndTime(FullPullHelper.getCurrentTimeStampString());
-                    FullPullHelper.updateMonitorFinishPartitionInfo(zkService, dbNameSpace, objProgInfo);
-
+                    FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
+                    FullPullHelper.writeFullErrorStatusToDbMgr(dataSourceInfo, objProgInfo.getEndTime(), "abort", progressInfo.getErrorMsg());
                 } else {
                     //如果没有错误，就完成后续工作
                     objProgInfo.setEndTime(FullPullHelper.getCurrentTimeStampString());
                     objProgInfo.setStatus(Constants.FULL_PULL_STATUS_ENDING);
-                    FullPullHelper.updateMonitorFinishPartitionInfo(zkService, dbNameSpace, objProgInfo);
-
+                    FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
                     FullPullHelper.finishPullReport(zkService, dataSourceInfo, objProgInfo.getEndTime(),
                             Constants.DataTableStatus.DATA_STATUS_OK, null);
                     FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
+                    FullPullHelper.writeFullFinishedStatusToDbMgr(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), "ok", "", finishedCount, dealRows);
                     LOG.info("{}:此次全量拉取处理完成！", dsKey);
                 }
-
-                deleteProgressInfo(dbNameSpace);
+                deleteProgressInfo(progressInfoNodePath);
             } else {
-                FullPullHelper.updateMonitorFinishPartitionInfo(zkService, dbNameSpace, objProgInfo);
+                FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
             }
             printProgressInfo(dsKey, objProgInfo);
 
@@ -151,7 +156,7 @@ public class ProgressBolt extends BaseRichBolt {
             LOG.error(errorMsg, e);
             FullPullHelper.finishPullReport(zkService, dataSourceInfo, FullPullHelper.getCurrentTimeStampString(),
                     Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
-            deleteProgressInfo(dbNameSpace);
+            deleteProgressInfo(progressInfoNodePath);
             collector.fail(input);
         }
     }
@@ -160,11 +165,11 @@ public class ProgressBolt extends BaseRichBolt {
          declarer.declare(new Fields("message"));
      }
 
-    private ProgressInfo getProgressInfo(String dsKey, String dbNameSpace, String totalRows, String startSecs, String totalPartitions){
-        ProgressInfo progressObj = progressInfoMap.get(dbNameSpace);
+    private ProgressInfo getProgressInfo(String dsKey, String progressInfoNodePath, String totalRows, String startSecs, String totalPartitions){
+        ProgressInfo progressObj = progressInfoMap.get(progressInfoNodePath);
         if(progressObj == null) {
             try {
-                progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+                progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 String errMsg = dsKey + "ProgressBolt get progress info from zk exception!";
@@ -180,13 +185,15 @@ public class ProgressBolt extends BaseRichBolt {
             if(totalPartitions != null && !totalPartitions.equals(progressObj.getTotalCount())) {
                 progressObj.setTotalCount(totalPartitions);
             }
-            progressInfoMap.put(dbNameSpace, progressObj);
+            progressInfoMap.put(progressInfoNodePath, progressObj);
         }
         return progressObj;
     }
 
-    private void deleteProgressInfo(String dbNameSpace){
-         progressInfoMap.remove(dbNameSpace);
+    private void deleteProgressInfo(String progressInfoNodePath){
+        if (progressInfoNodePath != null) {
+            progressInfoMap.remove(progressInfoNodePath);
+        }
      }
 
     private void setProgressInfo(ProgressInfo objProgInfo, long dealRows, long finishedCount) {

@@ -261,8 +261,8 @@ class EditableTable extends React.Component {
            />
             ),
         }, {
-      title: 'operation',
-      dataIndex: 'operation',
+      title: 'ruleOperation',
+      dataIndex: 'ruleOperation',
       width: '10%',
       render: (text, record, index) => {
         return (

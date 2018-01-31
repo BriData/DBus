@@ -20,10 +20,12 @@
 
 package com.creditease.dbus.stream.common.bean;
 
+import java.io.Serializable;
+
 /**
  * Created by dongwang47 on 2017/8/15.
  */
-public class DispatcherPackage {
+public class DispatcherPackage implements Serializable {
     private String key;
     private byte[] content;
     private int msgCount;

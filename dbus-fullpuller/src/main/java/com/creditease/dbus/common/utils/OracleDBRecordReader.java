@@ -18,9 +18,9 @@
 package com.creditease.dbus.common.utils;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.creditease.dbus.manager.GenericJdbcManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +39,9 @@ extends DBRecordReader<T>  {
   private Logger LOG = LoggerFactory.getLogger(getClass());
 
   // CHECKSTYLE:OFF
-  public OracleDBRecordReader(Connection conn,
+  public OracleDBRecordReader(GenericJdbcManager manager,
       DBConfiguration dbConfig, DataDrivenDBInputSplit inputSplit,String [] fields, String table) throws SQLException {
-    super(conn, dbConfig, inputSplit, fields, table);
+    super(manager, dbConfig, inputSplit, fields, table);
 //    setSessionTimeZone(conf, conn);
   }
   // CHECKSTYLE:ON

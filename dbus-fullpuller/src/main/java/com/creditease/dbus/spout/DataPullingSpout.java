@@ -79,7 +79,10 @@ public class DataPullingSpout extends BaseRichSpout {
     private ZkService zkService = null;
     private Consumer<String, byte[]> consumer;
 
+    //pending的任务池
     private Set pendingTasksSet = new HashSet();
+
+    //曾经出现过错误的split任务
     private HashSet<String> failAndBreakTuplesSet = new HashSet<>();
 
     //variable about stop
@@ -88,6 +91,8 @@ public class DataPullingSpout extends BaseRichSpout {
     private int processedCount = 0;   //收到ok或fail的ack数
     private int emittedCount = 0;     //只记录拉取消息的emit出去的条数，reload等控制信息不记录数
     //经过研究processedCount == emittedCount时，就是 flowedMsgCount = 0的时候，也就说 processedCount和emittedCount 没有存在的意义
+
+    private int suppressLoggingCount = 0;
 
     /**
      * 初始化collectors
@@ -107,6 +112,9 @@ public class DataPullingSpout extends BaseRichSpout {
         }
 
         try {
+            //设置topo类型，用于获取配置信息路径
+            FullPullHelper.setTopologyType(Constants.FULL_PULLER_TYPE);
+
             loadRunningConf(null);
             // 检查是否有遗留未决的拉取任务。如果有，resolve（发resume消息通知给appender，并在zk上记录，且将监测到的pending任务写日志，方便排查问题）。
             // 对于已经resolve的pending任务，将其移出pending队列，以免造成无限重复处理。
@@ -115,7 +123,20 @@ public class DataPullingSpout extends BaseRichSpout {
             e.printStackTrace();
             throw new InitializationException();
         }
-        LOG.info("Topology {} is started!", topologyId);
+        LOG.info("Pulling Spout {} is started!", topologyId);
+    }
+
+    /**
+     * delay Print message
+     * @return
+     */
+    private boolean canPrintNow () {
+        suppressLoggingCount++;
+        if (suppressLoggingCount % 60000 == 0) {
+            suppressLoggingCount = 0;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -175,6 +196,9 @@ public class DataPullingSpout extends BaseRichSpout {
             ConsumerRecords<String, byte[]> records = consumer.poll(0);
             // 判断是否有数据被读取
             if (records.isEmpty()) {
+                if (canPrintNow()) {
+                    LOG.info("Pulling Spout running ...");
+                }
                 return;
             }
 
@@ -204,7 +228,8 @@ public class DataPullingSpout extends BaseRichSpout {
                         stopFlag = TopoKillingStatus.STOPPING.status;
                         startTime = System.currentTimeMillis();
 
-                    } else if ((key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ))) {
+                    } else if ((key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ))
+                            || (key.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ))) {
                         // 对于每次拉取，只在第一次将当前任务添加到pending tasks list.以避免拉取轮数多时，频繁访问zk。
                         if(pendingTasksSet.add(dataSourceInfo)) {
                             FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName,
@@ -230,7 +255,8 @@ public class DataPullingSpout extends BaseRichSpout {
                     e.printStackTrace();
                     LOG.error(errorMsg, e);
                     //处理悬而未决的任务和发送拉取报告
-                    if (msg.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
+                    if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
+                            || key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
                         FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
                         FullPullHelper.finishPullReport(zkService, dataSourceInfo,
                                 FullPullHelper.getCurrentTimeStampString(), Constants.DataTableStatus.DATA_STATUS_ABORT,
@@ -319,18 +345,20 @@ public class DataPullingSpout extends BaseRichSpout {
      */
     private void startPullingReport(ZkService zkService, String dataSourceInfo) {
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
-
         String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
-        String dbNameSpace = FullPullHelper.getDbNameSpace(dataSourceInfo);
         try {
-            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+            //只是更新monitor节点状态
+            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
             progressObj.setUpdateTime(currentTimeStampString);
             progressObj.setStatus(Constants.FULL_PULL_STATUS_PULLING);
 
             ObjectMapper mapper = JsonUtil.getObjectMapper();
             FullPullHelper.updateZkNodeInfo(zkService, progressInfoNodePath, mapper.writeValueAsString(progressObj));
+
+            // 写拉取状态
+            FullPullHelper.writeStartPullStatusToDbMgr(dataSourceInfo, currentTimeStampString, "pulling", "");
+
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             String errorMsg = "Encountered exception when writing msg to zk monitor.";
             LOG.error(errorMsg,e);
         }
@@ -344,6 +372,7 @@ public class DataPullingSpout extends BaseRichSpout {
             this.dsName = commonProps.getProperty(Constants.ZkTopoConfForFullPull.DATASOURCE_NAME);
             this.zkService = (ZkService) confMap.get(FullPullHelper.RUNNING_CONF_KEY_ZK_SERVICE);
             this.consumer =  (Consumer<String, byte[]>)confMap.get(FullPullHelper.RUNNING_CONF_KEY_CONSUMER);
+
 
             String notifyEvtName = reloadMsgJson == null ? "loaded" : "reloaded";
             LOG.info("Running Config is " + notifyEvtName + " successfully for DataPullingSpout!");

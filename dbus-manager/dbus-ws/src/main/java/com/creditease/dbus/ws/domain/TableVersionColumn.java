@@ -35,6 +35,8 @@ public class TableVersionColumn {
 
     private long dataScale;
 
+    private String comments;
+
     public long getId() {
         return id;
     }
@@ -73,5 +75,13 @@ public class TableVersionColumn {
 
     public void setDataScale(long dataScale) {
         this.dataScale = dataScale;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 }

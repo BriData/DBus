@@ -20,12 +20,13 @@ var dataSchema2 = require('./routes/data-schema2');
 var dataTable = require('./routes/data-table');
 var stormTopology = require('./routes/storm-topology');
 var startTopology = require('./routes/start-topology');
-var jarManager = require('./routes/jar-manager');
+var jarManager = require('./routes/jar-manager-new');
 var ctlMessage = require('./routes/ctl-message');
 var tableMeta = require('./routes/table-meta');
 var zk = require('./routes/zk');
 var schemaTableInsert = require('./routes/schema-table-insert');
 var fullPull = require('./routes/full-pull');
+var fullpullHistory = require('./routes/fullpullHistory');
 var config = require('./routes/conf');
 var app = express();
 
@@ -62,6 +63,7 @@ app.use('/tableMeta',tableMeta);
 app.use('/topology', stormTopology);
 app.use('/insertSchemaAndTable',schemaTableInsert);
 app.use('/insertTablesInSource',schemaTableInsert);
+app.use('/fullpullHistory',fullpullHistory);
 app.use('/jarManager',jarManager);
 app.use('/startTopology', startTopology);
 

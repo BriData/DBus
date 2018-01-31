@@ -29,6 +29,10 @@ import com.creditease.dbus.mgr.base.ConfUtils;
 import com.creditease.dbus.utils.ControlMessageSender;
 import com.creditease.dbus.ws.common.Constants;
 import com.creditease.dbus.ws.common.Result;
+import com.creditease.dbus.ws.domain.DbusDataSource;
+import com.creditease.dbus.ws.domain.FullPullHistory;
+import com.creditease.dbus.ws.service.DataSourceService;
+import com.creditease.dbus.ws.service.FullPullService;
 import com.creditease.dbus.ws.tools.ControlMessageSenderProvider;
 import com.creditease.dbus.ws.tools.ZookeeperServiceProvider;
 import org.apache.commons.lang3.StringUtils;
@@ -40,11 +44,9 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Path("/fullPull")
@@ -52,26 +54,85 @@ import java.util.*;
 @Produces("application/json;charset=utf-8")
 public class FullPullResource {
     private Logger logger = LoggerFactory.getLogger(getClass());
-    /*
-    private static KafkaConsumer<String, byte[]>  consumer;
-    static {
-        Properties consumerProps = null;
-        try {
-            consumerProps = PropertiesUtils.getProps("consumer.properties");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        consumerProps.setProperty("client.id","full-pull.reader");
-        consumerProps.setProperty("group.id","full-pull.reader");
-        //consumerProps.setProperty("bootstrap.servers", PropertiesUtils.getProps("application.properties").getProperty("kafka.bootstrap.servers"));
 
-        consumer = new KafkaConsumer(consumerProps);
+    private FullPullService service = FullPullService.getService();
+
+    @POST
+    @Path("external")
+    public Response externalSendMessage(Map<String, Object> map) {
+        /**
+         * 需要传入三个必填参数dsName,schemaName,tableName
+         * 一个可选参数resultTopic,如果不填写,自动按照 independent.dsName.schemaName.TableName.timestamp 生成
+         */
+        if(!map.containsKey("dsName")) return Response.ok().entity(new Result(400, "Require dsName")).build();
+        if(!map.containsKey("schemaName")) return Response.ok().entity(new Result(400, "Require schemaName")).build();
+        if(!map.containsKey("tableName")) return Response.ok().entity(new Result(400, "Require tableName")).build();
+        String dsName = map.get("dsName").toString();
+        String schemaName = map.get("schemaName").toString();
+        String tableName = map.get("tableName").toString();
+        DbusDataSource dataSource = DataSourceService.getService().getDataSourceByName(dsName);
+        if(dataSource == null) return Response.ok().entity(new Result(400, "Can not find dsName in DBus manager database")).build();
+
+        Date date = new Date();
+        JSONObject payload = buildExternalPayload(map, date, dataSource);
+        JSONObject message = buildExternalMessage(map, date);
+        message.put("payload", payload);
+        Map<String, String> param = new HashMap<>();
+
+        param.put("id", String.valueOf(date.getTime()));
+        param.put("type", "indepent");
+        param.put("dsName",dsName);
+        param.put("schemaName",schemaName);
+        param.put("tableName",tableName);
+        param.put("ctrlTopic", dataSource.getCtrlTopic());
+        param.put("outputTopic", payload.get("resultTopic").toString());
+        param.put("message", JSON.toJSONString(message));
+
+        return sendMessage(param);
     }
-   */
+
+    private JSONObject buildExternalPayload(Map<String, Object> map, Date date, DbusDataSource dataSource) {
+
+        String dsName = map.get("dsName").toString();
+        String schemaName = map.get("schemaName").toString();
+        String tableName = map.get("tableName").toString();
+
+        JSONObject payload = new JSONObject();
+
+        payload.put("DBUS_DATASOURCE_ID", String.valueOf(dataSource.getId()));
+        payload.put("SCHEMA_NAME", schemaName);
+        payload.put("TABLE_NAME", tableName);
+        payload.put("INCREASE_VERSION", "false");
+        payload.put("INCREASE_BATCH_NO", "false");
+        if(map.containsKey("resultTopic")){
+            payload.put("resultTopic", map.get("resultTopic"));
+        } else {
+            payload.put("resultTopic", "independent." + dsName + "." + schemaName + "." + tableName + "." + String.valueOf(date.getTime()));
+        }
+        payload.put("SEQNO", String.valueOf(date.getTime()));
+
+        payload.put("PHYSICAL_TABLES", "");
+        payload.put("PULL_REMARK", "");
+        payload.put("SPLIT_BOUNDING_QUERY", "");
+        payload.put("PULL_TARGET_COLS", "");
+        payload.put("SCN_NO", "");
+        payload.put("SPLIT_COL", "");
+        return payload;
+    }
+
+    private JSONObject buildExternalMessage(Map<String, Object> map, Date date) {
+        JSONObject message = new JSONObject();
+        message.put("from", "external-independent-pull-request-from-CtrlMsgSender");
+        message.put("type", "FULL_DATA_INDEPENDENT_PULL_REQ");
+        message.put("id", date.getTime());
+        message.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(date));
+        return message;
+    }
+
     @POST
     @Path("send")
     public Response sendMessage(Map<String, String> map) {
-        String topic = null;
+        String ctrlTopic = null;
         String strMessage = null;
         try {
             if (!validate(map)) {
@@ -83,11 +144,11 @@ public class FullPullResource {
             if(!validate(message)) {
                 throw new Exception("消息验证失败");
             }
-            topic = map.get("topic");
+            ctrlTopic = map.get("ctrlTopic");
 
             Map<String, Object> payload = message.getPayload();
-            String key = "";
-            String value = "";
+            String key;
+            String value;
 
             Properties consumerProps = ConfUtils.load("consumer.properties");
             consumerProps.setProperty("client.id","full-pull.reader");
@@ -100,7 +161,7 @@ public class FullPullResource {
             KafkaConsumer<String, byte[]> consumer = new KafkaConsumer(consumerProps);
 
             String outputTopic = map.get("outputTopic");
-            logger.info("[control message] Send control message to ctrlTopic: {} \n outputTopic: {} \n map: {}", topic,outputTopic,map);
+            logger.info("[control message] Send control message to ctrlTopic: {} \n outputTopic: {} \n map: {}", ctrlTopic,outputTopic,map);
 
             TopicPartition dataTopicPartition = new TopicPartition(outputTopic, 0);
             List<TopicPartition> topics = Arrays.asList(dataTopicPartition);
@@ -144,11 +205,23 @@ public class FullPullResource {
             }
 
             ControlMessageSender sender = ControlMessageSenderProvider.getInstance().getSender();
-            sender.send(topic, message);
-            logger.info("[control message] Send control message to topic[{}] success.\n message.pos: {} \n message.op_ts: {}", topic, message.getPayload().get("POS") , message.getPayload().get(OP_TS));
-            return Response.ok().entity(Result.OK).build();
+
+            FullPullHistory fullPullHistory = new FullPullHistory();
+            fullPullHistory.setId(Long.parseLong((map.get("id").toString())));
+            fullPullHistory.setType(map.get("type").toString());
+            fullPullHistory.setDsName(map.get("dsName").toString());
+            fullPullHistory.setSchemaName(map.get("schemaName").toString());
+            fullPullHistory.setTableName(map.get("tableName").toString());
+            fullPullHistory.setState("init");
+            fullPullHistory.setInitTime(new Date(fullPullHistory.getId()));
+            fullPullHistory.setUpdateTime(fullPullHistory.getInitTime());
+            service.insert(fullPullHistory);
+
+            sender.send(ctrlTopic, message);
+            logger.info("[control message] Send control message to ctrlTopic[{}] success.\n message.pos: {} \n message.op_ts: {}", ctrlTopic, message.getPayload().get("POS") , message.getPayload().get(OP_TS));
+            return Response.ok().entity(new Result(200, "success")).build();
         } catch (Exception e) {
-            logger.error("[control message] Error encountered while sending control message.\ncontrol topic:{}\nmessage:{}", topic,strMessage, e);
+            logger.error("[control message] Error encountered while sending control message.\ncontrol ctrlTopic:{}\nmessage:{}", ctrlTopic,strMessage, e);
             return Response.status(200).entity(new Result(-1, e.getMessage())).build();
         }
     }

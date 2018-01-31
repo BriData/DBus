@@ -20,12 +20,13 @@
 
 package com.creditease.dbus.stream.common.appender.bean;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
  * Created by Shrimp on 16/5/18.
  */
-public class AvroSchema {
+public class AvroSchema implements Serializable {
     private long id;
     private long dsId;
     private String namespace;

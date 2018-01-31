@@ -42,8 +42,10 @@ var store = Reflux.createStore({
                 return;
             }
             var list = [];
-            result.data.forEach(function(e) {
-                list.push({value:e.id, text: [e.dsType, e.dsName].join("/")});
+            result.data.forEach(function (e) {
+                if (e.dsType == utils.dsType.oracle || e.dsType == utils.dsType.mysql) {
+                    list.push({value: e.id, text: [e.dsType, e.dsName].join("/")});
+                }
             });
             self.state.dsOptions = list;
             self.state.searchParam = result.data;

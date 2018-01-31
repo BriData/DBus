@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class MessageEncoder {
     }
 
     public void encode(DbusMessage message, List<EncodeColumn> columns) {
-        // 抽取加盐使用到的列，并且生成encoder对象
+        //抽取加盐使用到的列，并且生成encoder对象
         this.buildEncoders(columns);
         for (int i = 0; i < message.getPayload().size(); i++) {
             // 获取每一行的salt值
@@ -85,14 +85,25 @@ public class MessageEncoder {
         }
     }
 
-
     private void buildEncoders(List<EncodeColumn> columns) {
         for (EncodeColumn c : columns) {
+            //配置的加密类型,小写
             String type = c.getEncodeType();
-            MessageEncodeType t = MessageEncodeType.parse(type);
+            //内置的加密类型
+            Map<String, String> messageMap = MessageEncodeType.getMap();
+            boolean flag = true;
+            //判断是否是内置的加密类型
+            for(Map.Entry<String, String> entry : messageMap.entrySet()) {
+                String value = entry.getValue();
+                if(type.equals(value.toLowerCase())) {
+                    flag = false;
+                }
+            }
 
-            if(t.equals(MessageEncodeType.YISOU_DATA_CLEAN)){ t = null;}
-            if (t == null) {
+            //当脱敏类型为第三方提供时
+            if(flag) {
+                //当全量或者增量初始化时，会扫描classpath，将扫描到的信息存入map，
+                //当有数据需要第三方脱敏时，直接从map中获取
                 Map<String, Class<ExtEncodeStrategy>> map = ExternalEncoders.get();
                 Class<ExtEncodeStrategy> extEncoderClass = map.get(type);
                 if (extEncoderClass != null) {
@@ -107,29 +118,31 @@ public class MessageEncoder {
                 }
                 continue;
             }
-            switch (t) {
-                case REPLACE:
+            //内置的加密类型
+            type = type.toUpperCase();
+            switch (type) {
+                case "REPLACE":
                     addEncoder(c.getFieldName(), new ReplacementStrategy());
                     break;
-                case HASH_MD5:
+                case "HASH_MD5":
                     addEncoder(c.getFieldName(), new Md5HashStrategy());
                     break;
-                case HASH_MURMUR:
+                case "HASH_MURMUR":
                     addEncoder(c.getFieldName(), new Murmur3HashStrategy());
                     break;
-                case HASH_MD5_FIELD_SALT:
+                case "HASH_MD5_FIELD_SALT":
                     saltColumns.add(c.getEncodeParam());
                     addEncoder(c.getFieldName(), new Md5FieldSaltStrategy());
                     break;
-                case HASH_MD5_FIXED_SALT:
+                case "HASH_MD5_FIXED_SALT":
                     addEncoder(c.getFieldName(), new Md5FixedSaltStrategy());
                     break;
 //                case ADDRESS_NORMALIZE:
 //                    addEncoder(c.getFieldName(), new AddressNormalizerEncoder());
 //                    break;
-                case REGEX_NORMALIZE:
-                    addEncoder(c.getFieldName(), new RegexNormalizerEncoder());
-                    break;
+//                case REGEX_NORMALIZE:
+//                    addEncoder(c.getFieldName(), new RegexNormalizerEncoder());
+//                    break;
                 default:
                     addEncoder(c.getFieldName(), new DefaultValueStrategy());
             }

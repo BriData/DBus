@@ -22,6 +22,7 @@ package com.creditease.dbus.stream.dispatcher.bout;
 
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ControlType;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.stream.common.bean.DispatcherPackage;
 import com.creditease.dbus.stream.common.tools.MessageProcessor;
@@ -30,7 +31,6 @@ import com.creditease.dbus.stream.dispatcher.helper.DBHelper;
 import com.creditease.dbus.stream.dispatcher.helper.ZKHelper;
 import com.creditease.dbus.stream.dispatcher.tools.ContinuousFullyOffset;
 import com.creditease.dbus.stream.dispatcher.tools.FullyOffset;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -157,6 +157,12 @@ public class DispatcherBout extends BaseRichBolt {
             Constructor<?> constructor = clazz.getConstructor(DataSourceInfo.class, String.class, Properties.class, TableStatMap.class, Properties.class);
             return (MessageProcessor) constructor.newInstance(dsInfo, statTopic, statProps, statMap, schemaTopicProps);
 
+        } else if (dsInfo.getDbSourceType().equals("mongo")) {
+
+            Class clazz = Class.forName("com.creditease.dbus.stream.mongo.dispatcher.MongoMessageProcessor");
+            Constructor<?> constructor = clazz.getConstructor(DataSourceInfo.class, String.class, Properties.class, TableStatMap.class, Properties.class);
+            return (MessageProcessor) constructor.newInstance(dsInfo, statTopic, statProps, statMap, schemaTopicProps);
+
         } else {
             throw new RuntimeException("Unknown datasource type" + dsInfo.getDbSourceType());
         }
@@ -178,7 +184,7 @@ public class DispatcherBout extends BaseRichBolt {
 
 
 
-    private void processControlCommand(ConsumerRecord<String, byte[]>  record, Tuple input) {
+    private void processControlCommand(DBusConsumerRecord<String, byte[]>  record, Tuple input) {
         try {
             String key = record.key();
             String json = new String(record.value(), "utf-8");
@@ -203,7 +209,7 @@ public class DispatcherBout extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
-        ConsumerRecord<String, byte[]> record = (ConsumerRecord<String, byte[]>) input.getValueByField("record");
+        DBusConsumerRecord<String, byte[]> record = (DBusConsumerRecord<String, byte[]>) input.getValueByField("record");
 
         long kafkaOffset = record.offset();
         String fromTopic = record.topic();
@@ -223,7 +229,6 @@ public class DispatcherBout extends BaseRichBolt {
             // b 一次读取一个partition
             List<DispatcherPackage> list;
             int partitionOffset = 0;
-
 
             do {
                 partitionOffset++;
@@ -266,7 +271,7 @@ public class DispatcherBout extends BaseRichBolt {
 
         } catch (Exception ex) {
             // Print something in the log
-            logger.error(String.format("FAIL! Dispatcher bolt fails at offset (%s).", currentOffset.toString()));
+            logger.error(String.format("FAIL! Dispatcher bolt fails at offset (%s).", currentOffset.toString()),ex);
             // Call fail
             this.collector.fail(input);
 

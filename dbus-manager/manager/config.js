@@ -28,7 +28,7 @@ var restConfig = {
 
 
     //storm UI 所在机器的配置
-    stormRest: "http://localhost:8080/api/v1"
+    // stormRest: "http://localhost:8080/api/v1"
 
 };
 

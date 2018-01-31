@@ -82,11 +82,11 @@ var DefaultTable = React.createClass({
     _createTable: function(props) {
         var defaultOpts = {
             ref: "table",
-            rowHeight: getDefaultValue(props.rowHeight, 45),
+            rowHeight: getDefaultValue(props.rowHeight, 36),
             rowsCount: props.rowsCount,
             width: getDefaultValue(this.state.width, 1000),
-            height: getDefaultValue(props.height, getDefaultValue(props.rowHeight, 45) * props.rowsCount + getDefaultValue(props.headerHeight, 45) + this.state.scrollBarHeight),
-            headerHeight: getDefaultValue(props.headerHeight, 45),
+            height: getDefaultValue(props.height, getDefaultValue(props.rowHeight, 36) * props.rowsCount + getDefaultValue(props.headerHeight, 36) + this.state.scrollBarHeight),
+            headerHeight: getDefaultValue(props.headerHeight, 36),
             overflowX: "auto",
             overflowY: "hidden"
         };

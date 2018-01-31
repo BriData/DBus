@@ -182,4 +182,11 @@ public class DataSchemaService {
     }
 
 
+    public int deleteSchema(int schemaId) {
+        int result = template.query((session, args) -> {
+            DataSchemaMapper mapper = session.getMapper(DataSchemaMapper.class);
+            return mapper.deleteBySchemaId(schemaId);
+        });
+        return result;
+    }
 }

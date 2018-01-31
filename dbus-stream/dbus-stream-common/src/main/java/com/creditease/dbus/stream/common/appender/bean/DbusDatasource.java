@@ -22,12 +22,13 @@ package com.creditease.dbus.stream.common.appender.bean;
 
 import com.alibaba.fastjson.JSON;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
  * Created by Shrimp on 16/5/26.
  */
-public class DbusDatasource {
+public class DbusDatasource implements Serializable {
     private long id;
     private String dsName;
     private String dsType;

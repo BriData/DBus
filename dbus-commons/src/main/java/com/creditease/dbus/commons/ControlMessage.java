@@ -22,12 +22,13 @@ package com.creditease.dbus.commons;
 
 import com.alibaba.fastjson.JSON;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ControlMessage {
+public class ControlMessage implements Serializable {
 	
     public static final String ID = "id";
     public static final String TYPE = "type";

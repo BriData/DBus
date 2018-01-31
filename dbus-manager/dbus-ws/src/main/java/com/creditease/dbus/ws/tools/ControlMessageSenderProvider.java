@@ -30,25 +30,9 @@ import java.util.Properties;
  * Created by Shrimp on 16/9/9.
  */
 public class ControlMessageSenderProvider {
-    private Properties producerConf;
 
     private static class Instance {
         private static ControlMessageSenderProvider provider = new ControlMessageSenderProvider();
-    }
-
-    private ControlMessageSenderProvider() {
-        try {
-            ZookeeperServiceProvider zk = ZookeeperServiceProvider.getInstance();
-            Properties globalConf = zk.getZkService().getProperties(Constants.GLOBAL_CONF);
-
-            producerConf = new Properties();
-            producerConf.putAll(ConfUtils.ctlmsgProducerConf);
-
-            //producerConf.setProperty("client.id", Constants.CONTROL_MESSAGE_SENDER_NAME);
-            producerConf.setProperty("bootstrap.servers", globalConf.getProperty("bootstrap.servers"));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static ControlMessageSenderProvider getInstance() {
@@ -56,6 +40,22 @@ public class ControlMessageSenderProvider {
     }
 
     public ControlMessageSender getSender() throws Exception {
-        return new ControlMessageSender(producerConf);
+        return new ControlMessageSender(buildConf());
+    }
+
+    private static Properties buildConf() {
+        try {
+            ZookeeperServiceProvider zk = ZookeeperServiceProvider.getInstance();
+            Properties globalConf = zk.getZkService().getProperties(Constants.GLOBAL_CONF);
+
+            Properties producerConf = new Properties();
+            producerConf.putAll(ConfUtils.ctlmsgProducerConf);
+
+            //producerConf.setProperty("client.id", Constants.CONTROL_MESSAGE_SENDER_NAME);
+            producerConf.setProperty("bootstrap.servers", globalConf.getProperty("bootstrap.servers"));
+            return producerConf;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

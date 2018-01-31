@@ -81,22 +81,27 @@ public class SourceDbAccessHelper {
         }
     }
 
-    private void setLoginInfo (Connection mysqlConnection, String ds_name) throws Exception {
-        String sqlQuery = "select master_url, dbus_user, dbus_pwd " +
+    private void setLoginInfo (String ds_name) throws Exception {
+
+
+        String sqlQuery = "select slave_url, dbus_user, dbus_pwd " +
                 "from t_dbus_datasource as d " +
                 "where d.ds_name = ?";
 
         // Set conn_string, user, passed, ds_id
+        Connection mysqlConnection = null;
         PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
+            mysqlConnection = getMysqlConn();
             stmt = mysqlConnection.prepareStatement(sqlQuery);
             // Fill out datasource name for sql query
             // TODO: May needs to be changed
             stmt.setString(1, ds_name);
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
 
             while (rs.next()) {
-                connStr = rs.getString("master_url");
+                connStr = rs.getString("slave_url");
                 dbusUser = rs.getString("dbus_user");
                 dbusPasswd = rs.getString("dbus_pwd");
             }
@@ -106,8 +111,22 @@ public class SourceDbAccessHelper {
             e.printStackTrace();
             throw e;
         } finally {
+            closeRS(rs);
             closeStmt(stmt);
-            logger.info("Successfully fetched master_url, dbus_user, and dbus_password used for accessing Oracle DB. ");
+            closeConn(mysqlConnection);
+            logger.info("Successfully fetched slave_url, dbus_user, and dbus_password used for accessing Oracle DB. ");
+        }
+    }
+
+    private void closeRS(ResultSet rs) throws Exception {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                logger.error("Exception caught when trying to close a ResultSet. ");
+                e.printStackTrace();
+                throw e;
+            }
         }
     }
 
@@ -136,34 +155,49 @@ public class SourceDbAccessHelper {
     }
 
     public void querySourceDb(String dsName, String sql) {
-     	 Connection mysqlConn = null;
          Connection oracleConnection = null;
          PreparedStatement stmt = null;
          ResultSet rs = null;
          try {
-             mysqlConn = getMysqlConn(); 
-             setLoginInfo(mysqlConn, dsName);
+             setLoginInfo(dsName);
+
              oracleConnection = createOracleDBConnection();
-             stmt = oracleConnection.prepareStatement(sql); 
+             stmt = oracleConnection.prepareStatement(sql);
+
+             stmt.setFetchSize(2500);
+             logger.info("Using fetchSize for next query: {}", 2500);
+             stmt.setQueryTimeout(3600);
+             logger.info("Using queryTimeout 3600 seconds");
+
              rs = stmt.executeQuery();
              ResultSetMetaData rsmd = rs.getMetaData();
              int columnCount = rsmd.getColumnCount();
-             while(rs.next()){
-            	 for (int i = 1; i <= columnCount; i++) { 
-            		 logger.info("{}({})-------------{}.",rsmd.getColumnLabel(i),rsmd.getColumnTypeName(i),rs.getObject(i));
-            	 }
-            	 logger.info("********************************************");
+
+             long count = 0;
+             logger.info("********************************************");
+             while(rs.next()) {
+                 count++;
+
+                 System.out.println(" ");
+                 String columns = "";
+                 for (int i = 1; i <= columnCount; i++) {
+                     Object obj = rs.getObject(i);
+                     columns += String.format("%s(%s): %s, ", rsmd.getColumnLabel(i),
+                             rsmd.getColumnTypeName(i), obj != null ? obj.toString() : null);
+                 }
+                 logger.info("{}:{}", count, columns);
              }
+             logger.info("********************************************");
          } catch (Exception e) {
-             logger.error("Exception!",e);
+             logger.error(e.getMessage(), e);
          } finally {
              try {
-            	 closeConn(mysqlConn);
-				 closeConn(oracleConnection);
+                 closeRS(rs);
                  closeStmt(stmt);
+                 closeConn(oracleConnection);
              } catch (Exception e) {
-            	 logger.info("Close con/statement encountered exception.",e);
- 			}
+                 logger.info("Close con/statement encountered exception.",e);
+             }
              logger.info("Query finished.");
          }
     }

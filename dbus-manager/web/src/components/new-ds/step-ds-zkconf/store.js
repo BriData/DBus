@@ -20,7 +20,7 @@ var store = Reflux.createStore({
         var self = this;
         self.state.dsName = params.dsName;
         self.state.dsType = params.dsType;
-        $.get(utils.builPath("zk/loadZkTreeByDsName"), {dsName:self.state.dsName}, function(result) {
+        $.get(utils.builPath("zk/loadZkTreeByDsName"), {dsName:self.state.dsName,dsType:self.state.dsType}, function(result) {
             if(result.status !== 200) {
                 console.info("result.status !== 200");
                 self.state.data = [{name:'加载失败!'}];
@@ -45,7 +45,7 @@ var store = Reflux.createStore({
                 alert("克隆配置失败！");
                 return;
         }else{
-            $.get(utils.builPath("zk/loadZkTreeByDsName"), {dsName:self.state.dsName}, function(result) {
+            $.get(utils.builPath("zk/loadZkTreeByDsName"), {dsName:self.state.dsName,dsType:self.state.dsType}, function(result) {
                 if(result.status !== 200) {
                     console.info("result.status !== 200");
                     self.state.data = [{name:'加载失败!'}];

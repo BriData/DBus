@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.imps.CuratorFrameworkState;
-import org.slf4j.Logger;
-
+import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
 import com.creditease.dbus.heartbeat.container.EventContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
@@ -39,8 +35,13 @@ import com.creditease.dbus.heartbeat.event.impl.CheckHeartBeatEvent;
 import com.creditease.dbus.heartbeat.event.impl.EmitHeartBeatEvent;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
-import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
 import com.creditease.dbus.heartbeat.vo.DsVo;
+import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.slf4j.Logger;
 
 public abstract class AbstractEvent implements IEvent {
 
@@ -83,6 +84,17 @@ public abstract class AbstractEvent implements IEvent {
                         LOG.info("[control-event] 心跳次数:{}.", heartBeatCnt);
                     }
                     for (DsVo ds : dsVos) {
+                        if (this instanceof EmitHeartBeatEvent) {
+                            if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_LOGSTASH)
+                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_LOGSTASH_JSON)
+                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_UMS)
+                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MONGO)
+                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FILEBEAT)
+                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FLUME)) {
+                                LOG.info(ds.getType() + "，Ignored!");
+                                continue;
+                            }
+                        }
                         for (MonitorNodeVo node : nodes) {
                             //快速退出
                             if (!isRun.get())
@@ -91,23 +103,25 @@ public abstract class AbstractEvent implements IEvent {
                             if (!StringUtils.equals(ds.getKey(), node.getDsName()))
                                 continue;
 
-
-                            String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-                            path = StringUtils.join(new String[] {path, node.getDsName(), node.getSchema(), node.getTableName()}, "/");
-                            if (this instanceof EmitHeartBeatEvent) {
-                                fire(ds, node, path, txTime);
-                                if (isFirst)
-                                    cdl.countDown();
-                            } else if (this instanceof CheckHeartBeatEvent) {
-                                cdl.await();
-
-                                String key = StringUtils.join(new String[] {node.getDsName(), node.getSchema()}, "/");
-                                if (StringUtils.isBlank(EventContainer.getInstances().getSkipSchema(key))) {
+                            String[] dsPartitions = StringUtils.splitByWholeSeparator(node.getDsPartition(), ",");
+                            for (String partition : dsPartitions) {
+                                String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
+                                path = StringUtils.join(new String[] {path, node.getDsName(), node.getSchema(), node.getTableName(), partition}, "/");
+                                if (this instanceof EmitHeartBeatEvent) {
                                     fire(ds, node, path, txTime);
-                                } else {
-                                    LOG.warn("[control-event] schema:{},正在拉取全量,{}不进行监控.", key, node.getTableName());
+                                    if (isFirst)
+                                        cdl.countDown();
+                                } else if (this instanceof CheckHeartBeatEvent) {
+                                    cdl.await();
+                                    String key = StringUtils.join(new String[] {node.getDsName(), node.getSchema()}, "/");
+                                    if (StringUtils.isBlank(EventContainer.getInstances().getSkipSchema(key))) {
+                                        fire(ds, node, path, txTime);
+                                    } else {
+                                        LOG.warn("[control-event] schema:{},正在拉取全量,{}不进行监控.", key, node.getTableName());
+                                    }
                                 }
                             }
+
                         }
                     }
                 }
@@ -160,4 +174,4 @@ public abstract class AbstractEvent implements IEvent {
     }
 
 }
- 
+

@@ -23,11 +23,8 @@ package com.creditease.dbus.stream.common.appender.utils;
 import com.alibaba.druid.util.StringUtils;
 import com.creditease.dbus.commons.MetaWrapper;
 import com.creditease.dbus.commons.msgencoder.EncodeColumn;
+import com.creditease.dbus.stream.common.appender.bean.*;
 import com.creditease.dbus.stream.common.appender.exception.RuntimeSQLException;
-import com.creditease.dbus.stream.common.appender.bean.AvroSchema;
-import com.creditease.dbus.stream.common.appender.bean.DataTable;
-import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
-import com.creditease.dbus.stream.common.appender.bean.TabSchema;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,6 +112,121 @@ public class DBFacade {
         }
     }
 
+
+    public void updateColumnComments(MetaVersion version, MetaWrapper.MetaCell cell) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = ds.getConnection();
+            String sql;
+
+            sql = "update t_table_meta set comments = ?,alter_time=? where ver_id=? and column_name=?";
+            ps = conn.prepareStatement(sql);
+
+            ps.setString(1, cell.getComments());
+            ps.setTimestamp(2, cell.getDdlTime());
+            ps.setLong(3, version.getId());
+            ps.setString(4, cell.getColumnName());
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            logger.error("update column comments error", e);
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    public void updateTableComments(MetaVersion metaVersion, TableComments tableComments) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = ds.getConnection();
+            String sql;
+
+            sql = "update t_meta_version set comments = ? where id=?";
+            ps = conn.prepareStatement(sql);
+
+            ps.setString(1, tableComments.getComments());
+            ps.setLong(2, metaVersion.getId());
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            logger.error("update table comments error", e);
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void insertDdlEvent(DdlEvent ddlEvent) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = ds.getConnection();
+            String sql;
+
+            sql = "insert into t_ddl_event(event_id,ds_id,schema_name,table_name,column_name,ver_id,trigger_ver,ddl_type,ddl) values(?,?,?,?,?,?,?,?,?)";
+            ps = conn.prepareStatement(sql);
+
+            ps.setLong(1, ddlEvent.getEventId());
+            ps.setLong(2, ddlEvent.getDsId());
+            ps.setString(3, ddlEvent.getSchemaName());
+            ps.setString(4, ddlEvent.getTableName());
+            ps.setString(5, ddlEvent.getColumnName());
+            ps.setLong(6, ddlEvent.getVerId());
+            ps.setString(7, ddlEvent.getTriggerVer());
+            ps.setString(8, ddlEvent.getDdlType());
+            ps.setString(9, ddlEvent.getDdl());
+
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            logger.error("insert into t_ddl_event error");
+            e.printStackTrace();
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     /**
      * 保存新的version
      *
@@ -131,7 +243,7 @@ public class DBFacade {
             conn.setAutoCommit(false);
             String sql;
 
-            sql = "insert into t_meta_version(db_name,schema_name,table_name,version,inner_version,update_time,ds_id,event_offset, event_pos,table_id) values(?,?,?,?,?,?,?,?,?,?)";
+            sql = "insert into t_meta_version(db_name,schema_name,table_name,version,inner_version,update_time,ds_id,event_offset, event_pos,table_id,comments) values(?,?,?,?,?,?,?,?,?,?,?)";
             // 生成version信息
             ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
@@ -145,6 +257,7 @@ public class DBFacade {
             ps.setLong(8, version.getOffset());
             ps.setLong(9, version.getTrailPos());
             ps.setLong(10, version.getTableId());
+            ps.setString(11, version.getComments());
             ps.executeUpdate();
 
             // 获取自动生成的ID
@@ -159,8 +272,8 @@ public class DBFacade {
                 // 生成meta信息
                 sql = "insert into t_table_meta(ver_id,column_name,column_id,original_ser,data_type,data_length,data_precision," +
                         "data_scale,nullable,is_pk,pk_position,alter_time,char_length,char_used,internal_column_id, " +
-                        "hidden_column, virtual_column, original_column_name) " +
-                        "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                        "hidden_column, virtual_column, original_column_name, comments, default_value) " +
+                        "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
                 ps = conn.prepareStatement(sql);
                 List<MetaWrapper.MetaCell> columns = version.getMeta().getColumns();
@@ -170,7 +283,7 @@ public class DBFacade {
                     ps.setInt(3, column.getColumnId());
                     ps.setInt(4, version.getInnerVersion());
                     ps.setString(5, column.getDataType());
-                    ps.setInt(6, column.getDataLength());
+                    ps.setLong(6, column.getDataLength());
                     ps.setInt(7, column.getDataPrecision());
                     ps.setInt(8, column.getDataScale());
                     ps.setString(9, column.getNullAble());
@@ -183,6 +296,8 @@ public class DBFacade {
                     ps.setString(16, column.getHiddenColumn());
                     ps.setString(17, column.getVirtualColumn());
                     ps.setString(18, column.getOriginalColumnName());
+                    ps.setString(19, column.getComments());
+                    ps.setString(20, column.getDefaultValue());
                     ps.addBatch();
                 }
                 ps.executeBatch();
@@ -200,6 +315,77 @@ public class DBFacade {
         } catch (Exception e) {
             if (conn != null) conn.rollback();
             logger.error("create meta and version error", e);
+            throw e;
+        } finally {
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
+    /**
+     * mysql使用该函数，暂时不处理默认值问题
+     *
+     * @param version
+     * @throws Exception
+     */
+    public void deleteAndInsertTableMeta(MetaVersion version) throws Exception {
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+            String sql;
+
+            sql = "delete from t_table_meta where ver_id = ?";
+
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, version.getId());
+            ps.addBatch();
+
+            if (version.getMeta() != null && !version.getMeta().isEmpty()) {
+                // 生成meta信息
+                sql = "insert into t_table_meta(ver_id,column_name,column_id,original_ser,data_type,data_length,data_precision," +
+                        "data_scale,nullable,is_pk,pk_position,alter_time,char_length,char_used,internal_column_id, " +
+                        "hidden_column, virtual_column, original_column_name, comments) " +
+                        "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+                ps = conn.prepareStatement(sql);
+                List<MetaWrapper.MetaCell> columns = version.getMeta().getColumns();
+                for (MetaWrapper.MetaCell column : columns) {
+                    ps.setLong(1, version.getId());
+                    ps.setString(2, column.getColumnName());
+                    ps.setInt(3, column.getColumnId());
+                    ps.setInt(4, version.getInnerVersion());
+                    ps.setString(5, column.getDataType());
+                    ps.setLong(6, column.getDataLength());
+                    ps.setInt(7, column.getDataPrecision());
+                    ps.setInt(8, column.getDataScale());
+                    ps.setString(9, column.getNullAble());
+                    ps.setString(10, column.getIspk());
+                    ps.setInt(11, column.getPkPosition());
+                    ps.setTimestamp(12, column.getDdlTime());
+                    ps.setInt(13, column.getCharLength());
+                    ps.setString(14, column.getCharUsed());
+                    ps.setInt(15, column.getInternalColumnId());
+                    ps.setString(16, column.getHiddenColumn());
+                    ps.setString(17, column.getVirtualColumn());
+                    ps.setString(18, column.getOriginalColumnName());
+                    ps.setString(19, column.getComments());
+                    ps.addBatch();
+                }
+            }
+
+            ps.executeBatch();
+            conn.commit();
+
+        } catch (Exception e) {
+            if (conn != null) conn.rollback();
+            logger.error("delete and create meta error", e);
             throw e;
         } finally {
             if (ps != null) {
@@ -253,7 +439,7 @@ public class DBFacade {
                 cell.setColumnId(rs.getInt("column_id"));
                 cell.setVersion(rs.getInt("original_ser"));
                 cell.setDataType(rs.getString("data_type"));
-                cell.setDataLength(rs.getInt("data_length"));
+                cell.setDataLength(rs.getLong("data_length"));
                 cell.setDataPrecision(rs.getInt("data_precision"));
                 cell.setDataScale(rs.getInt("data_scale"));
                 cell.setNullAble(rs.getString("nullable"));
@@ -265,6 +451,10 @@ public class DBFacade {
                 cell.setInternalColumnId(rs.getInt("internal_column_id"));
                 cell.setHiddenColumn(rs.getString("hidden_column"));
                 cell.setVirtualColumn(rs.getString("virtual_column"));
+                cell.setComments(rs.getString("comments"));
+                String defaultValue = rs.getString("default_value");
+                // 转义\n，避免生成json时出现错误
+                cell.setDefaultValue(defaultValue == null ? null : defaultValue.trim().replaceAll("\n", "\\\\n"));
                 mw.addMetaCell(cell);
             }
             return mw;
@@ -442,6 +632,13 @@ public class DBFacade {
         });
     }
 
+    /**
+     * mysql使用该函数，暂时不处理默认值问题
+     *
+     * @param verId
+     * @param metaWrapper
+     * @throws Exception
+     */
     public void saveMeta(long verId, MetaWrapper metaWrapper) throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
@@ -452,7 +649,7 @@ public class DBFacade {
             // 生成meta信息
             String sql = "insert into t_table_meta(ver_id,column_name,column_id,original_ser,data_type,data_length,data_precision," +
                     "data_scale,nullable,is_pk,pk_position,alter_time,char_length,char_used, internal_column_id, " +
-                    "hidden_column, virtual_column, original_column_name) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                    "hidden_column, virtual_column, original_column_name, comments) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
             ps = conn.prepareStatement(sql);
 
@@ -463,7 +660,7 @@ public class DBFacade {
                 ps.setInt(3, column.getColumnId());
                 ps.setInt(4, column.getVersion());
                 ps.setString(5, column.getDataType());
-                ps.setInt(6, column.getDataLength());
+                ps.setLong(6, column.getDataLength());
                 ps.setInt(7, column.getDataPrecision());
                 ps.setInt(8, column.getDataScale());
                 ps.setString(9, column.getNullAble());
@@ -476,6 +673,7 @@ public class DBFacade {
                 ps.setString(16, column.getHiddenColumn());
                 ps.setString(17, column.getVirtualColumn());
                 ps.setString(18, column.getOriginalColumnName());
+                ps.setString(19, column.getComments());
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -600,9 +798,10 @@ public class DBFacade {
     }
 
     public MetaVersion queryMetaVersion(long dsId, String schemaName, String tableName) {
-        String sql = "select * from t_meta_version t where t.ds_id = ? and t.schema_name = ? and t.table_name = ? order by t.inner_version desc, t.id desc limit 1";
+        DataTable tab = queryDataTable(dsId, schemaName, tableName);
+        String sql = "select * from t_meta_version t where id = ?";
 
-        Map<String, Object> map = queryUnique(sql, dsId, schemaName, tableName);
+        Map<String, Object> map = queryUnique(sql, tab.getVerId());
         if (map == null) {
             return null;
         }
@@ -677,7 +876,7 @@ public class DBFacade {
                 // 生成meta信息
                 sql = "insert into t_table_meta(ver_id,column_name,column_id,original_ser,data_type,data_length,data_precision," +
                         "data_scale,nullable,is_pk,pk_position,alter_time,char_length, char_used, internal_column_id, " +
-                        "hidden_column, virtual_column, original_column_name) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                        "hidden_column, virtual_column, original_column_name, comments, default_value) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
                 ps = conn.prepareStatement(sql);
 
@@ -688,7 +887,7 @@ public class DBFacade {
                     ps.setInt(3, column.getColumnId());
                     ps.setInt(4, version.getInnerVersion());
                     ps.setString(5, column.getDataType());
-                    ps.setInt(6, column.getDataLength());
+                    ps.setLong(6, column.getDataLength());
                     ps.setInt(7, column.getDataPrecision());
                     ps.setInt(8, column.getDataScale());
                     ps.setString(9, column.getNullAble());
@@ -701,7 +900,8 @@ public class DBFacade {
                     ps.setString(16, column.getHiddenColumn());
                     ps.setString(17, column.getVirtualColumn());
                     ps.setString(18, column.getOriginalColumnName());
-
+                    ps.setString(19, column.getComments());
+                    ps.setString(20, column.getDefaultValue());
                     ps.addBatch();
                 }
                 ps.executeBatch();
@@ -726,7 +926,7 @@ public class DBFacade {
 
     public void updateTableVer(Long id, long verId) {
         try {
-            updateTableVerHistoryNotice(ds.getConnection(),id);
+            updateTableVerHistoryNotice(ds.getConnection(), id);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -746,8 +946,15 @@ public class DBFacade {
                  * 只有历史为空时，更新为当前版本+新版本
                  * 两个都有值，更新为当前历史+新版本
                  */
-                String verChangeHistory = (String) oldResultSet.getObject("ver_change_history");
-                String verId = (String) oldResultSet.getObject("ver_id");
+
+                String verChangeHistory = "";
+                if (oldResultSet.getObject("ver_change_history") != null) {
+                    verChangeHistory = String.valueOf(oldResultSet.getObject("ver_change_history"));
+                }
+                String verId = "";
+                if (oldResultSet.getObject("ver_id") != null) {
+                    verId = String.valueOf(oldResultSet.getObject("ver_id").toString());
+                }
                 if (StringUtils.isEmpty(verChangeHistory)) {
                     if (StringUtils.isEmpty(verId)) {
                         // 两个都为空，不做处理，连标记也不更新，直接返回
@@ -779,7 +986,6 @@ public class DBFacade {
             logger.error("updateTableVerHistoryNotice failed，error message:{}", e.getMessage());
         }
     }
-
 
 
     public void updateTableStatus(long id, String status) {

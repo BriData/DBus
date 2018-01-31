@@ -22,8 +22,8 @@ package com.creditease.dbus.stream.appender.kafka;
 
 import avro.shaded.com.google.common.collect.Lists;
 import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.appender.utils.ZKNodeOperator;
+import com.creditease.dbus.stream.common.Constants;
 import com.google.common.base.Joiner;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;

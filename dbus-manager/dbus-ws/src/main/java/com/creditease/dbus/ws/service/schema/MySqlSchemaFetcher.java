@@ -32,17 +32,9 @@ public class MySqlSchemaFetcher extends SchemaFetcher{
     }
 
     @Override
-    public String buildQuery(Object... args) {
+    public String buildQuery() {
         String sql ="select distinct(TABLE_SCHEMA) from information_schema.TABLES";
         return sql;
     }
 
-    @Override
-    public String fillParameters(PreparedStatement statement, Map<String, Object> params) throws Exception {
-        return null;
-    }
-
-    private String get(Map<String, Object> map, String key) {
-        return map.get(key).toString();
-    }
 }

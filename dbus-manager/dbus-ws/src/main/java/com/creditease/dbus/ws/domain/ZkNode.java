@@ -20,6 +20,7 @@
 
 package com.creditease.dbus.ws.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 /**
  * Created by hcyin on 16/11/7.
@@ -83,5 +84,28 @@ public class ZkNode {
 
     public void setExisted(boolean existed) {
         this.existed = existed;
+    }
+
+    public boolean hasChild(String childName){
+        boolean has = false;
+        if(null != children){
+            for (ZkNode child:children) {
+                if(child.getName().equals(childName)){
+                    has = true;
+                }
+            }
+        }
+        return has;
+    }
+
+    public ZkNode getChildByName(String name){
+        if(null != children){
+            for (ZkNode child:children) {
+                if(child.getName().equals(name)){
+                   return child;
+                }
+            }
+        }
+        return null;
     }
 }

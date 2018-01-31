@@ -20,7 +20,9 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.commons.ControlMessage;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
@@ -88,12 +90,16 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                         }
 
                         if (ControlType.G_META_SYNC_WARNING.toString().equals(key)) {
-                            JSONObject jsonValue = JSONObject.parseObject(value);
                             String subject = "表结构变更通知";
-                            String contents = HTMLUtil.globalControlEmailJsonVo2HTML(jsonValue);
+                            String contents = HTMLUtil.globalControlEmailJsonVo2HTML(JSONObject.parseObject(value));
 
-                            //TODO 需要填一下 扩展的邮件schema
-                            String email = getEmail(null);
+                            ControlMessage controlMessage = JSON.parseObject(value, ControlMessage.class);
+                            Map<String, Object> payload = controlMessage.getPayload();
+
+                            String datasource = payload.get("datasource") == null ? "" : payload.get("datasource").toString();
+                            String schema = payload.get("schema") == null ? "" : payload.get("schema").toString();
+
+                            String email = getSchemaChangeEmail(datasource + "/" + schema);
                             if (StringUtils.isBlank(email)) {
                                 LoggerFactory.getLogger().error("[Global-Control-kafka-Consumer-event] email setting is empty!");
                                 continue;
@@ -163,6 +169,30 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
         String adminUseEmail = hbConf.getAdminUseEmail();
         if (StringUtils.equals(adminUseEmail.toUpperCase(), "Y")) {
             email = hbConf.getAdminEmail();
+        }
+
+        if (StringUtils.isNotBlank(dsSchemaName)) {
+            Map<String, Map<String, String>> additionalNotify = hbConf.getAdditionalNotify();
+            Map<String, String> map = additionalNotify.get(dsSchemaName);
+            if (map != null && StringUtils.equals(map.get("UseEmail").toUpperCase(), "Y")) {
+                if (StringUtils.isNotBlank(email)) {
+                    email = StringUtils.join(new String[]{email, map.get("Email")}, ",");
+                } else {
+                    email = map.get("Email");
+                }
+            }
+        }
+
+        return email;
+    }
+
+    public String getSchemaChangeEmail(String dsSchemaName) {
+        String email = StringUtils.EMPTY;
+
+        HeartBeatVo hbConf = HeartBeatConfigContainer.getInstance().getHbConf();
+        String isUse = hbConf.getSchemaChangeUseEmail();
+        if (StringUtils.equals(isUse.toUpperCase(), "Y")) {
+            email = hbConf.getSchemaChangeEmail();
         }
 
         if (StringUtils.isNotBlank(dsSchemaName)) {

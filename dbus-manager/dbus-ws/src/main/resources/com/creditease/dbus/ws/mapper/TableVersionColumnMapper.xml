@@ -11,10 +11,11 @@
         <result property="dataType" column="data_type"/>
         <result property="dataLength" column="data_length"/>
         <result property="dataScale" column="data_scale"/>
+        <result property="comments" column="comments"/>
     </resultMap>
 
     <select id="getVersionColumnDetail" resultMap="tableVersionColumn">
-        SELECT id, column_name, data_type, data_length, data_scale FROM t_table_meta where ver_id=#{verId} order by column_name;
+        SELECT id, column_name, data_type, data_length, data_scale, comments FROM t_table_meta where ver_id=#{verId} order by column_name;
     </select>
 
 </mapper>

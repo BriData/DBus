@@ -20,33 +20,24 @@
 
 package com.creditease.dbus.common;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.common.utils.DBConfiguration;
 import com.creditease.dbus.common.utils.DBRecordReader;
 import com.creditease.dbus.common.utils.DataDrivenDBInputFormat;
 import com.creditease.dbus.common.utils.OracleDBRecordReader;
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.MetaWrapper;
-import com.creditease.dbus.commons.PropertiesHolder;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.commons.msgencoder.EncodeColumn;
 import com.creditease.dbus.enums.DbusDatasourceType;
+import com.creditease.dbus.manager.GenericJdbcManager;
 import com.creditease.dbus.manager.MySQLManager;
 import com.creditease.dbus.manager.OracleManager;
 import com.creditease.dbus.manager.SqlManager;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.*;
+import java.util.*;
 
 public class DBHelper {
     private static Logger logger = LoggerFactory.getLogger(DBHelper.class);
@@ -55,11 +46,12 @@ public class DBHelper {
     
     private static synchronized void initialize() throws Exception {
         if(mysqlProps == null) {
-            mysqlProps = PropertiesHolder.getProperties(DATASOURCE_CONFIG_NAME);
+            String topoType = FullPullHelper.getTopologyType();
+            mysqlProps = FullPullPropertiesHolder.getProperties(topoType, DATASOURCE_CONFIG_NAME);
         }
     }
     
-    public static Connection getMysqlConnection() throws Exception {
+    public static Connection getDBusMgrConnection() throws Exception {
         initialize();
         // 2. Set up jdbc driver
         try {
@@ -107,19 +99,17 @@ public class DBHelper {
             e1.printStackTrace();
         }
         DBConfiguration dbConf = null;
-        SqlManager dbManager = null;
+        GenericJdbcManager dbManager = null;
         try {
             dbConf = new DBConfiguration(confProperties);
             dbManager = FullPullHelper.getDbManager(dbConf, (String)(confProperties.get(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY)));
             String schemaName = confProperties.getProperty(DBConfiguration.INPUT_SCHEMA_PROPERTY);
-            String tableName = confProperties.getProperty(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_KEY);
-            // 目标抽取列获取。对于系列表，任取其中一个表来获取列信息。此处取第一个表。
-            if(tableName.indexOf(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER) != -1) {
-                tableName = tableName.split(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER)[0];
-            }
-            if (null != tableName) {
+            String[] physicalTables = confProperties.getProperty(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_KEY).split(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER);
+
+            if (null != physicalTables) {
+                // 目标抽取列获取。对于系列表，任取其中一个表来获取列信息。此处取第一个表,即physicalTables[0]。
                 //获取我们所支持类型的列
-                String[] colNames = getColumnNames(dbManager, dbConf, tableName);
+                String[] colNames = getColumnNames(dbManager, dbConf, physicalTables[0]);
 
                 String[] sqlColNames = null;
                 if (null != colNames) {
@@ -150,41 +140,49 @@ public class DBHelper {
                 dbConf.setInputFieldNames(sqlColNames);
             }
 
-            // 表分区信息获取
-            List<String> partitionsList = new ArrayList<>();
+
 
             String dsType = confProperties.getProperty(DBConfiguration.DataSourceInfo.DS_TYPE);
-            String tableNameWithoutSchema = tableName.indexOf(".") != -1 ? tableName.split("\\.")[1] : tableName;
-            String query = "";
-            // 目前仅支持oracle分区表
-            if (dsType.toUpperCase().equals(DbusDatasourceType.ORACLE.name())) {
-                query = "select PARTITION_NAME from DBA_TAB_PARTITIONS where table_owner='" + schemaName
-                        + "' and table_name='" + tableNameWithoutSchema + "' order by PARTITION_NAME";
-            }else if (dsType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())) {
-                query = "SELECT PARTITION_NAME FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = '" + schemaName
-                        + "' AND TABLE_NAME = '" + tableNameWithoutSchema + "' order by PARTITION_NAME";
-            }
+            Map partitionsInfo = new HashMap<>();
 
-            logger.info("Partions query sql:{}.", query);
+            // 表分区信息获取
+            for(String tableName:physicalTables){
+                List<String> partitionsList = new ArrayList<>();
+                String tableNameWithoutSchema = tableName.indexOf(".") != -1 ? tableName.split("\\.")[1] : tableName;
+                String query = "";
+                // 目前仅支持oracle分区表
+                if (dsType.toUpperCase().equals(DbusDatasourceType.ORACLE.name())) {
+                    query = "select PARTITION_NAME from DBA_TAB_PARTITIONS where table_owner='" + schemaName
+                            + "' and table_name='" + tableNameWithoutSchema + "' order by PARTITION_NAME";
+                }else if (dsType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())) {
+                    query = "SELECT PARTITION_NAME FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = '" + schemaName
+                            + "' AND TABLE_NAME = '" + tableNameWithoutSchema + "' order by PARTITION_NAME";
+                }
 
-            if(StringUtils.isNotBlank(query)) {
-                partitionsList = dbManager.queryTablePartitions(query);
-            }
+                logger.info("Partions query sql:{}.", query);
 
-            if (partitionsList.isEmpty()) {
-                // 无分区时，放入一个空字符串。便于调用方统一处理分区情况。否则调用方得根据是否有分区，决定是否要循环处理。逻辑会复杂。
-                // 此处放入空字符串，调用方于是可以统一采用循环来处理，只不过循环只一次，且拿到的是空字符串而已。
-                partitionsList.add("");
+                if(StringUtils.isNotBlank(query)) {
+                    partitionsList = dbManager.queryTablePartitions(query);
+                }
+
+                if (partitionsList.isEmpty()) {
+                    // 无分区时，放入一个空字符串。便于调用方统一处理分区情况。否则调用方得根据是否有分区，决定是否要循环处理。逻辑会复杂。
+                    // 此处放入空字符串，调用方于是可以统一采用循环来处理，只不过循环只一次，且拿到的是空字符串而已。
+                    partitionsList.add("");
+                }
+                logger.info("Found [{}] partitions for table [{}].", partitionsList.size(), tableName);
+                partitionsInfo.put(tableName,partitionsList);
             }
-            confProperties.put(DBConfiguration.TABEL_PARTITIONS, partitionsList);
-            logger.info("Found [{}] partitions for table [{}].", partitionsList.size(), tableName);
+            confProperties.put(DBConfiguration.TABEL_PARTITIONS, partitionsInfo);
         } catch(Exception e) {
             logger.error("Encountered exception when generating DBConfiguration.", e);
         } finally {
             try {
-                dbManager.close();
+                if (dbManager != null) {
+                    dbManager.close();
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("close dbManager error.", e);
             }
         }
         return dbConf;
@@ -206,16 +204,17 @@ public class DBHelper {
         String schema = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
         String logicTableName = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
         Object scn = fullDataPullReqObj.get(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCN_NO);
-        int seqNo = fullDataPullReqObj.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        long seqNo = fullDataPullReqObj.getLongValue(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
 
         // 这些字段可以为空
         String splitCol = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_COL);
         String splitBoundingQuery = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_BOUNDING_QUERY);
         String inputConditions = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_INPUT_CONDITIONS);
         String pullTargetCols = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_PULL_TARGET_COLS);
-      
-        String opTs = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_OP_TS);
-        
+
+        //兼容旧版本 1.2的时间
+        String  opTs = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_OP_TS);
+
         Properties confProperties = new Properties();
         confProperties.put(DBConfiguration.INPUT_TABLE_NAME_PROPERTY, schema + "." + logicTableName);
         
@@ -266,7 +265,7 @@ public class DBHelper {
         PreparedStatement pst = null;
         ResultSet ret = null;
         try {
-            conn = getMysqlConnection();
+            conn = getDBusMgrConnection();
 
             //从管理库中获得数据源信息
             String sql = "select * from t_dbus_datasource where id = ? ";
@@ -336,17 +335,21 @@ public class DBHelper {
                 pst = null;
             }
 
+            int recordRowSize = 0;
             //计算每个row最大长度来估算prefetch行数
-            sql = "SELECT sum(data_length) recordRowSize FROM t_table_meta where ver_id = ? ";
+            sql = "SELECT data_length, data_type FROM t_table_meta where ver_id = ? ";
 
             pst = conn.prepareStatement(sql);
             pst.setInt(1, metaVersionId);
             ret = pst.executeQuery();
-            if (ret.next()) {
-                int recordRowSize = ret.getInt("recordRowSize");
-                confProperties.put(DBConfiguration.DB_RECORD_ROW_SIZE, recordRowSize);
-                logger.info("MaxRowLength is :{}", recordRowSize + "");
+            while (ret.next()) {
+                String dataType = ret.getString("data_type");
+                if (SupportedOraDataType.isSupported(dataType) || SupportedMysqlDataType.isSupported(dataType)) {
+                    recordRowSize += ret.getInt("data_length");
+                }
             }
+            confProperties.put(DBConfiguration.DB_RECORD_ROW_SIZE, recordRowSize);
+            logger.info("MaxRowLength is :{}", recordRowSize + "");
 
             if(ret != null) {
                 ret.close();
@@ -398,7 +401,8 @@ public class DBHelper {
             confProperties.put(OracleManager.ORACLE_TIMEZONE_KEY, "GMT");
         }
         catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }finally {
             try {
                 if (ret != null)
@@ -441,7 +445,7 @@ public class DBHelper {
                     + "and tm.virtual_column ='NO'";
             logger.info("[Mysql manager] Meta query sql is {}.", sql);
             
-            conn = getMysqlConnection();
+            conn = getDBusMgrConnection();
             pst = conn.prepareStatement(sql);
             rs = pst.executeQuery();// 执行语句，得到结果集
             while (rs.next()) { 
@@ -451,7 +455,7 @@ public class DBHelper {
                 cell.setColumnName(rs.getString("column_name"));
                 cell.setColumnId(rs.getInt("column_id"));
                 cell.setDataType(rs.getString("data_type"));
-                cell.setDataLength(rs.getInt("data_length"));
+                cell.setDataLength(rs.getLong("data_length"));
                 cell.setDataPrecision(rs.getInt("data_precision"));
                 cell.setDataScale(rs.getInt("data_scale"));
                 cell.setNullAble(rs.getString("nullable"));
@@ -479,7 +483,7 @@ public class DBHelper {
         return null;
     }
     
-    public static DBRecordReader getRecordReader(SqlManager dbManager,
+    public static DBRecordReader getRecordReader(GenericJdbcManager dbManager,
                                                  DBConfiguration dbConf,
                                                  DataDrivenDBInputFormat.DataDrivenDBInputSplit inputSplit,
                                                  String logicalTableName) {
@@ -488,13 +492,13 @@ public class DBHelper {
             DbusDatasourceType dataBaseType = DbusDatasourceType.valueOf(datasourceType.toUpperCase());
             switch (dataBaseType) {
                 case ORACLE:
-                    return new OracleDBRecordReader(dbManager.getConnection(), dbConf,
+                    return new OracleDBRecordReader(dbManager, dbConf,
                                                     inputSplit, dbConf.getInputFieldNames(), logicalTableName);
                 case MYSQL:
-                    return new DBRecordReader(dbManager.getConnection(), dbConf,
+                    return new DBRecordReader(dbManager, dbConf,
                                               inputSplit, dbConf.getInputFieldNames(), logicalTableName);
                 default:
-                    return new DBRecordReader(dbManager.getConnection(), dbConf,
+                    return new DBRecordReader(dbManager, dbConf,
                                        inputSplit, dbConf.getInputFieldNames(), logicalTableName);
             }
         }

@@ -9,7 +9,7 @@ var store = require('./schema-store');
 var cells = require('../common/table/cells');
 var minxin = require('../common/table/mixin');
 var utils = require('../common/utils');
-
+var antd = require("antd");
 var Modal = B.Modal;
 var Column = Tab.Column;
 var Cell = Tab.Cell;
@@ -32,6 +32,7 @@ var Schema = React.createClass({
         this.initSelect(store);
         utils.showLoading();
         store.actions.initialLoad();
+        this.search();
     },
 
     // 选择数据源后触发加载schema事件
@@ -72,7 +73,29 @@ var Schema = React.createClass({
      },
      */
     createTable:function(data,e){
-        this.props.history.pushState({dsId:data.dsId,dsType:data.dsType,dsName:data.dsName,schemaName:data.schemaName}, "/data-schema/modify/schema-table");
+        if (data.dsType == utils.dsType.logLogstash 
+            || data.dsType == utils.dsType.logLogstashJson 
+            || data.dsType == utils.dsType.logUms
+            || data.dsType == utils.dsType.logFlume
+            || data.dsType == utils.dsType.logFilebeat) this.props.history.pushState({
+            dsId: data.dsId,
+            dsType: data.dsType,
+            dsName: data.dsName,
+            schemaId: data.id,
+            schemaName: data.schemaName,
+            srcTopic: data.srcTopic,
+            targetTopic: data.targetTopic,
+            description: data.description,
+            status: data.status
+        }, "/data-schema/modify/plainlog-schema-table");
+        else if (data.dsType == utils.dsType.mysql
+            || data.dsType == utils.dsType.oracle
+            || data.dsType == utils.dsType.mongo) this.props.history.pushState({
+            dsId: data.dsId,
+            dsType: data.dsType,
+            dsName: data.dsName,
+            schemaName: data.schemaName
+        }, "/data-schema/modify/schema-table");
     },
     _closeDialog: function() {
         store.actions.closeDialog();
@@ -87,6 +110,13 @@ var Schema = React.createClass({
             description:data.description
         };
         this.props.history.pushState({passParam: updateParam}, "/data-schema/schema-update");
+    },
+    deleteSchema: function(data) {
+        if(!confirm("Are you sure to delete this schema?")) return;
+        var param = {
+            schemaId: data.id
+        };
+        store.actions.deleteSchema(param, this.search);
     },
     render: function() {
         var rows = this.state.data.list || [];
@@ -112,19 +142,39 @@ var Schema = React.createClass({
                     </B.Button>
                 </TF.Header>
                 <TF.Body pageCount={this.state.data.pages} onPageChange={this.pageChange}>
-                    <Table rowsCount={rows.length}>
+                    <Table rowsCount={rows.length} width={document.documentElement.clientWidth - 210}>
                         <Column
                             header={ <Cell>Operation</Cell> }
-                            cell={<BtnCell data={rows}
-                            btns={[{text:"modify", bsStyle:"default", icon:"edit", action:this.openUpdate},
-                                {text:"add table", bsStyle:"info", icon:"plus", action:this.createTable}
-                                   ]}/> }
-                            width={180}
-                            flexGrow={1}/>
+                            cell={ props => (
+                            <div className="fixedDataTableCellLayout_wrap1 public_fixedDataTableCell_wrap1"><div className="fixedDataTableCellLayout_wrap2 public_fixedDataTableCell_wrap2"><div className="fixedDataTableCellLayout_wrap3 public_fixedDataTableCell_wrap3"><div className="public_fixedDataTableCell_cellContent btn-cell">
+                                <antd.Button onClick={this.createTable.bind(this, rows[props.rowIndex])}>
+                                    <span className="glyphicon glyphicon-plus"></span>
+                                    {" add table"}
+                                </antd.Button>
+                                <antd.Dropdown overlay={
+                                    <antd.Menu>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.openUpdate.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-edit"></span>
+                                                <span>{" modify"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.deleteSchema.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-remove"></span>
+                                                <span>{" delete"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                    </antd.Menu>}>
+                                    <antd.Button>More<antd.Icon type="down" /></antd.Button>
+                                </antd.Dropdown>
+                            </div></div></div></div>
+                            )}
+                            width={165}/>
                         <Column
                             header={ <Cell> id </Cell> }
                             cell={ <TextCell data={rows} col="id" onDoubleClick={this.openDialogByKey.bind(this,"id")}/>}
-                            width={80} />
+                            width={50} />
                         <Column
                             header={ <Cell>dsName</Cell> }
                             cell={ <TextCell data={rows} col="dsName" onDoubleClick={this.openDialogByKey.bind(this,"dsName")}/>}
@@ -135,9 +185,18 @@ var Schema = React.createClass({
                             width={150} />
                         <Column
                             header={ <Cell>status</Cell> }
-                            cell={ <StatusCell data={rows} styleGetter={function(data) {return data.status == "active" ? "success": "default"}} col="status" />}
-                            width={100}
-                            />
+                            cell={ <StatusCell style={{textAlign:'center'}} data={rows} styleGetter={function(data) {return data.status == "active" ? "success": "default"}} col="status" />}
+                            width={70}
+                        />
+                        <Column
+                            header={ <Cell>description</Cell> }
+                            cell={ <TextCell data={rows} col="description" onDoubleClick={this.openDialogByKey.bind(this,"description")}/>}
+                            width={200} />
+                        <Column
+                            header={ <Cell>updateTime</Cell> }
+                            cell={ <TextCell data={rows} col="createTime" onDoubleClick={this.openDialogByKey.bind(this,"createTime")}/>}
+                            width={180}
+                        />
                         <Column
                             header={ <Cell>srcTopic</Cell> }
                             cell={ <TextCell data={rows} col="srcTopic" onDoubleClick={this.openDialogByKey.bind(this,"srcTopic")}/>}
@@ -145,19 +204,10 @@ var Schema = React.createClass({
                         <Column
                             header={ <Cell>targetTopic</Cell> }
                             cell={ <TextCell data={rows} col="targetTopic" onDoubleClick={this.openDialogByKey.bind(this,"targetTopic")}/>}
-                            width={300} />
-                        <Column
-                            header={ <Cell>createTime</Cell> }
-                            cell={ <TextCell data={rows} col="createTime" onDoubleClick={this.openDialogByKey.bind(this,"createTime")}/>}
-                            width={200} />
-                        <Column
-                            header={ <Cell>description</Cell> }
-                            cell={ <TextCell data={rows} col="description" onDoubleClick={this.openDialogByKey.bind(this,"description")}/>}
-                            width={200}
-                            flexGrow={1}
-                            />
+                            width={300}
+                            flexGrow={1} />
                     </Table>
-                     <div id="dialogHolder">
+                    <div id="dialogHolder">
                         <Modal
                             bsSize="large"
                             show={this.state.dialog.show}
@@ -166,7 +216,7 @@ var Schema = React.createClass({
                                 <Modal.Title>{this.state.dialog.identity}</Modal.Title>
                             </Modal.Header>
                             <Modal.Body>
-                                 <div dangerouslySetInnerHTML={{__html: "<div style='word-wrap: break-word'>"+this.state.dialog.content+"</div>"}} ></div>
+                                <div dangerouslySetInnerHTML={{__html: "<div style='word-wrap: break-word'>"+this.state.dialog.content+"</div>"}} ></div>
                             </Modal.Body>
                             <Modal.Footer>
                                 <B.Button onClick={this._closeDialog}>Close</B.Button>
@@ -181,7 +231,7 @@ var Schema = React.createClass({
 
 function buildQueryParmeter(p, pageNum) {
     var param = {
-        pageSize:10,
+        pageSize:utils.getFixedDataTablePageSize(),
         pageNum: (typeof pageNum) == 'number'  ? pageNum : 1
     };
 

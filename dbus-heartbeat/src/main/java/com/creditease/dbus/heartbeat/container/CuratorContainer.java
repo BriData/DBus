@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,12 @@
 
 package com.creditease.dbus.heartbeat.container;
 
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.vo.ZkVo;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
-
-import com.creditease.dbus.heartbeat.log.LoggerFactory;
-import com.creditease.dbus.heartbeat.vo.ZkVo;
 
 public class CuratorContainer {
 
@@ -69,6 +69,7 @@ public class CuratorContainer {
     public boolean createZkNode(String path) {
         boolean isExists = false;
         try {
+            LoggerFactory.getLogger().info("path: " + path );
             isExists = curator.checkExists().forPath(path) == null ? false : true;
             if (!isExists) {
                 curator.create().creatingParentsIfNeeded().forPath(path, null);

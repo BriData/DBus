@@ -107,14 +107,15 @@ public class HTMLUtil {
         final int ORI_LENGTH_SUB_1 = 1;
         final int NOW_LENGTH_SUB_1 = 2;
         final int ORI_AND_NOW_LENGTH_SUB_1 = 3;
-        String[] header = new String[]{"columnName", "dataType", "dataLength", "dataScale"};
+        String[] header = new String[]{"columnName", "dataType", "dataLength", "dataScale", "comments"};
         int[][] dp = new int[ori.size() + 1][now.size() + 1];
         int[][] path = new int[ori.size() + 1][now.size() + 1];
         for (int i = 1; i <= ori.size(); i++) path[i][0] = ORI_LENGTH_SUB_1;
         for (int j = 1; j <= now.size(); j++) path[0][j] = NOW_LENGTH_SUB_1;
         for (int i = 1; i <= ori.size(); i++) {
             for (int j = 1; j <= now.size(); j++) {
-                if (fieldEqual(ori.getJSONObject(i - 1), now.getJSONObject(j - 1), header)) {
+                if (StringUtils.equals(ori.getJSONObject(i - 1).getString(header[0]),
+                        now.getJSONObject(j - 1).getString(header[0]))) {
                     path[i][j] = ORI_AND_NOW_LENGTH_SUB_1;
                     dp[i][j] = dp[i - 1][j - 1] + 1;
                 } else {
@@ -143,6 +144,7 @@ public class HTMLUtil {
             } else {
                 setResult(result[i], 0, header, ori.getJSONObject(posOri - 1));
                 setResult(result[i], header.length, header, now.getJSONObject(posNow - 1));
+                needHighlight[i] = !fieldEqual(ori.getJSONObject(posOri - 1), now.getJSONObject(posNow - 1), header);
                 posOri--;
                 posNow--;
             }
@@ -158,6 +160,8 @@ public class HTMLUtil {
 
     private static boolean fieldEqual(JSONObject jsonObject1, JSONObject jsonObject2, String[] header) {
         for (String s : header) {
+            if (jsonObject1.get(s) == null && jsonObject2.get(s) == null) continue;
+            if (jsonObject1.get(s) == null || jsonObject2.get(s) == null) return false;
             if (!jsonObject1.get(s).equals(jsonObject2.get(s))) return false;
         }
         return true;

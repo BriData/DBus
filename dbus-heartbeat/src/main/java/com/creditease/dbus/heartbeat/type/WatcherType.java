@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,6 @@
 package com.creditease.dbus.heartbeat.type;
 
 import java.util.Set;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 
 import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.ControlVo;
@@ -39,6 +35,10 @@ import com.creditease.dbus.heartbeat.container.LifeCycleContainer;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+
 /**
  * 通过监控zookeeper节点(/dbus/heartbeat/control)数据变化,实现如下控制:
  *   1. 重新加载配置
@@ -48,7 +48,7 @@ import com.creditease.dbus.heartbeat.util.JsonUtil;
  *   5. 拉取全量
  *
  *   控制参数JSON格式: {"cmdType":0,"args":"cm"}
- * 
+ *
  * @author Liang.Ma
  * @version 1.0
  */

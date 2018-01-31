@@ -7,7 +7,7 @@
     /*padding-top:20px;*/
 }
 .table-frame .header {
-    margin-bottom: 34px;
+    /*margin-bottom: 34px;*/
     color: #737f8d;
 }
 
@@ -17,7 +17,13 @@
 }
 .table-frame .header .elements>* {
     margin-right:15px;
+
 }
+.table-frame .header .title-text {
+    margin-top:6px;
+    display: inline-block;
+}
+
 .table-frame .btn-sm {
     padding: 3px 10px;
 }
@@ -39,11 +45,24 @@
 .table-frame .table-body {
     /*height: 392px;*/
 }
+
+.table-frame .table-body .fixedDataTableCellLayout_wrap1 {
+    width: 100%;
+}
+
 .table-frame .table-body .public_fixedDataTableCell_cellContent {
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
+    padding: 5px;
 }
+.table-frame .table-body .public_fixedDataTableCell_cellContent {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    padding: 5px;
+}
+
 .table-frame .table-body .fixedDataTableRowLayout_rowWrapper:last-child {
     border-bottom: none;
 }
@@ -53,6 +72,10 @@
 }
 .table-frame .table-body .table-options>* {
     margin-left:15px;
+}
+
+.step-4-table-left {
+    margin-left: 0px;
 }
 
 .ui-select {
@@ -151,7 +174,25 @@ div.jsoneditor-menu {
     background-repeat: repeat-x;
     border-color: #245580;
 }
+
 .loading {
-    top:200px !important;
+    top: 200px !important;
     font-size: 18px;
+}
+
+.ant-table-row-custom-td > td {
+    max-width: 1000px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ant-table-long-td-min-width {
+    min-width: 96px;
+}
+.ant-table-short-td-min-width {
+    min-width: 32px;
+}
+
+.ant-input-group-wrapper {
+    width: auto;
 }

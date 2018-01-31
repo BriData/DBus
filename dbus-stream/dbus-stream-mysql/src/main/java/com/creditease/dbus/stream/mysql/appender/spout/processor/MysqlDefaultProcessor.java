@@ -20,10 +20,11 @@
 
 package com.creditease.dbus.stream.mysql.appender.spout.processor;
 
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
-import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.spout.processor.AbstractProcessor;
 import com.creditease.dbus.stream.common.appender.spout.processor.ConsumerListener;
 import com.creditease.dbus.stream.common.appender.spout.processor.RecordProcessListener;
@@ -32,7 +33,6 @@ import com.creditease.dbus.stream.mysql.appender.protobuf.protocol.EntryHeader;
 import com.creditease.dbus.stream.mysql.appender.protobuf.protocol.MessageEntry;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.storm.tuple.Values;
 
 import java.util.Iterator;
@@ -48,7 +48,7 @@ public class MysqlDefaultProcessor extends AbstractProcessor {
 	}
 	 
 	 @Override
-	 public void process(ConsumerRecord<String, byte[]> record, Object... args) {
+	 public void process(DBusConsumerRecord<String, byte[]> record, Object... args) {
 		 try {
 			 logger.debug("[BEGIN] Receive data,offset:{}", record.offset());
 			 List<MessageEntry> msgEntryLst = parser.getEntry(record.value());
@@ -57,9 +57,7 @@ public class MysqlDefaultProcessor extends AbstractProcessor {
 				 EmitData data = new EmitData();
 				 data.add(EmitData.OFFSET, record.offset());
 				 data.add(EmitData.GENERIC_DATA_LIST, msgEntryLst);
-				 List<Object> values = new Values(data, Command.UNKNOWN_CMD);
-				 this.listener.emitData(values, record);
-				 values = null;
+				 this.listener.emitData(data, Command.UNKNOWN_CMD, record);
 				 logger.debug("[END] emit data,offset:{}", record.offset());
 			 }else{
 				 logger.info("Table not configured in t_dbus_tables {}", Joiner.on(",").join(msgEntryLst.stream()

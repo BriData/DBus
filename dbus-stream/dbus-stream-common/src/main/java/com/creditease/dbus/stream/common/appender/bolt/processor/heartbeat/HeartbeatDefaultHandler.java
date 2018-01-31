@@ -62,6 +62,10 @@ public class HeartbeatDefaultHandler implements BoltCommandHandler {
         MetaVersion ver = data.get(EmitData.VERSION);
         for (PairWrapper<String, Object> wrapper : wrapperList) {
             Object packet = wrapper.getPairValue("PACKET");
+            if(packet == null) {
+                logger.warn("[appender-heartbeat] data error. wrapper:{}", JSON.toJSONString(wrapper));
+                continue;
+            }
             JSONObject json = JSON.parseObject(packet.toString());
             String dbSchema = wrapper.getPairValue("SCHEMA_NAME").toString();
             String tableName = wrapper.getPairValue("TABLE_NAME").toString();

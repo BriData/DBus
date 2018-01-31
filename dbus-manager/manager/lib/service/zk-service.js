@@ -20,8 +20,8 @@ module.exports = {
         var url = $.url(restUrl, "/zookeeper/loadSubTreeOfPath?path="+path);
         request.get({url: url, forever: true}, $.resWrapper(cb));
     },
-    loadZkTreeByDsName: function (dsName, cb) {
-        var url = $.url(restUrl, "/zookeeper/loadZkTreeByDsName/"+dsName);
+    loadZkTreeByDsName: function (dsName, dsType, cb) {
+        var url = $.url(restUrl, "/zookeeper/loadZkTreeByDsName/"+dsName+"/"+dsType);
         request.get({url: url, forever: true}, $.resWrapper(cb));
     },
     cloneConfFromTemplate:function(param, cb){
@@ -100,8 +100,8 @@ module.exports = {
     },
 */
     deleteZkNodeOfPath: function (path, cb) {
-        var url = $.url(restUrl, "/zookeeper/deleteZkNodeOfPath?path="+path);
-        request.get({url: url, forever: true}, $.resWrapper(cb));
+        var url = $.url(restUrl, "/zookeeper/deleteZkNodeOfPath");
+        request.get({url: url, json:{path:path}, forever: true}, $.resWrapper(cb));
     },
 
     loadLevelOfPath: function (path, cb) {

@@ -21,31 +21,37 @@
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import avro.shaded.com.google.common.collect.Maps;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.utils.Utils;
+import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
+import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Pair;
 import com.creditease.dbus.stream.common.appender.utils.PairWrapper;
-import com.creditease.dbus.commons.DbusMessage;
-import com.creditease.dbus.commons.DbusMessageBuilder;
-import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
-import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import static com.creditease.dbus.stream.common.Constants.CacheNames;
 import static com.creditease.dbus.stream.common.Constants.MessageBodyKey;
 
 /**
- * Created by Shrimp on 16/7/1.
+ * Created by zhangyf on 16/7/1.
  */
 public class BoltCommandHandlerHelper {
 
@@ -55,7 +61,7 @@ public class BoltCommandHandlerHelper {
         String key = Utils.buildDataTableCacheKey(schema, table);
         // 修改data table的status字段
         DataTable dataTable = ThreadLocalCache.get(CacheNames.DATA_TABLES, key);
-        if(dataTable == null) {
+        if (dataTable == null) {
             logger.error("Table [{}.{}] not found", schema, table);
             throw new IllegalArgumentException("table not found");
         }
@@ -76,7 +82,7 @@ public class BoltCommandHandlerHelper {
 
         // 同步修改数据库
         DBFacadeManager.getDbFacade().updateTableStatus(dataTable.getId(), status);
-        if(DataTable.STATUS_ABORT.equals(status)) {
+        if (DataTable.STATUS_ABORT.equals(status)) {
             logger.warn("Table [{}.{}] was changed, status [{} -> {}]", schema, table, ostatus, status);
         } else {
             logger.info("Table [{}.{}] was changed, status [{} -> {}]", schema, table, ostatus, status);
@@ -105,7 +111,8 @@ public class BoltCommandHandlerHelper {
             Object value = record.get(key);
             // 分离存储是否关心顺序的key-value
             if (noorderKeys.contains(field.name())) {
-                wrapper.addProperties(key, value);
+                //wrapper.addProperties(key, value);
+                addPairWrapperProperties(wrapper, key, value);
             }
         }
 
@@ -119,8 +126,12 @@ public class BoltCommandHandlerHelper {
         mergeMap(beforeMap, afterMap);
 
         for (Map.Entry<String, Object> entry : beforeMap.entrySet()) {
-            if(!entry.getKey().endsWith(MessageBodyKey.IS_MISSING_SUFFIX)) {
-                wrapper.addPair(new Pair<>(entry.getKey(), CharSequence.class.isInstance(entry.getValue())?entry.getValue().toString():entry.getValue()));
+            if (!entry.getKey().endsWith(MessageBodyKey.IS_MISSING_SUFFIX)) {
+                if ((Boolean) beforeMap.get(entry.getKey() + MessageBodyKey.IS_MISSING_SUFFIX)) {
+                    wrapper.addMissingField(entry.getKey());
+                }
+                //wrapper.addPair(new Pair<>(entry.getKey(), CharSequence.class.isInstance(entry.getValue()) ? entry.getValue().toString() : entry.getValue()));
+                addPairWrapperValue(wrapper, entry.getKey(), entry.getValue());
             }
         }
 
@@ -137,7 +148,8 @@ public class BoltCommandHandlerHelper {
             Object value = record.get(key);
             // 分离存储是否关心顺序的key-value
             if (noorderKeys.contains(field.name())) {
-                wrapper.addProperties(key, value);
+                //wrapper.addProperties(key, value);
+                addPairWrapperProperties(wrapper, key, value);
             }
         }
 
@@ -146,8 +158,11 @@ public class BoltCommandHandlerHelper {
         Map<String, Object> beforeMap = convert2map(before);
 
         for (Map.Entry<String, Object> entry : beforeMap.entrySet()) {
-            if(!entry.getKey().endsWith(MessageBodyKey.IS_MISSING_SUFFIX)) {
-                wrapper.addPair(new Pair<>(entry.getKey(), CharSequence.class.isInstance(entry.getValue())?entry.getValue().toString():entry.getValue()));
+            if (!entry.getKey().endsWith(MessageBodyKey.IS_MISSING_SUFFIX)) {
+                //wrapper.addPair(new Pair<>(entry.getKey(), CharSequence.class.isInstance(entry.getValue()) ? entry.getValue().toString() : entry.getValue()));
+                addPairWrapperValue(wrapper, entry.getKey(), entry.getValue());
+            } else if ((Boolean) entry.getValue()) {
+                wrapper.addMissingField(entry.getKey());
             }
         }
 
@@ -158,11 +173,12 @@ public class BoltCommandHandlerHelper {
         return (T) record.get(key);
     }
 
-    private static void mergeMap(Map<String,Object> m0, Map<String, Object> m) {
+    private static void mergeMap(Map<String, Object> m0, Map<String, Object> m) {
         for (Map.Entry<String, Object> entry : m.entrySet()) {
-            if(!entry.getKey().endsWith(MessageBodyKey.IS_MISSING_SUFFIX)) {
-                if(!(Boolean)m.get(entry.getKey()+MessageBodyKey.IS_MISSING_SUFFIX)) {
+            if (!entry.getKey().endsWith(MessageBodyKey.IS_MISSING_SUFFIX)) {
+                if (!(Boolean) m.get(entry.getKey() + MessageBodyKey.IS_MISSING_SUFFIX)) {
                     m0.put(entry.getKey(), entry.getValue());
+                    m0.put(entry.getKey() + MessageBodyKey.IS_MISSING_SUFFIX, false);
                 }
             }
         }
@@ -184,20 +200,93 @@ public class BoltCommandHandlerHelper {
         setMetaChangeFlag(schema, tableName, DataTable.META_FLAG_CHANGED);
         logger.info("Table[{}.{}] meta change flag was set.", schema, tableName);
     }
+
     public static void clearMetaChangeFlag(String schema, String tableName) {
         setMetaChangeFlag(schema, tableName, DataTable.META_FLAG_DEFAULT);
         logger.info("Table[{}.{}] meta change flag was clean.", schema, tableName);
     }
+
     private static void setMetaChangeFlag(String schema, String tableName, int flag) {
         // 修改缓存
         DataTable table = ThreadLocalCache.get(Constants.CacheNames.DATA_TABLES, Joiner.on(".").join(schema, tableName));
 
-        if(table == null) {
+        if (table == null) {
             logger.warn("No table found by schema:{},table:{}", schema, tableName);
             return;
         }
         // 修改数据库字段值
         DBFacadeManager.getDbFacade().updateMetaChangeFlag(table.getId(), flag);
         table.setMetaChangeFlg(flag);
+    }
+
+    public static void onBuildMessageError(String errId, MetaVersion version, Exception e) {
+        Producer<String, String> producer = null;
+        try {
+            // 修改表的状态为：ABORT
+            BoltCommandHandlerHelper.changeDataTableStatus(version.getSchema(), version.getTable(), DataTable.STATUS_ABORT);
+            producer = createProducer();
+            // 发送control message 通知appender所有线程reload，同步状态
+            ControlMessage message = new ControlMessage(System.currentTimeMillis(), ControlType.APPENDER_RELOAD_CONFIG.name(), BoltCommandHandlerHelper.class.getName());
+            ProducerRecord<String, String> record = new ProducerRecord<>(Utils.getDatasource().getControlTopic(), message.getType(), message.toJSONString());
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    logger.error("Send control message error.{}", message.toJSONString(), exception);
+                }
+            });
+
+            // 发邮件
+            ControlMessage gm = new ControlMessage(System.currentTimeMillis(), ControlType.COMMON_EMAIL_MESSAGE.toString(), BoltCommandHandlerHelper.class.getName());
+
+            gm.addPayload("subject", "DBus生成消息异常报警");
+            gm.addPayload("contents", String.format("[%s]dbus-stream 生成dbus message失败：%s/%s/%s，原因：%s", errId, Utils.getDatasource().getDsName(), version.getSchema(), version.getTable(), e.getMessage()));
+            gm.addPayload("datasource_schema", Utils.getDatasource().getDsName() + "/" + version.getSchema());
+
+            String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.GLOBAL_EVENT_TOPIC);
+            record = new ProducerRecord<>(topic, gm.getType(), gm.toJSONString());
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    logger.error("Send global event error.{}", exception.getMessage());
+                }
+            });
+        } catch (Exception e1) {
+            logger.error("exception data process error.", e1);
+        } finally {
+            if (producer != null) producer.close();
+        }
+    }
+
+
+    public static void addPairWrapperProperties(PairWrapper<String, Object> pw, String key, Object value) {
+        if (value instanceof GenericData.Array) {
+            GenericData.Array array = (GenericData.Array) value;
+            List<Object> list = Lists.newArrayList();
+            for (Object v : array) {
+                list.add(CharSequence.class.isInstance(v) ? v.toString() : v);
+            }
+            pw.addProperties(key, list);
+        } else {
+            pw.addProperties(key, CharSequence.class.isInstance(value) ? value.toString() : value);
+        }
+    }
+
+    public static void addPairWrapperValue(PairWrapper<String, Object> pw, String key, Object value) {
+        if (value instanceof GenericData.Array) {
+            GenericData.Array array = (GenericData.Array) value;
+            List<Object> list = Lists.newArrayList();
+            for (Object v : array) {
+                list.add(CharSequence.class.isInstance(v) ? v.toString() : v);
+            }
+            pw.addPair(new Pair<>(key, list));
+        } else {
+            pw.addPair(new Pair<>(key, CharSequence.class.isInstance(value) ? value.toString() : value));
+        }
+    }
+
+    private static Producer<String, String> createProducer() throws Exception {
+        Properties props = PropertiesHolder.getProperties(Constants.Properties.PRODUCER_CONFIG);
+        props.setProperty("client.id", BoltCommandHandlerHelper.class.getName());
+
+        Producer<String, String> producer = new KafkaProducer<>(props);
+        return producer;
     }
 }

@@ -37,6 +37,10 @@ public class ZkFileConfigResource extends FileConfigResource<ZkVo> {
             conf.setZkSessionTimeout(Integer.parseInt(prop.getProperty("zk.connection.timeout")));
             conf.setZkRetryInterval(Integer.parseInt(prop.getProperty("zk.retry.interval")));
             conf.setConfigPath(prop.getProperty("dbus.heartbeat.config.path"));
+            conf.setLeaderPath(prop.getProperty("dbus.heartbeat.leader.path"));
+            conf.setMaas_configPath(prop.getProperty("dbus.heartbeat.maas.config.path"));
+            conf.setMaas_consumerPath(prop.getProperty("dbus.heartbeat.maas.consumer.path"));
+            conf.setMaas_producerPath(prop.getProperty("dbus.heartbeat.maas.producer.path"));
         } catch (Exception e) {
             throw new RuntimeException("parse config resource " + name + " error!");
         }

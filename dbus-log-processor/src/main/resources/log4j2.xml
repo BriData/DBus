@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="GB2312"?>
+<configuration status="OFF">
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %l - %msg%n" />
+        </Console>
+        <File name="dbus.log" fileName="logs/appender.log" append="false">
+            <PatternLayout
+                pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n" />
+        </File>
+        <File name="log" fileName="logs/appender.log" append="false">
+            <PatternLayout
+                pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n" />
+        </File>
+        <File name="storm.log" fileName="logs/storm.log" append="false">
+            <PatternLayout
+                pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n" />
+        </File>
+    </appenders>
+    <loggers>
+        <logger name="com.creditease" level="INFO" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="dbus.log" />
+        </logger>
+        <logger name="org.apache.storm" level="INFO" additivity="false">
+            <appender-ref ref="storm.log" />
+        </logger>
+        <root level="info">
+            <appender-ref ref="log" />
+        </root>
+    </loggers>
+</configuration>
+
+

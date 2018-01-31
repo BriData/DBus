@@ -20,7 +20,9 @@
 
 package com.creditease.dbus.stream.dispatcher.tools;
 
-public class FullyOffset {
+import java.io.Serializable;
+
+public class FullyOffset implements Serializable {
     private long kafkaOffset;
     private int partitionOffset;
     private int subOffset;

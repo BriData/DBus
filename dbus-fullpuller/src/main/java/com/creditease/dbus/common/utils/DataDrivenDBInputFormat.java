@@ -145,14 +145,14 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
         //分片大小
         int splitShardSize = dbConfiguration.getSplitShardSize();
         //构建monitor节点路径
-        String dbNameSpace = dbConfiguration.buildSlashedNameSpace(dataSourceInfo);
+        String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
         //获取物理表
         String[] physicalTables = dbConfiguration.getString(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_KEY)
                 .split(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER);
-        //获取表分区
-        List<String> tablePartitions = (List<String>) dbConfiguration.getConfProperties()
+        //获取表分区信息
+        Map tablePartitionsMap = (Map) dbConfiguration.getConfProperties()
                 .get(DBConfiguration.TABEL_PARTITIONS);
-        LOG.info("Physical Tables count:{}; Table Partitions count:{}.", physicalTables.length, tablePartitions.size());
+        LOG.info("Physical Tables count:{}; ", tablePartitionsMap.size());
 
         boolean hasNotProperSplitCol = StringUtils.isBlank(splitCol);
         int totalRows = 0;
@@ -160,19 +160,16 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
         if (hasNotProperSplitCol) {
             //如果不分片的情况
             for (String table : physicalTables) {
+                List<String> tablePartitions = (List<String>) tablePartitionsMap.get(table);
+                LOG.info("{} Partitions count:{}.", table, tablePartitions.size());
                 for (String tablePartition : tablePartitions) {
                     int totalRowsOfCurShard = dbManager.queryTotalRows(table, splitCol, tablePartition);
                     totalRows = totalRows + totalRowsOfCurShard;
                     totalShardsCount++;
                     //每算出一个分表情况 就更新一次
-                    FullPullHelper.updateMonitorSplitPartitionInfo(zkService, dbNameSpace, totalShardsCount, totalRows);
+                    FullPullHelper.updateMonitorSplitPartitionInfo(zkService, progressInfoNodePath, totalShardsCount, totalRows);
                     LOG.info("Physical Table:{} - Partition:{} - Total Count:{}.", table, tablePartition, totalRowsOfCurShard);
-                }
-            }
-            LOG.info("Not found proper column for splitting. Will generate 1=1 split(s).");
 
-            for (String table : physicalTables) {
-                for (String tablePartition : tablePartitions) {
                     InputSplit inputSplit = new DataDrivenDBInputFormat.DataDrivenDBInputSplit(-1, "1", " = ", "1",
                             " = ", "1");
                     inputSplit.setTargetTableName(table);
@@ -180,6 +177,7 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
                     inputSplitList.add(inputSplit);
                 }
             }
+            LOG.info("Not found proper column for splitting. Will generate 1=1 split(s).");
 
             allInfoMap.put(Constants.TABLE_SPLITTED_TOTAL_ROWS_KEY, totalRows);
             allInfoMap.put(Constants.TABLE_SPLITTED_SHARD_SPLITS_KEY, inputSplitList);
@@ -190,7 +188,7 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
             String dsType = dbConfiguration.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
             // 仅mysql需要考虑设置collate
             if (dsType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())) {
-                FullPullHelper.getConfFromZk(Constants.ZkTopoConfForFullPull.COMMON_CONFIG,
+                pullCollate = FullPullHelper.getConfFromZk(Constants.ZkTopoConfForFullPull.COMMON_CONFIG,
                         DataPullConstants.PULL_COLLATE_KEY);
                 pullCollate = (pullCollate != null) ? pullCollate : "";
             }
@@ -226,6 +224,8 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
             LOG.info("pullCollate=" + pullCollate);
 
             for (String table : physicalTables) {
+                List<String> tablePartitions = (List<String>) tablePartitionsMap.get(table);
+                LOG.info("{} Partitions count:{}.", table, tablePartitions.size());
                 for (String tablePartition : tablePartitions) {
                     int totalRowsOfCurShard = dbManager.queryTotalRows(table, splitCol, tablePartition);
                     // 为减少和客户的约定，不要求客户提交分片数目。此处分片数目利用fetchsize计算得来
@@ -238,7 +238,7 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
                     inputSplitList.addAll(dbManager.querySplits(table, splitCol, tablePartition, splitterStyle, pullCollate,
                             numSplitsOfCurShard, this));
 
-                    FullPullHelper.updateMonitorSplitPartitionInfo(zkService, dbNameSpace, totalShardsCount, totalRows);
+                    FullPullHelper.updateMonitorSplitPartitionInfo(zkService, progressInfoNodePath, totalShardsCount, totalRows);
                     LOG.info("Physical Table:{} - Partition:{} - Total Count:{}, Shards count:{}.",table, tablePartition, totalRowsOfCurShard, numSplitsOfCurShard);
                 }
             }

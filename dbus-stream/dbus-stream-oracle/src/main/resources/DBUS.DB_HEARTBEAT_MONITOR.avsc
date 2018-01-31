@@ -1,0 +1,95 @@
+{
+  "type" : "record",
+  "name" : "DB_HEARTBEAT_MONITOR",
+  "namespace" : "DBUS",
+  "fields" : [ {
+    "name" : "table",
+    "type" : "string"
+  }, {
+    "name" : "op_type",
+    "type" : "string"
+  }, {
+    "name" : "op_ts",
+    "type" : "string"
+  }, {
+    "name" : "current_ts",
+    "type" : "string"
+  }, {
+    "name" : "pos",
+    "type" : "string"
+  }, {
+    "name" : "primary_keys",
+    "type" : {
+      "type" : "array",
+      "items" : "string"
+    }
+  }, {
+    "name" : "tokens",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "default" : { }
+  }, {
+    "name" : "before",
+    "type" : [ "null", {
+      "type" : "record",
+      "name" : "columns",
+      "fields" : [ {
+        "name" : "ID",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "ID_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "DS_NAME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "DS_NAME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "SCHEMA_NAME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SCHEMA_NAME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "TABLE_NAME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "TABLE_NAME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "PACKET",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "PACKET_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "CREATE_TIME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "CREATE_TIME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "UPDATE_TIME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "UPDATE_TIME_isMissing",
+        "type" : "boolean"
+      } ]
+    } ],
+    "default" : null
+  }, {
+    "name" : "after",
+    "type" : [ "null", "columns" ],
+    "default" : null
+  } ]
+}

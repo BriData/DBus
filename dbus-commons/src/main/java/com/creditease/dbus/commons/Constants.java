@@ -25,6 +25,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Constants {
+    public static final String VERSION_12 = "1.2";
+    public static final String VERSION_13 = "1.3";
+    public static final String VERSION_14 = "1.4"; //used for mongo
 
     public static final String SYS_PROPS_LOG4J_CONFIG = "log4j.configuration";
     public static final String SYS_PROPS_LOG4J2_CONFIG = "log4j.configurationFile";
@@ -41,12 +44,14 @@ public class Constants {
 
     //顶级目录
     public static final String DBUS_ROOT = "/DBus";
+    public static final String ENCODER_PLUGINS = "/DBus/Commons/encoderPlugins";
 
     //一级目录
     public static final String COMMON_ROOT = DBUS_ROOT + "/Commons";
     public static final String MYSQL_PROPERTIES = "mysql.properties";
     public static final String GLOBAL_PROPERTIES = "global.properties";
 
+    public static final String  TEMPLATE_NODE_NAME = "/ConfTemplates";
     public static final String DBUS_CONF_TEMPLATE_ROOT = DBUS_ROOT + "/ConfTemplates";
 
     public static final String CONTROL_MESSAGE_RESULT_ROOT = DBUS_ROOT + "/ControlMessageResult";
@@ -66,18 +71,36 @@ public class Constants {
 
     public static final String STREAMING_ROOT = DBUS_ROOT + "/Streaming";
 
+    public static final String RULE_TYPE_STRING = "string";
+
+    public static final String RULE_TYPE_REGEX = "regex";
+
+    public static final String RULE_TYPE_INDEX = "index";
+
+    public static final String PREFIX_OR_APPEND_BEFORE = "before";
+
+    public static final String PREFIX_OR_APPEND_AFTER = "after";
+
+    public static final String TRIM_LEFT = "left";
+    public static final String TRIM_RIGHT = "right";
+    public static final String TRIM_BOTH = "both";
+    public static final String TRIM_ALL = "all";
+
+    public static final String LOG_PROCESSOR = "log-processor";
+
     //full puller
     public static final String HEARTBEAT_CONTROL_NODE = HEARTBEAT_ROOT + "/Control";
     public static final String FULL_SPLITTING_PROPS_ROOT = "dbus-fulldata-splitter";
     public static final String FULL_PULLING_PROPS_ROOT = "dbus-fulldata-puller";
+    public static final String FULL_SPLITTER_TYPE = "full-splitter";
+    public static final String FULL_PULLER_TYPE = "full-puller";
 
     public static final String CANAL_ROOT = DBUS_ROOT + "/Canal";
-
 
     public static final String DB_CONF_PROP_KEY_URL = "url";
     public static final String DB_CONF_PROP_KEY_USERNAME = "username";
     public static final String DB_CONF_PROP_KEY_PASSWORD = "password";
-    
+
     public static final String FULL_PULL_TABLE = "DB_FULL_PULL_REQUESTS";
     public static final String META_SYNC_EVENT_TABLE = "META_SYNC_EVENT";
     public static final String HEARTBEAT_MONITOR_TABLE = "DB_HEARTBEAT_MONITOR";
@@ -101,8 +124,8 @@ public class Constants {
     public static final int NEED_ROLLBACK_CANAL=2;
     public static final int SEND_NOT_COMPLETED = 3;
     public static final String EXTRACTOR_TOPOLOGY_ID = "extractor.topology.id";
-    
-   /**
+
+    /**
      * org.apache.storm.Config.java 中存储的数据的key值
      */
     public static class StormConfigKey {
@@ -171,7 +194,8 @@ public class Constants {
         /** 正在等待拉全量状态 */
         public static final String DATA_STATUS_WAITING = "waiting";
     }
-    
+
+
     public static class ZkTopoConfForFullPull {
         public static final String GLOBAL_FULLPULLER_TOPO_PREFIX = "global-";
         // config keys
@@ -182,6 +206,7 @@ public class Constants {
         public static final String MYSQL_CONFIG = "mysql";
 
         public static final String DATASOURCE_NAME = "datasource.name";
+        public static final String OUTPUT_VERSION = "output.version";
         public static final String ID_GENERATOR_ZK = "id.generator.zk";
         public static final String FULL_PULL_MONITORING_ZK_CONN_STR = "monitor.zk";
         public static final String SPOUT_MAX_FLOW_THRESHOLD = "spout.max.flow.threshold";
@@ -195,26 +220,26 @@ public class Constants {
         public static final String TOPOS_KILL_WAIT_TIME_FOR_RETRIES = "fullpull.topos.kill.waittime.for.retries";
         public static final String TOPOS_KILL_WAIT_TIMEOUT = "fullpull.topos.kill.timeout";
         public static final String TOPOS_KILL_STORM_API_WAITTIME_PARAM = "topo.kill.storm.api.waittime.param";
-        
+
         public static final String MYSQL_DRIVER_NAME = "jdbc.driver.name";
         public static final String MYSQL_URL = "db.url";
         public static final String MYSQL_USER = "user";
         public static final String MYSQL_PASSWORD = "password";
-        
+
         // config default values
         public static final long HEARTBEAT_MONITOR_TIME_INTERVAL_DEFAULT_VAL = 60L; //单位：秒 原来设置值为180（3min）;
-        
+
         public static final long TOPOS_KILL_WAIT_TIME_FOR_RETRIES_DEFAULT_VAL =  180L;
         public static final long TOPOS_KILL_WAIT_TIMEOUT_DEFAULT_VAL =  1200L;
-        public static final int TOPOS_KILL_STORM_API_WAITTIME_PARAM_DEFAULT_VAL = 15;        
+        public static final int TOPOS_KILL_STORM_API_WAITTIME_PARAM_DEFAULT_VAL = 15;
     }
-    
+
     public static final String TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER = ";";
     public static final String TABLE_SPLITTED_PHYSICAL_TABLES_KEY = "PHYSICAL_TABLES";
     public static final String TABLE_SPLITTED_TOTAL_ROWS_KEY = "AllPhysicalTablesTotalRows";
-//    public static final String TABLE_SPLITTED_SHARDS_COUNT_KEY = "AllPhysicalTablesShardsCount";
+    //    public static final String TABLE_SPLITTED_SHARDS_COUNT_KEY = "AllPhysicalTablesShardsCount";
     public static final String TABLE_SPLITTED_SHARD_SPLITS_KEY = "AllPhysicalTablesSplits";
-    
+
     public static final String FULL_PULL_STATUS_SPLITTING = "splitting";
     public static final String FULL_PULL_STATUS_PULLING = "pulling";
     public static final String FULL_PULL_STATUS_ENDING = "ending";

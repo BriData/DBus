@@ -23,6 +23,7 @@ var UpdateTable = React.createClass({
     },
     componentDidMount: function() {
         store.actions.initialLoad();
+        ReactDOM.findDOMNode(this.refs.description).value = this.props.location.state.passParam.description;
         ReactDOM.findDOMNode(this.refs.physicalTableRegex).value = this.props.location.state.passParam.physicalTableRegex;
         ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value = this.props.location.state.passParam.outputBeforeUpdateFlg;
 
@@ -34,6 +35,7 @@ var UpdateTable = React.createClass({
     handleSubmit: function() {
         var formdata = {
             id: 0,
+            description: ReactDOM.findDOMNode(this.refs.description).value,
             physicalTableRegex: ReactDOM.findDOMNode(this.refs.physicalTableRegex).value,
             outputBeforeUpdateFlg: ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value
         };
@@ -62,6 +64,13 @@ var UpdateTable = React.createClass({
                                 <label for="physicalTableRegex" className="col-sm-2 control-label">PTRegex</label>
                                 <div className="col-sm-10">
                                     <input className="form-control" ref="physicalTableRegex"/>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label for="description" className="col-sm-2 control-label">description</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" ref="description"/>
                                 </div>
                             </div>
 

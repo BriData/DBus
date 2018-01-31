@@ -38,7 +38,6 @@ public interface DataSchemaMapper {
     int insert(DataSchema dataSchema);
     int update(DataSchema dataSchema);
     int changeStatus(@Param("id")long id, @Param("status")String status);
-
     List<DataSchema> search(Map<String, Object> param);
-
+    int deleteBySchemaId(int id);
 }

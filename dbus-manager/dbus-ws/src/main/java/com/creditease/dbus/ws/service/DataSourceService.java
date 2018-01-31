@@ -162,4 +162,11 @@ public class DataSourceService {
         return page;
     }
 
+    public int deleteDataSourceById(int dsId) {
+        int result = template.query((session, args) -> {
+            DataSourceMapper mapper = session.getMapper(DataSourceMapper.class);
+            return mapper.deleteByDsId(dsId);
+        });
+        return result;
+    }
 }

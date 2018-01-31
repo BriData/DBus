@@ -18,6 +18,10 @@ module.exports = {
         console.log("request url:" + url);
         request.post({url: url, json: param, forever: true}, $.resWrapper(cb));
     },
+    deleteSchema: function (param,cb) {
+        var url = $.url(restUrl, "/dataschemas/deleteSchema");
+        request.get({url: url, json: param, forever: true}, $.resWrapper(cb));
+    },
     listManagerSchemaByDsId:function (dsId,cb) {
         var url = $.url(restUrl, "/dataschemas/dsId");
         var id = parseInt(dsId);

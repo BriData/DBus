@@ -100,6 +100,12 @@
         where id = #{id}
     </update>
 
-
+    <delete id="deleteBySchemaId">
+        delete ts,tt,tv,tm from t_data_schema ts
+        left join t_data_tables tt on ts.id = tt.schema_id
+        left join t_meta_version tv on tt.id = tv.table_id
+        left join t_table_meta tm on tv.id = tm.ver_id
+        where ts.id = #{id}
+    </delete>
 
 </mapper>

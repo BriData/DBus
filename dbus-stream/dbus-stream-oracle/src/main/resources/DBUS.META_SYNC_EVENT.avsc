@@ -1,0 +1,95 @@
+{
+  "type" : "record",
+  "name" : "META_SYNC_EVENT",
+  "namespace" : "DBUS",
+  "fields" : [ {
+    "name" : "table",
+    "type" : "string"
+  }, {
+    "name" : "op_type",
+    "type" : "string"
+  }, {
+    "name" : "op_ts",
+    "type" : "string"
+  }, {
+    "name" : "current_ts",
+    "type" : "string"
+  }, {
+    "name" : "pos",
+    "type" : "string"
+  }, {
+    "name" : "primary_keys",
+    "type" : {
+      "type" : "array",
+      "items" : "string"
+    }
+  }, {
+    "name" : "tokens",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "default" : { }
+  }, {
+    "name" : "before",
+    "type" : [ "null", {
+      "type" : "record",
+      "name" : "columns",
+      "fields" : [ {
+        "name" : "SERNO",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "SERNO_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "TABLE_OWNER",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "TABLE_OWNER_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "TABLE_NAME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "TABLE_NAME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "VERSION",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "VERSION_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "EVENT_TIME",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "EVENT_TIME_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "DDL_TYPE",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "DDL_TYPE_isMissing",
+        "type" : "boolean"
+      }, {
+        "name" : "DDL",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+        "name" : "DDL_isMissing",
+        "type" : "boolean"
+      } ]
+    } ],
+    "default" : null
+  }, {
+    "name" : "after",
+    "type" : [ "null", "columns" ],
+    "default" : null
+  } ]
+}

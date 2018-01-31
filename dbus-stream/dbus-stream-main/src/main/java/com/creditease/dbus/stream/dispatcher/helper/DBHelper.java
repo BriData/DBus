@@ -20,8 +20,8 @@
 
 package com.creditease.dbus.stream.dispatcher.helper;
 
-import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.commons.ConnectionProvider;
+import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

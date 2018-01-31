@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import com.creditease.dbus.commons.Constants;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrTokenizer;
@@ -522,19 +523,27 @@ public class DBConfiguration {
       String dbSchema = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
       String tableName = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
       String version = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
-      // 约定格式：database.db.table.v2.dbpar01.tablepar01。
+      // 约定格式：database.db.table.v2.dbpar01.tablepar01
       return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", tablePartition);
   }
 
-  public String buildSlashedNameSpace(String dataSourceInfo) {
+  public String buildSlashedNameSpace(String dataSourceInfo, String outputVersion) {
       String dbName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_NAME));
       JSONObject ds = JSONObject.parseObject(dataSourceInfo);
+      String timestamp = ds.getString(DataPullConstants.FullPullInterfaceJson.TIMESTAMP_KEY);
+      timestamp = timestamp.replace(":", ".");
       JSONObject payload = ds.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
       String dbSchema = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
       String tableName = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
-      // String version = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
-      String batchNo = payload.getString(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY);
-      return String.format("%s/%s/%s/%s", dbName, dbSchema, tableName, batchNo);
+
+      if (outputVersion.equals(Constants.VERSION_12)) {
+          String versionNo = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
+          return String.format("%s/%s/%s/%s", dbName, dbSchema, tableName, versionNo);
+      } else {
+          String batchNo = payload.getString(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY);
+          return String.format("%s/%s/%s/%s - %s", dbName, dbSchema, tableName, timestamp, batchNo);
+      }
+
   }
 
   public String buildNameSpaceForZkUidFetch(String dataSourceInfo) {
@@ -543,18 +552,18 @@ public class DBConfiguration {
   
   }
   
-  public String buildDottedNameSpace(String dataSourceInfo){
-      String dbName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_NAME));
-      JSONObject ds=JSONObject.parseObject(dataSourceInfo);
-      JSONObject payload = ds.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
-      //      String dbSchema = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_SCHEMA));
-      //      String tableName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.TABLE_NAME));
-      String dbSchema = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
-      String tableName = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
-      String version = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
-      return String.format("%s.%s.%s.%s", dbName, dbSchema, tableName, version);
-    
-  }
+//  public String buildDottedNameSpace(String dataSourceInfo){
+//      String dbName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_NAME));
+//      JSONObject ds=JSONObject.parseObject(dataSourceInfo);
+//      JSONObject payload = ds.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
+//      //      String dbSchema = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_SCHEMA));
+//      //      String tableName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.TABLE_NAME));
+//      String dbSchema = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
+//      String tableName = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
+//      String version = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
+//      return String.format("%s.%s.%s.%s", dbName, dbSchema, tableName, version);
+//
+//  }
   
   public String getDbNameAndSchema() {
       String dbName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_NAME));

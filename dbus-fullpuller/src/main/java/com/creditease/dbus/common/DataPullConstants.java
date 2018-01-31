@@ -25,6 +25,7 @@ public class DataPullConstants {
 
     public static final String DATA_SOURCE_INFO = "data.source.param";
     public static final String DATA_SOURCE_NAME_SPACE = "dsNameSpace";
+    public static final String DATA_MONITOR_ZK_PATH = "monitor.ZKPath";
     public static final String DATA_SOURCE_NAME = "dsName";
     public static final String DATA_SOURCE_TYPE = "dsType";
     public static final String DATA_SOURCE_TOPIC = "topic";
@@ -40,7 +41,7 @@ public class DataPullConstants {
     public static final String SPLITTER_STRING_STYLE_DEFAULT = "all";
     
     public static final String FULL_DATA_PULL_REQ_RESULT_TOPIC= "resultTopic";
-    // public static final String FULL_DATA_PULL_REQ_INCREASE_VERSION= "INCREASE_VERSION";
+    public static final String FULL_DATA_PULL_REQ_INCREASE_VERSION= "INCREASE_VERSION";
     public static final String FULL_DATA_PULL_REQ_INCREASE_BATCH_NO= "INCREASE_BATCH_NO";
     
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_DATA_SOURCE_ID = "DBUS_DATASOURCE_ID";
@@ -55,11 +56,11 @@ public class DataPullConstants {
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_INPUT_CONDITIONS ="INPUT_CONDITIONS";
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_PULL_TARGET_COLS ="PULL_TARGET_COLS";    
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_OP_TS = "OP_TS";
-    
     public static final String DATA_CHUNK_SPLIT = "dataChunkSplit";
     public static final String DATA_CHUNK_SPLIT_INDEX = "dataChunkSplitIndex";
     public static final String DATA_CHUNK_COUNT = "dataChunkCount";
     public static final String DATA_EVENT_FULL_PULL_REQ = "FULL_DATA_PULL_REQ";
+    public static final String DATA_EVENT_INDEPENDENT_FULL_PULL_REQ = "FULL_DATA_INDEPENDENT_PULL_REQ";
     public static final String COMMAND_FULL_PULL_STOP = "FULL_DATA_PULL_STOP";
     public static final String COMMAND_FULL_PULL_RELOAD_CONF = "FULL_DATA_PULL_RELOAD_CONF";
     
@@ -118,6 +119,8 @@ public class DataPullConstants {
     
     public static class FullPullInterfaceJson {
         public static final String PAYLOAD_KEY = "payload";
+        public static final String ID_KEY = "id";
+        public static final String TIMESTAMP_KEY = "timestamp";
         public static final String FROM_KEY = "from";
         public static final String COMPLETE_TIME_KEY = "COMPLETE_TIME";
         public static final String TYPE_KEY = "type";

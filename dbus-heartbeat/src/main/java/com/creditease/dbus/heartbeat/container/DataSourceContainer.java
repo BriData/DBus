@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,16 +25,16 @@ import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.dbcp.BasicDataSource;
-
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.vo.JdbcVo;
+
+import org.apache.commons.dbcp.BasicDataSource;
 
 public class DataSourceContainer {
 
     private static DataSourceContainer container;
 
-    private ConcurrentHashMap<String, BasicDataSource> cmap = 
+    private ConcurrentHashMap<String, BasicDataSource> cmap =
             new ConcurrentHashMap<String, BasicDataSource>();
 
     private DataSourceContainer() {
@@ -62,6 +62,19 @@ public class DataSourceContainer {
             bds.setMaxActive(conf.getMaxActive());
             bds.setMaxIdle(conf.getMaxIdle());
             bds.setMinIdle(conf.getMinIdle());
+            // validQuery 只给test idle 使用，不给 test Borrow使用， 为什么？
+            // 发现 oracle版本 insert心跳被block， 下面的link 有人说 可以通过设置TestOnBorrow=false 解决。
+            // https://stackoverflow.com/questions/4853732/blocking-on-dbcp-connection-pool-open-and-close-connnection-is-database-conne
+            bds.setTestOnBorrow(false);
+            bds.setTestWhileIdle(false);
+            /*bds.setTimeBetweenEvictionRunsMillis(1000 * 300);
+            if (org.apache.commons.lang.StringUtils.equals(Constants.CONFIG_DB_TYPE_ORA, conf.getType())) {
+                bds.setValidationQuery("select 1 from dual");
+                bds.setValidationQueryTimeout(1);
+            } else if (org.apache.commons.lang.StringUtils.equals(Constants.CONFIG_DB_TYPE_MYSQL, conf.getType())) {
+                bds.setValidationQuery("select 1");
+                bds.setValidationQueryTimeout(1);
+            }*/
             cmap.put(conf.getKey(), bds);
         } catch (Exception e) {
             LoggerFactory.getLogger().error("[db container initThreadPool key " + conf.getKey() + " datasource error!]", e);

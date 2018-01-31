@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,21 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.creditease.dbus.commons.StatMessage;
+import com.creditease.dbus.enums.DbusDatasourceType;
+import com.creditease.dbus.heartbeat.container.EventContainer;
+import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
+import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
+import com.creditease.dbus.heartbeat.event.AbstractEvent;
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.util.JsonUtil;
+import com.creditease.dbus.heartbeat.vo.PacketVo;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -35,16 +46,8 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
-
-import com.creditease.dbus.commons.StatMessage;
-import com.creditease.dbus.heartbeat.container.EventContainer;
-import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
-import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
-import com.creditease.dbus.heartbeat.event.AbstractEvent;
-import com.creditease.dbus.heartbeat.log.LoggerFactory;
-import com.creditease.dbus.heartbeat.util.JsonUtil;
-import com.creditease.dbus.heartbeat.vo.PacketVo;
 
 public class KafkaConsumerEvent extends AbstractEvent {
 
@@ -57,6 +60,8 @@ public class KafkaConsumerEvent extends AbstractEvent {
     private ConcurrentHashMap<String, PacketVo> zkInfoCache = new ConcurrentHashMap<String, PacketVo>();
 
     protected TopicPartition partition0 = null;
+
+    protected List<TopicPartition> assignTopics = null;
 
     private Long startTime;
 
@@ -88,11 +93,14 @@ public class KafkaConsumerEvent extends AbstractEvent {
         Properties producerProps = HeartBeatConfigContainer.getInstance().getKafkaProducerConfig();
         try {
             dataConsumer = new KafkaConsumer<>(props);
-            partition0 = new TopicPartition(this.topic, 0);
-            dataConsumer.assign(Arrays.asList(partition0));
-            dataConsumer.seekToEnd(Arrays.asList(partition0));
-            KafkaConsumerContainer.getInstances().putConsumer(this.topic, dataConsumer);
+            assignTopics = new ArrayList<>();
+            for (PartitionInfo pif : dataConsumer.partitionsFor(this.topic)) {
+                TopicPartition tp = new TopicPartition(pif.topic(), pif.partition());
+                assignTopics.add(tp);
+            }
 
+            dataConsumer.assign(assignTopics);
+            KafkaConsumerContainer.getInstances().putConsumer(this.topic, dataConsumer);
             statProducer = new KafkaProducer<>(producerProps);
         } catch (Exception e) {
             // TODO Auto-generated catch block
@@ -107,9 +115,9 @@ public class KafkaConsumerEvent extends AbstractEvent {
         try {
             while (isRun.get()) {
                 try {
-                    //跳过拉正在全量的topic
+                    //跳过正在拉全量的topic
                     if (!StringUtils.isEmpty(EventContainer.getInstances().getSkipTargetTopic(this.topic))) {
-                        dataConsumer.seekToEnd(Arrays.asList(partition0));
+                        dataConsumer.seekToEnd(assignTopics);
                         Thread.sleep(1000);
                         continue;
                     }
@@ -157,6 +165,7 @@ public class KafkaConsumerEvent extends AbstractEvent {
                         String dsName = null;
                         String schemaName = null;
                         String tableName = null;
+                        String dsPartition = null;
 
                         boolean isTableOK = true;
 
@@ -186,25 +195,35 @@ public class KafkaConsumerEvent extends AbstractEvent {
                             dsName = vals[2];
                             schemaName = vals[3];
                             tableName = vals[4];
+                            dsPartition = vals[6];
                             if (vals[0].equals("data_increment_data")) {
                                 //有数据来, table正常的情况
                                 // ojjTime
                                 //cpTime = Long.valueOf(vals[8]);
                                 isTableOK = false;
                             } else if (vals[0].equals("data_increment_heartbeat")) {
-                                //新版  time|txTime|status
-                                if (StringUtils.contains(vals[8], "|")) {
-                                    String times[] = StringUtils.split(vals[8], "|");
-                                    cpTime = Long.valueOf(times[0]);
-                                    txTime = Long.valueOf(times[1]);
-                                    if (times.length == 3 && times[2].equals("abort")) {
-                                        //表明 其实表已经abort了，但心跳数据仍然
-                                        //这种情况，只发送stat，不更新zk
-                                        isTableOK = false;
-                                    }
-                                    sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key);
+                                if (StringUtils.equals("_unknown_table_", tableName) &&
+                                    (DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_LOGSTASH)) &&
+                                    (DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_LOGSTASH_JSON)) &&
+                                    (DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_UMS)) &&
+                                    (DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_FILEBEAT)) &&
+                                    (DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_FLUME))) {
+                                    isTableOK = false;
                                 } else {
-                                    LOG.error("it should not be here. key:{}", key);
+                                    //新版  time|txTime|status
+                                    if (StringUtils.contains(vals[8], "|")) {
+                                        String times[] = StringUtils.split(vals[8], "|");
+                                        cpTime = Long.valueOf(times[0]);
+                                        txTime = Long.valueOf(times[1]);
+                                        if (times.length == 3 && times[2].equals("abort")) {
+                                            //表明 其实表已经abort了，但心跳数据仍然
+                                            //这种情况，只发送stat，不更新zk
+                                            isTableOK = false;
+                                        }
+                                        sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key);
+                                    } else {
+                                        LOG.error("it should not be here. key:{}", key);
+                                    }
                                 }
                             }
                         } else {
@@ -214,19 +233,30 @@ public class KafkaConsumerEvent extends AbstractEvent {
 
                         if (isTableOK) {
                             //更新zk表状态时间
-
                             String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-                            path = StringUtils.join(new String[]{path, dsName, schemaName, tableName}, "/");
+                            path = StringUtils.join(new String[]{path, dsName, schemaName, tableName, dsPartition}, "/");
                             // 反序列化packet信息
                             PacketVo packet = deserialize(path, PacketVo.class);
-                            if (packet == null) {
+                            if (packet == null &&
+                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_LOGSTASH)) &&
+                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_LOGSTASH_JSON)) &&
+                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_UMS)) &&
+                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.MONGO)) &&
+                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_FILEBEAT)) &&
+                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_FLUME))) {
                                 continue;
+                            } else {
+                                packet = new PacketVo();
+                                packet.setNode(path);
+                                packet.setType("checkpoint");
                             }
 
                             //积压的msg时也报警，因此读kafka时，读当前时间
                             packet.setTime(cpTime);
-
                             packet.setTxTime(txTime);
+
+                            LoggerFactory.getLogger().info("[kafka-dataConsumer-event] key:{}, packet time:{}, packet txTime:{}",
+                                    key, packet.getTime(), packet.getTxTime());
 
                             //更新cache，避免狂刷 zk
                             updateZkInfoCache(path, packet);
@@ -260,6 +290,7 @@ public class KafkaConsumerEvent extends AbstractEvent {
         }
         LoggerFactory.getLogger().info("[kafka-dataConsumer-event] stop. topic: " + topic + ",t:" + Thread.currentThread().getName());
     }
+
 
     private void sendStatMsg(String dsName, String schemaName, String tableName, long cpTime, long txTime, long curTime, String key) {
         //这个是带有checkpoint的心跳包

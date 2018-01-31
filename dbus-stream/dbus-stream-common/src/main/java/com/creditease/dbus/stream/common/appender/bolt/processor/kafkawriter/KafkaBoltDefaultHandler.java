@@ -50,9 +50,16 @@ public class KafkaBoltDefaultHandler implements BoltCommandHandler {
         EmitData emitData = (EmitData) tuple.getValueByField(Constants.EmitFields.DATA);
         MetaVersion version = emitData.get(EmitData.VERSION);
         DbusMessage message = emitData.get(EmitData.MESSAGE);
+
         String key = Joiner.on(".").join(version.getSchema(), version.getTable());
         reporter.reportStat(key, message.payloadSizeWithoutBefore());
-        logger.debug("report stat on:{},report count:{}", key, message.getPayload().size());
+        if (logger.isDebugEnabled()) {
+            logger.debug("report stat on:{},report count:{}", key, message.getPayload().size());
+            Object offsetObj = emitData.get(EmitData.OFFSET);
+            String offset = offsetObj != null ? offsetObj.toString() : "0";
+            logger.debug("[appender-kafka-writer] before writing message to kafka, offset: {}.", offset);
+        }
+
         listener.writeData(version.getSchema(), version.getTable(), message, tuple);
     }
 }

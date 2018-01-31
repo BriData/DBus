@@ -50,6 +50,8 @@ public class DataTable implements Serializable {
 
     private String dsType;
 
+    private String ctrlTopic;
+
     private Long schemaID;
 
     private String schemaName;
@@ -85,6 +87,8 @@ public class DataTable implements Serializable {
     private String versionsChangeHistory;
 
     private int verChangeNoticeFlg;
+
+    private String description;
 
     public int getOutputBeforeUpdateFlg() {
         return outputBeforeUpdateFlg;
@@ -269,4 +273,19 @@ public class DataTable implements Serializable {
 
     public void setDsType(String dsType) { this.dsType = dsType;}
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getCtrlTopic() {
+        return ctrlTopic;
+    }
+
+    public void setCtrlTopic(String ctrlTopic) {
+        this.ctrlTopic = ctrlTopic;
+    }
 }

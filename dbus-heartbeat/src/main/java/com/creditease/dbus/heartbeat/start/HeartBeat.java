@@ -45,8 +45,9 @@ public abstract class HeartBeat {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + userDir + "/conf/log4j.xml");
-        //System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/conf/log4j.xml");
+//        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + userDir + "/conf/log4j.xml");
+//        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + userDir + "/conf_creditease_setting/log4j.xml");
+        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/conf/log4j.xml");
     }
 
     protected List<IHandler> handlers = new ArrayList<IHandler>();

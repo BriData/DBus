@@ -37,6 +37,7 @@ public class TableVersion {
     private Long eventOffset;
     private Long eventPos;
     private Date updateTime;
+    private String comments;
 
     public Long getId() {
         return id;
@@ -125,4 +126,13 @@ public class TableVersion {
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
     }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
 }

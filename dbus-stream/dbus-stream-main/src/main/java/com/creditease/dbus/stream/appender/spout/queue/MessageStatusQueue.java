@@ -20,9 +20,12 @@
 
 package com.creditease.dbus.stream.appender.spout.queue;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import java.util.*;
+import com.creditease.dbus.commons.DBusConsumerRecord;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by zhangyf on 17/2/23.
@@ -41,7 +44,7 @@ public class MessageStatusQueue {
      * @param record
      * @return
      */
-    public void add(ConsumerRecord<String, byte[]> record) {
+    public void add(DBusConsumerRecord<String, byte[]> record) {
         QueueElement elem = getQueueElement(record.offset());
         if (elem != null) {
             if (elem.isFailed()) {

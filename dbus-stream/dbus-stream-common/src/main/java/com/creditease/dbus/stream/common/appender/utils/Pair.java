@@ -20,13 +20,18 @@
 
 package com.creditease.dbus.stream.common.appender.utils;
 
+import java.io.Serializable;
+
 /**
  * 键值对存储数据结构
- * Created by Shrimp on 16/5/20.
+ * Created by zhangyf on 16/5/20.
  */
-public class Pair<K, V> {
+public class Pair<K, V> implements Serializable {
     private K key;
     private V value;
+
+    public Pair() {
+    }
 
     public Pair(K key, V value) {
         this.key = key;

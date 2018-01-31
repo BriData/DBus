@@ -21,11 +21,28 @@
 package com.creditease.dbus.ws.mapper;
 
 import com.creditease.dbus.ws.domain.DataTableRule;
+import com.creditease.dbus.ws.domain.DataTableRuleGroup;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 public interface DataTableRuleMapper {
-    List<DataTableRule> getDataTableRule(int tableId);
-    int insertDataTableRule(DataTableRule dataTableRule);
-    int deleteDataTableRule(int tableId);
+    /**
+     * 规则组
+     */
+    List<DataTableRuleGroup> getAllRuleGroup(long tableId);
+
+    int updateRuleGroup(DataTableRuleGroup group);
+
+    int deleteRuleGroup(long groupId);
+
+    int addGroup(DataTableRuleGroup group);
+
+    /**
+     * 规则
+     */
+
+    int saveAllRules(List<DataTableRule> rules);
+    List<DataTableRule> getAllRules(long groupId);
+    int deleteRules(long groupId);
 }

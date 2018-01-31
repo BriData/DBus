@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,17 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+
 import com.creditease.dbus.commons.ControlMessage;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.FullPullNodeDetailVo;
-import com.creditease.dbus.commons.FullPullNodeVo;
 import com.creditease.dbus.components.sms.DBusSmsFactory;
 import com.creditease.dbus.components.sms.ISms;
 import com.creditease.dbus.components.sms.SmsMessage;
@@ -43,13 +50,7 @@ import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 
@@ -69,15 +70,6 @@ public class CheckFullPullEvent extends AbstractEvent {
         this.lock = lock;
     }
 
-    private boolean isStr2Num(String str) {
-        try {
-            Long.parseLong(str);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
     //获得zk上/DBUS/FullPuller所有叶子节点
     private void fetchZkNodeRecursively(String parentNode, List<String> resultNodesInfo, CuratorFramework curator) throws Exception {
         List<String> children = curator.getChildren().forPath(parentNode);
@@ -87,7 +79,7 @@ public class CheckFullPullEvent extends AbstractEvent {
             }
         } else {
             String ver = StringUtils.substringAfterLast(parentNode, "/");
-            if(isStr2Num(ver)) {
+            if (!ver.equalsIgnoreCase("null")) {
                 resultNodesInfo.add(parentNode);
             }
         }
@@ -106,23 +98,22 @@ public class CheckFullPullEvent extends AbstractEvent {
         //get all node list
         fetchZkNodeRecursively(fullPullerRootNode,flattedFullpullerNodeName, curator);
 
-        HashMap<String, Integer> map = new HashMap<String, Integer>();
+        HashMap<String, String> map = new HashMap<>();
         for (String znode : flattedFullpullerNodeName) {
             String key = StringUtils.substringBeforeLast(znode, "/");
             String ver = StringUtils.substringAfterLast(znode, "/");
-            Integer version = Integer.parseInt(ver);
             if (map.containsKey(key)) {
-                Integer tempVersion = map.get(key);
-                if (version > tempVersion) {
-                    map.put(key, version);
+                String tempVersion = map.get(key);
+                if (ver.compareTo(tempVersion) > 0) {
+                    map.put(key, ver);
                 }
             } else {
-                map.put(key, version);
+                map.put(key, ver);
             }
         }
 
         List<String> wkList = new ArrayList<String>();
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
             wkList.add(StringUtils.join(new String[] {entry.getKey(), String.valueOf(entry.getValue())}, "/"));
         }
         return wkList;
@@ -133,7 +124,7 @@ public class CheckFullPullEvent extends AbstractEvent {
         CuratorFramework curator = CuratorContainer.getInstance().getCurator();
         HeartBeatVo hbConf = HeartBeatConfigContainer.getInstance().getHbConf();
         // 切片在kafka中的最大堆积数
-        long fullPullSliceMaxPending = hbConf.getFullPullSliceMaxPending();
+        // long fullPullSliceMaxPending = hbConf.getFullPullSliceMaxPending();
         //监控全量拉取zk路径
         String monitorFullPullPath = hbConf.getMonitorFullPullPath();
         while (isRun.get()) {
@@ -141,7 +132,8 @@ public class CheckFullPullEvent extends AbstractEvent {
             try {
                 List<String> latestNodes = filter(monitorFullPullPath, curator);
                 for (String znode :  latestNodes) {
-                    if (!isRun.get())
+
+                    /*if (!isRun.get())
                         break;
                     // 发序列化fullpull节点数据
                     FullPullNodeVo fpNode = deserialize(monitorFullPullPath, FullPullNodeVo.class);
@@ -157,7 +149,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                         LOG.warn("全量拉取过程中切片在kafka中的最大堆积数{},超过预警阀值{},生产者OffSet:{},消费者OffSet:{}.",
                                 new Object[] {String.valueOf(diffVal), String.valueOf(fullPullSliceMaxPending),
                                         fpNode.getProducerOffset(), fpNode.getConsumerOffset()});
-                    }
+                    }*/
 
                     if (!isRun.get())
                         break;
@@ -214,7 +206,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                     // 比较更新时间
                     long updTime = DateUtil.convertStrToLong4Date(fpNodeDetail.getUpdateTime());
                     // 差值
-                    diffVal = currentTime - updTime + correcteValue;
+                    long diffVal = currentTime - updTime + correcteValue;
 
                     if (diffVal > fullPullTimeout) {
 

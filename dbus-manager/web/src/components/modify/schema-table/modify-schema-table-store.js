@@ -334,7 +334,7 @@ var store = Reflux.createStore({
                 if(e.physicalTableRegex!=='' && e.outputTopic!=='')
                 {
                     tablesCol.push({tableName:e.tableName, physicalTableRegex:e.physicalTableRegex,
-                    outputTopic:e.outputTopic, incompatibleCol:e.incompatibleColumn,
+                    outputTopic:e.outputTopic, incompatibleColumn:e.incompatibleColumn,
                     columnName:e.columnName,__ckbox_checked__:e.__ckbox_checked__,__disabled__:e.__disabled__});
                 }
                 else if(e.physicalTableRegex!=='' && e.outputTopic == '')

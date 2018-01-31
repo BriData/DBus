@@ -19,9 +19,9 @@ package com.creditease.dbus.common.utils;
 
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.creditease.dbus.manager.GenericJdbcManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * Emits LongWritables containing the record number as
  * key and DBWritables as value.
  */
+@Deprecated
 public class DataDrivenDBRecordReader<T extends DBWritable>
     extends DBRecordReader<T> {
 
@@ -45,20 +46,20 @@ public class DataDrivenDBRecordReader<T extends DBWritable>
    * @param split The InputSplit to read data for
    * @throws SQLException
    */
-  public DataDrivenDBRecordReader(DataDrivenDBInputFormat.DataDrivenDBInputSplit split, Connection conn,
+  public DataDrivenDBRecordReader(DataDrivenDBInputFormat.DataDrivenDBInputSplit split, GenericJdbcManager manager,
       DBConfiguration dbConfig, String [] fields, String table,
       String dbProduct) throws SQLException {
-    super(conn, dbConfig, split, fields, table);
+    super(manager, dbConfig, split, fields, table);
     this.dbProductName = dbProduct;
   }
   
   // CHECKSTYLE:ON
 
-  @Override
-  /** {@inheritDoc} */
-  public float getProgress() throws IOException {
-    return isDone() ? 1.0f : 0.0f;
-  }
+//  @Override
+//  /** {@inheritDoc} */
+//  public float getProgress() throws IOException {
+//    return isDone() ? 1.0f : 0.0f;
+//  }
 
   /** Returns the query for selecting the records, with lower and upper
    * clause consitions provided as parameters

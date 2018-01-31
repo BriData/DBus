@@ -126,7 +126,7 @@ var store = Reflux.createStore({
     },
     onCreateTypeList:function(typeParam){
        var self = this;
-       $.get(utils.builPath("fullPull"), {dsId:typeParam.dsId,schemaName:typeParam.schemaName,tableName:typeParam.tableName,resultTopic:typeParam.resultTopic,version:typeParam.version,batch:typeParam.batch} ,function(result){
+       $.get(utils.builPath("fullPull"), typeParam,function(result){
            var t = result.data.find(function(t) {
             if (t.text === typeParam.messageType) {
                 return t.template;
@@ -134,6 +134,7 @@ var store = Reflux.createStore({
            });
            if(t == null) return;
            var date = new Date();
+           t.template.payload.SEQNO = date.getTime()+'';
            self.state.editor.json = utils.extends(t.template, {
               id: date.getTime(),
               timestamp: date.format('yyyy-MM-dd hh:mm:ss.S')
@@ -162,12 +163,12 @@ var store = Reflux.createStore({
         self.trigger(self.state);
        }
     },
-    onSendMessage: function(ctrlTopic,outputTopic,message,callback) {
-        var strJson = JSON.stringify(message);
+    onSendMessage: function(param,callback) {
+        
           $.ajax({
             url:utils.builPath('fullPull/send'),
             method: "POST",
-            data: {ctrlTopic:ctrlTopic,outputTopic:outputTopic,message:strJson},
+            data: param,
             //contentType:"application/json; charset=utf-8",
             dataType:"json"
          }).done(function(result) {

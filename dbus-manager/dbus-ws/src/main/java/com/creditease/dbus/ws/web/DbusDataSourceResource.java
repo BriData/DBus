@@ -22,10 +22,12 @@ package com.creditease.dbus.ws.web;
 
 import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.EncrypAES;
+import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.ws.common.HttpHeaderUtils;
 import com.creditease.dbus.ws.common.Result;
 import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.creditease.dbus.ws.service.DataSourceService;
+import com.creditease.dbus.ws.service.source.MongoSourceFetcher;
 import com.creditease.dbus.ws.service.source.SourceFetcher;
 import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
@@ -86,9 +88,26 @@ public class DbusDataSourceResource {
     @Path("/validate")
     public Response validateDataSources(Map<String,Object> map){
         try {
-            SourceFetcher fetcher = SourceFetcher.getFetcher(map);
-            int temp = fetcher.fetchSource(map);
-            return Response.ok().entity(temp).build();
+            DbusDatasourceType dsType = DbusDatasourceType.parse(map.get("dsType").toString());
+            if(dsType.equals(DbusDatasourceType.LOG_LOGSTASH)
+                    || dsType.equals(DbusDatasourceType.LOG_LOGSTASH_JSON)
+                    || dsType.equals(DbusDatasourceType.LOG_UMS)
+                    || dsType.equals(DbusDatasourceType.LOG_FLUME)
+                    || dsType.equals(DbusDatasourceType.LOG_FILEBEAT)) {
+                return Response.ok().entity(1).build();
+            }
+            else if(dsType.equals(DbusDatasourceType.MYSQL)
+                    || dsType.equals(DbusDatasourceType.ORACLE)){
+                SourceFetcher fetcher = SourceFetcher.getFetcher(map);
+                int temp = fetcher.fetchSource(map);
+                return Response.ok().entity(temp).build();
+            } else if(dsType.equals(DbusDatasourceType.MONGO)) {
+                MongoSourceFetcher fetcher = new MongoSourceFetcher();
+                int temp = fetcher.fetchSource(map);
+                return Response.ok().entity(temp).build();
+            }
+            return Response.ok().entity(0).build();
+
         } catch (Exception e) {
             logger.error("Error encountered while validate datasources with parameter:{}", JSON.toJSONString(map), e);
             return Response.status(200).entity(new Result(-1, e.getMessage())).build();
@@ -186,6 +205,14 @@ public class DbusDataSourceResource {
             logger.error("Error encountered while deactivate DateSource with parameter:{}", id, ex);
             return Response.status(200).entity(new Result(-1, ex.getMessage())).build();
         }
+    }
+
+    @GET
+    @Path("/deleteDataSource")
+    public Response deleteDataSource(Map<String, Object> map) {
+        int dsId = Integer.parseInt(map.get("dsId").toString());
+        int result = service.deleteDataSourceById(dsId);
+        return Response.ok().entity(result).build();
     }
     
     private static void encryp(DbusDataSource ds) {

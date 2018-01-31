@@ -20,7 +20,7 @@
 
 package com.creditease.dbus.stream.appender.spout.queue;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +36,9 @@ public class QueueElement {
     private int status = INIT;
     private long key = -1L;
     private int emitCount = 0;
-    private ConsumerRecord<String, byte[]> record;
+    private DBusConsumerRecord<String, byte[]> record;
 
-    public QueueElement(ConsumerRecord<String, byte[]> record) {
+    public QueueElement(DBusConsumerRecord<String, byte[]> record) {
         this.key = record.offset();
         setRecord(record);
     }
@@ -84,7 +84,7 @@ public class QueueElement {
         this.key = key;
     }
 
-    public ConsumerRecord<String, byte[]> getRecord() {
+    public DBusConsumerRecord<String, byte[]> getRecord() {
         return record;
     }
 
@@ -92,7 +92,7 @@ public class QueueElement {
         return emitCount;
     }
 
-    public void setRecord(ConsumerRecord<String, byte[]> record) {
+    public void setRecord(DBusConsumerRecord<String, byte[]> record) {
         this.record = record;
         emitCount++;
     }

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.ws.mapper.FullPullHistoryMapper">
+    <resultMap id="FullPullHistory" type="com.creditease.dbus.ws.domain.FullPullHistory">
+        <id property="id" column="id"/>
+        <result property="type" column="type"/>
+        <result property="dsName" column="dsName"/>
+        <result property="schemaName" column="schemaName"/>
+        <result property="tableName" column="tableName"/>
+        <result property="version" column="version"/>
+        <result property="batchId" column="batch_id"/>
+        <result property="state" column="state"/>
+        <result property="errorMsg" column="error_msg"/>
+        <result property="initTime" column="init_time"/>
+        <result property="startSplitTime" column="start_split_time"/>
+        <result property="startPullTime" column="start_pull_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="finishedPartitionCount" column="finished_partition_count"/>
+        <result property="totalPartitionCount" column="total_partition_count"/>
+        <result property="finishedRowCount" column="finished_row_count"/>
+        <result property="totalRowCount" column="total_row_count"/>
+    </resultMap>
+
+    <select id="search" resultMap="FullPullHistory">
+        select * from t_fullpull_history t1
+        where 1=1
+        <if test ="dsName != null"> and t1.dsName like "%"#{dsName}"%"</if>
+        <if test ="schemaName != null"> and t1.schemaName like "%"#{schemaName}"%"</if>
+        <if test = "tableName != null"> and t1.tableName like  "%"#{tableName}"%" </if>
+        order by t1.update_time desc
+    </select>
+
+    <insert id="insert">
+        replace into t_fullpull_history
+        (id,
+        type,
+        dsName,
+        schemaName,
+        tableName,
+        state,
+        init_time,
+        update_time)
+        values
+        (#{id},
+        #{type},
+        #{dsName},
+        #{schemaName},
+        #{tableName},
+        #{state},
+        #{initTime},
+        #{updateTime})
+    </insert>
+</mapper>

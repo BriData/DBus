@@ -20,6 +20,9 @@
 
 package com.creditease.dbus.common;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
+import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -47,7 +51,6 @@ import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.manager.GenericJdbcManager;
 import com.creditease.dbus.manager.MySQLManager;
 import com.creditease.dbus.manager.OracleManager;
-import com.creditease.dbus.manager.SqlManager;
 import com.esotericsoftware.minlog.Log;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -56,7 +59,8 @@ public class FullPullHelper {
     private static ConcurrentMap<String, DBConfiguration> dbConfMap = new ConcurrentHashMap<>();
 
     private static volatile ZkService zkService = null;
-    private static String topologyId = " ";
+    private static String splitterTopologyId;
+    private static String pullerTopologyId;
     private static String zkConnect;
     private static boolean isGlobal;
     private static String zkMonitorRootNodePath;
@@ -68,17 +72,67 @@ public class FullPullHelper {
     public static final String RUNNING_CONF_KEY_STRING_PRODUCER_PROPS = "string.producer.props";
     public static final String RUNNING_CONF_KEY_MAX_FLOW_THRESHOLD = "maxFlowThreshold";
     public static final String RUNNING_CONF_KEY_ZK_SERVICE = "zkService";
-    
-    public static synchronized void initialize(String topoId, String zkConString) {
-        if (topologyId != null) {
-            topologyId = topoId;
-            zkConnect = zkConString;
-            isGlobal = topologyId.toLowerCase().indexOf(ZkTopoConfForFullPull.GLOBAL_FULLPULLER_TOPO_PREFIX) != -1 ? true : false;
-            if (isGlobal) {
-                zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT_GLOBAL;
+
+
+    private static ThreadLocal<String> topoTypeHolder = new ThreadLocal<>();
+    public static void setTopologyType(String topoType) {
+        if (topoType.equalsIgnoreCase(Constants.FULL_SPLITTER_TYPE)) {
+            topoTypeHolder.set(topoType);
+        } else if (topoType.equalsIgnoreCase(Constants.FULL_PULLER_TYPE)) {
+            topoTypeHolder.set(topoType);
+        } else {
+            throw new RuntimeException("setTopologyType(): bad topology type!! " + topoType);
+        }
+    }
+
+    public static String getTopologyType() {
+        String topoType = topoTypeHolder.get();
+
+        if (topoType == null) {
+            throw new RuntimeException("getTopologyType(): bad topology type!! " + topoType);
+        } else {
+            if (topoType.equalsIgnoreCase(Constants.FULL_SPLITTER_TYPE)) {
+                return Constants.FULL_SPLITTER_TYPE;
+            } else if (topoType.equalsIgnoreCase(Constants.FULL_PULLER_TYPE)) {
+                return Constants.FULL_PULLER_TYPE;
             } else {
-                zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT;
+                throw new RuntimeException("getTopologyType(): bad topology type!! " + topoType);
             }
+        }
+    }
+
+    private static void setTopologyId(String topoId) {
+        String topoType = getTopologyType();
+        if (topoType.equalsIgnoreCase(Constants.FULL_SPLITTER_TYPE)) {
+            splitterTopologyId = topoId;
+        } else if (topoType.equalsIgnoreCase(Constants.FULL_PULLER_TYPE)) {
+            pullerTopologyId = topoId;
+        } else {
+            throw new RuntimeException("setTopolopyId(): bad topology type!! " + topoType);
+        }
+    }
+
+    private static String getTopologyId() {
+        String topoType = getTopologyType();
+        if (topoType.equalsIgnoreCase(Constants.FULL_SPLITTER_TYPE)) {
+            return splitterTopologyId;
+        } else if (topoType.equalsIgnoreCase(Constants.FULL_PULLER_TYPE)) {
+            return pullerTopologyId;
+        } else {
+            throw new RuntimeException("getTopologyId(): bad topology type!! " + topoType);
+        }
+    }
+
+
+
+    public static synchronized void initialize(String topoId, String zkConString) {
+        setTopologyId(topoId);
+        zkConnect = zkConString;
+        isGlobal = topoId.toLowerCase().indexOf(ZkTopoConfForFullPull.GLOBAL_FULLPULLER_TOPO_PREFIX) != -1 ? true : false;
+        if (isGlobal) {
+            zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT_GLOBAL;
+        } else {
+            zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT;
         }
     }
 //    public static void refreshCache() {
@@ -96,7 +150,7 @@ public class FullPullHelper {
 //        }
 //        zkServiceMap = new ConcurrentHashMap<>();
 //    }
-    
+
     /**
      * 获取指定配置文件的Properties对象
      * @param dataSourceInfo 配置文件名称,不加扩展名
@@ -112,7 +166,7 @@ public class FullPullHelper {
         }
         return dbConf;
     }
-    
+
     public static ZkService getZkService() {
         if(zkService != null) {
             return zkService;
@@ -133,17 +187,16 @@ public class FullPullHelper {
     }
 
 
-    public static boolean updateMonitorFinishPartitionInfo(ZkService zkService, String dbNameSpace, ProgressInfo objProgInfo) {
-        String zkPath = FullPullHelper.buildZkPath(zkMonitorRootNodePath, dbNameSpace);
+    public static boolean updateMonitorFinishPartitionInfo(ZkService zkService, String progressInfoNodePath, ProgressInfo objProgInfo) {
         try {
             for (int i = 0; i < 10; i++) {
-                int nextVersion = FullPullHelper.updateZkNodeInfoWithVersion(zkService, zkPath, objProgInfo);
+                int nextVersion = FullPullHelper.updateZkNodeInfoWithVersion(zkService, progressInfoNodePath, objProgInfo);
                 if (nextVersion != -1)
                     break;
 
                 //稍作休息重试
                 Thread.sleep(200);
-                ProgressInfo zkProgInfo = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+                ProgressInfo zkProgInfo = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
                 objProgInfo.mergeProgressInfo(zkProgInfo);
             }
         } catch (Exception e) {
@@ -154,11 +207,11 @@ public class FullPullHelper {
         return true;
     }
 
-    public static void updateMonitorSplitPartitionInfo(ZkService zkService, String dbNameSpace, int totalShardsCount, int totalRows) {
+    public static void updateMonitorSplitPartitionInfo(ZkService zkService, String progressInfoNodePath, int totalShardsCount, int totalRows) {
         try {
             String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
 
-            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
             progressObj.setUpdateTime(currentTimeStampString);
             progressObj.setTotalCount(String.valueOf(totalShardsCount));
             progressObj.setTotalRows(String.valueOf(totalRows));
@@ -169,19 +222,17 @@ public class FullPullHelper {
             progressObj.setConsumeSecs(String.valueOf(consumeSecs) + "s");
 
             ObjectMapper mapper = JsonUtil.getObjectMapper();
-            String progressNodePath = FullPullHelper.buildZkPath(zkMonitorRootNodePath, dbNameSpace);
-            FullPullHelper.updateZkNodeInfo(zkService, progressNodePath, mapper.writeValueAsString(progressObj));
+            FullPullHelper.updateZkNodeInfo(zkService, progressInfoNodePath, mapper.writeValueAsString(progressObj));
         } catch (Exception e) {
             LOG.error("Update Monitor Detail Info Failed.", e);
             throw new RuntimeException(e);
         }
     }
 
-    public static ProgressInfo getMonitorInfoFromZk(ZkService zkService, String dbNameSpace) throws Exception {
-        String zkPath = buildZkPath(zkMonitorRootNodePath, dbNameSpace);
-        int version = zkService.getVersion(zkPath);
+    public static ProgressInfo getMonitorInfoFromZk(ZkService zkService, String progressInfoNodePath) throws Exception {
+        int version = zkService.getVersion(progressInfoNodePath);
         if(version != -1) {
-            byte[] data = zkService.getData(zkPath);
+            byte[] data = zkService.getData(progressInfoNodePath);
 
             if (data != null) {
                 ObjectMapper mapper = JsonUtil.getObjectMapper();
@@ -193,7 +244,29 @@ public class FullPullHelper {
         return (new ProgressInfo());
     }
 
-    public static void startPullReport(ZkService zkService, String dataSourceInfo) {
+
+    //有三种拉全量方法:
+    // global pull 是独立拉全量，用于自我调试
+    // 线属的非独立拉全量，停增量，  同一个topic
+    // 线属的独立拉全量， 不停增量，补写zk，不写数据库， 别的topic
+    public static boolean isIndenpentPull(boolean isGlobal, String dataSourceInfo) {
+        if (isGlobal) {
+            return true;
+        } else {
+            String dataType = JSONObject.parseObject(dataSourceInfo).getString("type");
+            if (dataType == null) {
+                LOG.error("dataType is null in isIndenpentPull()");
+                return false;
+            }
+            if (dataType.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public static void startSplitReport(ZkService zkService, String dataSourceInfo) {
         try {
             String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
             long startSecs = System.currentTimeMillis() / 1000;
@@ -203,18 +276,19 @@ public class FullPullHelper {
             String version = payloadObj.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
             String batchNo = payloadObj.getString(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY);
 
-
             DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
             ObjectMapper mapper = JsonUtil.getObjectMapper();
             FullPullHelper.createProgressZkNode(zkService, dbConf);
 
-            if (!isGlobal) {
+            //1 通知心跳程序 拉全量开始，心跳程序不在监控 增量数据
+            if (!isIndenpentPull(isGlobal, dataSourceInfo)) {
                 HeartBeatInfo heartBeanObj = new HeartBeatInfo();
                 heartBeanObj.setArgs(dbConf.getDbNameAndSchema());
                 heartBeanObj.setCmdType(String.valueOf(CommandType.FULL_PULLER_BEGIN.getCommand()));
                 FullPullHelper.updateZkNodeInfo(zkService, Constants.HEARTBEAT_CONTROL_NODE, mapper.writeValueAsString(heartBeanObj));
             }
 
+            //2 更新zk monitor节点信息
             ProgressInfo progressObj = new ProgressInfo();
             progressObj.setCreateTime(currentTimeStampString);
             progressObj.setStartTime(currentTimeStampString);
@@ -226,7 +300,11 @@ public class FullPullHelper {
             String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
             FullPullHelper.updateZkNodeInfo(zkService, progressInfoNodePath, mapper.writeValueAsString(progressObj));
 
-            FullPullHelper.updateFullPullReqTable(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), null, null, null);
+            if (!isIndenpentPull(isGlobal, dataSourceInfo)) {
+                //回写源端数据库状态
+                FullPullHelper.updateFullPullReqTable(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), null, null, null);
+            }
+//            writeSplitStatusToDbManager(dataSourceInfo, currentTimeStampString, version, batchNo, 0, 0);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             String errorMsg = "Encountered exception when writing msg to zk monitor.";
@@ -235,13 +313,14 @@ public class FullPullHelper {
         }
     }
 
+
     //完成拉取
     public static void finishPullReport(ZkService zkService, String dataSourceInfo, String completedTime, String pullStatus, String errorMsg) {
         DBConfiguration dbConf = getDbConfiguration(dataSourceInfo);
         // 通知相关方全量拉取完成：包括以下几个部分。
         try {
             // 一、向zk监控信息写入完成
-            if (!isGlobal) {
+            if (!isIndenpentPull(isGlobal, dataSourceInfo)) {
                 HeartBeatInfo heartBeanObj = new HeartBeatInfo();
                 heartBeanObj.setArgs(dbConf.getDbNameAndSchema());
                 heartBeanObj.setCmdType(String.valueOf(CommandType.FULL_PULLER_END.getCommand()));
@@ -255,9 +334,9 @@ public class FullPullHelper {
                 sendErrorMsgToZkMonitor(zkService, dataSourceInfo, errorMsg);
             }
 
-            if (!isGlobal) {
+            if (!isIndenpentPull(isGlobal, dataSourceInfo)) {
                 // 三、将完成时间回写到数据库，通知业务方
-                SqlManager dbManager = null;
+                GenericJdbcManager dbManager = null;
                 try {
                     dbManager = FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_WRITE));
                     dbManager.writeBackOriginalDb(null, completedTime, pullStatus, errorMsg);
@@ -267,41 +346,295 @@ public class FullPullHelper {
                     pullStatus = Constants.DataTableStatus.DATA_STATUS_ABORT;
                 }finally {
                     try {
-                        dbManager.close();
+                        if (dbManager != null) {
+                            dbManager.close();
+                        }
                     } catch (Exception e) {
-                        Log.error("finally", e);
+                        LOG.error("close dbManager error.", e);
                     }
                 }
             }
 
-            if (!isGlobal) {
+            if (!isIndenpentPull(isGlobal, dataSourceInfo)) {
                 // 四、向约定topic发送全量拉取完成或出错终止信息，供增量拉取进程使用
                 sendAckInfoToCtrlTopic(dataSourceInfo, completedTime, pullStatus);
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("finishPullReport() Exception:", e);
             throw new RuntimeException(e);
         }
-
+        writeFullErrorStatusToDbMgr(dataSourceInfo, completedTime, pullStatus, errorMsg);
     }
+
+    public static void writeSplitStatusToDbManager(String dataSourceInfo, String startSplitTime, String version, String batchNo, int totalPartitionCount, int totalRowCount, String state) {
+        Connection conn;
+        PreparedStatement ps;
+        ResultSet rs;
+        JSONObject dsInfo = JSON.parseObject(dataSourceInfo);
+        JSONObject jsonObj = dsInfo.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
+        Long id = jsonObj.getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT ");
+            sql.append("     *");
+            sql.append(" FROM ");
+            sql.append("     t_fullpull_history");
+            sql.append(" WHERE");
+            sql.append("     id = ?");
+
+            ps = conn.prepareStatement(sql.toString());
+            ps.setLong(1, id);
+            rs = ps.executeQuery();
+
+            if(rs.next()) {
+                sql = new StringBuilder();
+                sql.append(" UPDATE ");
+                sql.append("     t_fullpull_history");
+                sql.append(" SET ");
+                sql.append("     version = ?,");
+                sql.append("     batch_id = ?,");
+                sql.append("     state = ?,");
+                sql.append("     start_split_time = ?,");
+                sql.append("     update_time = now(),");
+                sql.append("     total_partition_count = ?,");
+                sql.append("     total_row_count = ?");
+                sql.append(" WHERE");
+                sql.append("     id = ?");
+
+                ps = conn.prepareStatement(sql.toString());
+                ps.setString(1, version);
+                ps.setString(2, batchNo);
+                ps.setString(3, state);
+                ps.setString(4, startSplitTime);
+                ps.setInt(5, totalPartitionCount);
+                ps.setInt(6, totalRowCount);
+                ps.setLong(7, id);
+                ps.executeUpdate();
+            } else {
+                LOG.error("No find fullpull Record in t_fullpull_history! dataSourceInfo:{}", dataSourceInfo);
+            }
+        } catch (Exception e) {
+            LOG.error("writeFullFinishedStatusToDbMgr failed! Error message:{}", e);
+        }
+    }
+
+    public static void writeStartPullStatusToDbMgr(String dataSourceInfo, String completedTime, String pullStatus, String errorMsg) {
+        Connection conn;
+        PreparedStatement ps;
+        ResultSet rs;
+        JSONObject dsInfo = JSON.parseObject(dataSourceInfo);
+        JSONObject jsonObj = dsInfo.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
+        Long id = jsonObj.getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT ");
+            sql.append("     *");
+            sql.append(" FROM ");
+            sql.append("     t_fullpull_history");
+            sql.append(" WHERE");
+            sql.append("     id = ?");
+
+            ps = conn.prepareStatement(sql.toString());
+            ps.setLong(1, id);
+            rs = ps.executeQuery();
+
+            if(rs.next()) {
+                sql = new StringBuilder();
+                sql.append(" UPDATE ");
+                sql.append("     t_fullpull_history");
+                sql.append(" SET ");
+                sql.append("     state = ?,");
+                sql.append("     error_msg = ?,");
+                sql.append("     start_pull_time = ?,");
+                sql.append("     update_time = now()");
+                sql.append(" WHERE");
+                sql.append("     id = ?");
+
+                ps = conn.prepareStatement(sql.toString());
+                ps.setString(1, pullStatus);
+                ps.setString(2, errorMsg);
+                ps.setString(3, completedTime);
+                ps.setLong(4, id);
+                ps.executeUpdate();
+            } else {
+                LOG.error("No find fullpull Record in t_fullpull_history! dataSourceInfo:{}", dataSourceInfo);
+            }
+
+        } catch (Exception e) {
+            LOG.error("writeFullFinishedStatusToDbMgr failed! Error message:{}", e);
+        }
+    }
+
+    public static void writeFullPullingStatusToDbMgr(String dataSourceInfo, String errorMsg, long finishedPartitionCount, long totalRowCount, String state) {
+        Connection conn;
+        PreparedStatement ps;
+        ResultSet rs;
+        JSONObject dsInfo = JSON.parseObject(dataSourceInfo);
+        JSONObject jsonObj = dsInfo.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
+        Long id = jsonObj.getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT ");
+            sql.append("     *");
+            sql.append(" FROM ");
+            sql.append("     t_fullpull_history");
+            sql.append(" WHERE");
+            sql.append("     id = ?");
+
+            ps = conn.prepareStatement(sql.toString());
+            ps.setLong(1, id);
+            rs = ps.executeQuery();
+
+            if(rs.next()) {
+                sql = new StringBuilder();
+                sql.append(" UPDATE ");
+                sql.append("     t_fullpull_history");
+                sql.append(" SET ");
+                sql.append("     error_msg = ?,");
+                sql.append("     state = ?,");
+                sql.append("     finished_partition_count = ?,");
+                sql.append("     finished_row_count = ?,");
+                sql.append("     update_time = now()");
+                sql.append(" WHERE");
+                sql.append("     id = ?");
+
+                ps = conn.prepareStatement(sql.toString());
+                ps.setString(1, errorMsg);
+                ps.setString(2, state);
+                ps.setLong(3, finishedPartitionCount);
+                ps.setLong(4, totalRowCount);
+                ps.setLong(5, id);
+                ps.executeUpdate();
+            } else {
+                LOG.error("No find fullpull Record in t_fullpull_history! dataSourceInfo:{}", dataSourceInfo);
+            }
+        } catch (Exception e) {
+            LOG.error("writeFullFinishedStatusToDbMgr failed! Error message:{}", e);
+        }
+    }
+
+    public static void writeFullFinishedStatusToDbMgr(String dataSourceInfo, String completedTime, String pullStatus, String errorMsg, long finishedPartitionCount, long finishedRowCount) {
+        Connection conn;
+        PreparedStatement ps;
+        ResultSet rs;
+        JSONObject dsInfo = JSON.parseObject(dataSourceInfo);
+        JSONObject jsonObj = dsInfo.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
+        Long id = jsonObj.getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+
+        if(StringUtils.equals(pullStatus, "ok")) {
+            pullStatus = "ending";
+        }
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT ");
+            sql.append("     *");
+            sql.append(" FROM ");
+            sql.append("     t_fullpull_history");
+            sql.append(" WHERE");
+            sql.append("     id = ?");
+
+            ps = conn.prepareStatement(sql.toString());
+            ps.setLong(1, id);
+            rs = ps.executeQuery();
+
+            if(rs.next()) {
+                sql = new StringBuilder();
+                sql.append(" UPDATE ");
+                sql.append("     t_fullpull_history");
+                sql.append(" SET ");
+                sql.append("     state = ?,");
+                sql.append("     error_msg = ?,");
+                sql.append("     update_time = now(),");
+                sql.append("     finished_partition_count = ?,");
+                sql.append("     finished_row_count = ?,");
+                sql.append("     end_time = ?");
+                sql.append(" WHERE");
+                sql.append("     id = ?");
+
+                ps = conn.prepareStatement(sql.toString());
+                ps.setString(1, pullStatus);
+                ps.setString(2, errorMsg);
+                ps.setLong(3, finishedPartitionCount);
+                ps.setLong(4, finishedRowCount);
+                ps.setString(5, completedTime);
+                ps.setLong(6, id);
+                ps.executeUpdate();
+            } else {
+                LOG.error("No find fullpull Record in t_fullpull_history! dataSourceInfo:{}", dataSourceInfo);
+            }
+        } catch (Exception e) {
+            LOG.error("writeFullFinishedStatusToDbMgr failed! Error message:{}", e);
+        }
+    }
+
+    public static void writeFullErrorStatusToDbMgr(String dataSourceInfo, String completedTime, String pullStatus, String errorMsg) {
+        Connection conn;
+        PreparedStatement ps;
+        ResultSet rs;
+        JSONObject dsInfo = JSON.parseObject(dataSourceInfo);
+        JSONObject jsonObj = dsInfo.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
+        Long id = jsonObj.getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        if(StringUtils.equals(pullStatus, "ok")) {
+            pullStatus = "ending";
+        }
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT ");
+            sql.append("     *");
+            sql.append(" FROM ");
+            sql.append("     t_fullpull_history");
+            sql.append(" WHERE");
+            sql.append("     id = ?");
+
+            ps = conn.prepareStatement(sql.toString());
+            ps.setLong(1, id);
+            rs = ps.executeQuery();
+
+            if(rs.next()) {
+                sql = new StringBuilder();
+                sql.append(" UPDATE ");
+                sql.append("     t_fullpull_history");
+                sql.append(" SET ");
+                sql.append("     state = ?,");
+                sql.append("     error_msg = ?,");
+                sql.append("     update_time = now(),");
+                sql.append("     end_time = ?");
+                sql.append(" WHERE");
+                sql.append("     id = ?");
+
+                ps = conn.prepareStatement(sql.toString());
+                ps.setString(1, pullStatus);
+                ps.setString(2, errorMsg);
+                ps.setString(3, completedTime);
+                ps.setLong(4, id);
+                ps.executeUpdate();
+            } else {
+                LOG.error("No find fullpull Record in t_fullpull_history! dataSourceInfo:{}", dataSourceInfo);
+            }
+        } catch (Exception e) {
+            LOG.error("writeFullFinishedStatusToDbMgr failed! Error message:{}", e);
+        }
+    }
+
 
     private static void sendErrorMsgToZkMonitor(ZkService zkService, String dataSourceInfo, String errorMsg) throws Exception {
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
 
-        DBConfiguration dbConf = getDbConfiguration(dataSourceInfo);
-        String dbNameSpace = dbConf.buildSlashedNameSpace(dataSourceInfo);
-
-        ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+        String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
+        ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
         progressObj.setUpdateTime(currentTimeStampString);
         String oriErrorMsg = progressObj.getErrorMsg();
         errorMsg = StringUtils.isBlank(oriErrorMsg) ? errorMsg : oriErrorMsg + ";" + errorMsg;
         progressObj.setErrorMsg(errorMsg);
 
         ObjectMapper mapper = JsonUtil.getObjectMapper();
-        String progressNodePath = getMonitorNodePath(dataSourceInfo);
-        updateZkNodeInfo(zkService, progressNodePath, mapper.writeValueAsString(progressObj));
+        updateZkNodeInfo(zkService, progressInfoNodePath, mapper.writeValueAsString(progressObj));
     }
 
     public static void updateZkNodeInfo(ZkService zkService, String zkPath, String updateInfo) throws Exception {
@@ -314,18 +647,18 @@ public class FullPullHelper {
         zkService.setData(zkPath, updateInfo.getBytes());
     }
 
-    public static int updateZkNodeInfoWithVersion(ZkService zkService, String zkPath, ProgressInfo objProgInfo) throws Exception{
-        if(zkService == null || StringUtils.isBlank(zkPath)) {
+    public static int updateZkNodeInfoWithVersion(ZkService zkService, String progressInfoNodePath, ProgressInfo objProgInfo) throws Exception{
+        if(zkService == null || StringUtils.isBlank(progressInfoNodePath)) {
             return -1;
         }
 
-        if(!zkService.isExists(zkPath)) {
-            zkService.createNode(zkPath, null);
+        if(!zkService.isExists(progressInfoNodePath)) {
+            zkService.createNode(progressInfoNodePath, null);
         }
 
         ObjectMapper mapper = JsonUtil.getObjectMapper();
         String updateInfo = mapper.writeValueAsString(objProgInfo);
-        int nextVersion = zkService.setDataWithVersion(zkPath, updateInfo.getBytes(), objProgInfo.getZkVersion());
+        int nextVersion = zkService.setDataWithVersion(progressInfoNodePath, updateInfo.getBytes(), objProgInfo.getZkVersion());
         if (nextVersion != -1) {
             objProgInfo.setZkVersion(nextVersion);
         }
@@ -364,31 +697,47 @@ public class FullPullHelper {
     //TODO 应该放到 util 类中
     public static String getCurrentTimeStampString() {
         SimpleDateFormat formatter = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss.SSS");
-        String timeStampString = formatter.format(new Date()); 
+        String timeStampString = formatter.format(new Date());
         return timeStampString;
     }
-    
+
     private static String buildZkPath(String parent, String child) {
         return parent + "/" + child;
     }
 
+
+    public static String getOutputVersion() {
+        String outputVersion = getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true)
+                .getProperty(Constants.ZkTopoConfForFullPull.OUTPUT_VERSION);
+        if (outputVersion == null) {
+            outputVersion = Constants.VERSION_13;
+        }
+        return outputVersion;
+    }
+
     public static String getMonitorNodePath(String dataSourceInfo) {
+        String outputVersion = getOutputVersion();
+		LOG.info("getMonitorNodePath: " + outputVersion);
+		
+		
         // 根据当前拉取全量的目标数据库信息，生成数据库表NameSpace信息
         DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
-        String dbNameSpace = dbConf.buildSlashedNameSpace(dataSourceInfo);
+        String dbNameSpace = dbConf.buildSlashedNameSpace(dataSourceInfo, outputVersion);
 
         // 获得全量拉取监控信息的zk node path
         String monitorNodePath = FullPullHelper.buildZkPath(zkMonitorRootNodePath, dbNameSpace);
         return monitorNodePath;
     }
 
-    public static String getDbNameSpace(String dataSourceInfo) {
-        DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
-        String dbNameSpace = dbConf.buildSlashedNameSpace(dataSourceInfo);
-        return dbNameSpace;
-    }
+//    @Deprecated
+//    public static String getDbNameSpace(String dataSourceInfo) {
+//        DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
+//        String dbNameSpace = dbConf.buildSlashedNameSpace(dataSourceInfo);
+//        return dbNameSpace;
+//    }
 
     public static boolean validateMetaCompatible(String dataSourceInfo) {
+        OracleManager oracleManager = null;
         try {
             DBConfiguration dbConf = getDbConfiguration(dataSourceInfo);
             // Mysql 不校验meta
@@ -398,7 +747,7 @@ public class FullPullHelper {
             LOG.info("Not mysql. Should validate meta.");
 
             //从源库中获取meta信息
-            OracleManager oracleManager = (OracleManager)FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY));
+            oracleManager = (OracleManager)FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY));
             MetaWrapper metaInOriginalDb = oracleManager.queryMetaInOriginalDb();
 
             //从dbus manager库中获取meta信息
@@ -416,6 +765,14 @@ public class FullPullHelper {
         catch (Exception e) {
             LOG.error("Failed on camparing meta.",e);
             return false;
+        } finally {
+            try {
+                if (oracleManager != null) {
+                    oracleManager.close();
+                }
+            } catch (Exception e) {
+                LOG.error("close dbManager error.", e);
+            }
         }
     }
 
@@ -434,7 +791,7 @@ public class FullPullHelper {
             payloadObj.put(DataPullConstants.FullPullInterfaceJson.DATA_STATUS_KEY, pullStatus);
             jsonObj.put(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY, payloadObj);
             String ctrlTopic = getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true)
-                .getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC);
+                    .getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC);
             Producer producer = DbusHelper
                     .getProducer(getFullPullProperties(Constants.ZkTopoConfForFullPull.BYTE_PRODUCER_CONFIG, true));
             ProducerRecord record = new ProducerRecord<>(ctrlTopic, DataPullConstants.FullPullInterfaceJson.TYPE_VALUE, jsonObj.toString().getBytes());
@@ -446,10 +803,10 @@ public class FullPullHelper {
             throw new RuntimeException(e);
         }
     }
-    
+
     public static GenericJdbcManager getDbManager(DBConfiguration dbConf, String url) {
         String datasourceType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
-        String dbDriverClass = DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.valueOf(datasourceType.toUpperCase())); 
+        String dbDriverClass = DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.valueOf(datasourceType.toUpperCase()));
         DbusDatasourceType dataBaseType = DbusDatasourceType.valueOf(datasourceType.toUpperCase());
         switch (dataBaseType) {
             case ORACLE:
@@ -459,9 +816,9 @@ public class FullPullHelper {
             default:
                 return new GenericJdbcManager(dbDriverClass, dbConf, url);
         }
-        
+
     }
-    
+
 //    private static String buildOracleManagerCacheKey(String dataSourceInfo, String url){
 //        return dataSourceInfo+url;
 //    }
@@ -498,9 +855,9 @@ public class FullPullHelper {
      * 更新数据库全量拉取请求表
      */
     public static void updateFullPullReqTable(String dataSourceInfo, String startTime, String completedTime, String pullStatus, String errorMsg){
-        SqlManager dbManager = null;
+        GenericJdbcManager dbManager = null;
         try {
-            DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo); 
+            DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
             String readWriteDbUrl = dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_WRITE);
             dbManager = getDbManager(dbConf, readWriteDbUrl);
             dbManager.writeBackOriginalDb(startTime, completedTime, pullStatus, errorMsg);
@@ -509,22 +866,29 @@ public class FullPullHelper {
             LOG.error("Error occured when report full data pulling status to original DB.");
         }finally {
             try {
-                dbManager.close();
+                if (dbManager != null) {
+                    dbManager.close();
+                }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error("close dbManager error.", e);
             }
         }
     }
-    
+
     public static Properties getFullPullProperties(String confFileName, boolean useCacheIfCached) {
+        String topologyId = getTopologyId();
         String customizeConfPath = topologyId + "/" + confFileName;
         LOG.info("customizeConfPath is {}", customizeConfPath);
         try {
-            Properties properties = PropertiesHolder.getPropertiesInculdeCustomizeConf(confFileName, customizeConfPath, useCacheIfCached);
+            String topoType = getTopologyType();
+            String path = FullPullPropertiesHolder.getPath(topoType);
+            Properties properties = FullPullPropertiesHolder.getPropertiesInculdeCustomizeConf(topoType, confFileName, customizeConfPath, useCacheIfCached);
             if(Constants.ZkTopoConfForFullPull.CONSUMER_CONFIG.equals(confFileName)) {
-                properties.put("client.id", topologyId + "_" + properties.getProperty("client.id") + System.currentTimeMillis());
-                properties.put("group.id", topologyId + "_" + properties.getProperty("group.id") + System.currentTimeMillis());
+                String clientId = topologyId + "_" + properties.getProperty("client.id");
+                String groupId = topologyId + "_" + properties.getProperty("group.id");
+                properties.put("client.id", clientId);
+                properties.put("group.id", groupId);
+                LOG.warn("typoType: {}, path: {}, client.id: {}, group.id: {}", topoType, path, clientId, groupId);
             }
             return properties;
         }
@@ -532,12 +896,13 @@ public class FullPullHelper {
             return new Properties();
         }
     }
-    
+
+
     public static String getConfFromZk(String confFileName, String propKey) {
         Properties properties = getFullPullProperties(confFileName, false);
-        return properties.getProperty(propKey); 
-    }     
-    
+        return properties.getProperty(propKey);
+    }
+
     public static String getDataSourceKey(JSONObject ds) {
         StringBuilder key= new StringBuilder();
         JSONObject jsonObj = ds.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
@@ -571,16 +936,17 @@ public class FullPullHelper {
         String pendingTaskKey = dsObj.toString().replace("\"", "");
         return pendingTaskKey;
     }
-    
+
     /**
      * 第三个参数dataSourceInfo可能传null值，此时操作类型一定是FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY。
      * crash检查是全局的，而不是针对某一个datasource。所以无特定的dataSourceInfo。
      * crash的处理未用到dataSourceInfo参数，所以这种情况下传null不影响逻辑。
-     * */   
+     * */
     public static void updatePendingTasksTrackInfo(ZkService zkService, String dsName,
                                                    String dataSourceInfo, String opType) {
         try {
             zkService = getZkService();
+
             //1 get pendingNodPath
             String pendingZKNodePath;
             if (isGlobal) {
@@ -603,7 +969,8 @@ public class FullPullHelper {
 
 
             // 2 get pendingTask
-            // 引入topologyId做key，以免pullling和splitting的消息相互交叉覆盖，作区分
+            // 引入topologyId做key，以免pulling和splitting的消息相互交叉覆盖，作区分
+            String topologyId = getTopologyId();
             JSONObject pendingTasksJsonObj;
             String pendingTasksJsonObjKey = DataPullConstants.FULLPULL_PENDING_TASKS + topologyId;
             if(pendingNodeContent.containsKey(pendingTasksJsonObjKey)) {
@@ -628,7 +995,7 @@ public class FullPullHelper {
                 String pendingTaskKey = makePendingTaskKey(dataSourceInfo);
                 pendingTasksJsonObj.remove(pendingTaskKey);
                 pendingNodeContent.put(pendingTasksJsonObjKey, pendingTasksJsonObj);
-                
+
                 LOG.info("Fullpull task [{}] is removing from watching list by {}!", dataSourceInfo, topologyId);
 
             } else if (DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY.equals(opType)) {
@@ -673,6 +1040,8 @@ public class FullPullHelper {
                 e.printStackTrace();
             }
 
+            //todo 更新数据库，写拉全量状态
+
             LOG.info("Pending Tasks Watching Node on zk is updated!");
         } catch (Exception e) {
             LOG.error("Maintaining pending tasks encounter error!", e);
@@ -683,7 +1052,7 @@ public class FullPullHelper {
         Map confMap = new HashMap<>();
         try {
             //连接zk
-            PropertiesHolder.initialize(zkconnect, zkTopoRoot);
+            FullPullPropertiesHolder.initialize(getTopologyType(), zkconnect, zkTopoRoot);
             initialize(topid, zkconnect);
             //从zk中获取common-config节点的内容
             Properties commonProps = getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true);
@@ -696,20 +1065,20 @@ public class FullPullHelper {
             confMap.put(RUNNING_CONF_KEY_COMMON, commonProps);
             confMap.put(RUNNING_CONF_KEY_MAX_FLOW_THRESHOLD, maxFlowThreshold);
             confMap.put(RUNNING_CONF_KEY_ZK_SERVICE, zkService);
-            
+
             if(StringUtils.isNotBlank(consumerSubTopicKey)) {
                 String consumerSubTopic = commonProps.getProperty(consumerSubTopicKey);
                 Properties consumerProps = getFullPullProperties(Constants.ZkTopoConfForFullPull.CONSUMER_CONFIG, true);
                 Consumer<String, byte[]> consumer = DbusHelper.createConsumer(consumerProps, consumerSubTopic);
                 confMap.put(RUNNING_CONF_KEY_CONSUMER, consumer);
             }
-            
+
             Properties byteProducerProps = FullPullHelper.getFullPullProperties(Constants.ZkTopoConfForFullPull.BYTE_PRODUCER_CONFIG, true);
             if(null != byteProducerProps) {
                 Producer byteProducer = DbusHelper.getProducer(byteProducerProps);
                 confMap.put(RUNNING_CONF_KEY_BYTE_PRODUCER, byteProducer);
             }
-            
+
             Properties stringProducerProps = FullPullHelper.getFullPullProperties(Constants.ZkTopoConfForFullPull.STRING_PRODUCER_CONFIG, true);
             if(null != stringProducerProps) {
                 Producer stringProducer = DbusHelper.getProducer(stringProducerProps);
@@ -723,11 +1092,42 @@ public class FullPullHelper {
         return confMap;
     }
 
+//    public static void saveEncodeTypeonZk(ZkService zkService) {
+//        //获取内置的加密类型
+//        Map<String, String> map = new HashMap<>();
+//        for (MessageEncodeType type : MessageEncodeType.values()) {
+//            map.put(type.name().toLowerCase(), "Built in encryption");
+//        }
+//        //检测第三方加密类型
+//        Map<String, Class<ExtEncodeStrategy>> extMap = ExternalEncoders.get();
+//        for(Map.Entry<String, Class<ExtEncodeStrategy>> entry : extMap.entrySet()) {
+//            String key = entry.getKey();
+//            String value = entry.getValue().getName();
+//            map.put(key,value);
+//        }
+//        LOG.info("encodeTypes map:" + map);
+//
+//        String zkPath = "/DBus/encoderType";
+//        String updateInfo = map.toString();
+//        if(zkService == null) {
+//            return;
+//        }
+//        try {
+//            if(!zkService.isExists(zkPath)) {
+//                zkService.createNode(zkPath, null);
+//            }
+//            zkService.setData(zkPath, updateInfo.getBytes());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+
+
     @SuppressWarnings("unchecked")
     public static Map reloadZkServiceConfProps(String zkconnect, String zkTopoRoot) {
         Map confMap = new HashMap<>();
         try{
-            PropertiesHolder.initialize(zkconnect, zkTopoRoot);
             Properties commonProps = getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true);
             String zkConString = commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_MONITORING_ZK_CONN_STR);
 

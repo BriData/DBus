@@ -24,13 +24,13 @@ import avro.shaded.com.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
 import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.utils.Pair;
 import com.creditease.dbus.stream.common.appender.utils.PairWrapper;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.creditease.dbus.stream.mysql.appender.protobuf.protocol.EntryHeader;
 import com.creditease.dbus.stream.mysql.appender.protobuf.protocol.MessageEntry;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +42,7 @@ public class Convertor {
      * mysql 拉全量请求
      * @return
      */
-    public static ControlMessage mysqlFullPullMessage(MessageEntry entry, String topologyId, ConsumerRecord<String, byte[]> consumerRecord){
+    public static ControlMessage mysqlFullPullMessage(MessageEntry entry, String topologyId, DBusConsumerRecord<String, byte[]> consumerRecord){
     	ControlMessage message = new ControlMessage();
     	message.setId(System.currentTimeMillis());
         message.setFrom(topologyId);

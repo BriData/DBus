@@ -32,7 +32,6 @@ var store = Reflux.createStore({
             self.state.dsOptions = list;
             self.trigger(self.state);
         });
-        this.onSearch({});
     },
     //监听所有的actions
     listenables: [actions],

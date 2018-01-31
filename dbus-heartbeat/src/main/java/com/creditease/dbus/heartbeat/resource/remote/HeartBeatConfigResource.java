@@ -22,6 +22,7 @@ package com.creditease.dbus.heartbeat.resource.remote;
 
 import java.nio.charset.Charset;
 
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import org.apache.commons.lang.StringUtils;
 
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
@@ -44,12 +45,13 @@ public class HeartBeatConfigResource extends ZkConfigResource<HeartBeatVo> {
         HeartBeatVo hbvo = new HeartBeatVo();
         try {
             path = HeartBeatConfigContainer.getInstance().getZkConf().getConfigPath();
+            LoggerFactory.getLogger().info("path........"+path);
             byte[] bytes = curator.getData().forPath(path);
             if (bytes == null || bytes.length == 0) {
                 throw new RuntimeException("[load-zk-config] 加载zk path: " + path + "配置信息不存在.");
             }
-            String tmp=new String(bytes, Charset.forName("UTF-8"));
-            hbvo = JsonUtil.fromJson(tmp,  HeartBeatVo.class);
+            String tmp =new String(bytes, Charset.forName("UTF-8"));
+            hbvo = JsonUtil.fromJson(tmp, HeartBeatVo.class);
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

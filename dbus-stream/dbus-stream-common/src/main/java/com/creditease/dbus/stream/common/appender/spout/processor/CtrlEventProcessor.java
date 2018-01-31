@@ -21,13 +21,13 @@
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
 import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.spout.cmds.CtrlCommand;
 import com.creditease.dbus.stream.common.appender.spout.cmds.TopicResumeCmd;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.storm.tuple.Values;
 
 import java.util.Collections;
@@ -50,7 +50,7 @@ public class CtrlEventProcessor extends AbstractProcessor {
     }
 
     @Override
-    public void process(ConsumerRecord<String, byte[]> record, Object... args) {
+    public void process(DBusConsumerRecord<String, byte[]> record, Object... args) {
         try {
             processControlEvent(record);
         } catch (Exception e) {
@@ -58,7 +58,7 @@ public class CtrlEventProcessor extends AbstractProcessor {
         }
     }
 
-    private void processControlEvent(ConsumerRecord<String, byte[]> record) throws Exception {
+    private void processControlEvent(DBusConsumerRecord<String, byte[]> record) throws Exception {
         Object processed = cache.getIfPresent(record.offset());
         if (processed == null) {
             String key = record.key();
@@ -83,8 +83,7 @@ public class CtrlEventProcessor extends AbstractProcessor {
                     });
 
                     // 发送命令给bolt,开始发送数据,停止过滤termination的表
-                    List<Object> values = new Values(emitData, Command.APPENDER_TOPIC_RESUME);
-                    listener.emitData(values, record);
+                    listener.emitData(emitData, Command.APPENDER_TOPIC_RESUME, record);
                     return; // 不用继续执行
 
                 case APPENDER_RELOAD_CONFIG:

@@ -25,6 +25,7 @@ import com.creditease.dbus.bolt.PagedBatchDataFetchingBolt;
 import com.creditease.dbus.bolt.ProgressBolt;
 import com.creditease.dbus.common.DataPullConstants;
 import com.creditease.dbus.common.FullPullHelper;
+import com.creditease.dbus.common.FullPullPropertiesHolder;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.spout.DataPullingSpout;
@@ -60,27 +61,22 @@ public class FullPullerTopology {
         FullPullerTopology topology = new FullPullerTopology();
         //处理splitter
         if("splitter".equals(type)) {
-            PropertiesHolder.initialize(zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_SPLITTING_PROPS_ROOT);
-            FullPullHelper.initialize(fullSplitterTopologyId, zkConnect);
-            splittingBoltParallel = Integer.valueOf(FullPullHelper.getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true)
+            FullPullPropertiesHolder.initialize(Constants.FULL_SPLITTER_TYPE, zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_SPLITTING_PROPS_ROOT);
+            splittingBoltParallel = Integer.valueOf(FullPullPropertiesHolder.getCommonConf(Constants.FULL_SPLITTER_TYPE, fullSplitterTopologyId)
                     .getProperty(Constants.ZkTopoConfForFullPull.SPLITTING_BOLT_PARALLEL));
         //处理puller
         } else if("puller".equals(type)) {
-            PropertiesHolder.initialize(zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_PULLING_PROPS_ROOT);
-            FullPullHelper.initialize(fullPullerTopologyId, zkConnect);
-            pullingBoltParallel = Integer
-                    .valueOf(FullPullHelper.getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true)
+            FullPullPropertiesHolder.initialize(Constants.FULL_PULLER_TYPE, zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_PULLING_PROPS_ROOT);
+            pullingBoltParallel = Integer.valueOf(FullPullPropertiesHolder.getCommonConf(Constants.FULL_PULLER_TYPE, fullPullerTopologyId)
                             .getProperty(Constants.ZkTopoConfForFullPull.PULLING_BOLT_PARALLEL));
         //处理splitter和puller
         } else {
-            PropertiesHolder.initialize(zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_SPLITTING_PROPS_ROOT);
-            FullPullHelper.initialize(fullSplitterTopologyId, zkConnect);
-            splittingBoltParallel = Integer.valueOf(FullPullHelper.getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true)
+            FullPullPropertiesHolder.initialize(Constants.FULL_SPLITTER_TYPE, zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_SPLITTING_PROPS_ROOT);
+            splittingBoltParallel = Integer.valueOf(FullPullPropertiesHolder.getCommonConf(Constants.FULL_SPLITTER_TYPE, fullSplitterTopologyId)
                     .getProperty(Constants.ZkTopoConfForFullPull.SPLITTING_BOLT_PARALLEL));
-            PropertiesHolder.initialize(zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_PULLING_PROPS_ROOT);
-            FullPullHelper.initialize(fullPullerTopologyId, zkConnect);
-            pullingBoltParallel = Integer
-                    .valueOf(FullPullHelper.getFullPullProperties(Constants.ZkTopoConfForFullPull.COMMON_CONFIG, true)
+
+            FullPullPropertiesHolder.initialize(Constants.FULL_PULLER_TYPE, zkConnect, Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_PULLING_PROPS_ROOT);
+            pullingBoltParallel = Integer.valueOf(FullPullPropertiesHolder.getCommonConf(Constants.FULL_PULLER_TYPE, fullPullerTopologyId)
                             .getProperty(Constants.ZkTopoConfForFullPull.PULLING_BOLT_PARALLEL));
         }
 
@@ -171,6 +167,7 @@ public class FullPullerTopology {
             builder.setSpout(DataPullConstants.FullDataPullTopoItems.DATA_SPLITTING_SPOUT_NAME, new DataShardsSplittingSpout());
             builder.setBolt(DataPullConstants.FullDataPullTopoItems.DATA_SPLITTING_BOLT_NAME, new DataShardsSplittingBolt(),
                     splittingBoltParallel).shuffleGrouping(DataPullConstants.FullDataPullTopoItems.DATA_SPLITTING_SPOUT_NAME);
+
             builder.setSpout(DataPullConstants.FullDataPullTopoItems.PULLING_SPOUT_NAME, new DataPullingSpout());
             builder.setBolt(DataPullConstants.FullDataPullTopoItems.BATCH_DATA_FETCHING_BOLT_NAME,
                     new PagedBatchDataFetchingBolt(), pullingBoltParallel)
@@ -188,7 +185,8 @@ public class FullPullerTopology {
         conf.put(Constants.StormConfigKey.FULL_SPLITTER_TOPOLOGY_ID, fullSplitterTopologyId);
         conf.put(Constants.StormConfigKey.FULL_PULLER_TOPOLOGY_ID, fullPullerTopologyId);
         conf.put(Constants.StormConfigKey.ZKCONNECT, this.zkConnect);
-        conf.setMessageTimeoutSecs(3600);
+        //设置message超时时间为10小时，保证每个分片都能在10小时内拉完数据
+        conf.setMessageTimeoutSecs(36000);
         conf.setMaxSpoutPending(30);
         conf.setDebug(true);
         conf.setNumWorkers(1);

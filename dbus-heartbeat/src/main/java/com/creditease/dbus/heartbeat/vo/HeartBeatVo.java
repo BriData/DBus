@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,6 +78,12 @@ public class HeartBeatVo implements Serializable {
     private String adminEmail;
 
     private String adminUseEmail;
+
+    private String schemaChangeEmail;
+
+    private String schemaChangeUseEmail;
+
+    private Integer queryTimeout;
 
     private Map<String, Map<String, String>> additionalNotify;
 
@@ -281,5 +287,29 @@ public class HeartBeatVo implements Serializable {
     public void setAdditionalNotify(
             Map<String, Map<String, String>> additionalNotify) {
         this.additionalNotify = additionalNotify;
+    }
+
+    public String getSchemaChangeEmail() {
+        return schemaChangeEmail;
+    }
+
+    public void setSchemaChangeEmail(String schemaChangeEmail) {
+        this.schemaChangeEmail = schemaChangeEmail;
+    }
+
+    public String getSchemaChangeUseEmail() {
+        return schemaChangeUseEmail;
+    }
+
+    public void setSchemaChangeUseEmail(String schemaChangeUseEmail) {
+        this.schemaChangeUseEmail = schemaChangeUseEmail;
+    }
+
+    public Integer getQueryTimeout() {
+        return queryTimeout;
+    }
+
+    public void setQueryTimeout(Integer queryTimeout) {
+        this.queryTimeout = queryTimeout;
     }
 }

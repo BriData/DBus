@@ -29,7 +29,6 @@ var store = Reflux.createStore({
               alert("添加结点失败");
               return;
           }
-          alert("添加结点成功");
           //self.trigger(self.props.state);
           refreshNode(currentPath)
       });
@@ -41,7 +40,6 @@ var store = Reflux.createStore({
               alert("删除结点失败");
               return;
           }
-          alert("删除结点成功");
           //self.trigger(self.props.state);
           //let parentPath = currentPath.substr(0, currentPath.lastIndexOf("/"));
       });

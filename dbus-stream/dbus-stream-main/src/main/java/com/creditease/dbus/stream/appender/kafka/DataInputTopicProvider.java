@@ -21,12 +21,12 @@
 package com.creditease.dbus.stream.appender.kafka;
 
 import avro.shaded.com.google.common.collect.Sets;
-import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.utils.Utils;
-import com.creditease.dbus.stream.appender.exception.InitializationException;
 import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
+import com.creditease.dbus.stream.appender.exception.InitializationException;
+import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.TabSchema;
+import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
+import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 

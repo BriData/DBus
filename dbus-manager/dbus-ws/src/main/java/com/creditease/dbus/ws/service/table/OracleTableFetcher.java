@@ -32,7 +32,7 @@ public class OracleTableFetcher extends TableFetcher{
 
     @Override
     public String buildQuery(Object... args) {
-        String sql =" select TABLE_NAME from SYS.dba_tables where owner = ?";
+        String sql =" select TABLE_NAME from all_tables where owner = ?";
         return sql;
     }
 
@@ -51,7 +51,7 @@ public class OracleTableFetcher extends TableFetcher{
  */
     @Override
     public String buildTableFieldQuery(Object... args) {
-        String sql ="select COLUMN_NAME,DATA_TYPE from SYS.dba_tab_columns where owner= ? and table_name= ?";
+        String sql ="select TABLE_NAME,COLUMN_NAME,DATA_TYPE from all_tab_columns where owner= ?";
         return sql;
     }
 
@@ -61,7 +61,6 @@ public class OracleTableFetcher extends TableFetcher{
     @Override
     public String fillTableParameters(PreparedStatement statement, Map<String, Object> params) throws Exception {
         statement.setString(1, get(params, "schemaName"));
-        statement.setString(2, get(params, "tableName"));
         return null;
     }
 

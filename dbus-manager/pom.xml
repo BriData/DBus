@@ -5,14 +5,14 @@
     <parent>
         <artifactId>dbus-main</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
     </parent>
     <packaging>pom</packaging>
     <modules>
 		<module>mgr-base</module>
         <module>dbus-ws</module>
         <module>httpserver</module>
-        <module>distribution</module>
+        <!--<module>distribution</module>-->
     </modules>
     <modelVersion>4.0.0</modelVersion>
 

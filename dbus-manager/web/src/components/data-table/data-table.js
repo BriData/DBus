@@ -11,6 +11,7 @@ var cells = require('../common/table/cells');
 var minxin = require('../common/table/mixin');
 var utils = require('../common/utils');
 var $ = require('jquery');
+var antd = require('antd');
 
 var Column = Tab.Column;
 var Cell = Tab.Cell;
@@ -74,14 +75,18 @@ var DataTable = React.createClass({
         utils.showLoading();
         store.actions.openVersionDifference(obj, this);
     },
-    addRule:function(obj) {
-        utils.showLoading();
-        store.actions.openAddRule(obj, this);
+    configRule: function(obj) {
+        store.actions.configRule(obj, this);
+    },
+    takeEffect: function (obj) {
+        if (!confirm("Are you sure to take effect ?")) return;
+        store.actions.takeEffect(obj);
     },
     openUpdate:function(data,e){
         var updateParam = {
             id:data.id,
             tableName:data.tableName,
+            description:data.description,
             physicalTableRegex:data.physicalTableRegex,
             outputBeforeUpdateFlg:data.outputBeforeUpdateFlg,
             status:data.status
@@ -89,13 +94,39 @@ var DataTable = React.createClass({
         store.actions.openUpdate(updateParam);
         this.props.history.pushState({passParam: updateParam}, "/data-table/table-update");
     },
+    changeInactive:function(data,e){
+        if(!confirm("Are you sure to inactivate this table ?")) return;
+        var param = {
+            id:data.id,
+            status:"inactive"
+        };
+        store.actions.changeInactive(param);
+    },
     confirmStatusChange: function (data, e) {
         if(confirm("Are you sure to clear the flag ?"))
         {
             store.actions.confirmStatusChange(data, e.currentTarget);
         }
     },
+    independentPullWhole:function(data,e){
+        var date = new Date();
+        var newResultTopic = prompt("Please input output topic :", 'independent.' + data.outputTopic + '.' + date.getTime());
+        if (newResultTopic == null) return;
+        var typeParam = {
+            date: date,
+            dsId: data.dsID,
+            schemaName: data.schemaName,
+            tableName: data.tableName,
+            ctrlTopic: data.ctrlTopic,
+            resultTopic: newResultTopic,
+            version: false,
+            batch: false,
+            messageType: '单表独立全量拉取'
+        };
+        store.actions.independentPullWhole(typeParam, data);
+    },
     pullWhole:function(data,e){
+        if (!confirm("Are you sure to pull full ?")) return;
         var pullParam = {
             id:data.id,
             dsId:data.dsID,
@@ -107,12 +138,12 @@ var DataTable = React.createClass({
             outputTopic:data.outputTopic,
             version:data.version,
             namespace:data.namespace,
-            createTime:data.createTime,
             type:"load-data"
         };
         store.actions.pullWhole(pullParam);
     },
     pullIncrement:function(data,e){
+        if (!confirm("Are you sure to pull increment ?")) return;
         var pullParam = {
             id:data.id,
             dsId:data.dsID,
@@ -130,6 +161,7 @@ var DataTable = React.createClass({
         store.actions.pullIncrement(pullParam);
     },
     stop:function(data,e){
+        if (!confirm("Are you sure to stop ?")) return;
         var stopParam = {
             id:data.id
         };
@@ -145,11 +177,23 @@ var DataTable = React.createClass({
         //this.props.history.pushState({}, "/zk-manager");
     },
     versionChanged:function(data,e){
-       var dataParam = {
-          path:this.state.dialog.identityZK,
-          version:data
-       };
-       store.actions.versionChanged(dataParam,this);
+        var dataParam = {
+            path:this.state.dialog.identityZK,
+            version:data
+        };
+        store.actions.versionChanged(dataParam,this);
+    },
+
+    refreshZookeeperNode: function () {
+        var version = ReactDOM.findDOMNode(this.refs.tableVersion).childNodes[0].value;
+        this.versionChanged(version);
+    },
+    deleteTable: function(data) {
+        if(!confirm("Are you sure to delete this table?")) return;
+        var param = {
+            tableId: data.id
+        };
+        store.actions.deleteTable(param, this.search);
     },
     statusStyle: function(data) {
         if (data.status == "ok" && data.verChangeNoticeFlg == 1) {
@@ -170,16 +214,15 @@ var DataTable = React.createClass({
     },
     render: function() {
         var rows = this.state.data.list || [];
-        var btns = [
-            {text:"IncrementPuller", bsStyle:"info", icon:"play", action:this.pullIncrement},
-            {text:"FullPuller", bsStyle:"primary", icon:"share-alt", action:this.pullWhole},
-            {text:"Stop", bsStyle:"warning", icon:"stop", action:this.stop},
-            {text:"ReadZK", bsStyle:"success", icon:"info-sign", action:this.readTableVersion},
-            {text:"Encode", bsStyle:"success", icon:"lock", action:this.openDialogConfigure},
-            {text:"Modify", bsStyle:"default", icon:"edit", action:this.openUpdate}];
-        if(global.isDebug) {
-            btns.push({text:"add rules", bsStyle:"info", icon:"cog", action:this.addRule});
-        }
+
+        var isDsTypeLog = function(dsType) {
+            return dsType != null && dsType.startsWith("log_");
+        };
+
+        var isDsTypeMysqlOracle = function(dsType) {
+            return dsType == utils.dsType.oracle || dsType == utils.dsType.mysql;
+        };
+
         return (
             <TF>
                 <TF.Header title="DataTable">
@@ -207,33 +250,112 @@ var DataTable = React.createClass({
                     </B.Button>
                 </TF.Header>
                 <TF.Body pageCount={this.state.data.pages} onPageChange={this.pageChange}>
-                    <Table rowsCount={rows.length}>
+                    <Table rowsCount={rows.length} width={document.documentElement.clientWidth - 210}>
                         <Column
-                        header={ <Cell>Operation</Cell> }
-                        cell={<BtnCell data={rows}
-                            btns={btns}/> }
-                        width={310}
-                        flexGrow={1}/>
+                            header={ <Cell>Operation</Cell> }
+                            cell={ props => (
+                            <div className="fixedDataTableCellLayout_wrap1 public_fixedDataTableCell_wrap1"><div className="fixedDataTableCellLayout_wrap2 public_fixedDataTableCell_wrap2"><div className="fixedDataTableCellLayout_wrap3 public_fixedDataTableCell_wrap3"><div className="public_fixedDataTableCell_cellContent btn-cell">
+                                <antd.Dropdown disabled={!isDsTypeMysqlOracle(rows[props.rowIndex].dsType)} overlay={
+                                    <antd.Menu>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.independentPullWhole.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-share-alt"></span>
+                                                <span>{" Custom FullPuller"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                    </antd.Menu> }>
+                                    <antd.Button type="primary" onClick={this.pullWhole.bind(this, rows[props.rowIndex])}>
+                                        <span className="glyphicon glyphicon-share-alt"></span>{" FullPuller"}<antd.Icon type="down" />
+                                    </antd.Button>
+                                </antd.Dropdown>
+                                <antd.Dropdown overlay={
+                                    <antd.Menu>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.pullIncrement.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-play"></span>
+                                                <span>{" IncrementPuller"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.stop.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-stop"></span>
+                                                <span>{" Stop"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+
+                                        <antd.Menu.Divider />
+
+                                        <antd.Menu.Item disabled={!isDsTypeMysqlOracle(rows[props.rowIndex].dsType)}>
+                                            <div onClick={isDsTypeMysqlOracle(rows[props.rowIndex].dsType) ? this.readTableVersion.bind(this, rows[props.rowIndex]): null}>
+                                                <span className="glyphicon glyphicon-info-sign"></span>
+                                                <span>{" ReadZK"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item disabled={!isDsTypeMysqlOracle(rows[props.rowIndex].dsType)}>
+                                            <div onClick={isDsTypeMysqlOracle(rows[props.rowIndex].dsType) ? this.openDialogConfigure.bind(this, rows[props.rowIndex]) : null}>
+                                                <span className="glyphicon glyphicon-lock"></span>
+                                                <span>{" Encode"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.openUpdate.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-edit"></span>
+                                                <span>{" Modify"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.changeInactive.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-edit"></span>
+                                                <span>{" Inactivate"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item disabled={!isDsTypeLog(rows[props.rowIndex].dsType)}>
+                                            <div onClick={isDsTypeLog(rows[props.rowIndex].dsType) ? this.configRule.bind(this, rows[props.rowIndex]): null}>
+                                                <span className="glyphicon glyphicon-cog"></span>
+                                                <span>{" Rules"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                        <antd.Menu.Item>
+                                            <div onClick={this.deleteTable.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-remove"></span>
+                                                <span>{" Delete"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+
+                                        <antd.Menu.Divider />
+
+                                        <antd.Menu.Item>
+                                            <div onClick={this.takeEffect.bind(this, rows[props.rowIndex])}>
+                                                <span className="glyphicon glyphicon-ok"></span>
+                                                <span>{" Take Effect"}</span>
+                                            </div>
+                                        </antd.Menu.Item>
+                                    </antd.Menu>}>
+                                    <antd.Button>More<antd.Icon type="down" /></antd.Button>
+                                </antd.Dropdown>
+                            </div></div></div></div>
+                            )}
+                            width={185}/>
                         <Column
                             header={ <Cell> id </Cell> }
                             cell={ <TextCell data={rows} col="id"onDoubleClick={this.openDialogByKey.bind(this,"id")}/>}
-                            width={80} />
+                            width={50} />
                         <Column
-                            header={ <Cell>dsName</Cell> }
+                            header={ <Cell>ds</Cell> }
                             cell={ <TextCell data={rows} col="dsName" onDoubleClick={this.openDialogByKey.bind(this,"dsName")}/>}
-                            width={150} />
+                            width={70} />
                         <Column
-                            header={ <Cell>schemaName</Cell> }
+                            header={ <Cell>schema</Cell> }
                             cell={ <TextCell data={rows} col="schemaName" onDoubleClick={this.openDialogByKey.bind(this,"schemaName")}/>}
-                            width={150} />
+                            width={70} />
                         <Column
                             header={ <Cell>tableName</Cell> }
                             cell={ <TextCell data={rows} col="tableName" onDoubleClick={this.openDialogByKey.bind(this,"tableName")}/>}
-                            width={250} />
+                            width={160} />
                         <Column
                             header={ <Cell>status</Cell> }
                             cell={props => (
-                            <Cell>
+                            <Cell style={{textAlign:'center'}}>
                                 <span className={"label label-" + this.statusStyle(rows[props.rowIndex])}>
                                     {
                                          rows[props.rowIndex].showStatusHyperlink
@@ -245,37 +367,46 @@ var DataTable = React.createClass({
                                 </span>
                             </Cell>
                             )}
-                            width={100}
+                            width={70}
                         />
-                        <Column
-                            header={ <Cell>History</Cell> }
-                            cell={ <TextCell data={rows} col="versionsChangeHistory" onDoubleClick={this.openDialogByKey.bind(this,"versionsChangeHistory")}/> }
-                            width={100} />
                         <Column
                             header={ <Cell>version</Cell> }
                             cell={props => (
-                            <div onClick={this.openVersionDifference.bind(this, rows[props.rowIndex])} title="Click to View Version History" style={{marginLeft:"8px",marginTop:"13px",fontWeight:"bold",textDecoration:"underline",cursor:"pointer"}}>
+                            <div className="fixedDataTableCellLayout_wrap1 public_fixedDataTableCell_wrap1"><div className="fixedDataTableCellLayout_wrap2 public_fixedDataTableCell_wrap2"><div className="fixedDataTableCellLayout_wrap3 public_fixedDataTableCell_wrap3"><div className="public_fixedDataTableCell_cellContent">
+
+                            <span onClick={this.openVersionDifference.bind(this, rows[props.rowIndex])} title="Click to View Version History" style={{fontWeight:"bold",textDecoration:"underline",cursor:"pointer"}}>
                                 {rows[props.rowIndex]["version"]}
-                            </div>)
+                            </span>
+                            <span>
+                                {(function(version, history){
+                                    if(version == null || history == null) return null;
+                                    return "<<"+history;
+                                })(rows[props.rowIndex]["version"], rows[props.rowIndex]["versionsChangeHistory"])}
+                            </span>
+                            </div></div></div></div>
+                            )
                             }
-                            width={100} />
+                            width={70} />
                         <Column
-                            header={ <Cell>physicalTableRegex</Cell> }
-                            cell={ <TextCell data={rows} col="physicalTableRegex"  ref="physicalTableRegex" onDoubleClick={this.openDialogByKey.bind(this,"physicalTableRegex")}/>}
-                            width={250} />
-                        <Column
-                            header={ <Cell>outputTopic</Cell> }
-                            cell={ <TextCell data={rows} col="outputTopic" onDoubleClick={this.openDialogByKey.bind(this,"outputTopic")}/>}
-                            width={300} />
-                        <Column
-                            header={ <Cell>namespace</Cell> }
-                            cell={ <TextCell data={rows} col="namespace" onDoubleClick={this.openDialogByKey.bind(this,"namespace")}/>}
-                            width={450} />
+                            header={ <Cell>description</Cell> }
+                            cell={ <TextCell data={rows} col="description" onDoubleClick={this.openDialogByKey.bind(this,"description")}/>}
+                            width={150} />
                         <Column
                             header={ <Cell>createTime</Cell> }
                             cell={ <TextCell data={rows} col="createTime" onDoubleClick={this.openDialogByKey.bind(this,"createTime")}/>}
-                            width={200}
-                            flexGrow={1}/>
+                            width={180} />
+                        <Column
+                            header={ <Cell>physicalTableRegex</Cell> }
+                            cell={ <TextCell data={rows} col="physicalTableRegex"  ref="physicalTableRegex" onDoubleClick={this.openDialogByKey.bind(this,"physicalTableRegex")}/>}
+                            width={200} />
+                        <Column
+                            header={ <Cell>outputTopic</Cell> }
+                            cell={ <TextCell data={rows} col="outputTopic" onDoubleClick={this.openDialogByKey.bind(this,"outputTopic")}/>}
+                            width={200} />
+                        <Column
+                            header={ <Cell>namespace</Cell> }
+                            cell={ <TextCell data={rows} col="namespace" onDoubleClick={this.openDialogByKey.bind(this,"namespace")}/>}
+                            width={400} />
                     </Table>
                     <div id="dialogHolder">
                         <Modal
@@ -299,13 +430,15 @@ var DataTable = React.createClass({
                                 <Modal.Title>{this.state.dialog.identityZK}</Modal.Title>
                             </Modal.Header>
                             <Modal.Body>
-                               <Select
-                                 ref="tableVersion"
-                                 defaultOpt={{value:-1,text:"select a zookeeper node"}}
-                                 options={this.state.tableVersion}
-                                 onChange={this.versionChanged}/>
-                                 <br/><br/>
-                                 <textarea className="form-control" ref="zkResult"  rows="30" cols="70"></textarea>
+                                <Select
+                                    ref="tableVersion"
+                                    defaultOpt={{value:-1,text:"select a zookeeper node"}}
+                                    options={this.state.tableVersion}
+                                    onChange={this.versionChanged}/>
+                                <B.Button style={{marginLeft: "15px"}} bsSize="sm" onClick={this.refreshZookeeperNode}>Refresh
+                                </B.Button>
+                                <br/><br/>
+                                <textarea className="form-control" ref="zkResult"  rows="18" cols="70"></textarea>
                             </Modal.Body>
                             <Modal.Footer>
                                 <B.Button onClick={this.closeDialogZK}>Close</B.Button>
@@ -335,7 +468,7 @@ var DataTable = React.createClass({
 
 function buildQueryParmeter(p, pageNum) {
     var param = {
-        pageSize:10,
+        pageSize:utils.getFixedDataTablePageSize(),
         pageNum: (typeof pageNum) == 'number'  ? pageNum : 1
     };
     if(p.dsID != 0) {

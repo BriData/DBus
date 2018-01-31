@@ -20,24 +20,23 @@
 
 package com.creditease.dbus.ws.web;
 
-import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.IZkService;
+import com.creditease.dbus.enums.DbusDatasourceType;
+import com.creditease.dbus.utils.ZkConfTemplateHelper;
 import com.creditease.dbus.ws.common.Charset;
 import com.creditease.dbus.ws.common.Constants;
-import com.creditease.dbus.ws.common.Result;
 import com.creditease.dbus.ws.domain.ZkNode;
-import com.creditease.dbus.ws.service.source.SourceFetcher;
 import com.creditease.dbus.ws.tools.ZookeeperServiceProvider;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.data.ACL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.creditease.dbus.commons.Constants.DBUS_CONF_TEMPLATE_ROOT;
+import static com.creditease.dbus.commons.Constants.TEMPLATE_NODE_NAME;
 
 /**
  * 数据源resource,提供数据源的相关操作
@@ -46,6 +45,7 @@ import java.util.Map;
 @Consumes("application/json")
 @Produces("application/json;charset=utf-8")
 public class ZkConfResource {
+    private Logger logger = LoggerFactory.getLogger(getClass());
     /**
      * 根据path获取对应zk树。
      * @return zk tree json
@@ -54,7 +54,7 @@ public class ZkConfResource {
     @Path("/loadZkTreeOfPath")
     public Response loadZkTreeOfPath(@QueryParam("path") String path) {
         IZkService zkService = ZookeeperServiceProvider.getInstance().getZkService();
-        ZkNode root=initialTreeOfPath(path,zkService); //根据path，生成（公共祖先的）父子关系链
+        ZkNode root=initialTreeOfPath(path, false, zkService); //根据path，生成（公共祖先的）父子关系链
         ZkNode lastCommonParent=getLastCommonParent(root);
         lastCommonParent.setChildren(loadChildrenRecursively(zkService,lastCommonParent));//获取子树
         return Response.status(200).entity(root).build();
@@ -68,7 +68,7 @@ public class ZkConfResource {
     @Path("/loadSubTreeOfPath")
     public Response loadSubTreeOfPath(@QueryParam("path") String path) {
         IZkService zkService = ZookeeperServiceProvider.getInstance().getZkService();
-        ZkNode root=initialTreeOfPath(path,zkService); //根据path，生成（公共祖先的）父子关系链
+        ZkNode root=initialTreeOfPath(path, false, zkService); //根据path，生成（公共祖先的）父子关系链
         ZkNode lastCommonParent=getLastCommonParent(root);
         List<ZkNode> children=loadChildrenRecursively(zkService,lastCommonParent);//获取子树
         return Response.status(200).entity(children).build();
@@ -136,13 +136,13 @@ public class ZkConfResource {
      * @return zk tree json
      */
     @GET
-    @Path("/loadZkTreeByDsName/{dsName}")
-    public Response loadZkTreeByDsName(@PathParam("dsName") String dsName) {
+    @Path("/loadZkTreeByDsName/{dsName}/{dsType}")
+    public Response loadZkTreeByDsName(@PathParam("dsName") String dsName, @PathParam("dsType") String dsType) {
         IZkService zkService = ZookeeperServiceProvider.getInstance().getZkService();
-        ZkNode root = initialTreeOfPath(Constants.DBUS_ROOT,zkService);
+        ZkNode root = initialTreeOfPath(com.creditease.dbus.commons.Constants.DBUS_ROOT, false, zkService);
         root.setToggled(true);
         ZkNode businessRoot=getLastCommonParent(root);
-        List<ZkNode> businessConfChildren = loadBusinessConf(zkService, dsName);
+        List<ZkNode> businessConfChildren = loadBusinessConf(zkService, dsName, dsType);
         businessRoot.setChildren(businessConfChildren);
         return Response.status(200).entity(root).build();
     }
@@ -169,7 +169,8 @@ public class ZkConfResource {
      */
     @GET
     @Path("/deleteZkNodeOfPath")
-    public Response deleteZkNodeOfPath(@QueryParam("path") String path) {
+    public Response deleteZkNodeOfPath(Map<String, Object> map) {
+        String path = map.get("path").toString();
         IZkService zkService = ZookeeperServiceProvider.getInstance().getZkService();
         try {
             //zkService.deleteNode(path);
@@ -285,18 +286,19 @@ public class ZkConfResource {
     @GET
     @Path("/cloneConfFromTemplate")
     public Response cloneConfFromTemplate(Map<String,Object> map) {
-        String TEMPLATE_ROOT_TOPOLOGY = "/DBus/ConfTemplates/Topology";
-        String TEMPLATE_ROOT_EXTRACTOR = "/DBus/ConfTemplates/Extractor";
-
         IZkService zkService = ZookeeperServiceProvider.getInstance().getZkService();
-
         try {
             String dsName = String.valueOf(map.get("dsName"));
             String dsType = String.valueOf(map.get("dsType"));
-
-            cloneNodeRecursively(TEMPLATE_ROOT_TOPOLOGY, dsName, zkService);
-            if(dsType.toLowerCase().equals("mysql")){
-                cloneNodeRecursively(TEMPLATE_ROOT_EXTRACTOR, dsName, zkService);
+            // 根据数据源类型，获取对应数据源需要克隆的zk子树。依次克隆
+            Set<String> rootNodesSetOfDs = ZkConfTemplateHelper.getZkConfRootNodesSetForDs(DbusDatasourceType.parse(dsType));
+            if(null!=rootNodesSetOfDs && !rootNodesSetOfDs.isEmpty()){
+                for (String rootNodePath:rootNodesSetOfDs) {
+                    // 公共节点可能被重复处理，例如：/DBus/ConfTemplaes/Topology，可能被处理多次。
+                    // 但结果幂等。为了代码简洁性，选择接受重复处理，而不是各种判断，特殊处理，增加代码复杂性,导致代码不可读。
+                    initialTreeOfPath(com.creditease.dbus.commons.Constants.DBUS_CONF_TEMPLATE_ROOT+"/"+rootNodePath, true, zkService);
+                    cloneNodeRecursively(com.creditease.dbus.commons.Constants.DBUS_CONF_TEMPLATE_ROOT+"/"+rootNodePath, dsName, dsType, zkService);
+                }
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -304,10 +306,7 @@ public class ZkConfResource {
         return Response.status(200).build();
     }
 
-    //  /DBus/ConfTemplates/Topology   /DBus/ConfTemplates/Extractor
-    private  void cloneNodeRecursively(String templatePath, String dsName, IZkService zkService){
-        // TODO
-        String TEMPLATE_NODE_NAME = "/ConfTemplates";
+    private  void cloneNodeRecursively(String templatePath, String dsName, String dsType, IZkService zkService){
         try{
             List<String> children = zkService.getChildren(templatePath);
             if(children.size() > 0){
@@ -315,30 +314,32 @@ public class ZkConfResource {
                     String templateNodePath = templatePath+"/"+nodeName;
                     //判断节点是否存在，如果不存在，则创建
                     String businessNodePath = templateNodePath.replace(TEMPLATE_NODE_NAME,"");
+                    businessNodePath = businessNodePath.replaceAll("typePlaceholder", dsType);
                     businessNodePath = businessNodePath.replaceAll("placeholder",dsName);
                     if(!zkService.isExists(businessNodePath)){
-                        zkService.createNode(businessNodePath, null);
+                        // 公共节点可能被重复处理，例如：/DBus/ConfTemplaes/Topology，可能被处理多次。
+                        // 但结果幂等。为了代码简洁性，选择接受重复处理，而不是各种判断，特殊处理，增加代码复杂性,导致代码不可读。
+                        initialTreeOfPath(businessNodePath, true, zkService);
                     }
-                    cloneNodeRecursively(templateNodePath, dsName, zkService);
+                    cloneNodeRecursively(templateNodePath, dsName, dsType, zkService);
                 }
             }else{
-                populateLeafNodeData(templatePath, dsName, zkService);
+                populateLeafNodeData(templatePath, dsName, dsType,  zkService);
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
     }
 
-    private void populateLeafNodeData(String templatePath, String dsName,  IZkService zkService){
-        // TODO
-        String TEMPLATE_NODE_NAME = "/ConfTemplates";
+    private void populateLeafNodeData(String templatePath, String dsName, String dsType, IZkService zkService){
         String businessNodePath = templatePath.replace(TEMPLATE_NODE_NAME,"");
+        businessNodePath = businessNodePath.replaceAll("typePlaceholder", dsType);
         businessNodePath = businessNodePath.replaceAll("placeholder",dsName);  //替换占位符placeholder为dsName
         try {
             if(zkService.isExists(businessNodePath)){
                 String nodeData = new String(zkService.getData(templatePath),"UTF-8");
                 if(nodeData != null){
+                    nodeData = nodeData.replaceAll("typePlaceholder", dsType);
                     nodeData = nodeData.replaceAll("placeholder", dsName);
                 }else{
                     nodeData = "";
@@ -351,7 +352,7 @@ public class ZkConfResource {
         }
     }
 
-    private ZkNode initialTreeOfPath(String pathParam,IZkService zkService){
+    private ZkNode initialTreeOfPath(String pathParam, boolean createIfNotExists, IZkService zkService){
         //我们的地址是 /DBus/xxx的形式。需要对第一个 / 进行特殊处理,生成其代表的根节点
         ZkNode root=new ZkNode("/");
         root.setPath("/");
@@ -370,6 +371,15 @@ public class ZkConfResource {
                     node.setPath(curPath);
                     try {
                         boolean nodeExisted = zkService.isExists(curPath);
+                        if(!nodeExisted&&createIfNotExists){
+                            try {
+                                zkService.createNode(curPath, null);
+                                nodeExisted = true;
+                            } catch (Exception e) {
+                                logger.warn("Create zk Node failed.",e);
+                            }
+                        }
+
                         node.setExisted(zkService.isExists(curPath));
                         if(nodeExisted){
                             byte[] data = zkService.getData(curPath);
@@ -378,7 +388,7 @@ public class ZkConfResource {
                             }
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        logger.warn("Initial Tree Of Path failed.",e);
                     }
                     List<ZkNode> children=new ArrayList<>();
                     children.add(node);
@@ -420,40 +430,69 @@ public class ZkConfResource {
         }
         return childrenNodes;
     }
-    private List<ZkNode> loadBusinessConf(IZkService zkService, String dsName){
-        ZkNode root=initialTreeOfPath(Constants.TEMPLATE_ROOT,zkService);
-        ZkNode templateRoot=getLastCommonParent(root);
-        // 获取具体配置模板节点
-        List<ZkNode> confNodes=loadChildrenRecursively(zkService,templateRoot);
+
+    private List<ZkNode> loadBusinessConf(IZkService zkService, String dsName, String dsType) {
+        ZkNode root = initialTreeOfPath(DBUS_CONF_TEMPLATE_ROOT, false, zkService);
+        ZkNode templateRoot = getLastCommonParent(root);
+
+        if (StringUtils.isNotBlank(dsType)) {
+            Set<String> rootNodesSetOfDs = ZkConfTemplateHelper.getZkConfRootNodesSetForDs(DbusDatasourceType.parse(dsType));
+            // 根据dsType, 确定需要加载的各子树的root。
+            for (String rootNodePath : rootNodesSetOfDs) {
+                ZkNode parentNode = templateRoot;
+                String parentPath = parentNode.getPath();
+                String[] pathItems = rootNodePath.split("/");
+                for (String nodeName : pathItems) {
+                    String currentNodePath = parentPath + "/" + nodeName;
+                    ZkNode zkNode = new ZkNode();
+                    zkNode.setName(nodeName);
+                    zkNode.setToggled(true); // TODO
+                    zkNode.setPath(currentNodePath);
+                    if (!parentNode.hasChild(nodeName)) {
+                        if(parentNode.getChildren() == null)
+                            parentNode.setChildren(new ArrayList<>());
+                        parentNode.getChildren().add(zkNode);
+                    }
+                    parentPath = currentNodePath;
+                    parentNode = parentNode.getChildByName(nodeName);
+                }
+                //  最末级节点，也就是退出for循环时，parentNode代表的节点，是我们根据dsType筛出来的，要加载的子树的root。根据这个root，加载子树
+                parentNode.setChildren(loadChildrenRecursively(zkService, parentNode));
+            }
+        }
+
+        // 上述步骤结束后，生成了根据不同dsType，需要加载的conf template子孙节点级。进一步处理templateRoot的子（孙—）节点。
+        List<ZkNode> confTemplateChildren = templateRoot.getChildren();
         // 根据dsName把配置模板渲染成业务配置节点
-        if(confNodes.size()>0) {
-            for (ZkNode node : confNodes) {
+        if (confTemplateChildren!=null && !confTemplateChildren.isEmpty()) {
+            for (ZkNode node : confTemplateChildren) {
                 renderBusinessTreeBasedTemplate(zkService, node, dsName);
             }
         }
-        return  confNodes;
+        return confTemplateChildren;
     }
-    private void renderBusinessTreeBasedTemplate(IZkService zkService, ZkNode zkNode, String dsName){
-            zkNode.setName(zkNode.getName().replace(Constants.BUSSINESS_PLACEHOLDER,dsName));
-            String path=zkNode.getPath();
-            path=path.replace(Constants.TEMPLATE_NODE_NAME,"");
-            path=path.replace(Constants.BUSSINESS_PLACEHOLDER,dsName);
-            zkNode.setPath(path);
-            try {
-                // 检查是否存在与dsName对应的业务配置节点，设置标志。并且，存在的话，获取具体配置内容
-                boolean exists=zkService.isExists(path);
-                zkNode.setExisted(exists);
-                if(exists){
-                    byte[] data = zkService.getData(path);
-                    if (data != null && data.length > 0) {
-                        zkNode.setContent(new String(data, Charset.UTF8));
-                    }
+
+    private void renderBusinessTreeBasedTemplate(IZkService zkService, ZkNode zkNode, String dsName) {
+        zkNode.setName(zkNode.getName().replace(Constants.BUSSINESS_PLACEHOLDER, dsName));
+        String path = zkNode.getPath();
+        path = path.replace(TEMPLATE_NODE_NAME, "");
+        path = path.replace(Constants.BUSSINESS_PLACEHOLDER, dsName);
+        zkNode.setPath(path);
+        try {
+            // 检查是否存在与dsName对应的业务配置节点，设置标志。并且，存在的话，获取具体配置内容
+            boolean exists = zkService.isExists(path);
+            zkNode.setExisted(exists);
+            if (exists) {
+                byte[] data = zkService.getData(path);
+                if (data != null && data.length > 0) {
+                    zkNode.setContent(new String(data, Charset.UTF8));
                 }
-            }catch (Exception e){
-                e.printStackTrace();
             }
-        List<ZkNode> children=zkNode.getChildren();
-        if(children!=null&&!children.isEmpty()){
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        List<ZkNode> children = zkNode.getChildren();
+        if (children != null && !children.isEmpty()) {
             for (ZkNode node : children) {
                 renderBusinessTreeBasedTemplate(zkService, node, dsName);
             }

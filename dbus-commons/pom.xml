@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.creditease.dbus</groupId>
         <artifactId>dbus-main</artifactId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
     </parent>
     <artifactId>dbus-commons</artifactId>
 
@@ -19,6 +19,12 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.5</version>
         </dependency>
 
         <dependency>
@@ -42,15 +48,29 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>0.9.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.6.1</version>
         </dependency>
 
 
         <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
 
 
+
+
+        <!-- 你需要添加 oracle 依赖在这里 ojdbc14 -->
 
     </dependencies>
 </project>

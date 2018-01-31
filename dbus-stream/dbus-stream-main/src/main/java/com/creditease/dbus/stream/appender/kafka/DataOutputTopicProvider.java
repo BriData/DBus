@@ -20,11 +20,11 @@
 
 package com.creditease.dbus.stream.appender.kafka;
 
+import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.bean.TabSchema;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
-import com.creditease.dbus.stream.common.Constants;
 import com.google.common.base.Strings;
 
 import java.util.ArrayList;

@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ZkService implements IZkService {
-    private static final String auth = "DBus:yvr5skHKWJOR0jiG";
+    // 0.4.0 秘钥
+    private static final String auth = "DBus:CHEOi@TSeyLfSact";
+    // 0.3.0 秘钥
+    // private static final String auth = "DBus:yvr5skHKWJOR0jiG";
     private Logger logger = LoggerFactory.getLogger(getClass());
     private CuratorFramework client;
 
@@ -328,7 +328,7 @@ public class ZkService implements IZkService {
                 //从zk上上删除旧节点
                 String path = Constants.NAMESPACE_ROOT + "/" + oldNameSpace.replace('.', '/');
                 try {
-                    deleteNode(path);    
+                    deleteNode(path);
                 }catch (Exception e) {
                     logger.warn("Failed to delete zk node:"+path+"! Please confirm it exists.");
                 }
@@ -372,7 +372,7 @@ public class ZkService implements IZkService {
     public long currentValue(String dbName, String schemaName, String tableName, String version) throws Exception  {
         String nameSpace = String.format("%s.%s.%s.%s", dbName, schemaName, tableName, version);
         return currentValue(nameSpace);
-   }
+    }
 
     /**
      * 获得当前值

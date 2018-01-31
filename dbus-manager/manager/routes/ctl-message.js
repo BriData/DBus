@@ -40,6 +40,11 @@ var buildTemplateReaload = function (type) {
 router.get('/', function (req, res) {
     var typeList = [
         {
+            type: "LOG_PROCESSOR_RELOAD_CONFIG",
+            text: "Reload Log-Processor",
+            template: buildTemplate('LOG_PROCESSOR_RELOAD_CONFIG')
+        },
+        {
             type: "EXTRACTOR_RELOAD_CONF",
             text: "Reload Extractor",
             template: buildTemplate('EXTRACTOR_RELOAD_CONF')
@@ -96,8 +101,7 @@ router.get('/send', function (req, res) {
                     console.log(error.stack);
                     res.json({status: 500});
                     return;
-                }
-                else res.json({status: 200});
+                } else res.json({status: 200});
                 client.close();
                 console.log('connection closed.');
             });

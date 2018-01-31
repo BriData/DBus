@@ -44,4 +44,5 @@ public interface TableMapper {
     int update(DataTable table);
     int changeStatus(@Param("id")Long id, @Param("status")String status);
     int confirmVerChange(@Param("id")Long id);
+    int deleteByTableId(int id);
 }

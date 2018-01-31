@@ -37,9 +37,9 @@ public class Constants {
         public static final String RUNNING = "running";
         public static final String ENDING = "ending";
     }
-    public static final String DBUS_ROOT ="/DBus";
-    public static final String  TEMPLATE_NODE_NAME = "/ConfTemplates";
-    public static final String TEMPLATE_ROOT="/DBus/ConfTemplates";
+//    public static final String DBUS_ROOT ="/DBus";
+//    public static final String  TEMPLATE_NODE_NAME = "/ConfTemplates";
+//    public static final String TEMPLATE_ROOT="/DBus/ConfTemplates";
     public static final String BUSSINESS_PLACEHOLDER="placeholder";
     public static final String CONTROL_MESSAGE_SENDER_NAME = "dbus-rest";
     public static final String GLOBAL_CONF = "/DBus/Commons/global.properties";

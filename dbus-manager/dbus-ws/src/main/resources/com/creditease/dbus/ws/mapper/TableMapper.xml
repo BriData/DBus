@@ -9,6 +9,7 @@
         <result property="dsID" column="ds_id"/>
         <result property="dsName" column="ds_name"/>
         <result property="dsType" column="ds_type"/>
+        <result property="ctrlTopic" column="ctrl_topic"/>
         <result property="schemaID" column="schema_id"/>
         <result property="schemaName" column="schema_name"/>
         <result property="tableName" column="table_name"/>
@@ -27,6 +28,7 @@
         <result property="verChangeHistory" column="ver_change_history"/>
         <result property="verChangeNoticeFlg" column="ver_change_notice_flg"/>
         <result property="outputBeforeUpdateFlg" column="output_before_update_flg"/>
+        <result property="description" column="description"/>
     </resultMap>
 
     <select id="findAll" resultMap="table">
@@ -70,7 +72,7 @@
     </select>
 -->
     <select id="search" resultMap="table">
-        select t1.*, t2.ds_name,t2.ds_type, t3.version, t3.inner_version from t_data_tables t1 left join t_dbus_datasource t2 on t1.ds_id = t2.id left join t_meta_version t3 on t1.ver_id = t3.id
+        select t1.*, t2.ds_name,t2.ds_type,t2.ctrl_topic, t3.version, t3.inner_version from t_data_tables t1 left join t_dbus_datasource t2 on t1.ds_id = t2.id left join t_meta_version t3 on t1.ver_id = t3.id
         where 1=1
         <if test ="dsID != null"> and t1.ds_id = #{dsID}</if>
         <if test ="schemaName != null"> and t1.schema_name like "%"#{schemaName}"%"</if>
@@ -79,13 +81,13 @@
     </select>
 
     <select id="findTables" resultMap="table">
-        select t1.*, t2.ds_name, t2.ds_type,t3.version, t3.inner_version from t_data_tables t1, t_dbus_datasource t2, t_meta_version t3 where t1.ds_id = t2.id and t1.ver_id = t3.id
+        select t1.*, t2.ds_name, t2.ds_type,t2.ctrl_topic, t3.version, t3.inner_version from t_data_tables t1, t_dbus_datasource t2, t_meta_version t3 where t1.ds_id = t2.id and t1.ver_id = t3.id
         <if test ="dsID != null"> and t1.ds_id = #{dsID}</if>
         <if test ="schemaName != null"> and t1.schema_name = #{schemaName}</if>
         <if test = "tableName != null"> and t1.table_name like  "%"#{tableName}"%"</if>
     </select>
 
-    <insert id="insert">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into t_data_tables
         (ds_id,
         schema_id,
@@ -118,6 +120,7 @@
         <if test="outputBeforeUpdateFlg != null">output_before_update_flg = #{outputBeforeUpdateFlg},</if>
         <if test="verID != null">ver_id = #{verID},</if>
         <if test="status != null">status = #{status},</if>
+        <if test="description != null">description = #{description},</if>
         create_time = current_timestamp()
         where id = #{id}
     </update>
@@ -133,4 +136,11 @@
         set ver_change_history = null, ver_change_notice_flg = 0, create_time = create_time
         where id = #{id}
     </update>
+
+    <delete id="deleteByTableId">
+        delete tt,tv,tm from t_data_tables tt
+        left join t_meta_version tv on tt.id = tv.table_id
+        left join t_table_meta tm on tv.id = tm.ver_id
+        where tt.id = #{id}
+    </delete>
 </mapper>

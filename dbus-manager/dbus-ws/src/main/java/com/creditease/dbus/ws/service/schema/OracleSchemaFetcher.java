@@ -31,18 +31,10 @@ public class OracleSchemaFetcher extends SchemaFetcher{
     }
 
     @Override
-    public String buildQuery(Object... args) {
+    public String buildQuery() {
         String sql ="select username from sys.dba_users order by username";
         return sql;
     }
 
-    @Override
-    public String fillParameters(PreparedStatement statement, Map<String, Object> params) throws Exception {
-        return null;
-    }
-
-    private String get(Map<String, Object> map, String key) {
-        return map.get(key).toString();
-    }
 }
 

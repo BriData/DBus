@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,15 +29,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.curator.framework.CuratorFramework;
-
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.curator.framework.CuratorFramework;
 
 /**
  *
@@ -103,22 +103,22 @@ public class DeleteFullPullOldVersionEvent extends AbstractEvent {
     }
 
     private void getChildrenPath(CuratorFramework curator, List<String> lst, String parent) throws Exception{
-    	List<String> lstPath = curator.getChildren().forPath(parent);
-		for(String path:lstPath){
-			getChildrenPath(curator,lst,parent+"/"+path);
-		}
-		if(lstPath.size()==0)
-			lst.add(parent);
+        List<String> lstPath = curator.getChildren().forPath(parent);
+        for(String path:lstPath){
+            getChildrenPath(curator,lst,parent+"/"+path);
+        }
+        if(lstPath.size()==0)
+            lst.add(parent);
     }
 
     private class VersionComparator implements Comparator<String> {
         @Override
         public int compare(String str1, String str2) {
-            int v1 = Integer.parseInt(StringUtils.substringAfterLast(str1, "/"));
-            int v2 = Integer.parseInt(StringUtils.substringAfterLast(str2, "/"));
-            if (v1 > v2)
+            String v1 = StringUtils.substringAfterLast(str1, "/");
+            String v2 = StringUtils.substringAfterLast(str2, "/");
+            if (v1.compareTo(v2) > 0)
                 return -1;
-            else if (v1 < v2)
+            else if (v1.compareTo(v2) < 0)
                 return 1;
             return 0;
         }

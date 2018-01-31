@@ -71,6 +71,19 @@ public class MysqlGenericMessage implements IGenericMessage {
         return 1;
     }
 
+    @Override
+    public boolean isDML() {
+        CanalEntry.EventType eventType = entry.getHeader().getEventType();
+        switch (eventType) {
+            case INSERT:
+            case UPDATE:
+            case DELETE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public  CanalEntry.Entry getEntry() {
         return entry;
     }

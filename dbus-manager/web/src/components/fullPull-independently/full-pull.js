@@ -80,24 +80,25 @@ var FullPull = React.createClass({
                schemaName = schema.text;
             }
         });
-        var outputTopic = dsName[1] + "." + schemaName + ".result";
-        store.actions.sendMessage(ctrlTopic,outputTopic,message,function(msg) {
+        var outputTopic = ReactDOM.findDOMNode(this.refs.resultTopic).value;
+        var strMessage = JSON.stringify(message);
+        var param = {
+            id: message.id,
+            type: 'global',
+            dsName: dsName[1],
+            schemaName: schemaName,
+            tableName: ReactDOM.findDOMNode(this.refs.table).value,
+            ctrlTopic: ctrlTopic,
+            outputTopic: outputTopic,
+            message: strMessage
+        };
+        store.actions.sendMessage(param,function(msg) {
             btn.removeAttr('disabled');
             alert(msg);
         });
     },
     datasourceChanged:function(){
         var dsId = ReactDOM.findDOMNode(this.refs.ds).value;
-        /*
-        var dsName = [];
-        this.state.dsOptions.forEach(function(ds, idx) {
-            if(ds.value == dsId){
-               var dsText = ds.text;
-               dsName = dsText.split("/");
-            }
-        });
-        ReactDOM.findDOMNode(this.refs.resultTopic).value = dsName[1] + ".global.fuller.fulldata";
-        */
         var dsParam = {dsId:dsId};
         this.createSchemaList(dsParam);
     },
@@ -177,7 +178,7 @@ var FullPull = React.createClass({
                                 <FormControl
                                     ref="messageType"
                                     componentClass="input"
-                                    value="独立全量拉取请求">
+                                    value="全局独立全量拉取">
                                 </FormControl>
                             </Col>
                         </FormGroup>

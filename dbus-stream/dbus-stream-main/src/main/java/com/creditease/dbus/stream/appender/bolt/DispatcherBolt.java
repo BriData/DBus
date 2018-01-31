@@ -166,10 +166,12 @@ public class DispatcherBolt extends BaseRichBolt implements CommandHandlerListen
         }*/
         DbusDatasourceType type = GlobalCache.getDatasourceType();
         String name;
-        if(type == DbusDatasourceType.ORACLE) {
+        if (type == DbusDatasourceType.ORACLE) {
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.DispatcherCmdHandlerProvider";
-        } else if(type == DbusDatasourceType.MYSQL) {
+        } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.DispatcherCmdHandlerProvider";
+        } else if (type == DbusDatasourceType.MONGO) {
+            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.DispatcherCmdHandlerProvider";
         } else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }

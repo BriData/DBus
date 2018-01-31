@@ -20,10 +20,10 @@
 
 package com.creditease.dbus.stream.dispatcher.bout;
 
-import com.creditease.dbus.stream.common.bean.DispatcherPackage;
-import com.creditease.dbus.stream.dispatcher.tools.FullyOffset;
 import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.stream.common.bean.DispatcherPackage;
 import com.creditease.dbus.stream.dispatcher.helper.ZKHelper;
+import com.creditease.dbus.stream.dispatcher.tools.FullyOffset;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -73,9 +73,9 @@ public class KafkaProducerBout extends BaseRichBolt {
 
         reporter.start(10, TimeUnit.SECONDS);
 
-        messagesMeter = metrics.meter("Kafka_Messages");
-        recordsMeter = metrics.meter("Records");
-        bytesMeter = metrics.meter("Bytes");
+        messagesMeter = metrics.meter("D-Kafka_Messages");
+        recordsMeter = metrics.meter("D-Records");
+        bytesMeter = metrics.meter("D-Bytes");
     }
 
     private void reloadConfig() {

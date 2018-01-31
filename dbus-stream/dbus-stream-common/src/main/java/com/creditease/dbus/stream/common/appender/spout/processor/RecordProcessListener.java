@@ -20,7 +20,9 @@
 
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import com.creditease.dbus.commons.DBusConsumerRecord;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.enums.Command;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
@@ -38,9 +40,9 @@ public interface RecordProcessListener {
      * 标识重新加载数据
      * @param record kafka consumer record
      */
-    void markReloading(ConsumerRecord<String, byte[]> record, Map<String, Object> params);
+    void markReloading(DBusConsumerRecord<String, byte[]> record, Map<String, Object> params);
 
-    void emitData(List<Object> values, Object msgId);
+    void emitData(EmitData data, Command cmd, Object msgId);
 
     Future<RecordMetadata> sendRecord(ProducerRecord<String, byte[]> producerRecord);
 

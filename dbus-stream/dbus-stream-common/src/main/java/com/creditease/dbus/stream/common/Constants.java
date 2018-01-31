@@ -57,6 +57,7 @@ public class Constants {
         public static final String DBUS_STATISTIC_TOPIC = "dbus.statistic.topic"; // 统计信息topic
         public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
         public static final String GLOBAL_EVENT_TOPIC = "global.event.topic"; // 全局事件topic
+        public static final String LOGFILE_NUM_COMPENSATION = "logfile.num.compensation"; // mysql binlog 文件号补偿值
 
     }
 

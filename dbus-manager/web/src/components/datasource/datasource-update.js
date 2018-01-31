@@ -34,7 +34,8 @@ var UpdateDs = React.createClass({
       id:this.props.location.state.passParam.id,
       dsDesc:ReactDOM.findDOMNode(this.refs.desc).value,
 			masterURL:ReactDOM.findDOMNode(this.refs.masterurl).value,
-			slaveURL:ReactDOM.findDOMNode(this.refs.slaveurl).value
+			slaveURL:ReactDOM.findDOMNode(this.refs.slaveurl).value,
+            dsPartition:ReactDOM.findDOMNode(this.refs.dsPartition).value,
 		  };
       var selectStatus = ReactDOM.findDOMNode(this.refs.status).value;
       if(selectStatus != "default"){
@@ -73,6 +74,7 @@ var UpdateDs = React.createClass({
         var masterURL = this.props.location.state.passParam.masterURL;
         var slaveURL = this.props.location.state.passParam.slaveURL;
         var dsName = this.props.location.state.passParam.dsName;
+        var dsPartition = this.props.location.state.passParam.dsPartition;
         return (
             <div className="container-fluid">
                 <div className="row header">
@@ -94,16 +96,23 @@ var UpdateDs = React.createClass({
                          <div className="form-group ">
                                 <label for="areaMaster" className="col-sm-2 control-label">Master_URL:</label>
                                 <div className="col-sm-10">
-                                  <textarea className="form-control" rows="6" ref="masterurl" style={{resize:"none"}}>{masterURL}</textarea>
+                                  <textarea className="form-control" rows="4" ref="masterurl" style={{resize:"none"}}>{masterURL}</textarea>
                                 </div>
                          </div>
 
-                          <div className="form-group ">
-                                <label for="areaSlave" className="col-sm-2 control-label">Slave_URL:</label>
-                                <div className="col-sm-10 ">
-                                  <textarea className="form-control" rows="6" ref="slaveurl" style={{resize:"none"}}>{slaveURL}</textarea>
-                                </div>
-                          </div>
+                         <div className="form-group ">
+                             <label for="areaSlave" className="col-sm-2 control-label">Slave_URL:</label>
+                             <div className="col-sm-10 ">
+                                 <textarea className="form-control" rows="4" ref="slaveurl" style={{resize:"none"}}>{slaveURL}</textarea>
+                             </div>
+                         </div>
+
+                         <div className="form-group ">
+                             <label for="areaDsPartition" className="col-sm-2 control-label">dsPartition:</label>
+                             <div className="col-sm-10 ">
+                                 <textarea className="form-control" rows="2" ref="dsPartition" style={{resize:"none"}}>{dsPartition}</textarea>
+                             </div>
+                         </div>
 
 
                         <div className="form-group">

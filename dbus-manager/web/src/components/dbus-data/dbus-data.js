@@ -92,7 +92,7 @@ var DbusData = React.createClass({
                         onChange={this.search}/>
                 </TF.Header>
                 <TF.Body pageCount={this.state.data.pages} onPageChange={this.pageChange}>
-                    <Table rowsCount={rows.length}>
+                    <Table rowsCount={rows.length} width={document.documentElement.clientWidth - 210}>
                         <Column
                             header={ <Cell > 类型 </Cell> }
                             cell={ <TextCell data={rows}  col="type" onDoubleClick={this.openDialogByKey.bind(this,"type")}/>}
@@ -115,7 +115,6 @@ var DbusData = React.createClass({
                             btns={[{text:"查看数据", bsStyle:"info", icon:"log-in", action:this.openDialogSql}
                                    ]}/> }
                             width={100}
-                            flexGrow={1}
                         />
                     </Table>
 
@@ -168,7 +167,7 @@ var DbusData = React.createClass({
 
 function buildQueryParmeter(p, pageNum) {
     var param = {
-        pageSize:10,
+        pageSize:12,
         pageNum: (typeof pageNum) == 'number'  ? pageNum : 1
     };
 

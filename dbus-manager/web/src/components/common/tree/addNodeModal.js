@@ -24,7 +24,7 @@ const NodeCreateForm = Form.create()(
                         {getFieldDecorator('title', {
                             rules: [{ required: true, message: 'Please input the name of node!' }],
                         })(
-                            <Input />
+                            <Input onPressEnter={onCreate}/>
                         )}
                     </FormItem>
                 </Form>

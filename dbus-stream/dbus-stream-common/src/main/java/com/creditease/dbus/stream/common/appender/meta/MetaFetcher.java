@@ -21,10 +21,17 @@
 package com.creditease.dbus.stream.common.appender.meta;
 
 import com.creditease.dbus.commons.MetaWrapper;
+import com.creditease.dbus.stream.common.appender.bean.TableComments;
 
 /**
  * Created by Shrimp on 16/5/17.
  */
 public interface MetaFetcher {
-    MetaWrapper fetch(String schama, String table, int version) throws Exception;
+
+    MetaWrapper fetch2X(String schema, String tableName, int version) throws Exception;
+
+    MetaWrapper fetch(String schema, String table, int version) throws Exception;
+
+    TableComments fetchTableComments(String schema, String table) throws Exception;
+
 }

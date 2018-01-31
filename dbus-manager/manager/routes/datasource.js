@@ -23,8 +23,8 @@ router.get('/list', function (req, res) {
 
 router.get('/search', function (req, res) {
     var param = buildParam(req.query, [ "text", "pageSize", "pageNum"]);
-    if (!param.pageSize||param.pageSize != 20) {
-        param.pageSize = 20;
+    if (!param.pageSize) {
+        param.pageSize = 12;
     }
     if (!param.pageNum) {
         param.pageNum = 1;
@@ -38,6 +38,16 @@ router.get('/search', function (req, res) {
     });
 });
 
+router.get('/deleteDataSource', function (req, res) {
+    var param = req.query;
+    ds.deleteDataSource(param, function searchDs(err, response) {
+        if(err) {
+            res.json({status: 500, message: err.message});
+            return;
+        }
+        res.json({status: 200, data: response.body});
+    });
+});
 
 router.get('/searchFromSource', function (req, res) {
     var param = buildParam(req.query, [ "dsId" ,"dsType","URL","user","password"]);
@@ -161,7 +171,7 @@ router.get('/validate',function(req,res){
 });
 
 router.get('/updateDs',function(req,res){
-    var param = buildParam(req.query,["id","dsDesc","masterURL","slaveURL"]);
+    var param = buildParam(req.query,["id","dsDesc","masterURL","slaveURL","dsPartition"]);
     ds.updateDs(param,function updateDs(err, response) {
             console.log(response.body);
             if(err) {

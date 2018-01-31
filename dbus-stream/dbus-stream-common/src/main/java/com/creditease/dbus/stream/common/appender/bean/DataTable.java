@@ -20,6 +20,7 @@
 
 package com.creditease.dbus.stream.common.appender.bean;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import static com.creditease.dbus.commons.Constants.DataTableStatus.*;
@@ -27,7 +28,7 @@ import static com.creditease.dbus.commons.Constants.DataTableStatus.*;
 /**
  * Created by Shrimp on 16/6/15.
  */
-public class DataTable {
+public class DataTable implements Serializable {
     public static final String STATUS_OK = DATA_STATUS_OK;
     public static final String STATUS_ABORT = DATA_STATUS_ABORT;
     public static final String STATUS_WAITING = DATA_STATUS_WAITING;

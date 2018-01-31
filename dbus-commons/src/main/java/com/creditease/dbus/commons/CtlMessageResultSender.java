@@ -81,8 +81,8 @@ public class CtlMessageResultSender {
                 zk.setData(buildRoot(), JSON.toJSONString(result.getOriginalMessage(), true).getBytes(UTF8));
             }
             String nodePath = buildNode(node);
-            if(zk.isExists(nodePath)){
-                zk.setData(nodePath,result.toString().getBytes(UTF8));
+            if(zk.isExists(nodePath)) {
+                zk.setData(nodePath, result.toString().getBytes(UTF8));
             }else{
                 zk.createNode(nodePath, result.toString().getBytes(UTF8));
             }

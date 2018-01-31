@@ -17,7 +17,6 @@
     </resultMap>
 
     <select id="searchInfo" resultMap="interface">
-        select b.ds_type, b.ds_name,a.schema_name, a.table_name,c.version, b.status,a.output_topic, c.update_time as schema_time, IFNULL(d.pk,'') as pk from t_data_tables as a join t_dbus_datasource as b on a.ds_id = b.id join t_meta_version as c on a.ver_id = c.id left join ( select d.ver_id, group_concat(d.column_name order by d.pk_position) as pk from t_table_meta as d where d.is_pk ='Y' group by  d.ver_id) as d on c.id = d.ver_id where a.output_topic != '';
-
+        select b.ds_type, b.ds_name,a.schema_name, a.table_name,c.version, b.status,a.output_topic, c.update_time as schema_time, IFNULL(d.pk,'') as pk from t_data_tables as a join t_dbus_datasource as b on a.ds_id = b.id join t_meta_version as c on a.ver_id = c.id left join ( select d.ver_id, group_concat(d.column_name order by d.pk_position) as pk from t_table_meta as d,t_data_tables as t where t.ver_id = d.ver_id and d.is_pk ='Y' group by  d.ver_id) as d on c.id = d.ver_id where a.output_topic != '';
     </select>
  </mapper>

@@ -24,4 +24,10 @@ package com.creditease.dbus.stream.common.appender.meta;
  * Created by Shrimp on 16/7/18.
  */
 public class MetaFetcherException extends Exception {
+    public MetaFetcherException() {
+    }
+
+    public MetaFetcherException(String message) {
+        super(message);
+    }
 }

@@ -24,18 +24,26 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.creditease.dbus.commons.*;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.log.processor.adapter.LogFilebeatAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.LogFlumeAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.LogUmsAdapter;
+import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
+import com.creditease.dbus.ws.domain.RuleInfo;
+import com.creditease.dbus.commons.log.processor.rule.impl.Rules;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.enums.MessageEncodeType;
+import com.creditease.dbus.mgr.base.ConfUtils;
 import com.creditease.dbus.utils.ControlMessageSender;
-import com.creditease.dbus.ws.common.Charset;
-import com.creditease.dbus.ws.common.HttpHeaderUtils;
-import com.creditease.dbus.ws.common.Result;
+import com.creditease.dbus.ws.common.*;
 import com.creditease.dbus.ws.domain.*;
 import com.creditease.dbus.ws.mapper.*;
 import com.creditease.dbus.ws.service.*;
 import com.creditease.dbus.ws.service.mybatis.MybatisTemplate;
+import com.creditease.dbus.ws.service.table.MongoTableFetcher;
 import com.creditease.dbus.ws.service.table.TableFetcher;
 import com.creditease.dbus.ws.tools.ControlMessageSenderProvider;
+import com.creditease.dbus.ws.tools.PlainLogKafkaConsumerProvider;
 import com.creditease.dbus.ws.tools.ZookeeperServiceProvider;
 import com.github.pagehelper.PageInfo;
 import com.google.common.base.Joiner;
@@ -50,7 +58,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 /**
  * 数据源resource,提供数据源的相关操作
@@ -65,6 +75,7 @@ public class DataTableResource {
     private static final String INITIAL_LOAD_DATA = "load-data";
 
     private TablesService service = TablesService.getService();
+
 
     /**
      * 根据id获取相应的table
@@ -126,12 +137,12 @@ public class DataTableResource {
      * @return table列表
      */
 
-      @GET
-      @Path("/allTables")
-      public Response findAllTables() {
-          List<DataTable> list = service.findAllTables();
-          return Response.status(200).entity(list).build();
-      }
+    @GET
+    @Path("/allTables")
+    public Response findAllTables() {
+        List<DataTable> list = service.findAllTables();
+        return Response.status(200).entity(list).build();
+    }
 
     /**
      * 根据数据源ID,schemaID以及table名称获取相关table列表
@@ -152,10 +163,7 @@ public class DataTableResource {
                 flag = true;
             }
             String dsType = table.getDsType();
-            if("jsonlog".equals(dsType)) {
-                dsType = "log";
-            }
-            String namespace = "";
+            String namespace;
             if(flag) {
                 namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
                         "." + table.getVersion() + "." + "0" + "." + "0";
@@ -380,12 +388,17 @@ public class DataTableResource {
                 for(String verId : verChangeHistory.split(",")) {
                     try {
                         TableVersion tableVersion = versionService.findById(Long.parseLong(verId));
-                        versionsChangeHistory += ","+tableVersion.getVersion();
+                        if(tableVersion != null && tableVersion.getVersion()!=null) {
+                            versionsChangeHistory += ","+tableVersion.getVersion();
+                        }
                     } catch (NumberFormatException e) {
                         logger.warn("transform verId to version failed for verid: {}, error message: {}",verId, e);
+                        versionsChangeHistory += ","+verId;
                     }
                 }
-                versionsChangeHistory = versionsChangeHistory.substring(1);
+                if(StringUtils.isNotEmpty(versionsChangeHistory)) {
+                    versionsChangeHistory = versionsChangeHistory.substring(1);
+                }
                 dataTable.setVersionsChangeHistory(versionsChangeHistory);
             }
             return Response.ok().entity(result).build();
@@ -548,14 +561,27 @@ public class DataTableResource {
                 DbusDatasourceType dsType = DbusDatasourceType.parse(ds.getDsType());
                 InitialLoadService ilService = InitialLoadService.getService();
 
+                FullPullHistory fullPullHistory = new FullPullHistory();
+                Date date = new Date();
+                fullPullHistory.setId(date.getTime());
+                fullPullHistory.setType("normal");
+                fullPullHistory.setDsName(map.get("dsName"));
+                fullPullHistory.setSchemaName(map.get("schemaName"));
+                fullPullHistory.setTableName(map.get("tableName"));
+                fullPullHistory.setState("init");
+                fullPullHistory.setInitTime(date);
+                fullPullHistory.setUpdateTime(date);
+                FullPullService.getService().insert(fullPullHistory);
+
+
                 if (DbusDatasourceType.ORACLE == dsType) {
                     logger.info("Activate oracle table");
                     // 处理oracle拉全量
-                    ilService.oracleInitialLoadBySql(ds, table);
+                    ilService.oracleInitialLoadBySql(ds, table, date.getTime());
                 } else if (DbusDatasourceType.MYSQL == dsType) {
                     logger.info("Activate mysql table");
                     // 处理mysql拉全量
-                    ilService.mysqlInitialLoadBySql(ds, table);
+                    ilService.mysqlInitialLoadBySql(ds, table, date.getTime());
                 } else {
                     throw new IllegalArgumentException("Illegal datasource type:" + ds.getDsType());
                 }
@@ -647,6 +673,14 @@ public class DataTableResource {
         }
     }
 
+    @GET
+    @Path("/deleteTable")
+    public Response deleteTable(Map<String, Object> map) {
+        int tableId = Integer.parseInt(map.get("tableId").toString());
+        int result = service.deleteTable(tableId);
+        return Response.ok().entity(result).build();
+    }
+
     /*
         @GET
         @Path("meta")
@@ -669,173 +703,893 @@ public class DataTableResource {
         }
     */
 
-        @GET
-        @Path("/schemaname")
-        public Response findTablesByDsIdAndSchemaName(@QueryParam("dsID") long dsID, @QueryParam("schemaName") String schemaName) {
-            List<DataTable> list = service.findTablesByDsIdAndSchemaName(dsID, schemaName);
-            return Response.status(200).entity(list).build();
-        }
-
-        @GET
-        @Path("/tablename")
-        public Response fetchTable(@QueryParam("dsName") String dsName,@QueryParam("schemaName") String schemaName) {
-            try {
-                DataSourceService dsService = DataSourceService.getService();
-                DbusDataSource ds = dsService.getDataSourceByName(dsName);
-               // DataSchemaService schemaService = DataSchemaService.getService();
-               // List<DataSchema> tempList = schemaService.getDataSchemaByName(schemaName);
-                TableFetcher fetcher = TableFetcher.getFetcher(ds);
-
-                Map<String, Object> map = new HashMap<>();
-                map.put("dsName", dsName);
-                map.put("schemaName", schemaName);
-                List<DataTable> list = fetcher.fetchTable(map);
-                return Response.ok().entity(list).build();
-                //return Response.ok(list.size()).build();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return Response.ok(Result.OK).build();
-        }
+    @GET
+    @Path("/schemaname")
+    public Response findTablesByDsIdAndSchemaName(@QueryParam("dsID") long dsID, @QueryParam("schemaName") String schemaName) {
+        List<DataTable> list = service.findTablesByDsIdAndSchemaName(dsID, schemaName);
+        return Response.status(200).entity(list).build();
+    }
 
     @GET
-    @Path("/tablefield")
-    public Response fetchTableField(@QueryParam("dsName") String dsName,@QueryParam("schemaName") String schemaName,@QueryParam("tableName") String tableName) {
+    @Path("/tablename")
+    public Response fetchTable(@QueryParam("dsName") String dsName,@QueryParam("schemaName") String schemaName) {
         try {
             DataSourceService dsService = DataSourceService.getService();
             DbusDataSource ds = dsService.getDataSourceByName(dsName);
-            TableFetcher fetcher = TableFetcher.getFetcher(ds);
-
-            Map<String, Object> map = new HashMap<>();
-            map.put("dsName", dsName);
-            map.put("schemaName", schemaName);
-            map.put("tableName", tableName);
-
-            List<TableMeta> list = fetcher.fetchTableField(map);
-            //System.out.print(list.size());
+            List<DataTable> list;
+            if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MYSQL)
+                    || DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.ORACLE))
+            {
+                TableFetcher fetcher = TableFetcher.getFetcher(ds);
+                Map<String, Object> map = new HashMap<>();
+                map.put("dsName", dsName);
+                map.put("schemaName", schemaName);
+                list = fetcher.fetchTable(map);
+            } else if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MONGO)) {
+                MongoTableFetcher fetcher = new MongoTableFetcher(ds);
+                list = fetcher.fetchTable(schemaName);
+            } else {
+                throw new IllegalArgumentException("Unsupported datasource type");
+            }
 
             return Response.ok().entity(list).build();
-            //return Response.ok(list.size()).build();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return Response.ok(Result.OK).build();
     }
 
+    @POST
+    @Path("/tablefield")
+    public Response fetchTableField(Map<String, Object> param) {
+        List<Map<String, Object>> paramsList = (List<Map<String, Object>>) param.get("sourceTables");
+        List<List<TableMeta>> ret = new ArrayList<>();
+        for (Map<String, Object> params : paramsList) {
+            try {
+                String dsName = String.valueOf(params.get("dsName"));
+                DataSourceService dsService = DataSourceService.getService();
+                DbusDataSource ds = dsService.getDataSourceByName(dsName);
+                if(DbusDatasourceType.stringEqual(ds.getDsType(), DbusDatasourceType.MYSQL)
+                        || DbusDatasourceType.stringEqual(ds.getDsType(), DbusDatasourceType.ORACLE)) {
+                    TableFetcher fetcher = TableFetcher.getFetcher(ds);
+                    ret = fetcher.fetchTableField(params, paramsList);
+
+                } else if(DbusDatasourceType.stringEqual(ds.getDsType(), DbusDatasourceType.MONGO)){
+                    MongoTableFetcher fetcher = new MongoTableFetcher(ds);
+                    ret = fetcher.fetchTableField(params, paramsList);
+                } else {
+                    throw new IllegalArgumentException("Unsupported datasource type");
+                }
+                break;
+
+            } catch (Exception e) {
+                logger.error("Fetch table field failed, error message: {}", e);
+            }
+        }
+        return Response.ok().entity(ret).build();
+    }
+
     @GET
-    @Path("/searchRules")
-    public Response searchRules(Map<String, Object> map) {
+    @Path("/listPlainlogTable")
+    public Response listPlainlogTable(Map<String, Object> map) {
         try {
             MybatisTemplate template = MybatisTemplate.template();
-            List<DataTableRule> result = template.query((session, args) -> {
-                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
-                return mapper.getDataTableRule(Integer.parseInt(map.get("id").toString()));
+            List<DataTable> list = template.query((session, args) -> {
+                TableMapper mapper = session.getMapper(TableMapper.class);
+                return mapper.findBySchemaID(Long.parseLong(map.get("schemaId").toString()));
             });
-            return Response.ok().entity(result).build();
+            return Response.ok(list).build();
         } catch (Exception e) {
-            logger.error("Error encountered while search rules information with parameter:{}", JSON.toJSONString(map), e);
+            logger.error("list plain log tables error", e);
             return Response.status(204).entity(new Result(-1, e.getMessage())).build();
         }
     }
 
     @GET
-    @Path("/saveRules")
-    public Response saveRules(Map<String, Object > map) {
+    @Path("/createPlainlogTable")
+    public Response createPlainlogTable(Map<String, Object> map) {
+        try {
+            DataTable dataTable = JSON.parseObject(JSON.toJSONString(map), DataTable.class);
+            MybatisTemplate template = MybatisTemplate.template();
+            int res = template.query((session, args) -> {
+                TableMapper mapper = session.getMapper(TableMapper.class);
+                return mapper.insert(dataTable);
+            });
+            if (res != 1) throw new Exception("insert plain log table error");
+
+            TableVersion tableVersion = new TableVersion();
+            tableVersion.setTableId(dataTable.getId());
+            tableVersion.setDsId(dataTable.getDsID());
+            tableVersion.setDbName(dataTable.getDsName());
+            tableVersion.setSchemaName(dataTable.getSchemaName());
+            tableVersion.setTableName(dataTable.getTableName());
+            tableVersion.setVersion(0);
+            tableVersion.setInnerVersion(0);
+            tableVersion.setEventOffset(0L);
+            tableVersion.setEventPos(0L);
+            res = template.query((session, args) -> {
+                TableVersionMapper mapper = session.getMapper(TableVersionMapper.class);
+                return mapper.insert(tableVersion);
+            });
+
+            if (res != 1) throw new Exception("insert plain log tableVersion error");
+
+            dataTable.setVerID(tableVersion.getId());
+            res = template.query((session, args) -> {
+                TableMapper mapper = session.getMapper(TableMapper.class);
+                return mapper.update(dataTable);
+            });
+
+            if (res != 1) throw new Exception("update plain log table verId error");
+
+            return listPlainlogTable(map);
+        } catch (Exception e) {
+            logger.error("create plain log tables error", e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("/createPlainlogSchemaAndTable")
+    public Response createPlainlogSchemaAndTable(Map<String, Object> map) {
+        try {
+            DataSchema dataSchema = JSON.parseObject(JSON.toJSONString(map.get("schema")), DataSchema.class);
+            MybatisTemplate template = MybatisTemplate.template();
+            int res = template.query((session, args) -> {
+                DataSchemaMapper mapper = session.getMapper(DataSchemaMapper.class);
+                return mapper.insert(dataSchema);
+            });
+            if (res != 1) throw new Exception("insert plain log schema error");
+            List<JSONObject> tables = JSON.parseArray(JSON.toJSONString(map.get("tables")), JSONObject.class);
+
+            for (JSONObject table : tables) {
+                DataTable dataTable = new DataTable();
+                dataTable.setDsID(dataSchema.getDsId());
+                dataTable.setSchemaID(dataSchema.getId());
+                dataTable.setSchemaName(dataSchema.getSchemaName());
+                dataTable.setTableName(table.getString("tableName"));
+                dataTable.setPhysicalTableRegex(table.getString("tableName"));
+                dataTable.setOutputTopic(table.getString("outputTopic"));
+                dataTable.setStatus(DataTable.ABORT);
+                res = template.query((session, args) -> {
+                    TableMapper mapper = session.getMapper(TableMapper.class);
+                    return mapper.insert(dataTable);
+                });
+                if (res != 1) throw new Exception("insert plain log table error");
+
+                TableVersion tableVersion = new TableVersion();
+                tableVersion.setTableId(dataTable.getId());
+                tableVersion.setDsId(dataSchema.getDsId());
+                tableVersion.setDbName(dataSchema.getDsName());
+                tableVersion.setSchemaName(dataSchema.getSchemaName());
+                tableVersion.setTableName(dataTable.getTableName());
+                tableVersion.setVersion(0);
+                tableVersion.setInnerVersion(0);
+                tableVersion.setEventOffset(0L);
+                tableVersion.setEventPos(0L);
+                res = template.query((session, args) -> {
+                    TableVersionMapper mapper = session.getMapper(TableVersionMapper.class);
+                    return mapper.insert(tableVersion);
+                });
+
+                if (res != 1) throw new Exception("insert plain log tableVersion error");
+
+                dataTable.setVerID(tableVersion.getId());
+                res = template.query((session, args) -> {
+                    TableMapper mapper = session.getMapper(TableMapper.class);
+                    return mapper.update(dataTable);
+                });
+
+                if (res != 1) throw new Exception("update plain log table verId error");
+            }
+            return Response.ok().build();
+        } catch (Exception e) {
+            logger.error("create plain log schema and tables error", e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+    // 规则组开始
+
+    @GET
+    @Path("/getAllRuleGroup")
+    public Response getAllRuleGroup(Map<String, Object> map) {
+        Connection connection;
         try {
             MybatisTemplate template = MybatisTemplate.template();
-            template.query((session, args) -> {
+            List<DataTableRuleGroup> list = template.query((session, args) -> {
                 DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
-                return mapper.deleteDataTableRule(Integer.parseInt(map.get("tableId").toString()));
+                return mapper.getAllRuleGroup(Long.parseLong(map.get("tableId").toString()));
             });
-            if (map.get("rules") != null) {
-                for (Map<String, Object> rule : (List<Map<String, Object>>) map.get("rules")) {
 
-                    DataTableRule dataTableRule = new DataTableRule();
-                    dataTableRule.setTableId(Integer.parseInt(rule.get("tableId").toString()));
-                    dataTableRule.setOrder(Integer.parseInt(rule.get("order").toString()));
-                    dataTableRule.setType(rule.get("type").toString());
-                    dataTableRule.setColumn(rule.get("column").toString());
-                    dataTableRule.setRe(rule.get("re").toString());
+            Class.forName("com.mysql.jdbc.Driver");
+            Properties properties = ConfUtils.mybatisConf;
+            connection = DriverManager.getConnection(properties.getProperty("url"), properties.getProperty("username"), properties.getProperty("password"));
+            List<RuleInfo> ruleInfos = getAsRuleInfo(connection, map);
 
-                    template.query((session, args) -> {
-                        DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
-                        return mapper.insertDataTableRule(dataTableRule);
-                    });
+            Map<String, Object> ret = new HashMap<>();
+            ret.put("group", list);
+            ret.put("saveAs", ruleInfos);
+
+            return Response.ok().entity(ret).build();
+        } catch (Exception e) {
+            logger.error("Error encountered while get all rule group with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("/updateRuleGroup")
+    public Response updateRuleGroup(Map<String, Object> map) {
+
+        DataTableRuleGroup group = new DataTableRuleGroup();
+        group.setId(Long.parseLong(map.get("groupId").toString()));
+        group.setStatus(map.get("newStatus").toString());
+        group.setGroupName(map.get("newName").toString());
+
+        try {
+            MybatisTemplate template = MybatisTemplate.template();
+            int updateResult = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                return mapper.updateRuleGroup(group);
+            });
+            if (updateResult == 0) {
+                throw new SQLException();
+            }
+
+            return getAllRuleGroup(map);
+
+        } catch (Exception e) {
+            logger.error("update group info failed with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("/deleteRuleGroup")
+    public Response deleteRuleGroup(Map<String, Object> map) {
+        try {
+            MybatisTemplate template = MybatisTemplate.template();
+            int deleteResult = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                int r1 = mapper.deleteRuleGroup(Long.parseLong(map.get("groupId").toString()));
+                int r2 = mapper.deleteRules(Long.parseLong(map.get("groupId").toString()));
+                return r1 + r2;
+            });
+            if (deleteResult == 0) {
+                throw new SQLException();
+            }
+
+            return getAllRuleGroup(map);
+
+        } catch (Exception e) {
+            logger.error("update group info failed with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("/addGroup")
+    public Response addGroup(Map<String, Object> map) {
+        try {
+            MybatisTemplate template = MybatisTemplate.template();
+            int insertResult = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                DataTableRuleGroup group = new DataTableRuleGroup();
+                group.setTableId(Long.parseLong(map.get("tableId").toString()));
+                group.setStatus(map.get("newStatus").toString());
+                group.setGroupName(map.get("newName").toString());
+                return mapper.addGroup(group);
+            });
+            if (insertResult == 0) {
+                throw new SQLException();
+            }
+
+            return getAllRuleGroup(map);
+
+        } catch (Exception e) {
+            logger.error("update group info failed with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("/cloneRuleGroup")
+    public Response cloneRuleGroup(Map<String, Object> map) {
+
+        // 生成新的规则组信息
+        DataTableRuleGroup group = new DataTableRuleGroup();
+        group.setTableId(Long.parseLong(map.get("tableId").toString()));
+        group.setGroupName(map.get("newName").toString());
+        group.setStatus(map.get("newStatus").toString());
+
+        try {
+
+            //插入新的规则组，获取其生成的id
+            MybatisTemplate template = MybatisTemplate.template();
+            int insertResult = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                return mapper.addGroup(group);
+            });
+            if (insertResult == 0) {
+                throw new SQLException();
+            }
+
+            //获取原来这个组的所有规则
+            List<DataTableRule> rules = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                return mapper.getAllRules(Long.parseLong(map.get("groupId").toString()));
+            });
+
+            if(rules != null && rules.size() > 0) {
+                //修改规则的groupId
+                for (DataTableRule rule : rules) {
+                    rule.setGroupId(group.getId());
+                }
+
+                //插入这些规则
+                insertResult = template.query((session, args) -> {
+                    DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                    return mapper.saveAllRules(rules);
+                });
+                if (insertResult != rules.size()) {
+                    throw new SQLException();
                 }
             }
 
+            return getAllRuleGroup(map);
+
+        } catch (Exception e) {
+            logger.error("clone group and rules failed with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("/diffGroupRule")
+    public Response diffGroupRule(Map<String, Object> map) throws SQLException {
+        Connection connection = null;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Properties properties = ConfUtils.mybatisConf;
+            connection = DriverManager.getConnection(properties.getProperty("url"), properties.getProperty("username"), properties.getProperty("password"));
+
+            List<RuleInfo> result = getAsRuleInfo(connection, map);
+
+            return Response.ok().entity(result).build();
+        } catch (Exception e) {
+            logger.error("Get group rule diff info failed with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        } finally {
+            if(connection != null) {
+                connection.close();
+            }
+        }
+    }
+
+    @GET
+    @Path("/upgradeVersion")
+    public Response upgradeVersion(Map<String, Object> map) throws SQLException {
+        Connection connection = null;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Properties properties = ConfUtils.mybatisConf;
+            connection = DriverManager.getConnection(properties.getProperty("url"), properties.getProperty("username"), properties.getProperty("password"));
+            connection.setAutoCommit(false);
+
+
+            String validateResult = validateAs(connection, map);
+            if(StringUtils.isNotEmpty(validateResult)) {
+                return Response.accepted().entity(new Result(-1, validateResult)).build();
+            }
+            /**
+             * 在t_meta_version中生成新版本号，同时更新t_data_table中的版本
+             */
+            int verId = generateNewVerId(connection, map);
+            /**
+             * 从t_plain_log_rule_group和t_plain_log_rules中复制规则到
+             * t_plain_log_rule_group_version和t_plain_log_rules_version中
+             */
+            confirmUpgradeVersion(connection, map, verId);
+            /**
+             * 向t_table_meta中插入 ruleScope,name,type
+             */
+            upgradeRuleTableMeta(connection, map, verId);
+
+            connection.commit();
+
             return Response.ok().build();
         } catch (Exception e) {
-            logger.error("Error encountered while save rules with parameter:{}", JSON.toJSONString(map), e);
+            logger.error("upgrade rule version failed with parameter:{}", JSON.toJSONString(map), e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        } finally {
+            if(connection != null) {
+                connection.close();
+            }
+        }
+    }
+
+    private List<RuleInfo> getAsRuleInfo(Connection connection, Map<String, Object> map) throws SQLException {
+        String sql = "select tg.id, tg.group_name, tg.`status`, tr.rule_grammar from (select id,group_name,status from t_plain_log_rule_group where table_id= ? ) tg left join (select group_id,rule_grammar from t_plain_log_rules where rule_type_name = ? ) tr on tg.id = tr.group_id";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setInt(1, Integer.parseInt(map.get("tableId").toString()));
+        ps.setString(2, Rules.SAVEAS.name);
+        ResultSet rs = ps.executeQuery();
+        List<RuleInfo> ruleInfos = new ArrayList<>();
+        while(rs.next()) {
+            RuleInfo ruleInfo = new RuleInfo();
+            ruleInfo.setGroupId(rs.getLong("id"));
+            ruleInfo.setGroupName(rs.getString("group_name"));
+            ruleInfo.setRuleGrammar(rs.getString("rule_grammar"));
+            ruleInfo.setStatus(rs.getString("status"));
+            ruleInfos.add(ruleInfo);
+        }
+        rs.close();
+        ps.close();
+        return ruleInfos;
+    }
+    private String validateAs(Connection connection, Map<String, Object> map) throws SQLException {
+        final String INACTIVE = "inactive";
+        List<RuleInfo> ruleInfos = getAsRuleInfo(connection, map);
+        for (int i = 0; i < ruleInfos.size(); i++) {
+            if (ruleInfos.get(i).getStatus().equals(INACTIVE)) continue;
+            for (int j = i + 1; j < ruleInfos.size(); j++) {
+                if (ruleInfos.get(j).getStatus().equals(INACTIVE)) continue;
+                List<RuleGrammar> ruleGrammar1 = JSON.parseArray(ruleInfos.get(i).getRuleGrammar(), RuleGrammar.class);
+                List<RuleGrammar> ruleGrammar2 = JSON.parseArray(ruleInfos.get(j).getRuleGrammar(), RuleGrammar.class);
+                if (!compareRuleGrammarAsType(ruleGrammar1, ruleGrammar2)) {
+                    return ruleInfos.get(i).getGroupName() + " 和 " + ruleInfos.get(j).getGroupName() + " SaveAS不相同，请使用Diff对比";
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean compareRuleGrammarAsType(List<RuleGrammar> ruleGrammar1, List<RuleGrammar> ruleGrammar2) {
+        if(ruleGrammar1 == null || ruleGrammar2 == null) return false;
+        if(ruleGrammar1.size() != ruleGrammar2.size()) return false;
+        Collections.sort(ruleGrammar1, (o1, o2) -> StringUtils.compare(o1.getName(), o2.getName()));
+        Collections.sort(ruleGrammar2, (o1, o2) -> StringUtils.compare(o1.getName(), o2.getName()));
+        for(int i=0;i<ruleGrammar1.size();i++) {
+            if (!StringUtils.equals(ruleGrammar1.get(i).getName(), ruleGrammar2.get(i).getName())) return false;
+            if (!StringUtils.equals(ruleGrammar1.get(i).getType(), ruleGrammar2.get(i).getType())) return false;
+            if (!StringUtils.equals(ruleGrammar1.get(i).getRuleScope(), ruleGrammar2.get(i).getRuleScope())) return false;
+        }
+        return true;
+    }
+
+    private void upgradeRuleTableMeta(Connection connection, Map<String, Object> map, int verId) throws SQLException {
+        List<RuleInfo> ruleInfos = getAsRuleInfo(connection, map);
+        RuleInfo asRuleInfo = null;
+        for (RuleInfo ruleInfo : ruleInfos) {
+            if ("active".equals(ruleInfo.getStatus())) asRuleInfo = ruleInfo;
+        }
+        if (asRuleInfo == null) return;
+        List<RuleGrammar> ruleGrammars = JSON.parseArray(asRuleInfo.getRuleGrammar(), RuleGrammar.class);
+        MybatisTemplate template = MybatisTemplate.template();
+        for (RuleGrammar ruleGrammar : ruleGrammars) {
+            TableMeta tableMeta = new TableMeta();
+            tableMeta.setVerId((long) verId);
+            tableMeta.setColumnName(ruleGrammar.getName());
+            tableMeta.setColumnId(Integer.parseInt(ruleGrammar.getRuleScope()));
+            tableMeta.setOriginalSer(0L);
+            tableMeta.setDataType(ruleGrammar.getType());
+            tableMeta.setDataLength(0);
+            tableMeta.setDataPrecision(0);
+            tableMeta.setDataScale(0);
+            tableMeta.setNullable("Y");
+            tableMeta.setIsPk("N");
+            tableMeta.setPkPosition(-1);
+            int result = template.query((session, args) -> {
+                TableMetaMapper mapper = session.getMapper(TableMetaMapper.class);
+                return mapper.insert(tableMeta);
+            });
+        }
+    }
+
+    private void confirmUpgradeVersion(Connection connection, Map<String, Object> map, int verId) throws SQLException {
+        int tableId = Integer.parseInt(map.get("tableId").toString());
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        String sql = "SELECT `id`, `table_id`, `group_name`, `status` FROM `t_plain_log_rule_group` WHERE `table_id` = ? AND `status` = 'active';";
+        PreparedStatement selectTempGroupPS = connection.prepareStatement(sql);
+        selectTempGroupPS.setInt(1, tableId);
+        ResultSet tempGroup = selectTempGroupPS.executeQuery();
+
+        while(tempGroup.next()) {
+
+            sql = "SELECT `order_id`, `rule_type_name`, `rule_grammar` FROM `t_plain_log_rules` where group_id = ?;";
+            PreparedStatement selectTempRulesPS = connection.prepareStatement(sql);
+            selectTempRulesPS.setInt(1, tempGroup.getInt("id"));
+            ResultSet tempRules = selectTempRulesPS.executeQuery();
+
+            sql = "INSERT INTO `t_plain_log_rule_group_version` (`table_id`, `group_name`, `status`, `ver_id`, `update_time`) VALUES (?,?,?,?,?);";
+            PreparedStatement insertNewGroupVersionPS = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            insertNewGroupVersionPS.setInt(1, tableId);
+            insertNewGroupVersionPS.setString(2, tempGroup.getString("group_name"));
+            insertNewGroupVersionPS.setString(3, tempGroup.getString("status"));
+            insertNewGroupVersionPS.setInt(4, verId);
+            insertNewGroupVersionPS.setTimestamp(5, timestamp);
+            insertNewGroupVersionPS.executeUpdate();
+            ResultSet idSet = insertNewGroupVersionPS.getGeneratedKeys();
+            idSet.next();
+            int groupId = idSet.getInt("generated_key");
+            idSet.close();
+            insertNewGroupVersionPS.close();
+
+            sql = "INSERT INTO `t_plain_log_rules_version` (`group_id`, `order_id`, `rule_type_name`, `rule_grammar`, `update_time`) VALUES (?,?,?,?,?);";
+            PreparedStatement insertNewRulesPS = connection.prepareStatement(sql);
+            while(tempRules.next()) {
+                insertNewRulesPS.setInt(1, groupId);
+                insertNewRulesPS.setInt(2, tempRules.getInt("order_id"));
+                insertNewRulesPS.setString(3, tempRules.getString("rule_type_name"));
+                insertNewRulesPS.setString(4, tempRules.getString("rule_grammar"));
+                insertNewRulesPS.setTimestamp(5, timestamp);
+                insertNewRulesPS.addBatch();
+            }
+            insertNewRulesPS.executeBatch();
+
+            insertNewRulesPS.close();
+
+            tempRules.close();
+            selectTempRulesPS.close();
+        }
+
+        tempGroup.close();
+        selectTempGroupPS.close();
+
+    }
+
+    private int generateNewVerId(Connection connection, Map<String, Object> map) throws SQLException {
+        int tableId = Integer.parseInt(map.get("tableId").toString());
+        int verId;
+
+        String sql = "select `id`, `table_id`, `ds_id`, `db_name`, `schema_name`, `table_name`, `version`, `inner_version`, `event_offset`, `event_pos`, `update_time`, `comments` from t_meta_version where table_id = ? order by version desc limit 1;";
+        PreparedStatement oldVersionPS = connection.prepareStatement(sql);
+        oldVersionPS.setInt(1, tableId);
+        ResultSet oldVersion = oldVersionPS.executeQuery();
+
+        if (oldVersion.next()) {
+            sql = "INSERT INTO `t_meta_version` (`table_id`, `ds_id`, `db_name`, `schema_name`, `table_name`, `version`, `inner_version`, `event_offset`, `event_pos`, `update_time`, `comments`) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+            PreparedStatement copyNewVersionPS = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            copyNewVersionPS.setInt(1, tableId);
+            copyNewVersionPS.setInt(2, oldVersion.getInt("ds_id"));
+            copyNewVersionPS.setString(3, oldVersion.getString("db_name"));
+            copyNewVersionPS.setString(4, oldVersion.getString("schema_name"));
+            copyNewVersionPS.setString(5, oldVersion.getString("table_name"));
+            copyNewVersionPS.setInt(6, oldVersion.getInt("version") + 1);
+            copyNewVersionPS.setInt(7, oldVersion.getInt("inner_version") + 1);
+            copyNewVersionPS.setLong(8, oldVersion.getLong("event_offset"));
+            copyNewVersionPS.setLong(9, oldVersion.getLong("event_pos"));
+            copyNewVersionPS.setTimestamp(10, new Timestamp(System.currentTimeMillis()));
+            copyNewVersionPS.setString(11, oldVersion.getString("comments"));
+            copyNewVersionPS.executeUpdate();
+            ResultSet idSet = copyNewVersionPS.getGeneratedKeys();
+            idSet.next();
+            verId = idSet.getInt("generated_key");
+            idSet.close();
+            copyNewVersionPS.close();
+        } else {
+            int dsId = Integer.parseInt(map.get("dsId").toString());
+            String dsName = map.get("dsName").toString();
+            String schemaName = map.get("schemaName").toString();
+            String tableName = map.get("tableName").toString();
+
+            sql = "INSERT INTO `t_meta_version` (`table_id`, `ds_id`, `db_name`, `schema_name`, `table_name`, `version`, `inner_version`, `event_offset`, `event_pos`, `update_time`, `comments`) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+            PreparedStatement newVersionPS = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            newVersionPS.setInt(1, tableId);
+            newVersionPS.setInt(2, dsId);
+            newVersionPS.setString(3, dsName);
+            newVersionPS.setString(4, schemaName);
+            newVersionPS.setString(5, tableName);
+            newVersionPS.setInt(6, 0);
+            newVersionPS.setInt(7, 0);
+            newVersionPS.setLong(8, 0);
+            newVersionPS.setLong(9, 0);
+            newVersionPS.setTimestamp(10, new Timestamp(System.currentTimeMillis()));
+            newVersionPS.setString(11, null);
+            newVersionPS.executeUpdate();
+            ResultSet idSet = newVersionPS.getGeneratedKeys();
+            idSet.next();
+            verId = idSet.getInt("generated_key");
+            idSet.close();
+            newVersionPS.close();
+        }
+
+        oldVersion.close();
+        oldVersionPS.close();
+
+        sql = "UPDATE `t_data_tables` SET `ver_id`= ? WHERE `id`= ?;";
+        PreparedStatement updateDataTablePS = connection.prepareStatement(sql);
+        updateDataTablePS.setInt(1, verId);
+        updateDataTablePS.setInt(2, tableId);
+        updateDataTablePS.executeUpdate();
+        updateDataTablePS.close();
+
+        return verId;
+    }
+
+    // 规则组结束
+
+    // ResultSet转List<Map>
+//    private List<Map<String, Object>> convertResultSetToList(ResultSet resultSet) throws SQLException {
+//        List<Map<String, Object>> list = new ArrayList();
+//        ResultSetMetaData md = resultSet.getMetaData(); //获得结果集结构信息,元数据
+//        int columnCount = md.getColumnCount();   //获得列数
+//        while (resultSet.next()) {
+//            Map<String, Object> map = new HashMap<>();
+//            for (int i = 1; i <= columnCount; i++) {
+//                map.put(md.getColumnName(i), resultSet.getObject(i));
+//            }
+//            list.add(map);
+//        }
+//        return list;
+//    }
+
+
+    // 规则开始
+
+    @GET
+    @Path("/getAllRules")
+    public Response getAllRules(Map<String, Object> map) {
+
+        String dsType = map.get("dsType").toString();
+
+        try {
+            MybatisTemplate template = MybatisTemplate.template();
+            List<DataTableRule> rules = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                return mapper.getAllRules(Long.parseLong(map.get("groupId").toString()));
+            });
+            // 获取该表的数据源topic
+            String topic;
+            DbusDataSource dataSource = template.query((session, args) -> {
+                DataSourceMapper mapper = session.getMapper(DataSourceMapper.class);
+                return mapper.findById(Long.parseLong(map.get("dsId").toString()));
+            });
+            topic = dataSource.getTopic();
+
+            // 获取该表的数据源offset
+
+            KafkaConsumer<String, String> consumer = PlainLogKafkaConsumerProvider.getKafkaConsumer();
+            TopicPartition dataTopicPartition = new TopicPartition(topic, 0);
+            List<TopicPartition> topics = Arrays.asList(dataTopicPartition);
+            consumer.assign(topics);
+            consumer.seekToEnd(topics);
+            long offset = consumer.position(dataTopicPartition);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("topic",topic);
+            result.put("offset",offset);
+            result.put("rules",rules);
+            return Response.ok().entity(result).build();
+
+        } catch (Exception e) {
+            logger.error("Error encountered while get all rules with parameter:{}", JSON.toJSONString(map), e);
             return Response.status(204).entity(new Result(-1, e.getMessage())).build();
         }
     }
 
     @POST
-    @Path("/executeSqlRule")
-    public Response executeSqlRule(String param) {
-        System.out.println(param);
-        JSONObject map = JSON.parseObject(param);
-        String sql = map.getString("sql");
-        int length = map.getInteger("length");
-        List<List<String>> data = new ArrayList<>();
-        for(int i=0;i<length;i++) {
-            data.add((List<String>)map.get("data["+i+"][]"));
-        }
-
+    @Path("/saveAllRules")
+    public Response saveAllRules(Map<String, Object> map) {
         try {
-            Properties properties = PropertiesUtils.getProps("mybatis.properties");
-            DbusDataSource source = new DbusDataSource();
-            source.setDsType("mysql");
-            source.setMasterURL(properties.get("url").toString());
-            source.setDbusUser(properties.get("username").toString());
-            source.setDbusPassword(properties.get("password").toString());
-            TableFetcher fetcher = TableFetcher.getFetcher(source);
-            List<List<String>> result = fetcher.doSqlRule(sql, data);
-            return Response.ok().entity(result).build();
+            MybatisTemplate template = MybatisTemplate.template();
+            int result = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+
+                DataTableRuleGroup group = new DataTableRuleGroup();
+                group.setId(Long.parseLong(map.get("groupId").toString()));
+
+                return mapper.updateRuleGroup(group);
+            });
+            result = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                return mapper.deleteRules(Long.parseLong(map.get("groupId").toString()));
+            });
+            result = template.query((session, args) -> {
+                DataTableRuleMapper mapper = session.getMapper(DataTableRuleMapper.class);
+                return mapper.saveAllRules(JSON.parseArray(map.get("rules").toString(), DataTableRule.class));
+            });
+
+            return Response.ok().build();
+
         } catch (Exception e) {
-            logger.error("Error encountered while execute sql rule, error message:{}", e);
+            logger.error("Error encountered while save all rules with parameter:{}", JSON.toJSONString(map), e);
             return Response.status(204).entity(new Result(-1, e.getMessage())).build();
         }
     }
 
-    @GET
-    @Path("/readKafkaTopic")
-    public Response readKafkaTopic(Map<String, Object > map) {
+    @POST
+    @Path("/executeRules")
+    public Response executeRules(Map<String, Object> map) {
         try {
-            Properties properties = PropertiesUtils.getProps("consumer.properties");
-            properties.setProperty("client.id","readKafkaTopic");
-            properties.setProperty("group.id","readKafkaTopic");
-            //properties.setProperty("bootstrap.servers", "localhost:9092");
-            KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
-            String topic = map.get("topic").toString();
-            //System.out.println("topic="+topic);
-            TopicPartition topicPartition = new TopicPartition(topic, 0);
-            List<TopicPartition> topics = Arrays.asList(topicPartition);
-            consumer.assign(topics);
-            consumer.seekToEnd(topics);
-            long current = consumer.position(topicPartition);
-            long end = current;
-            current -= 1000;
-            if(current < 0) current = 0;
-            consumer.seek(topicPartition, current);
-            List<String> result = new ArrayList<>();
-            while (current < end) {
-                //System.out.println("topic position = "+current);
-                ConsumerRecords<String, String> records = consumer.poll(1000);
-                for (ConsumerRecord<String, String> record : records) {
-                    result.add(record.value());
-                    //System.out.printf("offset = %d, key = %s, value = %s%n", record.offset(), record.key(), record.value());
-                }
-                current = consumer.position(topicPartition);
+            Map<String, Object> kafkaData = getKafkaPlainLogContent(map);
+            List<List<String>> keysList = (List<List<String>>) kafkaData.get("keysList");
+            List<List<String>> valuesList = (List<List<String>>) kafkaData.get("valuesList");
+            List<RuleInfo> executeRules = JSON.parseArray(map.get("executeRules").toString(), RuleInfo.class);
+            List<List<String>> data = new ArrayList<>();
+
+            if(valuesList == null || executeRules == null) {
+                return Response.ok().entity(valuesList).build();
             }
-            consumer.close();
-            return Response.ok().entity(result).build();
+
+            DbusDatasourceType dsType = DbusDatasourceType.parse(map.get("dsType").toString().toLowerCase());
+
+            List<Long> offset = new ArrayList<>();
+            long kafkaOffset = Long.parseLong(map.get("kafkaOffset").toString());
+
+            for (int i = 0; i < valuesList.size(); i++) {
+
+                List<String> rowList = valuesList.get(i);
+
+                if (dsType.equals(DbusDatasourceType.LOG_UMS)) {
+                    if(executeRules.size() == 0) {
+                        data.add(rowList);
+                        offset.add(kafkaOffset + i);
+                    } else {
+                        LogUmsAdapter adapter = new LogUmsAdapter(rowList.get(0));
+                        while (adapter.hasNext()) {
+                            rowList = new ArrayList() {{
+                                add(adapter.next());
+                            }};
+                            for (RuleInfo rule : executeRules) {
+                                String ruleGramar = rule.getRuleGrammar();
+                                List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
+                                Rules rules = Rules.fromStr(rule.getRuleTypeName());
+                                rowList = rules.getRule().transform(rowList, grammar, rules);
+                                if (rowList.isEmpty()) break;
+                            }
+                            if (!rowList.isEmpty()) {
+                                data.add(rowList);
+                                offset.add(kafkaOffset + i);
+                            }
+                        }
+                    }
+                } else if (dsType.equals(DbusDatasourceType.LOG_LOGSTASH)
+                        || dsType.equals(DbusDatasourceType.LOG_LOGSTASH_JSON)) {
+                    for (RuleInfo rule : executeRules) {
+                        String ruleGramar = rule.getRuleGrammar();
+                        List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
+                        Rules rules = Rules.fromStr(rule.getRuleTypeName());
+                        rowList = rules.getRule().transform(rowList, grammar, rules);
+                        if (rowList.isEmpty()) break;
+                    }
+                    if (!rowList.isEmpty()) {
+                        data.add(rowList);
+                        offset.add(kafkaOffset + i);
+                    }
+                } else if (dsType.equals(DbusDatasourceType.LOG_FLUME)) {
+                    LogFlumeAdapter adapter = new LogFlumeAdapter(keysList.get(i).get(0), rowList.get(0));
+                    while (adapter.hasNext()) {
+                        rowList = new ArrayList() {{
+                            add(adapter.next());
+                        }};
+                        for (RuleInfo rule : executeRules) {
+                            String ruleGramar = rule.getRuleGrammar();
+                            List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
+                            Rules rules = Rules.fromStr(rule.getRuleTypeName());
+                            rowList = rules.getRule().transform(rowList, grammar, rules);
+                            if (rowList.isEmpty()) break;
+                        }
+                        if (!rowList.isEmpty()) {
+                            data.add(rowList);
+                            offset.add(kafkaOffset + i);
+                        }
+                    }
+                } else if (dsType.equals(DbusDatasourceType.LOG_FILEBEAT)) {
+                    LogFilebeatAdapter adapter = new LogFilebeatAdapter(rowList.get(0));
+                    while (adapter.hasNext()) {
+                        rowList = new ArrayList() {{
+                            add(adapter.next());
+                        }};
+                        for (RuleInfo rule : executeRules) {
+                            String ruleGramar = rule.getRuleGrammar();
+                            List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
+                            Rules rules = Rules.fromStr(rule.getRuleTypeName());
+                            rowList = rules.getRule().transform(rowList, grammar, rules);
+                            if (rowList.isEmpty()) break;
+                        }
+                        if (!rowList.isEmpty()) {
+                            data.add(rowList);
+                            offset.add(kafkaOffset + i);
+                        }
+                    }
+                }
+            }
+
+            HashMap<String, Object> ret = new HashMap<>();
+            ret.put("data", data);
+            ret.put("offset", offset);
+            if (executeRules.size() == 0) {
+                if (dsType.equals(DbusDatasourceType.LOG_UMS)) {
+                    ret.put("dataType", "UMS");
+                } else if (dsType.equals(DbusDatasourceType.LOG_LOGSTASH)
+                        || dsType.equals(DbusDatasourceType.LOG_LOGSTASH_JSON)
+                        || dsType.equals(DbusDatasourceType.LOG_FLUME)
+                        || dsType.equals(DbusDatasourceType.LOG_FILEBEAT)) {
+                    ret.put("dataType", "JSON");
+                }
+            } else {
+                String lastRule = executeRules.get(executeRules.size() - 1).getRuleTypeName();
+                if (lastRule.equals(Rules.FLATTENUMS.name)
+                        || lastRule.equals(Rules.KEYFILTER.name)) {
+                    ret.put("dataType", "JSON");
+                } else if (lastRule.equals(Rules.SAVEAS.name)) {
+                    ret.put("dataType", "FIELD");
+                } else {
+                    ret.put("dataType", "STRING");
+                }
+            }
+
+            return Response.ok().entity(ret).build();
+
         } catch (Exception e) {
-            logger.error("Error encountered while readKafkaTopic with parameter:{}", JSON.toJSONString(map), e);
+            logger.error("Error encountered while run rules with parameter:{}", JSON.toJSONString(map), e);
             return Response.status(204).entity(new Result(-1, e.getMessage())).build();
         }
     }
+
+    private Map<String, Object> getKafkaPlainLogContent(Map<String, Object> map) {
+        String topic = map.get("kafkaTopic").toString();
+        long offset = Long.parseLong(map.get("kafkaOffset").toString());
+        long count = Long.parseLong(map.get("kafkaCount").toString());
+        DbusDatasourceType dsType = DbusDatasourceType.parse(map.get("dsType").toString().toLowerCase());
+
+        try {
+            KafkaConsumer<String, String> consumer = PlainLogKafkaConsumerProvider.getKafkaConsumer();
+
+            TopicPartition dataTopicPartition = new TopicPartition(topic, 0);
+            List<TopicPartition> topics = Arrays.asList(dataTopicPartition);
+            consumer.assign(topics);
+            consumer.seek(dataTopicPartition, offset);
+
+            List<List<String>> valuesList = new ArrayList<>();
+            List<List<String>> keysList = new ArrayList<>();
+            while(valuesList.size() < count) {
+                ConsumerRecords<String, String> records = consumer.poll(3000);
+                for (ConsumerRecord<String, String> record : records) {
+                    if (dsType.equals(DbusDatasourceType.LOG_LOGSTASH)
+                            || dsType.equals(DbusDatasourceType.LOG_LOGSTASH_JSON)) {
+                        JSONObject value = JSON.parseObject(record.value());
+                        for (String key : value.keySet()) {
+                            if (value.get(key) instanceof String) continue;
+                            value.put(key, JSON.toJSONString(value.get(key)));
+                        }
+                        ArrayList<String> values = new ArrayList<String>() {{
+                            add(JSON.toJSONString(value));
+                        }};
+                        valuesList.add(values);
+                    } else if(dsType.equals(DbusDatasourceType.LOG_FLUME) || dsType.equals(DbusDatasourceType.LOG_FILEBEAT) || dsType.equals(DbusDatasourceType.LOG_UMS)) {
+                        ArrayList<String> values = new ArrayList<String>() {{
+                            add(record.value());
+                        }};
+                        valuesList.add(values);
+                    }
+
+                    ArrayList<String> key = new ArrayList<String>() {{
+                        add(record.key());
+                    }};
+                    keysList.add(key);
+
+                    if(valuesList.size() >= count) break;
+                }
+                offset += records.count();
+                consumer.seek(dataTopicPartition, offset);
+                if(records.count() == 0) {
+                    logger.warn("There is no content while reading kafka plain log");
+                    break;
+                }
+            }
+            Map<String, Object> ret = new HashMap<>();
+            ret.put("keysList", keysList);
+            ret.put("valuesList", valuesList);
+            return ret;
+        } catch (Exception e) {
+            logger.error("Read kafka plain log error", e);
+        }
+
+        return null;
+    }
+    // 规则结束
 
     private Result validateTableStatus(DataTable table) throws Exception {
         DataTable waitingTable = null;

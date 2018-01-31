@@ -3,12 +3,13 @@ var $ = require('jquery')
 var utils = require('../common/utils');
 
 var actions = Reflux.createActions(['initialLoad','dataSourceSelected','search','handleSubmit',
-    'openDialogByKey','closeDialog']);
+    'openDialogByKey','closeDialog','deleteSchema']);
 
 var store = Reflux.createStore({
     state: {
         dsOptions: [],
         data: [],
+        currentPageNum: 1,
         dialog: {
             show: false,
             content:"",
@@ -32,7 +33,6 @@ var store = Reflux.createStore({
             self.state.dsOptions = list;
             self.trigger(self.state);
         });
-        this.onSearch({});
     },
     onCloseDialog: function() {
         this.state.dialog.show = false;
@@ -58,11 +58,22 @@ var store = Reflux.createStore({
             callback();
         });
     },
+    onDeleteSchema:function(param, search){
+        var self = this;
+        $.get(utils.builPath("schema2/deleteSchema"), param, function(result) {
+            if(result.status !== 200) {
+                alert("Delete schema failed");
+                return;
+            }
+            search(null, self.state.currentPageNum);
+        });
+    },
     //监听所有的actions
     listenables: [actions],
     onSearch: function(p){
         var self = this;
         $.get(utils.builPath("schema2/search"), p, function(result) {
+            self.state.currentPageNum = p.pageNum;
             if(result.status !== 200) {
                 if(console)
                     console.error(JSON.stringify(result));

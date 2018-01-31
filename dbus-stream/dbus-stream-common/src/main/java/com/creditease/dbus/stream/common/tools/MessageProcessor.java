@@ -20,11 +20,11 @@
 
 package com.creditease.dbus.stream.common.tools;
 
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.stream.common.bean.DispatcherPackage;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -158,7 +158,9 @@ public abstract class MessageProcessor {
             }
 
             //只有数据进行统计
-            statMark (schemaName, tableName, rowCount);
+            if (msg.isDML()) {
+                statMark(schemaName, tableName, rowCount);
+            }
 
             //按照schema来分包，因为schema对应不同topic
             List<IGenericMessage> subList = map.get(schemaName);
@@ -196,7 +198,7 @@ public abstract class MessageProcessor {
      * @param record
      * @throws IOException
      */
-    public void preProcess(ConsumerRecord record) throws IOException {
+    public void preProcess(DBusConsumerRecord<String, byte[]> record) throws IOException {
 
         messageList = unwrapMessages((byte[]) record.value());
 

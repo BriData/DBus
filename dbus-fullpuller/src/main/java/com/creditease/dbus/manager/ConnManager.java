@@ -530,10 +530,10 @@ public abstract class ConnManager {
   /**
    * discard the database connection.
    */
-  public void discardConnection(boolean doClose) {
-    throw new UnsupportedOperationException("No discard connection support "
-      + "for this database");
-  }
+//  public void discardConnection(boolean doClose) {
+//    throw new UnsupportedOperationException("No discard connection support "
+//      + "for this database");
+//  }
 
   /**
    * @return a string identifying the driver class to load for this

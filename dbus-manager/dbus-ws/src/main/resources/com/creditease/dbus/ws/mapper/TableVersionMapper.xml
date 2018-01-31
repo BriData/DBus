@@ -17,6 +17,7 @@
         <result property="eventOffset" column="event_offset"/>
         <result property="eventPos" column="event_pos"/>
         <result property="updateTime" column="update_time"/>
+        <result property="comments" column="comments"/>
     </resultMap>
 
     <select id="findById" resultMap="version">
@@ -24,7 +25,7 @@
     </select>
 
     <select id="getVersionListByTableId" resultMap="version">
-        select id, version, inner_version, update_time from t_meta_version where table_id = #{tableId} ORDER BY update_time DESC
+        select id, version, inner_version, update_time, comments from t_meta_version where table_id = #{tableId} ORDER BY update_time DESC
     </select>
 
     <update id="update">

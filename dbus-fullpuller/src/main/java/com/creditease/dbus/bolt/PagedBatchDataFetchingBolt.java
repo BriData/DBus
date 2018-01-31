@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.creditease.dbus.common.ProgressInfo;
+import com.creditease.dbus.commons.*;
+import com.creditease.dbus.commons.msgencoder.ExternalEncoders;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
@@ -55,15 +57,11 @@ import com.creditease.dbus.common.FullPullHelper;
 import com.creditease.dbus.common.utils.DBConfiguration;
 import com.creditease.dbus.common.utils.DBRecordReader;
 import com.creditease.dbus.common.utils.DataDrivenDBInputFormat;
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.DataType;
-import com.creditease.dbus.commons.DbusMessage;
-import com.creditease.dbus.commons.DbusMessageBuilder;
-import com.creditease.dbus.commons.ZkService;
 import com.creditease.dbus.commons.msgencoder.EncodeColumn;
 import com.creditease.dbus.commons.msgencoder.MessageEncoder;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.manager.GenericJdbcManager;
+
 
 public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     private Logger LOG = LoggerFactory.getLogger(getClass());
@@ -88,13 +86,20 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         this.topologyId = (String) conf.get(Constants.StormConfigKey.FULL_PULLER_TOPOLOGY_ID);
         this.zkconnect = (String) conf.get(Constants.StormConfigKey.ZKCONNECT);
         this.zkTopoRoot = Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_PULLING_PROPS_ROOT;
+
+        //设置topo类型，用于获取配置信息路径
+        FullPullHelper.setTopologyType(Constants.FULL_PULLER_TYPE);
+
         loadRunningConf(null);
+
+        LOG.info("PagedBatchDataFetchingBolt init OK!");
     }
 
     public void execute(Tuple input) {
         String dsKey = null;
         JSONObject jsonObject = null;
         String dataSourceInfo = null;
+        String splitIndex = null;
         ResultSet rs = null;
         GenericJdbcManager dbManager = null;
         DBRecordReader dbRecordReader = null;
@@ -116,9 +121,12 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             } else if (cmdType.equals(DataPullConstants.COMMAND_FULL_PULL_RELOAD_CONF)) {
                 //处理reload事件
                 loadRunningConf(dataSourceInfo);
+
                 // 将load conf请求传导到下级bolt
                 collector.emit(new Values(jsonObject));
                 // 不跟踪消息的处理, 也不需要ack
+
+                LOG.info("receive RELOAD command OK!");
                 return;
             }
 
@@ -139,16 +147,16 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             JSONObject dataSplitShard = jsonObject;
 
             //出错提前退出逻辑，如果取不到progress信息或者已经出现错误，跳过后来的tuple数据
-            String dbNameSpace = FullPullHelper.getDbNameSpace(dataSourceInfo);
-            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+            String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
+            ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
             if (progressObj.getErrorMsg() != null) {
-                String splitIndex = dataSplitShard.getString(DataPullConstants.DATA_CHUNK_SPLIT_INDEX);
+                splitIndex = dataSplitShard.getString(DataPullConstants.DATA_CHUNK_SPLIT_INDEX);
                 LOG.error("Get process failed，skipped index:" + splitIndex);
                 collector.fail(input);
                 return;
             }
 
-            String splitIndex = dataSplitShard.getString(DataPullConstants.DATA_CHUNK_SPLIT_INDEX);
+            splitIndex = dataSplitShard.getString(DataPullConstants.DATA_CHUNK_SPLIT_INDEX);
             String totalRows = dataSplitShard.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_TOTAL_ROWS);
             String startSecs = dataSplitShard.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_START_SECS);
             String totalPartitions = dataSplitShard.getString(DataPullConstants.DATA_CHUNK_COUNT);
@@ -204,15 +212,24 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
 
             long lastUpdatedMonitorTime = System.currentTimeMillis();
             int counter = 0;
+
+            //oracle不加这一行, 可能会产生结果集已耗尽的问题
+            //rs.beforeFirst();
+
+
+            String outputVersion = FullPullHelper.getOutputVersion();
             while (rs.next()) {
                 counter++;
                 List<Object> rowDataValues = new ArrayList<>();
-                long uniqId = localZkService.nextValue(dbConf.buildNameSpaceForZkUidFetch(dataSourceInfo));
                 String pos = payloadObject.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_POS);
                 rowDataValues.add(pos);
                 rowDataValues.add(opTs);
                 rowDataValues.add("i");
-                rowDataValues.add(String.valueOf(uniqId)); // 全局唯一 _ums_uid_。
+                //1.3 or later include _ums_uid_
+                if (!outputVersion.equals(Constants.VERSION_12)) {
+                    long uniqId = localZkService.nextValue(dbConf.buildNameSpaceForZkUidFetch(dataSourceInfo));
+                    rowDataValues.add(String.valueOf(uniqId)); // 全局唯一 _ums_uid_
+                }
                 dealRowCnt++;
                 sendRowsCnt++;
                 for (int i = 1; i <= columnCount; i++) {
@@ -315,7 +332,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 if (isKafkaSend(dealRowMemSize, sendRowsCnt)) {
                     dealRowMemSize = 0;
                     sendRowsCnt = 0;
-                    DbusMessage dbusMessage = buildResultMessage(tuples, dataSourceInfo, dbConf, rsmd, splittedTableInfo, batchNo);
+                    DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, splittedTableInfo, batchNo);
                     //将数据写入kafka
                     sendMessageToKafka(resultKey, dbusMessage, sendCnt, recvCnt, isError);
                     tuples.clear();
@@ -329,12 +346,12 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 long updatedMonitorInterval = (System.currentTimeMillis() - lastUpdatedMonitorTime) / 1000;
                 if(updatedMonitorInterval > monitorTimeInterval) {
                     //1. 隔一段时间刷新monitor zk状态
-                    emitMonitorState(input, dataSourceInfo, dbNameSpace, dealRowCnt, startSecs, totalRows, totalPartitions, 0); //最后一个参数：一片尚未完成，计数0
+                    emitMonitorState(input, dataSourceInfo, progressInfoNodePath, dealRowCnt, startSecs, totalRows, totalPartitions, 0); //最后一个参数：一片尚未完成，计数0
                     lastUpdatedMonitorTime = System.currentTimeMillis();
                     dealRowCnt = 0;
 
                     //2. 如果已经出现错误，跳过后来的tuple数据
-                    progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, dbNameSpace);
+                    progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
                     if (progressObj.getErrorMsg() != null) {
                         LOG.error("Get process failed，skipped index:" + splitIndex);
                         collector.fail(input);
@@ -349,9 +366,9 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             localZkService.close();
 
 
-            LOG.info("Shard of split_index {} has {} records. Partition Info:{}", splitIndex, counter, tablePartition);
+            LOG.info("Shard of split_index{} has {} records. Partition Info: {}", splitIndex, counter, tablePartition);
             if(tuples.size() > 0) {
-                DbusMessage dbusMessage = buildResultMessage(tuples, dataSourceInfo, dbConf, rsmd, splittedTableInfo, batchNo);
+                DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, splittedTableInfo, batchNo);
                 tuples.clear();
                 tuples = null;
 
@@ -361,7 +378,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
 
             boolean isFinished = isSendFinished(sendCnt, recvCnt);
             if(isFinished) {
-                emitMonitorState(input, dataSourceInfo, dbNameSpace, dealRowCnt, startSecs, totalRows, totalPartitions, 1);//最后一个参数：完成一片，计数1
+                emitMonitorState(input, dataSourceInfo, progressInfoNodePath, dealRowCnt, startSecs, totalRows, totalPartitions, 1);//最后一个参数：完成一片，计数1
                 long endTime = (System.currentTimeMillis() - startTime) / 1000;
                 LOG.info("{}:the batchDataFetchBolt deal split {}, finished {} rows,consume time {}s.  Partition Info:{}", dsKey, splitIndex, dealRowCnt, endTime, tablePartition);
                 collector.ack(input);
@@ -370,7 +387,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             }
         } catch (Exception e) {
             String errorMsg = dsKey + ":Exception happened when fetching data of split: " + jsonObject.toJSONString() + "."
-                    + e.getMessage();
+                    + e.getMessage() + "  [split index is " + splitIndex + "]";
             LOG.error(errorMsg, e);
             FullPullHelper.finishPullReport(zkService,dataSourceInfo, FullPullHelper.getCurrentTimeStampString(),
                         Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
@@ -383,11 +400,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 if (dbManager != null) {
                     dbManager.close();
                 }
-                if (dbRecordReader != null) {
-                    dbRecordReader.close();
-                }
             } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
+                LOG.error("close dbManager error.", e);
             }
         }
     }
@@ -433,9 +447,11 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         return true;
     }
 
-    private DbusMessage buildResultMessage(List<List<Object>> tuples, String dataSourceInfo,
+    private DbusMessage buildResultMessage(String outputVersion, List<List<Object>> tuples, String dataSourceInfo,
                                            DBConfiguration dbConf, ResultSetMetaData rsmd, String tablePartition, int batchNo) throws SQLException {
-        DbusMessageBuilder builder = new DbusMessageBuilder();
+
+
+        DbusMessageBuilder builder = new DbusMessageBuilder(outputVersion);
         builder.build(DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbConf.getDbTypeAndNameSpace(dataSourceInfo, tablePartition), batchNo);
         String dsType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
         int columnCount = rsmd.getColumnCount();
@@ -456,10 +472,10 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         return message;
     }
 
-    private void emitMonitorState(Tuple input, String dataSourceInfo, String dbNameSpace, long dealRows, String startSecs, String totalRows, String totalPartitions, int finishedShardCount) {
+    private void emitMonitorState(Tuple input, String dataSourceInfo, String progressInfoNodePath, long dealRows, String startSecs, String totalRows, String totalPartitions, int finishedShardCount) {
         JSONObject jsonInfo = new JSONObject();
         jsonInfo.put(DataPullConstants.DATA_SOURCE_INFO, dataSourceInfo);
-        jsonInfo.put(DataPullConstants.DATA_SOURCE_NAME_SPACE, dbNameSpace);
+        jsonInfo.put(DataPullConstants.DATA_MONITOR_ZK_PATH, progressInfoNodePath);
         jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_COUNT, finishedShardCount);
         jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_ROWS, dealRows);
         jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_START_SECS, startSecs);
@@ -614,6 +630,10 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             }
             loadResultMsg = "Running Config is " + notifyEvtName + " successfully for PagedBatchDataFetchingBolt!";
             LOG.info(loadResultMsg);
+
+            //获取脱敏类型
+            ExternalEncoders externalEncoders = new ExternalEncoders();
+            externalEncoders.initExternalEncoders(zkconnect, zkService);
         } catch (Exception e) {
             loadResultMsg = e.getMessage();
             LOG.error(notifyEvtName + "ing running configuration encountered Exception!", loadResultMsg);
@@ -621,6 +641,9 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         } finally {
             if (reloadMsgJson != null) {
                 FullPullHelper.saveReloadStatus(reloadMsgJson, "pulling-dataFetching-bolt", false, zkconnect);
+                //reload脱敏类型
+                ExternalEncoders externalEncoders = new ExternalEncoders();
+                externalEncoders.initExternalEncoders(zkconnect,zkService);
             }
         }
     }

@@ -103,11 +103,7 @@ var StepSecond = React.createClass({
         }
         var dsType = this.state.dsType || "";
         var display = "scriptShow";
-        if(global.isDebug == false) {
-            display = "scriptHide";
-        }
-        if(dsType != "oracle")
-        {
+        if(dsType != "oracle") {
             display = "scriptHide";
         }
         return (

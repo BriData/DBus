@@ -67,21 +67,24 @@ public abstract class TableFetcher {
      * @return table所有字段
      * @throws Exception
      */
-    public List<TableMeta> fetchTableField(Map<String, Object> params) throws Exception {
-        try {
-            PreparedStatement statement = conn.prepareStatement(buildTableFieldQuery(params));
-            fillTableParameters(statement, params);
-            ResultSet resultSet = statement.executeQuery();
-            if(ds.getDsType().equals("mysql")){
-                return tableFieldMysql(resultSet);
-            }else{
-                return tableFieldOracle(resultSet);
-            }
-        } finally {
-            if (!conn.isClosed()) {
-                conn.close();
-            }
+    public List<List<TableMeta>> fetchTableField(Map<String, Object> params, List<Map<String, Object>> paramsList) throws Exception {
+        PreparedStatement statement = conn.prepareStatement(buildTableFieldQuery(params));
+        fillTableParameters(statement, params);
+        ResultSet resultSet = statement.executeQuery();
+        List<String> tableNames = new ArrayList<>();
+        for (Map<String, Object> map : paramsList) {
+            tableNames.add(String.valueOf(map.get("tableName")));
         }
+        List<List<TableMeta>> ret;
+        if(ds.getDsType().equals("mysql")){
+            ret = tableFieldMysql(tableNames, resultSet);
+        }else{
+            ret = tableFieldOracle(tableNames, resultSet);
+        }
+        resultSet.close();
+        statement.close();
+        conn.close();
+        return ret;
     }
 
     public static TableFetcher getFetcher(DbusDataSource ds) throws Exception {
@@ -124,24 +127,29 @@ public abstract class TableFetcher {
     }
 
     /**
-     *
+     * @param tableNames
      * @param rs
      * @return table所有字段
      * @throws SQLException
      */
-    protected List<TableMeta> tableFieldMysql(ResultSet rs) throws SQLException {
-        List<TableMeta> list = new ArrayList<>();
-        TableMeta tableMeta ;
-        while(rs.next())
-        {
-            tableMeta = new TableMeta();
+    protected List<List<TableMeta>> tableFieldMysql(List<String> tableNames, ResultSet rs) throws SQLException {
+        Map<String, List<TableMeta>> tableToMeta = new HashMap<>();
+        for (String tableName : tableNames) {
+            tableToMeta.put(tableName, new ArrayList<>());
+        }
+        while (rs.next()) {
+            TableMeta tableMeta = new TableMeta();
             tableMeta.setColumnName(rs.getString("COLUMN_NAME"));
             tableMeta.setDataType(rs.getString("DATA_TYPE"));
-            if(!SupportedMysqlDataType.isSupported(rs.getString("DATA_TYPE")))
-                list.add(tableMeta);
+            if (!SupportedMysqlDataType.isSupported(rs.getString("DATA_TYPE")))
+                if (tableToMeta.containsKey(rs.getString("TABLE_NAME")))
+                    tableToMeta.get(rs.getString("TABLE_NAME")).add(tableMeta);
         }
-        //System.out.println(list.size());
-        return list;
+        List<List<TableMeta>> ret = new ArrayList<>();
+        for (String tableName : tableNames) {
+            ret.add(tableToMeta.get(tableName));
+        }
+        return ret;
     }
 
 
@@ -157,25 +165,31 @@ public abstract class TableFetcher {
         return false;
     }
     /**
-     *
+     * @param tableNames
      * @param rs
      * @return table所有字段
      * @throws SQLException
      */
-    protected List<TableMeta> tableFieldOracle(ResultSet rs) throws SQLException {
-        List<TableMeta> list = new ArrayList<>();
-        TableMeta tableMeta ;
-        while(rs.next())
-        {
-            tableMeta = new TableMeta();
+    protected List<List<TableMeta>> tableFieldOracle(List<String> tableNames, ResultSet rs) throws SQLException {
+        Map<String, List<TableMeta>> tableToMeta = new HashMap<>();
+        for (String tableName : tableNames) {
+            tableToMeta.put(tableName, new ArrayList<>());
+        }
+        while (rs.next()) {
+            TableMeta tableMeta = new TableMeta();
             tableMeta.setColumnName(rs.getString("COLUMN_NAME"));
             tableMeta.setDataType(rs.getString("DATA_TYPE"));
-            if(isIncompatibleCol(rs.getString("DATA_TYPE")))
-                 tableMeta.setIncompatibleColumn(rs.getString("COLUMN_NAME") +"/" + rs.getString("DATA_TYPE"));
-            if(!SupportedOraDataType.isSupported(rs.getString("DATA_TYPE")))
-                list.add(tableMeta);
+            if (isIncompatibleCol(rs.getString("DATA_TYPE")))
+                tableMeta.setIncompatibleColumn(rs.getString("COLUMN_NAME") + "/" + rs.getString("DATA_TYPE"));
+            if (!SupportedOraDataType.isSupported(rs.getString("DATA_TYPE")))
+                if (tableToMeta.containsKey(rs.getString("TABLE_NAME")))
+                    tableToMeta.get(rs.getString("TABLE_NAME")).add(tableMeta);
         }
-        return list;
+        List<List<TableMeta>> ret = new ArrayList<>();
+        for (String tableName : tableNames) {
+            ret.add(tableToMeta.get(tableName));
+        }
+        return ret;
     }
 
     protected List<DataTable> buildResultOracle(ResultSet rs) throws SQLException {

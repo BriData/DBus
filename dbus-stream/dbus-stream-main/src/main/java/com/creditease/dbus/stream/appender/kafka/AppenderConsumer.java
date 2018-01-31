@@ -21,10 +21,7 @@
 package com.creditease.dbus.stream.appender.kafka;
 
 import avro.shaded.com.google.common.collect.Lists;
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.IZkService;
-import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.commons.ZkService;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.stream.appender.utils.JsonNodeOperator;
 import com.creditease.dbus.stream.appender.utils.ZKNodeOperator;
@@ -34,7 +31,6 @@ import com.creditease.dbus.stream.common.appender.spout.processor.ConsumerListen
 import com.creditease.dbus.stream.common.appender.spout.processor.CtrlMessagePostOperation;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -177,7 +173,7 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
         oper.spoutResumed(message, result);
     }
     @Override
-    public void syncOffset(ConsumerRecord<String, byte[]> record) {
+    public void syncOffset(DBusConsumerRecord<String, byte[]> record) {
         logger.debug("Ack offset {topic:{},partition:{},offset:{}}", record.topic(), record.partition(), record.offset() + 1);
         Map<TopicPartition, OffsetAndMetadata> map = Collections.singletonMap(new TopicPartition(record.topic(), record.partition()), new OffsetAndMetadata(record.offset() + 1, ""));
         consumer.commitAsync(map, (metadata, exception) -> {
@@ -208,7 +204,7 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
     }
 
     @Override
-    public void seek(ConsumerRecord<String, byte[]> record) {
+    public void seek(DBusConsumerRecord<String, byte[]> record) {
         logger.info("seek topic {topic:{},partition:{},offset:{}}", record.topic(), record.partition(), record.offset());
         consumer.seek(new TopicPartition(record.topic(), record.partition()), record.offset());
     }

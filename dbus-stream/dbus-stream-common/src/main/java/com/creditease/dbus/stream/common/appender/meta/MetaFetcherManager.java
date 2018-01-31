@@ -40,13 +40,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class MetaFetcherManager {
     private static Logger logger = LoggerFactory.getLogger(MetaFetcherManager.class);
-    private static final String DATASOURCE_CONFIG_NAME = Constants.Properties.ORA_META;
+    private static final String ORA_DATASOURCE_CONFIG_NAME = Constants.Properties.ORA_META;
     private static MetaFetcher fetcher;
     private static AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private static boolean initialize(String jdbcUrl, String user, String pwd) {
+    private static boolean initializeOraMetaFetcher(String jdbcUrl, String user, String pwd) {
         try {
-            Properties properties = PropertiesHolder.getProperties(DATASOURCE_CONFIG_NAME);
+            Properties properties = PropertiesHolder.getProperties(ORA_DATASOURCE_CONFIG_NAME);
             properties.setProperty("url", jdbcUrl);
             properties.setProperty("username", user);
             properties.setProperty("password", pwd);
@@ -56,18 +56,18 @@ public class MetaFetcherManager {
             fetcher = (MetaFetcher) constructor.newInstance(provider.provideDataSource());
             return true;
         } catch (Exception e) {
-            logger.error("MetaFetcherManager initialize error!", e);
+            logger.error("MetaFetcherManager initializeOraMetaFetcher error!", e);
             return false;
         }
     }
 
-    public static MetaFetcher getFetcher() {
+    public static MetaFetcher getOraMetaFetcher() {
         if (!initialized.get()) {
             synchronized (MetaFetcherManager.class) {
                 DbusDatasource ds = Utils.getDatasource();
-                boolean result = initialize(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                boolean result = initializeOraMetaFetcher(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPwd());
                 if (!result) {
-                    result = initialize(ds.getSlaveUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                    result = initializeOraMetaFetcher(ds.getSlaveUrl(), ds.getDbusUser(), ds.getDbusPwd());
                     if (!result) {
                         throw new UnintializedException("DBFacadeManager initialized error!");
                     }
@@ -77,6 +77,77 @@ public class MetaFetcherManager {
         }
         return fetcher;
     }
+
+    private static boolean initializeMysqlMetaFetcher(String jdbcUrl, String user, String pwd) {
+        try {
+            Properties properties = new Properties();
+            properties.setProperty("driverClassName", "com.mysql.jdbc.Driver");
+            properties.setProperty("url", jdbcUrl);
+            properties.setProperty("username", user);
+            properties.setProperty("password", pwd);
+            DataSourceProvider provider = new DruidDataSourceProvider(properties);
+            Class<?> clazz = Class.forName("com.creditease.dbus.stream.mysql.appender.meta.MysqlMetaFetcher");
+            Constructor<?> constructor = clazz.getConstructor(DataSource.class);
+            fetcher = (MetaFetcher) constructor.newInstance(provider.provideDataSource());
+            return true;
+        } catch (Exception e) {
+            logger.error("MetaFetcherManager initializeMysqlMetaFetcher error!", e);
+            return false;
+        }
+    }
+
+    public static MetaFetcher getMysqlMetaFetcher() {
+        if (!initialized.get()) {
+            synchronized (MetaFetcherManager.class) {
+                DbusDatasource ds = Utils.getDatasource();
+                boolean result = initializeMysqlMetaFetcher(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                if (!result) {
+                    result = initializeMysqlMetaFetcher(ds.getSlaveUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                    if (!result) {
+                        throw new UnintializedException("DBFacadeManager initialized error!");
+                    }
+                }
+                initialized.set(true);
+            }
+        }
+        return fetcher;
+    }
+/*
+    private static boolean initializeMongoMetaFetcher(String jdbcUrl, String user, String pwd) {
+        try {
+            Properties properties = new Properties();
+            properties.setProperty("driverClassName", "com.mongo.jdbc.Driver");//TODO 不知MongoDB的driver是否是这个格式呢
+            properties.setProperty("url", jdbcUrl);
+            properties.setProperty("username", user);
+            properties.setProperty("password", pwd);
+            DataSourceProvider provider = new DruidDataSourceProvider(properties);
+            Class<?> clazz = Class.forName("com.creditease.dbus.stream.mongo.appender.meta.MongoMetaFetcher");
+            Constructor<?> constructor = clazz.getConstructor(DataSource.class);
+            fetcher = (MetaFetcher) constructor.newInstance(provider.provideDataSource());
+            return true;
+        } catch (Exception e) {
+            logger.error("MetaFetcherManager initializeMongoMetaFetcher error!", e);
+            return false;
+        }
+    }
+
+    public static MetaFetcher getMongoMetaFetcher() {
+        if (!initialized.get()) {
+            synchronized (MetaFetcherManager.class) {
+                DbusDatasource ds = Utils.getDatasource();
+                boolean result = initializeMongoMetaFetcher(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                if (!result) {
+                    result = initializeMongoMetaFetcher(ds.getSlaveUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                    if (!result) {
+                        throw new UnintializedException("DBFacadeManager initialized error!");
+                    }
+                }
+                initialized.set(true);
+            }
+        }
+        return fetcher;
+    }
+*/
 
     public static void reset() {
         initialized.compareAndSet(true, false);

@@ -26,7 +26,7 @@ var initMessageType = function(result) {
     return result.data
 };
 
-var actions = Reflux.createActions(['initialLoad', 'messageTypeChanged', 'sendMessage','readZkNode','closeDialogZK']);
+var actions = Reflux.createActions(['initialLoad', 'messageTypeChanged', 'datasourceChanged','sendMessage','readZkNode','closeDialogZK']);
 var store = Reflux.createStore({
     //监听所有的actions
     listenables: [actions],
@@ -93,7 +93,14 @@ var store = Reflux.createStore({
         this.state.dialogCtrl.showJson = false;
         this.trigger(this.state);
     },
+    onDatasourceChanged: function(message) {
+        this.state.editor.json = message;
+        console.log("this.state.editor.json = message: " + JSON.stringify(message));
+        this.trigger(this.state);
+    },
     onSendMessage: function(ds,ctrlTopic,message, messageType,callback) {
+        var self = this;
+        console.log("onSendMessage: " + JSON.stringify(message));
         var param = {
             ds: ds,
             ctrlTopic: ctrlTopic,

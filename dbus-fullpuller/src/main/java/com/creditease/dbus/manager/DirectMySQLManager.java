@@ -49,6 +49,8 @@ import com.creditease.dbus.common.utils.DBConfiguration;
  * Manages direct connections to MySQL databases
  * so we can use mysqldump to get really fast dumps.
  */
+// refactor connection 2017.11.29
+@Deprecated
 public class DirectMySQLManager
     extends MySQLManager {
 

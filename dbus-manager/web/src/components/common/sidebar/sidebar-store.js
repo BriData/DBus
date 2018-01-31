@@ -63,12 +63,17 @@ var sidebarList = [
     {
         id: 10,
         icon: "glyphicon glyphicon-circle-arrow-down",
-        text: "full-pull",
+        text: "Global-full-pull",
         href: "/full-pull",
         isActive: false
-    }
-];
-var debugSidebarList = sidebarList.concat([
+    },
+    {
+        id: 11,
+        icon: "glyphicon glyphicon-share-alt",
+        text: "FullPull History",
+        href: "/fullpull-history",
+        isActive: false
+    },
     {
         id: 7,
         icon: "glyphicon glyphicon-folder-open",
@@ -81,7 +86,10 @@ var debugSidebarList = sidebarList.concat([
         text: "Topology Manager",
         href: "/topology",
         isActive: false
-    }, {
+    },
+];
+var debugSidebarList = sidebarList.concat([
+    {
         id: 3,
         icon: "glyphicon glyphicon-star",
         text: "Avro Schema",
@@ -91,29 +99,29 @@ var debugSidebarList = sidebarList.concat([
 ]);
 
 var store = Reflux.createStore({
-    items:sidebarList,
+    items: sidebarList,
     //监听所有的actions
     listenables: [actions],
     //on开头的都是action触发后的回调函数
     getItems () {
-        if(global.isDebug) {
+        if (global.isDebug) {
             this.items = debugSidebarList;
         }
         return this.items;
     },
     onHashChanged(hash) {
         var items = this.getItems();
-        if(hash == "/") {
-            for(var i = 1; i < items.length; i++) {
+        if (hash == "/") {
+            for (var i = 1; i < items.length; i++) {
                 items[i].isActive = false;
             }
             items[0].isActive = true;
         } else {
             var found = false;
-            for(var i = items.length -1; i >=0; i--) {
-                if(hash.indexOf(items[i].href) != 0) {
+            for (var i = items.length - 1; i >= 0; i--) {
+                if (hash.indexOf(items[i].href) != 0) {
                     items[i].isActive = false;
-                } else if(!found){
+                } else if (!found) {
                     found = true;
                     items[i].isActive = true;
                 } else {
@@ -122,7 +130,7 @@ var store = Reflux.createStore({
             }
         }
 
-        this.trigger({items:items});
+        this.trigger({items: items});
     }
 });
 store.actions = actions;

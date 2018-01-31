@@ -64,7 +64,7 @@ router.get('/loadZkTreeOfPath', function (req, res) {
 });
 
 router.get('/loadZkTreeByDsName', function (req, res) {
-    var param = buildParam(req.query, ["dsName"]);
+    var param = buildParam(req.query, ["dsName","dsType"]);
     if(!param["dsName"]){
         var msg="Parameter missing!";
         // logger.warn(msg);
@@ -72,7 +72,7 @@ router.get('/loadZkTreeByDsName', function (req, res) {
         return;
     }
 
-    service.loadZkTreeByDsName(param["dsName"],function loadZkTreeByDsNameCb(error,response) {
+    service.loadZkTreeByDsName(param["dsName"],param["dsType"],function loadZkTreeByDsNameCb(error,response) {
         if(error){
             res.json({status: 500, data: '内部错误！'});
         }else{
@@ -115,7 +115,7 @@ router.post('/modifyZkNodeData', function (req, res) {
         return;
     }
     let path = param["path"];
-    path = path.replace('\=2', '\:');
+    path = path.replace(/=2/g, ':');
     let client = ZooKeeper.createClient(config.zk.connect,config.zk.client);
     client.once('connected', function () {
         console.log('Connected to the server.');
@@ -199,6 +199,7 @@ router.get('/deleteZkNodeOfPath', function(req, res){
         res.json({status: 404, message: "parameter 'path' not found"});
         return;
     }
+    path = path.replace(/=2/g, ':');
     service.deleteZkNodeOfPath(path,function deleteZkNodeOfPathCb(error,response) {
         if(error){
             res.json({status: 500, data: '内部错误！'});
@@ -265,7 +266,7 @@ router.get('/getZkNodeOfPath', function (req, res) {
         res.json({status:404, message:"parameter 'path' not found"});
         return;
     }
-    path = path.replace('\=2', '\:');
+    path = path.replace(/=2/g, ':');
     var node={};
     try{
         let client = ZooKeeper.createClient(config.zk.connect,config.zk.client);
@@ -376,6 +377,8 @@ router.get('/applyTemplateConfToBusiness', function (req, res) {
         var templateNodePath=businessNodePath.replace(TEMPLATE_ROOT,BUSSINESS_ROOT);
         //js replace 用正则表达式才可以替换全部。正则里面不能用变量名，必须直接用值。所以没再引用定义的常量，而是直接写死了
         businessNodePath=businessNodePath.replace(/placeholder/g,dsName);
+        businessNodePath=businessNodePath.replace(/placeholderType/g,dsType);
+
     });
     let client = ZooKeeper.createClient(config.zk.connect,config.zk.client);
     client.once('connected', function () {

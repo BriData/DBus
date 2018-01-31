@@ -1,0 +1,8 @@
+      {
+        "name" : "%s",
+        "type" : [ "null", "string" ],
+        "default" : null
+      }, {
+      "name" : "%s_isMissing",
+      "type" : "boolean"
+      }

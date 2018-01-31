@@ -7,9 +7,15 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+<<<<<<< HEAD
  * 
  *      http://www.apache.org/licenses/LICENSE-2.0
  * 
+=======
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+>>>>>>> 3dff4cf03b2a83b8139051e9b6e36b36a4512711
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,17 +26,24 @@
 
 package com.creditease.dbus.heartbeat.handler.impl;
 
+
 import java.util.HashSet;
 import java.util.Set;
 
+import com.creditease.dbus.heartbeat.container.EventContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
+import com.creditease.dbus.heartbeat.event.IEvent;
 import com.creditease.dbus.heartbeat.event.impl.GlobalControlKafkaConsumerEvent;
 import com.creditease.dbus.heartbeat.event.impl.KafkaConsumerEvent;
+import com.creditease.dbus.heartbeat.event.impl.MaasAppenderEvent;
+import com.creditease.dbus.heartbeat.event.impl.MaasEvent;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
+
+
 
 public class KafkaConsumerHandler extends AbstractHandler {
 
@@ -40,7 +53,7 @@ public class KafkaConsumerHandler extends AbstractHandler {
         Set<TargetTopicVo> topics = HeartBeatConfigContainer.getInstance().getTargetTopic();
         Set<String> topicSet = new HashSet<String>();
         for(TargetTopicVo vo : topics){
-        	topicSet.add(vo.getTargetTopic());
+            topicSet.add(vo.getTargetTopic());
         }
         LoggerFactory.getLogger().info("[kafka-consumer-handler] topic count:{}, {}", topicSet.size(), topicSet.toString());
 
@@ -55,11 +68,15 @@ public class KafkaConsumerHandler extends AbstractHandler {
         // 单独添加一个全局的global_ctrl消费者
         KafkaConsumerEvent event = new GlobalControlKafkaConsumerEvent(Constants.GLOBAL_CTRL_TOPIC);
         container.submit(event);
+
+
+
+
+
     }
-    
-    
-    
-    
+
+
+
     /*@Override
     public void process() {
         KafkaConsumerContainer container = KafkaConsumerContainer.getInstance();
@@ -70,7 +87,8 @@ public class KafkaConsumerHandler extends AbstractHandler {
             topicCountMap.put(topic, Integer.valueOf(1));
         }
         LoggerFactory.getLogger().info("[kafka-consumer-handler] {}", topicCountMap.toString());
-        Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = 
+
+        Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap =
                 container.getConsumer().createMessageStreams(topicCountMap);
         for (String key : consumerMap.keySet()) {
             List<KafkaStream<byte[], byte[]>> streams = consumerMap.get(key);

@@ -6,27 +6,65 @@
 <mapper namespace="com.creditease.dbus.ws.mapper.DataTableRuleMapper">
     <resultMap id="dataTableRule" type="com.creditease.dbus.ws.domain.DataTableRule">
         <id property="id" column="id"/>
-        <result property="tableId" column="table_id"/>
-        <result property="order" column="order_"/>
-        <result property="type" column="type"/>
-        <result property="column" column="column_"/>
-        <result property="re" column="re"/>
-        <result property="createTime" column="create_time"/>
+        <result property="groupId" column="group_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="ruleTypeName" column="rule_type_name"/>
+        <result property="ruleGrammar" column="rule_grammar"/>
+        <result property="updateTime" column="update_time"/>
     </resultMap>
 
+    <resultMap id="dataTableRuleGroup" type="com.creditease.dbus.ws.domain.DataTableRuleGroup">
+        <id property="id" column="id"/>
+        <result property="tableId" column="table_id"/>
+        <result property="groupName" column="group_name"/>
+        <result property="status" column="status"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
 
+    <!-- 规则组开始 -->
 
-    <select id="getDataTableRule" resultMap="dataTableRule">
-        select * from t_log_rule where table_id = #{tableId} order by order_
+    <select id="getAllRuleGroup" resultMap="dataTableRuleGroup">
+        select * from t_plain_log_rule_group where table_id = #{tableId}
     </select>
 
-    <insert id="insertDataTableRule">
-        insert into t_log_rule
-        ( table_id, order_, type, column_, re) values(
-        #{tableId},#{order},#{type},#{column},#{re})
+    <update id="updateRuleGroup">
+        update t_plain_log_rule_group
+        <set>
+            <if test="groupName != null">group_name = #{groupName},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = CURRENT_TIMESTAMP
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteRuleGroup">
+        DELETE FROM t_plain_log_rule_group WHERE id = #{groupId}
+    </delete>
+
+    <insert id="addGroup" useGeneratedKeys="true" keyProperty="id">
+        insert into t_plain_log_rule_group(table_id, group_name, status)
+        values(#{tableId}, #{groupName}, #{status})
     </insert>
 
-    <delete id="deleteDataTableRule">
-        DELETE FROM t_log_rule WHERE table_id = #{tableId}
+    <!-- 规则组结束 -->
+
+    <!-- 规则开始 -->
+
+    <select id="getAllRules" resultMap="dataTableRule">
+        select * from t_plain_log_rules where group_id = #{groupId} order by order_id
+    </select>
+
+    <delete id="deleteRules">
+        DELETE FROM t_plain_log_rules WHERE group_id = #{groupId}
     </delete>
+
+    <insert id="saveAllRules" parameterType="java.util.List">
+        insert into t_plain_log_rules (group_id, order_id, rule_type_name, rule_grammar)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.groupId},#{item.orderId},#{item.ruleTypeName},#{item.ruleGrammar})
+        </foreach>
+    </insert>
+
+    <!-- 规则结束 -->
 </mapper>

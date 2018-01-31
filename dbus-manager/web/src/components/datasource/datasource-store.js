@@ -2,12 +2,13 @@ var Reflux = require('reflux');
 var $ = require('jquery')
 var utils = require('../common/utils');
 
-var actions = Reflux.createActions(['initialLoad','search','start','stop',
-    'closeDialog', 'openDialogByKey' , 'handleSubmit']);
+var actions = Reflux.createActions(['search','start','stop',
+    'closeDialog', 'openDialogByKey' , 'handleSubmit','deleteDataSource']);
 
 var store = Reflux.createStore({
     state: {
         data: [],
+        currentPageNum: 1,
         dialog: {
             show: false,
             content:"",
@@ -16,9 +17,6 @@ var store = Reflux.createStore({
     },
     initState: function() {
         return this.state;
-    },
-    onInitialLoad: function() {
-        this.onSearch({});
     },
     onStart:function(startParam,validateParam){
         var self = this;
@@ -96,11 +94,22 @@ var store = Reflux.createStore({
             callback();
         });
     },
+    onDeleteDataSource:function(param,search){
+        var self = this;
+        $.get(utils.builPath("ds/deleteDataSource"), param, function(result) {
+            if(result.status !== 200) {
+                alert("Delete datasource failed");
+                return;
+            }
+            search(null, self.state.currentPageNum);
+        });
+    },
     //监听所有的actions
     listenables: [actions],
     onSearch: function(p){
         var self = this;
         $.get(utils.builPath("ds/search"), p, function(result) {
+            self.state.currentPageNum = p.pageNum;
             if(result.status !== 200) {
                 if(console)
                     console.error(JSON.stringify(result));

@@ -21,10 +21,8 @@
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import com.alibaba.fastjson.JSON;
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.ControlType;
-import com.creditease.dbus.commons.MetaWrapper;
-import com.creditease.dbus.commons.PropertiesHolder;
+import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.commons.meta.MetaCompareResult;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
@@ -36,6 +34,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +65,25 @@ public class MetaEventWarningSender {
         message.addPayload("after", newMeta);
         message.addPayload("compare-result", JSON.toJSON(result));
         message.addPayload("version", ver.getVersion());
+
+        String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.GLOBAL_EVENT_TOPIC);
+        ProducerRecord<String, String> record = new ProducerRecord<>(topic, message.getType(), message.toJSONString());
+        Future<RecordMetadata> future = producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                logger.error("Send global event error.{}", exception.getMessage());
+            }
+        });
+        try {
+            future.get(10000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
+
+    public void sendMaasAppenderMessage(MaasAppenderMessage maasAppenderMessage) {
+        ControlMessage message = new ControlMessage(System.currentTimeMillis(), ControlType.G_MAAS_APPENDER_EVENT.toString(), "dbus-appender");
+
+        message.setPayload(JSONObject.parseObject(maasAppenderMessage.toString()));
 
         String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.GLOBAL_EVENT_TOPIC);
         ProducerRecord<String, String> record = new ProducerRecord<>(topic, message.getType(), message.toJSONString());

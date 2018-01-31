@@ -20,23 +20,24 @@
 
 package com.creditease.dbus.stream.appender.spout;
 
+import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.commons.DBusConsumerRecord;
+import com.creditease.dbus.commons.PropertiesHolder;
+import com.creditease.dbus.enums.DbusDatasourceType;
+import com.creditease.dbus.stream.appender.exception.InitializationException;
+import com.creditease.dbus.stream.appender.kafka.AppenderConsumer;
+import com.creditease.dbus.stream.appender.spout.queue.MessageStatusQueueManager;
 import com.creditease.dbus.stream.appender.utils.MetaVersionInitializer;
 import com.creditease.dbus.stream.appender.utils.ReloadStatus;
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
+import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
+import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.spout.processor.AbstractMessageHandler;
 import com.creditease.dbus.stream.common.appender.spout.processor.CtrlMessagePostOperation;
 import com.creditease.dbus.stream.common.appender.spout.processor.RecordProcessListener;
-import com.creditease.dbus.stream.appender.spout.queue.MessageStatusQueueManager;
-import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
-import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
-import com.creditease.dbus.stream.appender.exception.InitializationException;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
-import com.creditease.dbus.stream.common.appender.bean.EmitData;
-import com.creditease.dbus.stream.common.appender.enums.Command;
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.stream.appender.kafka.AppenderConsumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -52,21 +53,22 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.Properties;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+    import java.io.IOException;
+    import java.io.UnsupportedEncodingException;
+    import java.util.List;
+    import java.util.Map;
+    import java.util.Properties;
+    import java.util.concurrent.Future;
+    import java.util.concurrent.TimeUnit;
 
-import static com.creditease.dbus.stream.common.Constants.*;
+    import static com.creditease.dbus.stream.common.Constants.*;
 
-/**
- * 读取kafka数据的Spout实现
- * dbus-dispatcher 会将表的数据拆分到所有其他schema所对应的kafka topic中
- * Created by Shrimp on 16/6/2.
- */
-public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListener {
+    /**
+     * 读取kafka数据的Spout实现
+     * dbus-dispatcher 会将表的数据拆分到所有其他schema所对应的kafka topic中
+     * Created by Shrimp on 16/6/2.
+     */
+    public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListener {
 
     private Logger logger = LoggerFactory.getLogger(DbusKafkaSpout.class);
 
@@ -124,7 +126,7 @@ public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListen
     @Override
     public void nextTuple() {
         if (!reloadSpout()) return;  // 判断是否重新加载了缓存,如果重新加载则直接返回
-        if (flowLimitation()) return; // 如果读取的流量过大则要sleep一下
+        //if (flowLimitation()) return; // 如果读取的流量过大则要sleep一下
         // 读取kafka消息
         ConsumerRecords<String, byte[]> records = consumer.getMessages();
 
@@ -237,13 +239,16 @@ public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListen
     }
 
     @Override
-    public void emitData(List<Object> values, Object msgId) {
-        if (msgId != null && msgId instanceof ConsumerRecord) {
-            ConsumerRecord<String, byte[]> record = getMessageId(msgId);
+    public void emitData(EmitData data, Command cmd, Object msgId) {
+        List<Object> values = new Values(data, cmd);
+        if (msgId != null && msgId instanceof DBusConsumerRecord) {
+            DBusConsumerRecord<String, byte[]> record = getMessageId(msgId);
             msgQueueMgr.addMessage(record);
+            this.collector.emit(values, record);
+            logger.debug("sport emit:" + record.toString());
+        } else {
+            this.collector.emit(values, msgId);
         }
-
-        this.collector.emit(values, msgId);
     }
 
     @Override
@@ -252,7 +257,7 @@ public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListen
     }
 
     @Override
-    public void markReloading(ConsumerRecord<String, byte[]> record, Map<String, Object> params) {
+    public void markReloading(DBusConsumerRecord<String, byte[]> record, Map<String, Object> params) {
         status.markReloading(record);
         status.addAllExts(params);
     }
@@ -280,26 +285,26 @@ public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListen
 
     @Override
     public void ack(Object msgId) {
-        if (msgId != null && ConsumerRecord.class.isInstance(msgId)) {
-            ConsumerRecord<String, byte[]> record = getMessageId(msgId);
+        if (msgId != null && DBusConsumerRecord.class.isInstance(msgId)) {
+            DBusConsumerRecord<String, byte[]> record = getMessageId(msgId);
             reduceFlowSize(record.serializedValueSize());
 
             // 标记处理成功并获取commit点
-            ConsumerRecord<String, byte[]> commitPoint = msgQueueMgr.okAndGetCommitPoint(record);
+            DBusConsumerRecord<String, byte[]> commitPoint = msgQueueMgr.okAndGetCommitPoint(record);
             if (commitPoint != null) {
                 consumer.syncOffset(commitPoint);
                 msgQueueMgr.committed(commitPoint);
             }
         }
         super.ack(msgId);
-        logger.debug("dbus-spout receive ack message {}", msgId.toString());
+        logger.debug("[dbus-spout-ack] receive ack message {}", msgId.toString());
     }
 
     @Override
     public void fail(Object msgId) {
-        logger.error("dbus-spout receive fail message {}", msgId != null ? msgId.toString() : null);
-        if (msgId != null && ConsumerRecord.class.isInstance(msgId)) {
-            ConsumerRecord<String, byte[]> record = getMessageId(msgId);
+        logger.error("[dbus-spout-fail] receive fail message {}", msgId != null ? msgId.toString() : null);
+        if (msgId != null && DBusConsumerRecord.class.isInstance(msgId)) {
+            DBusConsumerRecord<String, byte[]> record = getMessageId(msgId);
             // 如果是拉全量处理出错,则需要将暂停的topic唤醒
             if (Utils.parseCommand(record.key()) == Command.FULL_DATA_PULL_REQ) {
                 ControlMessage message;
@@ -317,7 +322,7 @@ public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListen
             this.reduceFlowSize(record.serializedValueSize());
 
             // 标记处理失败,获取seek点
-            ConsumerRecord<String, byte[]> seekPoint = msgQueueMgr.failAndGetSeekPoint(record);
+            DBusConsumerRecord<String, byte[]> seekPoint = msgQueueMgr.failAndGetSeekPoint(record);
             if (seekPoint != null) {
                 consumer.seek(seekPoint);
             }

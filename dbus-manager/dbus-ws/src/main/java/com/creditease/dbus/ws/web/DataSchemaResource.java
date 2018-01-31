@@ -21,12 +21,14 @@
 package com.creditease.dbus.ws.web;
 
 import com.alibaba.fastjson.JSON;
+import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.ws.common.HttpHeaderUtils;
 import com.creditease.dbus.ws.common.Result;
 import com.creditease.dbus.ws.domain.DataSchema;
 import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.creditease.dbus.ws.service.DataSchemaService;
 import com.creditease.dbus.ws.service.DataSourceService;
+import com.creditease.dbus.ws.service.schema.MongoSchemaFetcher;
 import com.creditease.dbus.ws.service.schema.SchemaFetcher;
 import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.rmi.UnexpectedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,11 +211,18 @@ public class DataSchemaResource {
         try {
             DataSourceService dsService = DataSourceService.getService();
             DbusDataSource ds = dsService.getDataSourceByName(dsName);
-            SchemaFetcher fetcher = SchemaFetcher.getFetcher(ds);
-
-            Map<String, Object> map = new HashMap<>();
-            map.put("dsName", dsName);
-            List<DataSchema> list = fetcher.fetchSchema(map);
+            List<DataSchema> list;
+            if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MYSQL)
+                || DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.ORACLE))
+            {
+                SchemaFetcher fetcher = SchemaFetcher.getFetcher(ds);
+                list = fetcher.fetchSchema();
+            } else if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MONGO)) {
+                MongoSchemaFetcher fetcher = new MongoSchemaFetcher(ds);
+                list = fetcher.fetchSchema();
+            } else {
+                throw new IllegalArgumentException("Unsupported datasource type");
+            }
             for(int i=0;i<list.size();i++){
                 list.get(i).setDsId(ds.getId());
                 list.get(i).setStatus(ds.getStatus());
@@ -220,11 +230,18 @@ public class DataSchemaResource {
                 list.get(i).setTargetTopic(ds.getDsName()+"."+list.get(i).getSchemaName()+".result");
             }
             return Response.ok().entity(list).build();
-            //return Response.ok(list.size()).build();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return Response.ok(Result.OK).build();
     }
 
+    @GET
+    @Path("/deleteSchema")
+    public Response deleteSchema(Map<String, Object> map) {
+        int schemaId = Integer.parseInt(map.get("schemaId").toString());
+        int result = service.deleteSchema(schemaId);
+        return Response.ok().entity(result).build();
+    }
 }

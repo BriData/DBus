@@ -21,7 +21,7 @@
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
 import com.creditease.dbus.commons.ControlMessage;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public interface ConsumerListener {
 
     void pauseTopic(TopicPartition tp, long offset, ControlMessage message);
 
-    void syncOffset(ConsumerRecord<String, byte[]> record);
+    void syncOffset(DBusConsumerRecord<String, byte[]> record);
 
     List<String> getControlTopics();
 
@@ -48,5 +48,5 @@ public interface ConsumerListener {
 
     List<String> getSchemaTopics();
 
-    void seek(ConsumerRecord<String, byte[]> record);
+    void seek(DBusConsumerRecord<String, byte[]> record);
 }

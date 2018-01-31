@@ -21,18 +21,21 @@
 package com.creditease.dbus.commons;
 
 import com.alibaba.fastjson.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.creditease.dbus.commons.SupportedOraDataType.NUMBER;
+import static com.creditease.dbus.commons.SupportedOraDataType.isSupported;
 
 /**
  * Meta信息包装器
  * Created by Shrimp on 16/5/17.
  */
-public class MetaWrapper {
+public class MetaWrapper implements Serializable {
     private static Logger LOG = LoggerFactory.getLogger(MetaWrapper.class);
     /**
      * meta 索引,用来快速定位meta在metaCells中的位置
@@ -52,6 +55,10 @@ public class MetaWrapper {
                 return o1.getInternalColumnId() - o2.getInternalColumnId();
             }
         });
+        index.clear();
+        for (int i = 0; i < metaCells.size(); i++) {
+            index.put(metaCells.get(i).getColumnName(), i);
+        }
     }
 
     public boolean contains(String tableName) {
@@ -95,7 +102,7 @@ public class MetaWrapper {
     public MetaCell getIfSupport(String columnName) {
         if (index.containsKey(columnName)) {
             MetaCell cell = get(columnName);
-            if (SupportedOraDataType.isSupported(cell.getDataType())) {
+            if (isSupported(cell.getDataType())) {
                 return cell;
             } else {
                 return null;
@@ -112,13 +119,33 @@ public class MetaWrapper {
         return null;
     }
 
+    public Map<String, Integer> getIndex() {
+        return index;
+    }
+
+    public void setIndex(Map<String, Integer> index) {
+        this.index = index;
+    }
+
+    public List<MetaCell> getMetaCells() {
+        return metaCells;
+    }
+
+    public void setMetaCells(List<MetaCell> metaCells) {
+        this.metaCells = metaCells;
+    }
+
     @Override
     public String toString() {
         return toJson();
     }
 
     public String toJson() {
-        return JSON.toJSONString(this);
+        try {
+            return JSON.toJSONString(this);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
     }
 
     /**
@@ -136,15 +163,15 @@ public class MetaWrapper {
         // 管理库中的meta信息
         LOG.info("[MetaWrapper]  Meta filtering......");
         List<MetaCell> dbusMetaCells = dbusMeta.filter();
-        
+
         // 如果过滤之后的字段数不相同则返回false
         if (originalMetaCells.size() != dbusMetaCells.size()) {
             LOG.warn("过滤之后的字段数不相同, 源库{} vs dbus管理库{},导致 Meta不兼容。", originalMetaCells.size(), dbusMetaCells.size());
             return false;
         }
-        
+
         LOG.info("过滤之后的字段数相同。");
-        
+
         // 如果两个集合中存在不同名字的字段则返回false
         for (MetaWrapper.MetaCell originalCell : originalMetaCells) {
             if (!dbusMeta.contains(originalCell.getColumnName())) {
@@ -192,7 +219,7 @@ public class MetaWrapper {
             LOG.error("Column {}类型不同。 源库{} vs dbus管理库{}.", originalCell.getColumnName(),
                     dbusCell.getDataType(), originalCell.getDataType());
             result = false;
-        } else if (dbusCell.getDataType().equals(SupportedOraDataType.NUMBER.name())
+        } else if (dbusCell.getDataType().equals(NUMBER.name())
                 && (originalCell.getDataScale() ^ dbusCell.getDataScale()) != 0) {
             // 如果小数位不同
             if (originalCell.getDataScale() * dbusCell.getDataScale() == 0) { // 是否存在零的情况
@@ -229,7 +256,7 @@ public class MetaWrapper {
     /**
      * meta info
      */
-    public static class MetaCell implements Cloneable {
+    public static class MetaCell implements Cloneable, Serializable {
         private String owner;
         private String tableName;
         private String columnName;
@@ -237,7 +264,7 @@ public class MetaWrapper {
         private int columnId;
         private int version;
         private String dataType;
-        private Integer dataLength;
+        private Long dataLength;
         private Integer dataPrecision;
         private Integer dataScale;
         private String nullAble;
@@ -248,7 +275,19 @@ public class MetaWrapper {
         private int internalColumnId;
         private String hiddenColumn;
         private String virtualColumn;
-        
+        private String comments;
+
+        //TODO 目前只有oracle使用
+        private String defaultValue;
+
+        public String getComments() {
+            return comments;
+        }
+
+        public void setComments(String comments) {
+            this.comments = comments;
+        }
+
         /** 对于oracle来讲可以为B/C，数据类型char(1 char)类型为C, char(1)和char(1 byte) 为B，默认为B */
         private String charUsed;
 
@@ -328,11 +367,11 @@ public class MetaWrapper {
             this.dataType = dataType;
         }
 
-        public Integer getDataLength() {
+        public Long getDataLength() {
             return dataLength;
         }
 
-        public void setDataLength(Integer dataLength) {
+        public void setDataLength(Long dataLength) {
             this.dataLength = dataLength;
         }
 
@@ -423,5 +462,51 @@ public class MetaWrapper {
         public void setVirtualColumn(String virtualColumn) {
             this.virtualColumn = virtualColumn;
         }
+
+        public String getDefaultValue() {
+            return defaultValue;
+        }
+
+        public void setDefaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        //        public Object getDefaultValue() {
+//            return defaultValue;
+//        }
+//
+//        public void setDefaultValue(Object defaultValue) {
+//            this.defaultValue = defaultValue;
+//        }
+//
+//        public String getDefaultValueStr() {
+//            // mysql不考虑默认值问题
+//            if (getDefaultValue() == null || !SupportedOraDataType.isSupported(getDataType())) return null;
+//            SupportedOraDataType type = parse(getDataType());
+//            switch (type) {
+//                case DATE:
+//                case TIMESTAMP:
+//                    return DateFormatUtils.format((Date) getDefaultValue(), "yyyy-MM-dd HH:mm:ss.SSS");
+//                default:
+//                    return getDefaultValue().toString();
+//            }
+//        }
+//
+//        public static Object parseDefaultValue(String dataType, String data) {
+//            // mysql不考虑默认值问题
+//            if (data == null || !SupportedOraDataType.isSupported(dataType)) return null;
+//            SupportedOraDataType type = parse(dataType);
+//            switch (type) {
+//                case DATE:
+//                case TIMESTAMP:
+//                    try {
+//                        return DateUtils.parseDate(data, "yyyy-MM-dd HH:mm:ss.SSS");
+//                    } catch (ParseException e) {
+//                        throw new IllegalArgumentException("Date or timestamp string of default value can't match with pattern:" + "yyyy-MM-dd HH:mm:ss.SSS");
+//                    }
+//                default:
+//                    return data;
+//            }
+//        }
     }
 }

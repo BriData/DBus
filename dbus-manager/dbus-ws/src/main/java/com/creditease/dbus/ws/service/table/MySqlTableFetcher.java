@@ -51,7 +51,7 @@ public class MySqlTableFetcher extends TableFetcher{
  */
     @Override
     public String buildTableFieldQuery(Object... args) {
-        String sql ="select COLUMN_NAME,DATA_TYPE from information_schema.COLUMNS where table_schema = ? and table_name = ?";
+        String sql ="select TABLE_NAME,COLUMN_NAME,DATA_TYPE from information_schema.COLUMNS where table_schema = ?";
         return sql;
     }
 
@@ -61,7 +61,6 @@ public class MySqlTableFetcher extends TableFetcher{
     @Override
     public String fillTableParameters(PreparedStatement statement, Map<String, Object> params) throws Exception {
         statement.setString(1, get(params, "schemaName"));
-        statement.setString(2, get(params, "tableName"));
         return null;
     }
 

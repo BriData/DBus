@@ -30,7 +30,7 @@ var StartTopo = React.createClass({
     },
     passParam:function() {
         var params = this.props.location.state;
-        console.info("params---"+params);
+        console.info("params---" + params);
         store.actions.passParam(params);
     },
     startTopology:function(param) {
@@ -41,7 +41,7 @@ var StartTopo = React.createClass({
             utils.hideLoading();
             return;
         }
-        store.actions.startTopology(param,this.updateStatus);
+        store.actions.startTopology(param, this.updateStatus);
     },
     updateStatus:function(flag) {
         if(flag) {
@@ -63,18 +63,18 @@ var StartTopo = React.createClass({
                     <StepCursor currentStep={3}/><br/>
                     </div>
                 </div>
-                <div className="row body">
+                <div className="step-4-table-left body">
                     <TF>
                         <TF.Body>
                             <Table rowsCount={rows.length}>
                                 <Column
                                     header={ <Cell>DS Name</Cell> }
                                     cell={ <TextCell data={rows} col="dsName" />}
-                                    width={120} />
+                                    width={100} />
                                 <Column
                                     header={ <Cell>Topology Type</Cell> }
                                     cell={ <TextCell data={rows} col="topologyType" />}
-                                    width={180} />
+                                    width={150} />
                                 <Column
                                     header={ <Cell>Topology Name</Cell> }
                                     cell={ <TextCell data={rows} col="topologyName" />}
@@ -84,9 +84,17 @@ var StartTopo = React.createClass({
                                     cell={ <StatusCell data={rows} styleGetter={function(data) {return data.status == "running" ? "success": "default"}} col="status" />}
                                     width={80} />
                                 <Column
-                                    header={ <Cell>Path</Cell> }
-                                    cell={ <TextCell data={rows} col="path"/>}
-                                    width={200}
+                                    header={ <Cell>Storm Path</Cell> }
+                                    cell={ <TextCell data={rows} col="stormPath"/>}
+                                    width={340}/>
+                                <Column
+                                    header={ <Cell>Jar Path</Cell> }
+                                    cell={ <TextCell data={rows} col="jarPath"/>}
+                                    width={300}/>
+                                <Column
+                                    header={ <Cell>Jar Name</Cell> }
+                                    cell={ <TextCell data={rows} col="jarName"/>}
+                                    width={300}
                                     flexGrow={1}/>
                                 <Column
                                     header={ <Cell>操作</Cell> }
@@ -104,7 +112,6 @@ var StartTopo = React.createClass({
                     <div className="panel-body" dangerouslySetInnerHTML={{__html:log}}>
                     </div>
                 </div>
-
             </div>
     );
     }

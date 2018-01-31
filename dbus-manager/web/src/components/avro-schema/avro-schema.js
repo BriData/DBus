@@ -29,6 +29,7 @@ var AvroSchema = React.createClass({
         // 监听select-all事件，在CheckboxCell中会发出select-all事件
         this.initSelect(store);
         store.actions.initialLoad();
+        this.search();
     },
 
     // 选择数据源后触发加载schema事件
@@ -161,7 +162,7 @@ var Dialog = React.createClass({
 
 function buildQueryParmeter(p, pageNum) {
     var param = {
-        pageSize:10,
+        pageSize:utils.getFixedDataTablePageSize(),
         pageNum: (typeof pageNum) == 'number'  ? pageNum : 1
     };
 

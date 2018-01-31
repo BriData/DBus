@@ -5,8 +5,8 @@ var $ = require("../utils/utils");
 var restUrl = config.rest.dbusRest;
 
 module.exports = {
-    send: function (topic,outputTopic,message, cb) {
+    send: function (param, cb) {
         var url = $.url(restUrl, "/fullPull/send");
-        request.post({url: url, json: {topic: topic,outputTopic:outputTopic ,message: message}, forever: true}, $.resWrapper(cb));
+        request.post({url: url, json: param, forever: true}, $.resWrapper(cb));
     }
 };

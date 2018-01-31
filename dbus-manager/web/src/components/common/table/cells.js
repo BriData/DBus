@@ -168,6 +168,8 @@ var BtnCell = React.createClass({
         } else {
             btnItems = this.props.btns;
         }
+        var isDisabled = this.props.isDisabled;
+        if (isDisabled == null) isDisabled = () => "";
         btnItems.forEach(function(btn, idx) {
             var content = [];
             if(btn.icon) {
@@ -176,9 +178,9 @@ var BtnCell = React.createClass({
             }
             content.push(" ", btn.text);
 
-            var btnCompotent = null
             btns.push(
-                <A.Button key={idx}
+                <A.Button disabled={isDisabled(btn.text, getData(self.props.data, self.props.rowIndex))}
+                    key={idx}
                     type={btn.bsStyle ? btn.bsStyle : "default"}
                     onClick={self._btnClick(btn.action, self.props)}>
                     {content}
@@ -195,7 +197,7 @@ var BtnCell = React.createClass({
                 content.push(<span key={"icon-"+idx} className={iconClass}></span>);
             }
             content.push(" ", btn.text);
-            items.push(<A.Menu.Item key={idx}> {content} </A.Menu.Item>);
+            items.push(<A.Menu.Item disabled={isDisabled(btn.text, getData(self.props.data, self.props.rowIndex))} key={idx}> {content} </A.Menu.Item>);
             cbs.push(btn.action);
         });
         if(items.length > 0) {

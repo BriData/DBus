@@ -110,7 +110,7 @@ public class CanalClientSpout extends BaseRichSpout  {
     }
     /********************************************************************************/
     private void reloadConfig(String reloadJson) {
-        logger.info("canal client spout reload configure starting......");
+        logger.info("spout: canal client reload starting......");
         ZKHelper zkHelper = null;
         try {
             ContainerMng.clearAllContainer();//清除所有container中存在的信息
@@ -122,17 +122,37 @@ public class CanalClientSpout extends BaseRichSpout  {
             zkHelper.loadFilter();
             zkHelper.loadKafkaProducerConfig();
             zkHelper.loadKafkaConsumerConfig();
+            logger.info("spout: 1 reload zk OK!");
+
+            Integer kafkaBatchSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getKafkaSendBatchSize();
+            if (kafkaBatchSize != null)
+                kafkaSendBatchSize = kafkaBatchSize;
+            batchSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalBatchSize();
+            flowSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalFlowSize();
+
+            /****************************初始化控制reload的kafka consumer************************/
+            if(consumer != null){
+                consumer.close();
+                consumer = null;
+            }
+            for (OutputTopicVo vo : ExtractorConfigContainer.getInstances().getOutputTopic()) {
+                extractorControlTopic = vo.getControlTopic();
+                break;
+            }
+            consumer = DbusHelper.createConsumer(ExtractorConfigContainer.getInstances().getKafkaConsumerConfig(),
+                                                 extractorControlTopic);
+            logger.info("spout: 2 reload kafka consumer OK!");
+            /***********************************************************************************/
 
             /***判断连接canal connect的zkconnectstr和destination是否改变，如果改变则断开重新连接，否则只进行后续订阅即可***/
             String canalZkPath = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalZkPath();
             String newZkConnectStr = zkServers + canalZkPath;
             String newDestination = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalInstanceName();
-
             if(connector == null || (connector != null && connector.checkValid() == false)) {
                 //连接不可用
                 if (connector != null && connector.checkValid() == false) {
                     //有连接，连接不可用
-                    logger.error("connect is not valid!");
+                    logger.error("spout: connect is not valid!");
                     connector.disconnect();
                     if(softStopProcess()) {
                         MsgStatusContainer.getInstance().clear();
@@ -143,12 +163,12 @@ public class CanalClientSpout extends BaseRichSpout  {
                 destination = newDestination;
                 connector = CanalConnectors.newClusterConnector(newZkConnectStr, newDestination, "", "");
                 connector.connect();
-                logger.info("canal connected!");
+                logger.info("spout: 3 canal reload OK!");
             } else {
                 //连接是可以用的
                 if (!newZkConnectStr.equals(zkConnectStr) || !newDestination.equals(destination)) {
                     //配置发生变化
-                    logger.info("canal reconnected, configure of canal zookeeper connect string or destination have changed!");
+                    logger.info("spout: canal reconnected, zk config have been changed!");
                     connector.disconnect();
                     if (softStopProcess()) {
                         MsgStatusContainer.getInstance().clear();
@@ -157,38 +177,20 @@ public class CanalClientSpout extends BaseRichSpout  {
                     connector.connect();
                     zkConnectStr = newZkConnectStr;
                     destination = newDestination;
-                    logger.info("canal connected!");
+                    logger.info("spout: 3 canal reload OK!");
                 } else {
-                    logger.info("configure of canal zookeeper connect string or destination have not changed!");
+                    logger.info("spout: 3 canal reload OK! zk config not changed!");
                 }
             }
 
-            //filter = ExtractorConfigContainer.getInstances().getExtractorConfig().getSubscribeFilter();
             filter = ExtractorConfigContainer.getInstances().getFilter();
             connector.subscribe(filter);
-            logger.info("canal client subscribe the filter is {}", filter);
-
-            Integer kafkaBatchSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getKafkaSendBatchSize();
-            if (kafkaBatchSize != null)
-                kafkaSendBatchSize = kafkaBatchSize;
-            batchSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalBatchSize();
-            flowSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalFlowSize();
-            /****************************初始化控制reload的kafka consumer************************/
-            if(consumer != null){
-                consumer.close();
-                consumer = null;
-            }
-            for (OutputTopicVo vo : ExtractorConfigContainer.getInstances().getOutputTopic()) {
-                extractorControlTopic = vo.getControlTopic();
-                break;
-            }
-            consumer = DbusHelper.createConsumer(ExtractorConfigContainer.getInstances().getKafkaConsumerConfig(), extractorControlTopic);
-            /***********************************************************************************/
+            logger.info("spout: canal subscribe filter is: {}", filter);
 
             //写reload状态到zookeeper
             zkHelper.saveReloadStatus(reloadJson, "extractor-canal-client-spout", true);
 
-            logger.info("canal client spout reload configure succeed!");
+            logger.info("spout: reload all_OK!");
 
         } catch (Exception ex) {
             logger.error("spout reloadConfig()", ex);
@@ -213,6 +215,7 @@ public class CanalClientSpout extends BaseRichSpout  {
         ackOrRollbackStartTime = System.currentTimeMillis();
         checkSurvivalStartTime = System.currentTimeMillis();
 
+        logger.info("CanalClientSpout() open finished");
     }
 
     /****流量控制处理函数****/
@@ -233,6 +236,16 @@ public class CanalClientSpout extends BaseRichSpout  {
     @Override
     public void nextTuple() {
         try {
+            //  上次如果出现退出错误
+            if (needReconnect) {
+                logger.info("Spout canal reconnect needed ....");
+                connector.connect();
+                filter = ExtractorConfigContainer.getInstances().getFilter();
+                connector.subscribe(filter);
+                logger.info("Reconnect success!  canal client subscribe the filter is {}", filter);
+                needReconnect = false;
+            }
+
             if (flowLimitation()) {
                 return; // 如果读取的流量过大则要sleep一下
             }
@@ -249,6 +262,8 @@ public class CanalClientSpout extends BaseRichSpout  {
                     //notify next bout to reload
                     this.collector.emit(new Values("message", record));
                     return;
+                } else {
+                    logger.info("Skipped unknown command key:{}", key);
                 }
             }
 
@@ -272,16 +287,6 @@ public class CanalClientSpout extends BaseRichSpout  {
 //                    logger.info("canal client subscribe success, the filter is {}", filter);
 //                }
 //            }
-
-            //  上次如果出现退出错误
-            if (needReconnect) {
-                connector.connect();
-                //filter = ExtractorConfigContainer.getInstances().getExtractorConfig().getSubscribeFilter();
-                filter = ExtractorConfigContainer.getInstances().getFilter();
-                connector.subscribe(filter);
-                logger.info("Reconnect success!  canal client subscribe the filter is {}", filter);
-                needReconnect = false;
-            }
 
             //如果没有消息,处理canal抓取数据
             Message message = connector.getWithoutAck(batchSize, timeout, TimeUnit.MILLISECONDS);
@@ -308,6 +313,7 @@ public class CanalClientSpout extends BaseRichSpout  {
                 ackOrRollback();
                 ackOrRollbackStartTime = curTime;
             }
+
         } catch (CanalClientException e) {
             needReconnect = true;
             connector.disconnect();

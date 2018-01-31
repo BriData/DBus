@@ -6,8 +6,8 @@ var service = require('../lib/service/schema-service2');
 
 router.get('/search', function (req, res) {
     var param = buildParam(req.query, ["dsId", "text", "pageSize", "pageNum"]);
-    if (!param.pageSize||param.pageSize != 20) {
-        param.pageSize = 20;
+    if (!param.pageSize) {
+        param.pageSize = 12;
     }
     if (!param.pageNum) {
         param.pageNum = 1;
@@ -24,6 +24,17 @@ router.get('/update', function (req, res) {
     var param = buildParam(req.query, [ "dsId", "schemaName","status","description"]);
     service.update(param,function updateSchema(err,response) {
         console.log(response.body);
+        if(err) {
+            res.json({status: 500, message: err.message});
+            return;
+        }
+        res.json({status: 200, data: response.body});
+    });
+});
+
+router.get('/deleteSchema', function (req, res) {
+    var param = req.query;
+    service.deleteSchema(param,function updateSchema(err,response) {
         if(err) {
             res.json({status: 500, message: err.message});
             return;

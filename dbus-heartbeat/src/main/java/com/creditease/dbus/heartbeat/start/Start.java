@@ -57,10 +57,10 @@ public class Start extends HeartBeat {
     protected void register() {
         // 注册加载jdbc.properties和zk.properties配置信息handler
         registerHandler(new LoadFileConfigHandler());
-        // 注册加载zk配置信息
-        registerHandler(new LoadZkConfigHandler());
         // 注册选举leader handler
         registerHandler(new LeaderElectHandler());
+        // 注册加载zk配置信息
+        registerHandler(new LoadZkConfigHandler());
         // 注册加载数据库配置信息handler
         registerHandler(new LoadDbConfigHandler());
         // 注册加载数据库配置信息handler

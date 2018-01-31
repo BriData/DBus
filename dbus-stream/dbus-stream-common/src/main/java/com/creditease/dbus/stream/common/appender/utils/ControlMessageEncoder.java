@@ -21,10 +21,10 @@
 package com.creditease.dbus.stream.common.appender.utils;
 
 import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 /**
  * Created by Shrimp on 16/6/17.
@@ -32,7 +32,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 public class ControlMessageEncoder {
     private static final String FULL_DATA_PULL_REQ = "FULL_DATA_PULL_REQ";
 
-    public static ControlMessage fullDataPollMessage(GenericRecord record, String topologyId, ConsumerRecord<String, byte[]> consumerRecord) {
+    public static ControlMessage fullDataPollMessage(GenericRecord record, String topologyId, DBusConsumerRecord<String, byte[]> consumerRecord) {
         ControlMessage message = new ControlMessage();
         message.setId(System.currentTimeMillis());
         message.setFrom(topologyId);

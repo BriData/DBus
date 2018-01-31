@@ -20,6 +20,7 @@
 
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.stream.common.Constants;
@@ -85,6 +86,8 @@ public abstract class AbstractMessageHandler {
                 name = "com.creditease.dbus.stream.mysql.appender.spout.processor.MysqlMessageHandler";
             } else if (datasourceType == DbusDatasourceType.ORACLE) {
                 name = "com.creditease.dbus.stream.oracle.appender.spout.processor.OracleMessageHandler";
+            } else if(datasourceType == DbusDatasourceType.MONGO){
+                name = "com.creditease.dbus.stream.mongo.appender.spout.processor.MongoMessageHandler";
             } else {
                 throw new IllegalArgumentException(datasourceType.toString() + " not support.");
             }
@@ -118,15 +121,15 @@ public abstract class AbstractMessageHandler {
             if (consumerListener.filterPausedTopic(record.topic())) {
                 listener.increaseFlowSize(record.serializedValueSize());
                 try {
-                    this.chooseProcessor(record.key(), record.topic()).process(record);
+                    this.chooseProcessor(record.key(), record.topic()).process(new DBusConsumerRecord<String, byte[]>(record));
                 } catch (Exception e) {
                     logger.error("sport process error", e);
-                    consumerListener.seek(record);
+                    consumerListener.seek(new DBusConsumerRecord<String, byte[]>(record));
                     break;
                 }
             } else {
                 listener.reduceFlowSize(record.serializedValueSize());
-                consumerListener.syncOffset(record);
+                consumerListener.syncOffset(new DBusConsumerRecord<String, byte[]>(record));
                 logger.info("The record of topic {} was skipped whose offset is {}", record.topic(), record.offset());
             }
         }

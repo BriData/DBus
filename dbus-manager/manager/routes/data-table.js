@@ -6,12 +6,13 @@ var service = require('../lib/service/table-service');
 var ZooKeeper = require ('node-zookeeper-client');
 var config = require('../config');
 var textEncoding = require('text-encoding');
+var PropertiesReader = require('properties-reader');
 var TextDecoder = textEncoding.TextDecoder;
 
 router.get('/search', function (req, res) {
     var param = buildParam(req.query, ["dsID", "schemaName", "tableName", "pageSize", "pageNum"]);
     if (!param.pageSize) {
-        param.pageSize = 20;
+        param.pageSize = 12;
     }
     if (!param.pageNum) {
         param.pageNum = 1;
@@ -48,7 +49,7 @@ router.get('/list', function (req, res) {
 });
 
 router.get('/updateTable',function(req,res){
-    var param = buildParam(req.query,["id","physicalTableRegex","outputBeforeUpdateFlg"]);
+    var param = buildParam(req.query,["id","physicalTableRegex","outputBeforeUpdateFlg","description","status"]);
     service.updateTable(param,function updateTable(err, response) {
             console.log(response.body);
             if(err) {
@@ -104,9 +105,8 @@ router.get('/readVersionData',function(req,res){
 });
 
 router.get('/pullWhole',function(req,res){
-    var param = buildParam(req.query,["id","dsId","dsName","schemaName","tableName","status","physicalTableRegex","outputTopic","version","namespace","createTime","type"]);
+    var param = req.query;
     service.pullWhole(param,function pull(err, response) {
-            console.log(response.body);
             if(err) {
                 res.json({status: 500, message: err.message});
                 return;
@@ -231,69 +231,55 @@ router.get('/fetchTableColumns',function(req,res){
     );
 });
 
-router.get('/fetchEncodeAlgorithms',function(req,res){
-    service.fetchEncodeAlgorithms(function (err, response) {
-            if(err) {
-                res.json({status: 500, message: err.message});
+//获取脱敏类型
+router.get('/fetchEncodeAlgorithms', function (req, res) {
+    var client = ZooKeeper.createClient(config.zk.connect,{retries:3});
+    client.once('connected', function () {
+        var path = "/DBus/Commons/encoderPlugins";
+        client.getData(path, function (error, data, stat) {
+            if (error) {
+                logger.error(error.stack);
+                res.json({status: 500});
+                client.close();
                 return;
             }
-            res.json({status: 200, data: response.body});
-        }
-    );
+
+            var result = {};
+            var prop = PropertiesReader();
+            prop.read(data);
+
+            prop.each((key, value) => {
+                if(key == 'BuiltInEncodeType') {
+                    //拆分内置加密类型
+                    var encryptedTypeArr = value.split(',');
+                    for(var i in encryptedTypeArr) {
+                        result["\"" + encryptedTypeArr[i] + "\""] = encryptedTypeArr[i];
+                    }
+                } else {
+                    result["\"" + value + "\""] = value;
+                }
+            })
+            res.json({data:result, status:200});
+            client.close();
+        });
+    });
+    client.connect();
 });
+
+// router.get('/fetchEncodeAlgorithms',function(req,res){
+//     service.fetchEncodeAlgorithms(function (err, response) {
+//             if(err) {
+//                 res.json({status: 500, message: err.message});
+//                 return;
+//             }
+//             res.json({status: 200, data: response.body});
+//         }
+//     );
+// });
 
 router.get('/changeDesensitization',function(req,res){
     var param = req.query;
     service.changeDesensitization(param, function (err, response) {
-            if(err) {
-                res.json({status: 500, message: err.message});
-                return;
-            }
-            res.json({status: 200, data: response.body});
-        }
-    );
-});
-
-router.get('/searchRules',function(req,res){
-    var param = req.query;
-    service.searchRules(param, function (err, response) {
-            if(err) {
-                res.json({status: 500, message: err.message});
-                return;
-            }
-            res.json({status: 200, data: response.body});
-        }
-    );
-});
-
-router.get('/saveRules',function(req,res){
-    var param = req.query;
-    service.saveRules(param, function (err, response) {
-            if(err) {
-                res.json({status: 500, message: err.message});
-                return;
-            }
-            res.json({status: 200, data: response.body});
-        }
-    );
-});
-
-router.post('/executeSqlRule',function(req,res){
-    console.info("执行executeSqlRule");
-    var param = req.body;
-    service.executeSqlRule(param, function (err, response) {
-            if(err) {
-                res.json({status: 500, message: err.message});
-                return;
-            }
-            res.json({status: 200, data: response.body});
-        }
-    );
-});
-
-router.get('/readKafkaTopic',function(req,res){
-    var param = req.query;
-    service.readKafkaTopic(param, function (err, response) {
             if(err) {
                 res.json({status: 500, message: err.message});
                 return;
@@ -363,40 +349,134 @@ router.get('/listTable', function (req, res) {
     });
 });
 
-router.get('/listTableFixed', function (req, res) {
-    var dsName = req.query["dsName"];
-    var schemaName = req.query["schemaName"];
-    var tableName = req.query["tableName"];
-    if(!dsName) {
-        logger.warn("parameter 'dsName' not found");
-        res.json({status:404, message:"parameter 'dsName' not found"});
-        return;
-    }
-    if(!schemaName) {
-        logger.warn("parameter 'schemaName' not found");
-        res.json({status:404, message:"parameter 'schemaName' not found"});
-        return;
-    }
-    if(!tableName) {
-        logger.warn("parameter 'tableName' not found");
-        res.json({status:404, message:"parameter 'tableName' not found"});
-        return;
-    }
-    service.listTableField(dsName, schemaName, tableName, function loadTableFields(err, response) {
-        if(err) {
+router.get('/deleteTable', function (req, res) {
+    var param = req.query;
+    service.deleteTable(param, function (err, response) {
+        if (err) {
             res.json({status: 500, message: err.message});
-            return;
+        } else {
+            res.json({status: 200, data: response.body});
         }
-        var resultList = JSON.parse(response.body);
-        var list = [];
-        for(var i = 0; i < resultList.length; i++) {
-            var tableInfo = {};
-            Utils.extend(tableInfo, resultList[i], ["columnName", "dataType"]);
-            list.push(tableInfo);
-        }
-       // console.log(list);
-        res.json({status: 200, data: list});
     });
 });
+
+
+
+// 规则组开始
+router.get('/getAllRuleGroup', function (req, res) {
+    var param = req.query;
+    service.getAllRuleGroup(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.get('/updateRuleGroup', function (req, res) {
+    var param = req.query;
+    service.updateRuleGroup(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.get('/deleteRuleGroup', function (req, res) {
+    var param = req.query;
+    service.deleteRuleGroup(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.get('/addGroup', function (req, res) {
+    var param = req.query;
+    service.addGroup(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.get('/cloneRuleGroup', function (req, res) {
+    var param = req.query;
+    service.cloneRuleGroup(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+
+router.get('/upgradeVersion', function (req, res) {
+    var param = req.query;
+    service.upgradeVersion(param, function (err, response) {
+        if (err) {
+            if(response.statusCode == 202) res.json({status: 500, message: response.body.message});
+            else res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.get('/diffGroupRule', function (req, res) {
+    var param = req.query;
+    service.diffGroupRule(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+// 规则组结束
+
+// 规则开始
+router.get('/getAllRules', function (req, res) {
+    var param = req.query;
+    service.getAllRules(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.post('/saveAllRules', function (req, res) {
+    var param = req.body;
+    service.saveAllRules(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+
+router.post('/executeRules', function (req, res) {
+    var param = req.body;
+    service.executeRules(param, function (err, response) {
+        if (err) {
+            res.json({status: 500, message: err.message});
+        } else {
+            res.json({status: 200, data: response.body});
+        }
+    });
+});
+// 规则结束
 
 module.exports = router;

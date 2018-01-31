@@ -21,11 +21,12 @@
 package com.creditease.dbus.stream.dispatcher.Spout;
 
 import avro.shaded.com.google.common.collect.Lists;
-import com.creditease.dbus.stream.common.DataSourceInfo;
-import com.creditease.dbus.stream.dispatcher.helper.DBHelper;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ControlType;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.commons.Pair;
+import com.creditease.dbus.stream.common.DataSourceInfo;
+import com.creditease.dbus.stream.dispatcher.helper.DBHelper;
 import com.creditease.dbus.stream.dispatcher.helper.ZKHelper;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
@@ -38,7 +39,10 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class KafkaConsumerSpout extends BaseRichSpout {
     protected Logger logger = LoggerFactory.getLogger(getClass());
@@ -62,7 +66,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
     private int executingCount = 0;
 
     private int suppressLoggingCount = 0;
-    private ConsumerRecord<String, byte[]> reloadRecord = null;
+    private DBusConsumerRecord<String, byte[]> reloadRecord = null;
 
     /**
      *
@@ -164,7 +168,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
         logger.info("spout deactivate...");
     }
 
-    private void processControlCommand(ConsumerRecord<String, byte[]>  record) {
+    private void processControlCommand(DBusConsumerRecord<String, byte[]> record) {
         ControlType command = ControlType.getCommand(record.key());
 
         logger.info(String.format("Got Command : %s.  topic=%s, partition=%d, offset=%d, key=%s",
@@ -235,14 +239,15 @@ public class KafkaConsumerSpout extends BaseRichSpout {
             logger.info(String.format("Spout got %d records......, poll() used_time: %d ms",  records.count(), after - before));
 
             for (ConsumerRecord<String, byte[]> record : records) {
-                if (record.topic().equals(dsInfo.getCtrlTopic())) {
-                    processControlCommand(record);
+                DBusConsumerRecord<String, byte[]> dbusRecord = new DBusConsumerRecord(record);
+                if (dbusRecord.topic().equals(dsInfo.getCtrlTopic())) {
+                    processControlCommand(dbusRecord);
                     continue;
                 }
 
                 executingCount++;
                 logger.debug(String.format("Got Data: topic=%s, offset=%d, serializedValueSize=%d",  record.topic(), record.offset(), record.serializedValueSize()));
-                this.collector.emit(new Values(record), new Pair<Long, String>(record.offset(), dsInfo.getDataTopic()));
+                this.collector.emit(new Values(dbusRecord), new Pair<Long, String>(record.offset(), dsInfo.getDataTopic()));
             }
         } catch (Exception ex) {
             logger.error("KafkaConsumerSpout nextTuple():", ex);
@@ -322,7 +327,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
                 } else {
                     commitOffset(topicOffset);
                     long after = System.currentTimeMillis();
-                    logger.info(String.format("OK. offset %d, Topic %s, used: %d ms",
+                    logger.debug(String.format("OK. offset %d, Topic %s, used: %d ms",
                             topicOffset.getKey(), topicOffset.getValue(), after - before));
                 }
             }

@@ -126,7 +126,7 @@ var styles  = {
     padding: '10px',
     fontSize: '14px',
     fontFamily: 'monospace',
-    height: '647px',
+    height: '427px',
     color:'black',
   },
   zkTextareaPathTitle:{
@@ -139,7 +139,7 @@ var styles  = {
   },
   scrolledContainer:{
     width: '45%',
-    height: '700px',
+    height: '500px',
     border: 'solid 1px #c3c2c2',
     float:'left',
     marginTop:'14px',

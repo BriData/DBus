@@ -55,6 +55,9 @@ import com.creditease.dbus.commons.exception.InitializationException;
 public class DataShardsSplittingSpout extends BaseRichSpout {
     private Logger LOG = LoggerFactory.getLogger(getClass());
     private static final long serialVersionUID = 1L;
+
+    private long overflowCount = 0;
+    
     // 用来发射数据的工具类
     private SpoutOutputCollector collector;
 
@@ -85,6 +88,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
     private int MAX_FLOW_THRESHOLD;
     Properties commonProps;
 
+    private int suppressLoggingCount = 0;
 
     /**
      * 初始化collector
@@ -102,6 +106,9 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         }
         LOG.info("topologyId:{} zkConnect:{} zkTopoRoot:{}", topologyId, zkConnect, zkTopoRoot);
         try {
+            //设置topo类型，用于获取配置信息路径
+            FullPullHelper.setTopologyType(Constants.FULL_SPLITTER_TYPE);
+
             loadRunningConf(null);
 
             // 检查是否有遗留未决的拉取任务。如果有，resolve（发resume消息通知给appender，并在zk上记录，且将监测到的pending任务写日志，方便排查问题）。
@@ -112,7 +119,20 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             e.printStackTrace();
             throw new InitializationException();
         }
-        LOG.info("Topology {} is started!", topologyId);
+        LOG.info("Splitting Spout {} is started!", topologyId);
+    }
+
+    /**
+     * delay Print message
+     * @return
+     */
+    private boolean canPrintNow () {
+        suppressLoggingCount++;
+        if (suppressLoggingCount % 60000 == 0) {
+            suppressLoggingCount = 0;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -123,12 +143,18 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         // 限流
         if (flowedMsgCount >= MAX_FLOW_THRESHOLD) {
             try {
-                TimeUnit.MILLISECONDS.sleep(10);
+                TimeUnit.MILLISECONDS.sleep(100);
+                if (overflowCount  %  100 == 0){
+                    LOG.warn("splitSPout overflow, flowedMsgCount: {}, MAX_FLOW_THRESHOLD: {}.", flowedMsgCount, MAX_FLOW_THRESHOLD);
+                }
+                overflowCount++;
+
             } catch (InterruptedException e) {
                 LOG.error(e.getMessage(), e);
             }
             return;
         }
+        overflowCount = 0;
 
 
         //通过命令删除topology的功能，可能可以移除
@@ -167,6 +193,9 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             ConsumerRecords<String, byte[]> records = consumer.poll(0);
             // 判断是否有数据被读取
             if (records.isEmpty()) {
+                if (canPrintNow()) {
+                    LOG.info("Splitting Spout running ...");
+                }
                 return;
             }
             // 按记录进行处理
@@ -176,31 +205,33 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                     continue;
                 }
 
-                String msg = new String(record.value());
+                String dataSourceInfo = new String(record.value());
                 try {
                     if (key.equals(DataPullConstants.COMMAND_FULL_PULL_RELOAD_CONF)) {
-                        loadRunningConf(msg);
-                        LOG.info("Received conf reloading request: {}", msg);
-                        collector.emit(new Values(msg));
+                        loadRunningConf(dataSourceInfo);
+                        LOG.info("Received conf reloading request: {}", dataSourceInfo);
+                        collector.emit(new Values(dataSourceInfo));
                         LOG.info("Conf for SplittingSpout is reloaded successfully!");
 
                     } else if (key.equals(DataPullConstants.COMMAND_FULL_PULL_STOP)) {
                         stopFlag = TopoKillingStatus.STOPPING.status;
                         startTime = System.currentTimeMillis();
                         // 不跟踪消息的处理状态，即不会调用ack或者fail
-                        collector.emit(new Values(msg));
-                    } else if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
-                        String dataSourceInfo = msg;
+                        collector.emit(new Values(dataSourceInfo));
+                    } else if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
+                            || key.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
                         //处理消息
                         LOG.info("Received full pull request: {}", dataSourceInfo);
                         flowedMsgCount++;
+
                         // 每次拉取都要进行批次号加1处理。这条语句的位置不要变动。
-                        msg = increseBatchNo(msg);
-                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, msg,
+                        dataSourceInfo = increseBatchNo(dataSourceInfo);
+
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,
                                 DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
                         //创建zk节点并在zk节点上输出拉取信息
-                        FullPullHelper.startPullReport(zkService, msg);
-                        collector.emit(new Values(msg), record);
+                        FullPullHelper.startSplitReport(zkService, dataSourceInfo);
+                        collector.emit(new Values(dataSourceInfo), record);
                         emittedCount++;
                     } else {
                         LOG.info("Ignore other command: {}", key);
@@ -211,8 +242,8 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                             + ". Exception Info:" + e.getMessage();
                     LOG.error(errorMsg, e);
 
-                    if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
-                        String dataSourceInfo = msg;
+                    if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
+                        || key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
                         FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,
                                 DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
                         FullPullHelper.finishPullReport(zkService, dataSourceInfo,
@@ -277,52 +308,86 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         String targetTableName = payloadObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
         String schemaName = payloadObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
 
+
+        String outputVersion = FullPullHelper.getOutputVersion();
+
         Connection conn = null;
         PreparedStatement pst = null;
         ResultSet ret = null;
-        String version = "";
-        String batchNo = "";
+        String version = "-1";
+        String batchNo = "-1";
         String sql = "";
         try {
-            conn = DBHelper.getMysqlConnection();
-            // 批次号是否加1标志位。如果没有此标志位(旧版消息没有)，将其置为true，表示要对批次号进行加1。
-            if (!payloadObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO)) {
-                payloadObj.put(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO, true);
-            }
-            if (payloadObj.getBooleanValue(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO)) {
-                // 增批次号标志位为true时执行。（传统的与增量有互动的全量拉取，每次拉取都需要增批次号。）
-                sql = "update t_data_tables set batch_id = batch_id + 1 " +
+            conn = DBHelper.getDBusMgrConnection();
+
+            //  传统全量：   1.2 拉全量自增版本， 1.3 拉全量自增batch_id
+            //  独立拉全量： 1.2 没有，           1.3 不自增batch_id
+            if (outputVersion.equals(Constants.VERSION_12)) {
+                // 版本号是否加1标志位。如果没有此标志位(旧版消息没有)，将其置为true，表示要对版本号进行加1。
+                if (!payloadObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_VERSION)) {
+                    payloadObj.put(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_VERSION, true);
+                }
+
+                if (payloadObj.getBooleanValue(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_VERSION)) {
+                    // 增版本号标志位true时，执行。（传统的与增量有互动的全量拉取，每次拉取都需要增版本号。）
+                    sql = "update t_meta_version set version=version + 1 where id = (SELECT ver_id from t_data_tables " +
+                            "where ds_id = ? "
+                            + "and schema_name = ? "
+                            + "and table_name = ? )";
+                    pst = conn.prepareStatement(sql);
+                    pst.setInt(1, dbusDatasourceId);
+                    pst.setString(2, schemaName);
+                    pst.setString(3, targetTableName);
+                    pst.execute();
+                    pst.close();
+                    pst = null;
+                }
+            } else {
+                // 1.3 or later
+                // 批次号是否加1标志位。如果没有此标志位(旧版消息没有)，将其置为true，表示要对批次号进行加1。
+                if (!payloadObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO)) {
+                    payloadObj.put(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO, true);
+                }
+                if (payloadObj.getBooleanValue(DataPullConstants.FULL_DATA_PULL_REQ_INCREASE_BATCH_NO)) {
+                    // 增批次号标志位为true时执行。（传统的与增量有互动的全量拉取，每次拉取都需要增批次号。）
+                    sql = "update t_data_tables set batch_id = batch_id + 1 " +
+                            "where ds_id = ? " +
+                            "and schema_name = ? " +
+                            "and table_name = ?";
+                    pst = conn.prepareStatement(sql);
+                    pst.setInt(1, dbusDatasourceId);
+                    pst.setString(2, schemaName);
+                    pst.setString(3, targetTableName);
+                    pst.execute();
+                    pst.close();
+                    pst = null;
+                }
+
+                //查询batch id
+                sql = "SELECT batch_id FROM t_data_tables " +
                         "where ds_id = ? " +
                         "and schema_name = ? " +
-                        "and table_name = ?";
+                        "and table_name = ? ";
                 pst = conn.prepareStatement(sql);
                 pst.setInt(1, dbusDatasourceId);
                 pst.setString(2, schemaName);
                 pst.setString(3, targetTableName);
-                pst.execute();
+                ret = pst.executeQuery();// 执行语句，得到结果集
+                while (ret.next()) {
+                    batchNo = ret.getString("batch_id");
+                }
+                ret.close();
+                ret = null;
+                pst.close();
+                pst = null;
             }
 
-            sql = "SELECT batch_id FROM t_data_tables " +
-                    "where ds_id = ? " +
-                    "and schema_name = ? " +
-                    "and table_name = ? ";
-
-            pst = conn.prepareStatement(sql);
-            pst.setInt(1, dbusDatasourceId);
-            pst.setString(2, schemaName);
-            pst.setString(3, targetTableName);
-            ret = pst.executeQuery();// 执行语句，得到结果集
-            while (ret.next()) {
-               batchNo = ret.getString("batch_id");
-            }
-
-            // 获取version，后续会写入zk
+            // 查询version，后续会写入zk
             sql = "SELECT mv.version FROM t_data_tables dt, t_meta_version mv " +
                     "where dt.ds_id = ? " +
                     "and dt.schema_name = ? " +
                     "and dt.table_name = ? " +
                     "and dt.ver_id = mv.id";
-
             pst = conn.prepareStatement(sql);
             pst.setInt(1, dbusDatasourceId);
             pst.setString(2, schemaName);
@@ -330,7 +395,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             // 执行语句，得到结果集
             ret = pst.executeQuery();
             while (ret.next()) {
-               version = ret.getString("version");
+                version = ret.getString("version");
             }
 
         } catch (Exception e) {
@@ -352,7 +417,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         }
 
         try {
-            payloadObj.put(DataPullConstants.FullPullInterfaceJson.VERSION_KEY, version);
+            payloadObj.put(DataPullConstants.FullPullInterfaceJson.VERSION_KEY, Integer.parseInt(version));
             payloadObj.put(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY, batchNo);
             wrapperObj.put(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY, payloadObj);
             return wrapperObj.toJSONString();

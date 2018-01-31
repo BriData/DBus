@@ -40,7 +40,7 @@ var TableVersionDifference = React.createClass({
             data.forEach(function (line) {
                 result.push({
                     value: line.id,
-                    text: "Id:" + line.id + ", Ver:" + line.version + ", InVer:" + line.innerVersion + ", Time:" + line.updateTime
+                    text: "Id:" + line.id + ", Ver:" + line.version + ", InVer:" + line.innerVersion + ", Time:" + line.updateTime + ", Comments:" + line.comments
                 });
             });
 

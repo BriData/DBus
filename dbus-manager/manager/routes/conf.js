@@ -42,6 +42,7 @@ router.get('/initialLoad', function (req, res) {
                 global.zookeeper = zookeeper;
                 global.monitor_url = prop.get('monitor_url');
                 global.storm = prop.get('stormStartScriptPath');
+                global.stormRest = prop.get('stormRest');
                 _extractor = prop.get('stormStartExtractorScriptPath');
                 global.user = prop.get('user');
                 data_total.global_config = global;
@@ -89,79 +90,70 @@ router.post('/savezk', function (req, res) {
     var param = req.body;
     var params = param.storm;
     var path_storm = params.substring(params.indexOf("/"),params.length);
-    
-    var flag = false;
     try {
         storm_service.stormcheck(params, function startTopo(err, data) {
-            var data_result = data.toString().replace(/\n/gm, "<br/>");
             var idx = data.indexOf(path_storm);
             if (err) {
                 console.log(err);
-                res.json({status: -1});
+                res.json({status: 500});
                 return;
             }
             else if(idx != -1){
-                res.json({status: -2});
+                res.json({status: 500});
                 return;
             }
             else {
-                flag = true;
+                var prop1 = PropertiesReader();
+                var param_str = JSON.stringify(param);
+                prop1.read(param_str+"");
+                prop1.set('bootstrap.servers',param.bootstrap);
+                prop1.set('monitor_url',param.monitor_url);
+                prop1.set('stormStartScriptPath',param.storm);
+                prop1.set('user',param.user);
+                prop1.set('stormRest',param.stormRest);
+                var data_11 = 'bootstrap.servers='+prop1.getRaw('bootstrap.servers')+'\n'+'monitor_url='+prop1.getRaw('monitor_url')+'\n'
+                    + 'stormStartScriptPath='+prop1.getRaw('stormStartScriptPath')+'\n' +'user='+prop1.getRaw('user')+'\n' +'stormRest='+prop1.getRaw('stormRest');
+                var client = ZooKeeper.createClient(config.zk.connect,{retries:3});
+                client.once('connected', function () {
+                    logger.info('Connected to the server.');
+                    var data = new Buffer(data_11);
+                    path = "/DBus/Commons/global.properties";
+                    client.exists(path, function (error, stat) {
+                        if (error) {
+                            logger.error(error.stack);
+                            return;
+                        }
+                        if (stat) {
+                            logger.info('Node exists.');
+                        } else {
+                            client.create(path, function (error) {
+                                if (error) {
+                                    logger.info('Failed to create node: %s due to: %s.', path, error);
+                                } else {
+                                    logger.info('Node: %s is successfully created.', path);
+                                }
+                                client.close();
+                            });
+                        }
+                    });
+
+                    client.setData(path, data, function (error, stat) {
+                        if (error) {
+                            logger.info(error.stack);
+                            res.json({status: 500});
+                            client.close();
+                            return;
+                        }
+                        res.json({status: 200});
+                        client.close();
+                    });
+                });
+                client.connect();
             }
         });
     } catch (error){
         logger.error("Error occurred while process modify jar description :%j.\n Error message -- %s \n%s", "", error.message, error.stack);
     }
-    if (flag){
-        var prop1 = PropertiesReader();
-        var param_str = JSON.stringify(param);
-        prop1.read(param_str+"");
-        prop1.set('bootstrap.servers',param.bootstrap);
-        prop1.set('monitor_url',param.monitor_url);
-        prop1.set('stormStartScriptPath',param.storm);
-        prop1.set('user',param.user);
-        var data_11 = 'bootstrap.servers='+prop1.getRaw('bootstrap.servers')+'\n'+'monitor_url='+prop1.getRaw('monitor_url')+'\n'
-            + 'stormStartScriptPath='+prop1.getRaw('stormStartScriptPath')+'\n' +'user='+prop1.getRaw('user');
-        var client = ZooKeeper.createClient(config.zk.connect,{retries:3});
-        client.once('connected', function () {
-            logger.info('Connected to the server.');
-            var data = new Buffer(data_11);
-            path = "/DBus/Commons/global.properties";
-            client.exists(path, function (error, stat) {
-                if (error) {
-                    logger.error(error.stack);
-                    return;
-                }
-                if (stat) {
-                    logger.info('Node exists.');
-                } else {
-                    client.create(path, function (error) {
-                        if (error) {
-                            logger.info('Failed to create node: %s due to: %s.', path, error);
-                        } else {
-                            logger.info('Node: %s is successfully created.', path);
-                        }
-                        client.close();
-                    });
-                }
-            });
-
-            client.setData(path, data, function (error, stat) {
-                if (error) {
-                    logger.info(error.stack);
-                    res.json({status: 500});
-                    client.close();
-                    return;
-                }
-                res.json({status: 200});
-                client.close();
-            });
-        });
-        client.connect();
-    }
-    else {
-        res.json({status: 300});
-    }
-
 });
 
 router.post('/save_heart_conf', function (req, res) {

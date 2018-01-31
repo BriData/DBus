@@ -20,14 +20,13 @@
 
 package com.creditease.dbus.commons;
 
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
+import com.creditease.dbus.commons.exception.UnintializedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.creditease.dbus.commons.exception.UnintializedException;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 
 /**
@@ -68,7 +67,7 @@ public class PropertiesHolder {
     public static Properties getPropertiesInculdeCustomizeConf(String confFileName, String customizeConfPath, boolean useCacheIfCached) throws Exception {
         return innerHolder.get().getPropertiesInculdeCustomizeConf(confFileName, customizeConfPath, useCacheIfCached);
     }
-    
+
     /**
      * 获取指定配置文件中 key 对应的value
      * @param config 配置文件名称
@@ -114,7 +113,7 @@ public class PropertiesHolder {
     private static class InnerHolder {
         private PropertiesProvider provider;
         private ConcurrentMap<String, Properties> propMap;
-        
+
         public InnerHolder(String zk, String path) {
             propMap = new ConcurrentHashMap<>();
             try {
@@ -123,11 +122,11 @@ public class PropertiesHolder {
                 e.printStackTrace();
             }
         }
-        
+
         public void reload() {
             propMap.clear();
         }
-        
+
         /**
          * 获取指定配置文件的Properties对象
          * @param config 配置文件名称,不加扩展名
@@ -148,7 +147,7 @@ public class PropertiesHolder {
             }
             return null;
         }
-        
+
         /**
          * 获取指定配置文件的Properties对象
          * @param confFileName 配置文件名称,不加扩展名
@@ -163,12 +162,12 @@ public class PropertiesHolder {
                     throw new UnintializedException("PropertiesHolder has not initialized");
                 }
                 Properties properties = provider.loadProperties(confFileName);
-                
+
                 if(null != customizeConfPath && !"".equals(customizeConfPath)) {
                     Properties customizeProperties = provider.loadProperties(customizeConfPath);
                     properties.putAll(customizeProperties);
                 }
-                
+
                 if(properties != null) {
                     propMap.putIfAbsent(confFileName, properties);
                     return properties;
@@ -177,7 +176,7 @@ public class PropertiesHolder {
             return null;
         }
     }
-    
+
     public static void main(String[] args) {
         try {
             //localInitialize();

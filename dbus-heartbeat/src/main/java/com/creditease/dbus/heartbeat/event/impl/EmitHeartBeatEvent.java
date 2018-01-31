@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,17 +20,18 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.concurrent.CountDownLatch;
-
-import org.apache.commons.lang.StringUtils;
-
 import com.creditease.dbus.heartbeat.dao.IHeartBeatDao;
 import com.creditease.dbus.heartbeat.dao.impl.HeartBeatDaoImpl;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
+import com.creditease.dbus.heartbeat.exception.SQLTimeOutException;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
 import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
 import com.creditease.dbus.heartbeat.vo.PacketVo;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import org.apache.commons.lang.StringUtils;
 
 /**
  *
@@ -44,6 +45,10 @@ public class EmitHeartBeatEvent extends AbstractEvent {
 
     private int checkPointPerHeartBeatCnt = 5;
 
+    private Set<String> timeOutDs = new LinkedHashSet<>();
+
+    private long txTime = -1l;
+
     public EmitHeartBeatEvent(long interval, CountDownLatch cdl, int checkPointPerHeartBeatCnt) {
         super(interval, cdl);
         dao = new HeartBeatDaoImpl();
@@ -53,6 +58,17 @@ public class EmitHeartBeatEvent extends AbstractEvent {
     @Override
     public void fire(DsVo ds, MonitorNodeVo node, String path, long txTime) {
         try {
+            // 同一个数据源，同一批次，当第一个表发生超时的时候，后面的表全部跳过
+            if (this.txTime == txTime && timeOutDs.contains(ds.getKey())) {
+                LOG.error("[emit-heartbeat-event] 数据源:{},插入心跳时发生过超时，同一批次:{}中跳过表:{}",
+                        ds.getKey(), txTime, node.getTableName());
+                return;
+            }
+            // 新的批次开始时，清空上一批次发生过超时的数据源
+            if (this.txTime != txTime) {
+                this.txTime = txTime;
+                timeOutDs.clear();
+            }
             PacketVo packet = new PacketVo();
             packet.setNode(path);
             packet.setTime(System.currentTimeMillis());
@@ -82,6 +98,8 @@ public class EmitHeartBeatEvent extends AbstractEvent {
             //LoggerFactory.getLogger().info("心跳数据发送{},数据包[{}].", (cnt == 1) ? "成功" : "失败", strPacket);
         } catch (Exception e) {
             LOG.error("[emit-heartbeat-event]", e);
+            if (e instanceof SQLTimeOutException)
+                timeOutDs.add(ds.getKey());
         }
     }
 

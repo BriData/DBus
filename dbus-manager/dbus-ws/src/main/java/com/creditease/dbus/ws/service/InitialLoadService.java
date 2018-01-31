@@ -105,7 +105,7 @@ public class InitialLoadService {
     }
 
 
-    public void oracleInitialLoadBySql(DbusDataSource ds, DataTable table) throws Exception {
+    public void oracleInitialLoadBySql(DbusDataSource ds, DataTable table, long seqno) throws Exception {
         Class.forName("oracle.jdbc.driver.OracleDriver");
         Connection conn = DriverManager.getConnection(ds.getMasterURL(), ds.getDbusUser(), ds.getDbusPassword());
         PreparedStatement pst = null;
@@ -124,7 +124,7 @@ public class InitialLoadService {
                     "pull_status," +
                     "pull_remark)" +
                     "  values(" +
-                    "seq_db_full_pull_requests.nextval," +
+                    "?," +
                     "upper(?)," +
                     "upper(?)," +
                     "dbms_flashback.get_system_change_number," +
@@ -139,9 +139,10 @@ public class InitialLoadService {
                     ")";
 
             pst = conn.prepareStatement(sql);
-            pst.setString(1, table.getSchemaName());
-            pst.setString(2, table.getTableName());
-            pst.setString(3, ds.getDsName());
+            pst.setLong(1, seqno);
+            pst.setString(2, table.getSchemaName());
+            pst.setString(3, table.getTableName());
+            pst.setString(4, ds.getDsName());
 
             pst.executeUpdate();
         } finally {
@@ -155,12 +156,13 @@ public class InitialLoadService {
 
     }
 
-    public void mysqlInitialLoadBySql(DbusDataSource ds, DataTable table) throws Exception {
+    public void mysqlInitialLoadBySql(DbusDataSource ds, DataTable table, long seqno) throws Exception {
         Class.forName("com.mysql.jdbc.Driver");
         Connection conn = DriverManager.getConnection(ds.getMasterURL(), ds.getDbusUser(), ds.getDbusPassword());
         PreparedStatement pst = null;
         try {
             String sql = "insert into db_full_pull_requests (" +
+                    "seqno," +
                     "schema_name," +
                     "table_name," +
                     "physical_tables," +
@@ -174,9 +176,10 @@ public class InitialLoadService {
                     "pull_status," +
                     "pull_remark)" +
                     "values(" +
-                    "LOWER(?)," +
-                    "LOWER(?)," +
-                    "LOWER(?)," +
+                    "?," +
+                    "?," +
+                    "?," +
+                    "?," +
                     "null," +
                     "null," +
                     "null," +
@@ -188,11 +191,12 @@ public class InitialLoadService {
                     "?" +
                     ");";
             pst = conn.prepareStatement(sql);
-            pst.setString(1, table.getSchemaName());
-            pst.setString(2, table.getTableName());
+            pst.setLong(1, seqno);
+            pst.setString(2, table.getSchemaName());
+            pst.setString(3, table.getTableName());
             String nameString = Strings.isNullOrEmpty(table.getPhysicalTableRegex()) ? null : getMysqlTables(conn, table);
-            pst.setString(3, nameString);
-            pst.setString(4, ds.getDsName());
+            pst.setString(4, nameString);
+            pst.setString(5, ds.getDsName());
 
             pst.executeUpdate();
         } finally {

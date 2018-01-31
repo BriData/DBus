@@ -29,12 +29,12 @@ module.exports = {
         console.log("sshCmd: " + sshCmd);
         child_process.exec(sshCmd, function (err, stdout, stderr) {
             if(err) {
-                logger.info("err: " + err);
+                logger.error("err: " + err);
                 callback(err, stderr);
             } else if(stderr) {
                 var result = [];
                 result.push(stdout);
-                logger.info("stderr: " + stderr);
+                logger.error("stderr: " + stderr);
                 callback(null, result);
             } else {
                 var result = [];

@@ -38,4 +38,5 @@ public interface DataSourceMapper {
     int insert(DbusDataSource user);
     int update(DbusDataSource user);
     int changeStatus(@Param("id")long id, @Param("status")String status);
+    int deleteByDsId(int id);
 }

@@ -1,0 +1,92 @@
+filebeat.prospectors:
+
+- type: log
+  enabled: true
+  paths:
+    - /app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.*
+  fields_under_root: true
+  fields:
+    type: heartbeat_log_filebeat    # 改为数据源的log比如：heartbeat_log_filebeat
+  encoding: utf-8     # 指定被监控的文件的编码类型使用plain和utf-8都是可以处理中文日志的
+
+  # 适用于日志中每一条日志占据多行的情况，比如各种语言的报错信息调用栈
+  multiline.pattern: '^\['   # 多行日志开始的那一行匹配的pattern
+  multiline.negate: true     # 是否需要对pattern条件转置使用，不翻转设为true，反转设置为false。【建议设置为true】
+  multiline.match: after     # 匹配pattern后，与前面（before）还是后面（after）的内容合并为一条日志
+  #multiline.max_lines: 500  # 合并的最多行数（包含匹配pattern的那一行）
+  #multiline.timeout: 5s     # 如果达到timeout，即使没有匹配一个新的pattern（发生一个新的事件），也把已经匹配的日志事件发送出去
+
+- type: log
+  enabled: true
+  paths:
+    - /app/dbus/dbus-agent-heartbeat/logs/*.*
+  fields_under_root: true
+  fields:
+    type: dbus-heartbeat 
+  encoding: utf-8    # 指定被监控的文件的编码类型使用plain和utf-8都是可以处理中文日志的
+
+
+  #harvester_buffer_size: 16384   # 每个harvester监控文件时，使用的buffer的大小,缺省值是16384 bytes
+
+  #max_bytes: 10485760   # 单个message的大小：默认是10M，超过这个值得数据会被丢弃，这个选项对多行数据比较有用
+  
+  #tail_files: false     # 如果设置为true，Filebeat从文件尾开始监控文件新增内容，把新增的每一行文件作为一个事件依次发送
+                         # 而不是从文件开始处重新发送所有内容,当设置为true时，新文件的第一行数据可能会丢失，缺省值是false
+                         # 当某个文件正在被读取，如果tail_files设置为true，则该选项并不会生效，filebeat还是会从之前记录的offset
+                         # 处读取，除非重启filebeat，并且清除注册信息
+  
+  #backoff: 1s          # Filebeat检测到某个文件到了EOF（文件结尾）之后，每次等待多久再去检测文件是否有更新，默认为1s
+  
+  #max_backoff: 10s     # Filebeat检测到某个文件到了EOF之后，等待检测文件更新的最大时间，默认是10秒
+  
+  #ignore_older: 0       # 缺省值是0,可以指定Filebeat忽略指定时间段以外修改的日志内容，比如几个月之前的文件，不想再去读取，就可以设置该选项，但需要保证ignore older时间范围大于close_inactive
+                         # 如果一个文件正在读取时候被设置忽略，它会在close_inactive时间后关闭文件，然后文件被忽略
+  
+  #registry_file: ./data/registry  # 记录filebeat处理日志文件的位置的文件，默认是在./data/registry
+  
+  #scan_frequency: 10s   # Filebeat以多快的频率去prospector指定的目录下面检测文件更新（比如是否有新增文件）
+                         # 如果设置为0s，则Filebeat会尽可能快地感知更新（占用的CPU会变高）。默认是10s
+  
+  #close_inactive: 1h    # 当启动close_inactive时，如果文件在指定时间没有被读取，将关闭文件句柄
+                         # 读取的最后一条日志定义为下一次读取的起始点，而不是基于文件的修改时间
+                         # 如果关闭的文件发生变化，一个新的harverster将在scan_frequency运行后被启动
+                         # 建议至少设置一个大于读取日志频率的值，配置多个prospector来实现针对不同更新速度的日志文件
+                         # 使用内部时间戳机制，来反映记录日志的读取，每次读取到最后一行日志时开始倒计时
+                         # 使用2h 5m 来表示,缺省值是5m
+
+  #close_renamed: false  # 默认值是false，当该选项启动，如果文件被重命名和移动，filebeat关闭文件的处理读取，可能会丢失数据
+
+  close_removed: true    # 当选项启动，文件被删除时，filebeat关闭文件的处理读取,这个选项启动后，必须启动clean_removed，默认为true
+
+  #clean_inactive: 0     # 可能会丢失数据！！默认是0s，从注册表文件中删除先前收获的文件的状态,设置必须大于ignore_older+scan_frequency，以确保在文件仍在收集时没有删除任何状态
+                         # 配置选项有助于减小注册表文件的大小，特别是如果每天都生成大量的新文件,此配置选项也可用于防止在Linux上重用inode的Filebeat问题
+
+  clean_removed: true   # 启动选项后，如果文件在磁盘上找不到，将从注册表中清除filebeat，如果关闭close removed 必须关闭clean removed
+
+filebeat.config.modules:
+  # filebeat配置文件
+  path: ${path.config}/modules.d/*.yml
+  # 使filebeat自动reload配置文件,每10s扫描一次
+  reload.enabled: true
+  encoding: utf-8
+  reload.period: 10s
+ 
+#================================ Outputs =====================================
+
+#----------------------------- kafka output --------------------------------
+output.kafka:
+  # initial brokers for reading cluster metadata
+  hosts: ["dbus-n1:9092","dbus-n2:9092","dbus-n3:9092"]
+
+  # message topic selection + partitioning
+  topic: 'heartbeat_log_filebeat'
+  partition.round_robin:
+  reachable_only: false
+
+  required_acks: 1
+  compression: snappy
+  max_message_bytes: 1000000
+
+#----------------------------- console output --------------------------------
+#output.console:
+#  pretty: true

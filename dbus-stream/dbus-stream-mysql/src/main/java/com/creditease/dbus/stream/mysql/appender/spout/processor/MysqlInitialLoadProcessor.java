@@ -22,11 +22,12 @@ package com.creditease.dbus.stream.mysql.appender.spout.processor;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
-import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
+import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.spout.processor.AbstractProcessor;
 import com.creditease.dbus.stream.common.appender.spout.processor.ConsumerListener;
 import com.creditease.dbus.stream.common.appender.spout.processor.RecordProcessListener;
@@ -37,7 +38,6 @@ import com.creditease.dbus.stream.mysql.appender.protobuf.protocol.EntryHeader;
 import com.creditease.dbus.stream.mysql.appender.protobuf.protocol.MessageEntry;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -67,7 +67,7 @@ public class MysqlInitialLoadProcessor extends AbstractProcessor {
      * 处理mysql 拉全量请求
      */
     @Override
-    public void process(final ConsumerRecord<String, byte[]> consumerRecord, Object... args){
+    public void process(final DBusConsumerRecord<String, byte[]> consumerRecord, Object... args){
     	try{
 	    	List<MessageEntry> msgEntryLst = parser.getEntry(consumerRecord.value());
 	    	if(msgEntryLst.isEmpty())
@@ -120,9 +120,7 @@ public class MysqlInitialLoadProcessor extends AbstractProcessor {
             EmitData emitData = new EmitData();
             emitData.add(EmitData.DB_SCHEMA, schemaName);
             emitData.add(EmitData.DATA_TABLE, tableName);
-
-            List<Object> values = new Values(emitData, Command.FULL_DATA_PULL_REQ);
-            listener.emitData(values, consumerRecord);
+            listener.emitData(emitData, Command.FULL_DATA_PULL_REQ, consumerRecord);
 
             consumerListener.syncOffset(consumerRecord);
             cache.put(msgPos, msgEntryLst.get(0).toString());

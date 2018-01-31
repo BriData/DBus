@@ -22,13 +22,15 @@ package com.creditease.dbus.stream.common.appender.bean;
 
 //import org.apache.storm.tuple.Tuple;
 
+import java.beans.Transient;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by Shrimp on 16/6/24.
  */
-public class EmitData {
+public class EmitData implements Serializable {
     public static final String NO_VALUE = "_no_value_";
     public static final String AVRO_SCHEMA = "avro_schema";
     public static final String MESSAGE = "message";
@@ -41,28 +43,33 @@ public class EmitData {
     public static final String STATUS = "status";
     public static final String CTRL_CMD = "ctrl_cmd";
     public static final String GROUP_KEY = "group_key";
+    public static final String CURRENT_TIME_MS = "current_time_ms";
 
     private Map<String, Object> data;
 
     public EmitData() {
         data = new HashMap<>();
     }
-//    public static EmitData parse(Tuple tuple, Builder builder) {
-//        return builder.build(tuple);
-//    }
+
+    @Transient
     public void add(String key, Object val) {
         data.put(key, val);
     }
 
+    @Transient
     public <T> T get(String key) {
         return (T) data.get(key);
     }
 
-//    public static interface Builder {
-//        EmitData build(Tuple tuple);
-//    }
-
     public Map<String, Object> getData() {
         return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
+
+    public String getStringValue(String key) {
+        return data.containsKey(key) ? data.get(key).toString() : null;
     }
 }

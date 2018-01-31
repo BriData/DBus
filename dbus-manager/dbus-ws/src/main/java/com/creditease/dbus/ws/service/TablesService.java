@@ -287,4 +287,12 @@ public class TablesService {
             return mapper.search(param);
         });
     }
+
+    public int deleteTable(int tableId) {
+        int result = template.query((session, args) -> {
+            TableMapper mapper = session.getMapper(TableMapper.class);
+            return mapper.deleteByTableId(tableId);
+        });
+        return result;
+    }
 }

@@ -20,80 +20,62 @@
 
 package com.creditease.dbus.ws.domain;
 
-import com.alibaba.fastjson.annotation.JSONField;
-
 import java.util.Date;
 
 public class DataTableRule {
 
-    private int id;
+    private long id;
+    private long groupId;
+    private long orderId;
+    private String ruleTypeName;
+    private String ruleGrammar;
+    private Date updateTime;
 
-    private int tableId;
-
-    private int order;
-
-    private String type;
-
-    private String column;
-
-    private String re;
-
-    @JSONField(format = "yyyy-MM-dd HH:mm:ss SSS")
-    private Date createTime;
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getTableId() {
-        return tableId;
+    public long getGroupId() {
+        return groupId;
     }
 
-    public void setTableId(int tableId) {
-        this.tableId = tableId;
+    public void setGroupId(long groupId) {
+        this.groupId = groupId;
     }
 
-    public int getOrder() {
-        return order;
+    public long getOrderId() {
+        return orderId;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
+    public void setOrderId(long orderId) {
+        this.orderId = orderId;
     }
 
-    public String getType() {
-        return type;
+    public String getRuleTypeName() {
+        return ruleTypeName;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setRuleTypeName(String ruleTypeName) {
+        this.ruleTypeName = ruleTypeName;
     }
 
-    public String getColumn() {
-        return column;
+    public String getRuleGrammar() {
+        return ruleGrammar;
     }
 
-    public void setColumn(String column) {
-        this.column = column;
+    public void setRuleGrammar(String ruleGrammar) {
+        this.ruleGrammar = ruleGrammar;
     }
 
-    public String getRe() {
-        return re;
+    public Date getUpdateTime() {
+        return updateTime;
     }
 
-    public void setRe(String re) {
-        this.re = re;
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
     }
 }

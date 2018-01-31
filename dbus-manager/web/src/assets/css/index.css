@@ -19,6 +19,7 @@ a:hover {
 /** navbar */
 
 .App .navbar {
+    margin-bottom: 0px;
     border-radius: 0px !important;
     border-bottom: 1px solid #191e23;
     background: #2c3742;
@@ -107,15 +108,15 @@ input[type="text"], input[type="password"], textarea {
 
 #sidebar-nav {
     position: absolute;
-    width: 200px;
+    width: 180px;
     float: left;
-    margin: -20px 0 0 0;
+    /*margin: -20px 0 0 0;*/
     padding: 0;
 }
 
 #dashboard-menu {
     list-style: none;
-    padding-right: 15px;
+    /*padding-right: 15px;*/
     padding-left: 0px;
     margin-bottom: 0;
     margin-left: 0px;
@@ -123,7 +124,7 @@ input[type="text"], input[type="password"], textarea {
 
 #dashboard-menu>li>a {
     display: block;
-    margin-left: 15px;
+    /*margin-left: 15px;*/
     padding: 19px 0 15px 0;
     margin-bottom: 5px;
     border-bottom: 1px solid #dae1e8;
@@ -287,15 +288,22 @@ input[type="text"], input[type="password"], textarea {
     font-style: italic;
 }
 
+.pagination {
+    margin: 0px !important;
+}
+
+.container-fluid {
+    padding-left: 0px !important;
+}
+
 .content {
     min-width: 400px;
     /*min-height: 1000px;*/
-    margin-top: -20px;
+    margin-top: -12px;
     margin-bottom: -20px;
-    padding-bottom: 50px;
     overflow: visible;
     background: #fff;
-    margin-left: 197px;
+    margin-left: 190px;
     border-left: 1px solid #dae3e9;
     border-bottom: 1px solid #dae3e9;
     box-shadow: -3px 3px 3px -2px #f1f1f3;

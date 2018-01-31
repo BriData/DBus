@@ -20,14 +20,14 @@
 
 package com.creditease.dbus.stream;
 
-import com.creditease.dbus.stream.appender.utils.DbusGrouping;
+import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.stream.appender.bolt.*;
+import com.creditease.dbus.stream.appender.spout.DbusKafkaSpout;
+import com.creditease.dbus.stream.appender.utils.DbusGrouping;
+import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.dispatcher.Spout.KafkaConsumerSpout;
 import com.creditease.dbus.stream.dispatcher.bout.DispatcherBout;
 import com.creditease.dbus.stream.dispatcher.bout.KafkaProducerBout;
-import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.stream.dispatcher.Spout.KafkaConsumerSpout;
-import com.creditease.dbus.stream.appender.spout.DbusKafkaSpout;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.storm.Config;
@@ -64,8 +64,6 @@ public class DispatcherAppenderTopology {
         DispatcherAppenderTopology topology = new DispatcherAppenderTopology();
 
 
-
-
         StormTopology top = topology.buildTopology();
         topology.start(top, runAsLocal);
     }
@@ -93,7 +91,7 @@ public class DispatcherAppenderTopology {
 
                 runAsLocal = line.hasOption("local");
                 zookeeper = line.getOptionValue("zookeeper");
-                if(line.hasOption("type")) {
+                if (line.hasOption("type")) {
                     topologyType = line.getOptionValue("type");
                 } else {
                     topologyType = Constants.TopologyType.ALL;
@@ -121,7 +119,7 @@ public class DispatcherAppenderTopology {
                 dispatcherTopologyId = StringUtils.join(new String[]{topologyIdPrefix, Constants.TopologyType.DISPATCHER}, "-");
                 appenderTopologyId = StringUtils.join(new String[]{topologyIdPrefix, Constants.TopologyType.APPENDER}, "-");
 
-                if(topologyType.equals(Constants.TopologyType.ALL)) {
+                if (topologyType.equals(Constants.TopologyType.ALL)) {
                     topologyId = StringUtils.join(new String[]{topologyIdPrefix, Constants.TopologyType.DISPATCHER, Constants.TopologyType.APPENDER}, "-");
                 } else {
                     topologyId = StringUtils.join(new String[]{topologyIdPrefix, topologyType}, "-");
@@ -147,7 +145,7 @@ public class DispatcherAppenderTopology {
         TopologyBuilder builder = new TopologyBuilder();
 
         // 启动类型为all，或者dispatcher
-        if(topologyType.equals(Constants.TopologyType.ALL) || topologyType.equals(Constants.TopologyType.DISPATCHER)) {
+        if (topologyType.equals(Constants.TopologyType.ALL) || topologyType.equals(Constants.TopologyType.DISPATCHER)) {
             /**
              * dispatcher部分
              */
@@ -167,9 +165,9 @@ public class DispatcherAppenderTopology {
              */
             builder.setSpout("appender-spout", new DbusKafkaSpout(), 1);
             builder.setBolt("appender-dispatcher", new DispatcherBolt(), 1).shuffleGrouping("appender-spout");
-            builder.setBolt("appender-meta-fetcher", new DbusAppenderBolt(), 3).customGrouping("appender-dispatcher", new DbusGrouping());
-            builder.setBolt("appender-wrapper", new WrapperBolt(), 3).customGrouping("appender-meta-fetcher", new DbusGrouping());
-            builder.setBolt("appender-kafka-writer", new DbusKafkaWriterBolt(), 3).customGrouping("appender-wrapper", new DbusGrouping());
+            builder.setBolt("appender-meta-fetcher", new DbusAppenderBolt(), 1).customGrouping("appender-dispatcher", new DbusGrouping());
+            builder.setBolt("appender-wrapper", new WrapperBolt(), 1).customGrouping("appender-meta-fetcher", new DbusGrouping());
+            builder.setBolt("appender-kafka-writer", new DbusKafkaWriterBolt(), 1).customGrouping("appender-wrapper", new DbusGrouping());
             builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
         }
 
@@ -182,7 +180,7 @@ public class DispatcherAppenderTopology {
         Config conf = new Config();
 
         // 启动类型为all，或者dispatcher
-        if(topologyType.equals(Constants.TopologyType.ALL) || topologyType.equals(Constants.TopologyType.DISPATCHER)) {
+        if (topologyType.equals(Constants.TopologyType.ALL) || topologyType.equals(Constants.TopologyType.DISPATCHER)) {
             /**
              * dispatcher配置
              */
@@ -207,14 +205,38 @@ public class DispatcherAppenderTopology {
             conf.put(Constants.StormConfigKey.DATASOURCE, datasource);
         }
 
+        conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE, 4096);
+        conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 4096);
+        conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE, 4096);
+
         conf.setDebug(true);
 
+        conf.setNumAckers(1);
         //设置worker数
         conf.setNumWorkers(1);
         //设置任务在发出后，但还没处理完成的中间状态任务的最大数量
-        conf.setMaxSpoutPending(100);
+        conf.setMaxSpoutPending(150);
         //设置任务在多久之内没处理完成，就任务这个任务处理失败
         conf.setMessageTimeoutSecs(120);
+
+        conf.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, true);
+        conf.registerSerialization(org.apache.avro.util.Utf8.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DBusConsumerRecord.class);
+        conf.registerSerialization(org.apache.kafka.common.record.TimestampType.class);
+        conf.registerSerialization(com.creditease.dbus.stream.common.appender.bean.EmitData.class);
+        conf.registerSerialization(com.creditease.dbus.stream.common.appender.enums.Command.class);
+        conf.registerSerialization(org.apache.avro.generic.GenericData.class);
+        conf.registerSerialization(com.creditease.dbus.stream.oracle.appender.avro.GenericData.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage12.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage12.Schema12.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage13.Schema13.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage13.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Field.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Payload.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Protocol.class);
+        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.ProtocolType.class);
+        conf.registerSerialization(com.creditease.dbus.stream.oracle.appender.bolt.processor.appender.OraWrapperData.class);
+        conf.registerSerialization(com.creditease.dbus.stream.common.appender.spout.cmds.TopicResumeCmd.class);
 
         if (runAsLocal) {
             LocalCluster cluster = new LocalCluster();

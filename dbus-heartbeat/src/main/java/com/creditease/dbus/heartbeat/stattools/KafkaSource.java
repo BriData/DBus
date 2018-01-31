@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.xml.bind.PropertyException;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -108,7 +110,7 @@ public class KafkaSource {
         for (ConsumerRecord<String, String> record : records) {
             String key = record.key();
             long offset = record.offset();
-
+            if(StringUtils.isEmpty(record.value())) continue;
             StatMessage msg = StatMessage.parse(record.value());
             list.add(msg);
             //logger.info(String.format("KafkaSource got record key=%s, offset=%d......", key, offset));

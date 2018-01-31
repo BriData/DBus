@@ -1,0 +1,77 @@
+package com.creditease.dbus.commons.log.processor.rule.impl;
+
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.log.processor.parse.ParseResult;
+import com.creditease.dbus.commons.log.processor.parse.ParseRuleGrammar;
+import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
+import com.creditease.dbus.commons.log.processor.rule.IRule;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+
+import java.util.*;
+
+public class SubStringRule implements IRule {
+
+    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception{
+        List<String> ret = new LinkedList<>(data);
+        List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
+        for (ParseResult pr : prList) {
+            for(int col : pr.getScope()) {
+                if (col >= data.size()) continue;
+                String value = data.get(col);
+                ret.remove(col);
+                if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_INDEX) &&
+                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_INDEX)) {
+                    if(pr.getEnd() != null) {
+                        ret.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart()), NumberUtils.toInt(pr.getEnd())));
+                    } else {
+                        ret.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart())));
+                    }
+                } else if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_INDEX) &&
+                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_STRING)) {
+                    ret.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart()),
+                            StringUtils.lastIndexOf(value, StringUtils.defaultString(pr.getEnd(), "")) + StringUtils.defaultString(pr.getEnd(), "").length()));
+                } else if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_STRING) &&
+                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_INDEX)) {
+                    if(pr.getEnd() != null) {
+                        ret.add(col, StringUtils.substring(value,
+                                StringUtils.indexOf(value, pr.getStart()), NumberUtils.toInt(pr.getEnd())));
+                    } else {
+                        ret.add(col, StringUtils.substring(value,
+                                StringUtils.indexOf(value, pr.getStart())));
+                    }
+                } else if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_STRING) &&
+                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_STRING)) {
+                    if(pr.getEnd() != null) {
+                        ret.add(col, StringUtils.substring(value, StringUtils.indexOf(value, pr.getStart()), StringUtils.lastIndexOf(value, pr.getEnd()) + pr.getEnd().length()));
+                    } else {
+                        ret.add(col, StringUtils.substring(value, StringUtils.indexOf(value, pr.getStart())));
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    public static void main(String[] args) {
+        String str = "KafkaConsumerEvent$1 299 - stat信息发送到topic:dbus_statistic, key:data_increment_heartbeat.oracle.db4.AMQUE.T_LOAN_INFO.5.0.0.1512024836812|1512024835870|ok.wh_placeholder, offset:716250631";
+        String str1 = "KafkaConsumerEvent$1 299 - stat信息发送到topic:dbus_statistic";
+        // 1. string string
+        String start = "topic";
+        String end = "dbus_statistic";
+        System.out.println(StringUtils.substring(str, StringUtils.indexOf(str1, start), StringUtils.lastIndexOf(str1, end) + end.length()));
+        // 2. string index
+//        start = "aaa";
+//        end = "23";
+//        System.out.println(StringUtils.substring(str, StringUtils.indexOf(str, start), NumberUtils.toInt(end)));
+//        // 3. index index
+//        start = "3";
+//        end = "23";
+//        System.out.println(StringUtils.substring(str, NumberUtils.toInt(start), NumberUtils.toInt(end)));
+//        // 4. index string
+//        start = "3";
+//        end = "ccc";
+//        System.out.println(StringUtils.substring(str, NumberUtils.toInt(start),
+//                StringUtils.lastIndexOf(str, end) + end.length()));
+    }
+}

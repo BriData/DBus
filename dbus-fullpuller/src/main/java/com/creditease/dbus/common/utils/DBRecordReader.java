@@ -26,6 +26,7 @@ import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 
+import com.creditease.dbus.manager.GenericJdbcManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class DBRecordReader<T extends DBWritable> {
 
     private Logger LOG = LoggerFactory.getLogger(getClass());
 
-  private ResultSet results = null;
+//  private ResultSet results = null;
 
 //  private Class<T> inputClass;
 
@@ -55,10 +56,12 @@ public class DBRecordReader<T extends DBWritable> {
 //  private LongWritable key = null;
 
   private T value = null;
+  
+  private GenericJdbcManager manager;
 
-  private Connection connection;
+  //private Connection connection;
 
-  protected PreparedStatement statement;
+  //protected PreparedStatement statement;
 
   private DBConfiguration dbConf;
 
@@ -71,11 +74,11 @@ public class DBRecordReader<T extends DBWritable> {
    */
   // CHECKSTYLE:OFF
   // TODO (aaron): Refactor constructor to take fewer arguments
-  public DBRecordReader(Connection conn,
+  public DBRecordReader(GenericJdbcManager manager,
       DBConfiguration dbConfig, DataDrivenDBInputSplit split, String [] fields,
       String table)
       throws SQLException {
-        this.connection = conn;
+        this.manager = manager;
         this.dbConf = dbConfig;
         this.split=split;
         if (fields != null) {
@@ -97,7 +100,7 @@ public class DBRecordReader<T extends DBWritable> {
 //	  return originString;
 //	}
 
-    public ResultSet queryData(String datasourceType, String splitIndex) {
+    public ResultSet queryData(String datasourceType, String splitIndex) throws Exception {
 
         ResultSet rset = null;
         try {
@@ -121,8 +124,7 @@ public class DBRecordReader<T extends DBWritable> {
                
             String query = getSelectQuery();
 
-            this.statement = connection.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-
+            PreparedStatement statement = manager.prepareStatement(query);
             // cond 不为 is null的时候，才用set 条件值。另：lower is null, upper一定也is null.所以不用两个都判断。
             if(!DataPullConstants.QUERY_COND_IS_NULL.equals(this.split.getLowerOperator())){
                 if(this.split.getSqlType() == Types.DATE || this.split.getSqlType() == Types.TIME || this.split.getSqlType() == Types.TIMESTAMP) {
@@ -147,7 +149,7 @@ public class DBRecordReader<T extends DBWritable> {
                statement.setObject(1, lowBound, this.split.getSqlType());
                statement.setObject(2, upperBound, this.split.getSqlType());
             }
-            
+
             LOG.info("split_index{}: Query Begin: {}, with cond lower: {} and upper: {}.", splitIndex, query, lowBound, upperBound);
             
             int fetchSize = dbConf.getPrepareStatementFetchSize();
@@ -162,18 +164,7 @@ public class DBRecordReader<T extends DBWritable> {
             return rset;
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
-            try {
-                if (this.connection != null) {
-                    this.connection.rollback();
-                }
-            }
-            catch (SQLException ex) {
-                LoggingUtils.logAll(LOG, "Failed to rollback transaction", ex);
-            }
             LoggingUtils.logAll(LOG, "Failed to list columns", e);
-            return null;
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
             return null;
         }
 //        finally {
@@ -247,26 +238,27 @@ public class DBRecordReader<T extends DBWritable> {
   }
   
 //  @Override
-  public void close() throws IOException {
-    try {
-      if (null != results) {
-        results.close();
-      }
+//    @Deprecated
+//  public void close() throws IOException {
+//    try {
+//      if (null != results) {
+//        results.close();
+//      }
       // Statement.isClosed() is only available from JDBC 4
       // Some older drivers (like mysql 5.0.x and earlier fail with
       // the check for statement.isClosed()
-      if (null != statement) {
-        statement.close();
-      }
-   // 关闭connecttion的事由druid去做
-      if (null != connection && !connection.isClosed()) {
-        connection.commit();
-        connection.close();
-      }
-    } catch (SQLException e) {
-      throw new IOException(e);
-    }
-  }
+//      if (null != statement) {
+//        statement.close();
+//      }
+//   // 关闭connecttion的事由druid去做
+//      if (null != connection && !connection.isClosed()) {
+//        connection.commit();
+//        connection.close();
+//      }
+//    } catch (SQLException e) {
+//      throw new IOException(e);
+//    }
+//}
 
   public void initialize(InputSplit inputSplit)
       throws IOException, InterruptedException {
@@ -310,9 +302,10 @@ public class DBRecordReader<T extends DBWritable> {
 //  }
 
 //  @Override
-  public float getProgress() throws IOException {
-    return pos / (float)split.getLength();
-  }
+//  @Deprecated
+//  public float getProgress() throws IOException {
+//    return pos / (float)split.getLength();
+//  }
 
 //  @Override
 //  public boolean nextKeyValue() throws IOException,Exception {
@@ -380,13 +373,14 @@ public class DBRecordReader<T extends DBWritable> {
   /**
    * @return true if nextKeyValue() would return false.
    */
-  protected boolean isDone() {
-    try {
-      return this.results != null && results.isAfterLast();
-    } catch (SQLException sqlE) {
-      return true;
-    }
-  }
+//  @Deprecated
+//  protected boolean isDone() {
+//    try {
+//      return this.results != null && results.isAfterLast();
+//    } catch (SQLException sqlE) {
+//      return true;
+//    }
+//  }
 
   protected DataDrivenDBInputFormat.DataDrivenDBInputSplit getSplit() {
     return split;
@@ -403,22 +397,24 @@ public class DBRecordReader<T extends DBWritable> {
   protected DBConfiguration getDBConf() {
     return dbConf;
   }
+//    @Deprecated
+//  protected Connection getConnection() {
+//    return connection;
+//  }
+//    @Deprecated
+//  protected void setConnection(Connection conn) {
+//    connection = conn;
+//  }
 
-  protected Connection getConnection() {
-    return connection;
-  }
-
-  protected void setConnection(Connection conn) {
-    connection = conn;
-  }
-
-  protected PreparedStatement getStatement() {
-    return statement;
-  }
-
-  protected void setStatement(PreparedStatement stmt) {
-    this.statement = stmt;
-  }
+//  @Deprecated
+//  protected PreparedStatement getStatement() {
+//    return statement;
+//  }
+//
+//  @Deprecated
+//  protected void setStatement(PreparedStatement stmt) {
+//    this.statement = stmt;
+//  }
 
   public void setSplit(DataDrivenDBInputFormat.DataDrivenDBInputSplit split) {
       this.split = split;

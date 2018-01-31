@@ -91,7 +91,7 @@ var NodeViewer  = React.createClass({
                                     <span className="glyphicon glyphicon-floppy-save" style={{ marginRight: '5px', color:'#8096d2'}}/>Save</button>
                             </div>
                         </div>
-                        <Textarea ref="nodeContent" className="col-sm-10 col-sm-12" rows="34" style={styles.nodeContentTextarea}></Textarea>
+                        <Textarea ref="nodeContent" className="col-sm-10 col-sm-12" rows="18" style={styles.nodeContentTextarea}></Textarea>
                 </TabPane>
                 <TabPane tab="Node Meta Data" key="nodeMeta">
                     <div className="paneView">

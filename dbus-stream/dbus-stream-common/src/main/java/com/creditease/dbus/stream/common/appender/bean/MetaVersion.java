@@ -41,6 +41,7 @@ public class MetaVersion implements Serializable {
     private long trailPos;
     private int version; // 外部版本号
     private int innerVersion;
+    private String comments;
 
     private MetaWrapper meta;
     
@@ -65,6 +66,7 @@ public class MetaVersion implements Serializable {
         v.setOffset((Long)data.get("event_offset"));
         v.setTrailPos((Long)data.get("event_pos"));
         v.setTableId((Integer)data.get("table_id"));
+        v.setComments((String)data.get("comments"));
         return v;
     }
 
@@ -154,8 +156,17 @@ public class MetaVersion implements Serializable {
         return innerVersion;
     }
 
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
     @Override
     public String toString() {
         return JSON.toJSONString(this);
     }
+
 }

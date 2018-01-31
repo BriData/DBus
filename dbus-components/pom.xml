@@ -3,7 +3,7 @@
     <parent>
         <artifactId>dbus-main</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -25,12 +25,12 @@
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>dbus-mail</artifactId>
-                <version>0.3.0</version>
+                <version>0.4.0</version>
             </dependency>
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>dbus-sms</artifactId>
-                <version>0.3.0</version>
+                <version>0.4.0</version>
             </dependency>
             <dependency>
                 <groupId>commons-lang</groupId>

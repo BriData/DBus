@@ -28,14 +28,16 @@ import java.util.*;
  * 定义自解释的消息协议
  * Created by Shrimp on 16/5/20.
  */
-public class DbusMessage {
-    private Protocol protocol;
-    private Schema schema;
-    private List<Payload> payload;
+public abstract class DbusMessage {
+    protected Protocol protocol;
+    protected Schema schema;
+    protected List<Payload> payload;
 
-    public DbusMessage(ProtocolType type, String schemaNs, int batchNo) {
-        this.protocol = new Protocol(type);
-        this.schema = new Schema(schemaNs, batchNo);
+    public DbusMessage() {
+    }
+
+    public DbusMessage(String version, ProtocolType type) {
+        this.protocol = new Protocol(type, version);
         this.payload = new ArrayList<>();
     }
 
@@ -94,8 +96,9 @@ public class DbusMessage {
     public static class Protocol {
         private ProtocolType type;
         private String version;
-        public Protocol(ProtocolType type) {
+        public Protocol(ProtocolType type, String version) {
             this.type = type;
+            this.version = version;
         }
 
         public String getType() {
@@ -106,25 +109,23 @@ public class DbusMessage {
             return version;
         }
 
-        public void setVersion(String version) {
-            this.version = version;
-        }
     }
 
-    public static class Schema {
+    public static abstract class Schema {
         private String namespace;
-        private int batchId;
         private Map<String, Integer> index;
         private List<Field> fields;
+
+        public Schema() {
+        }
 
         public void addField(String name, DataType type, boolean nullable) {
             index.put(name, this.fields.size());
             this.fields.add(new Field(name, type, nullable));
         }
 
-        public Schema(String schemaNs, int batchNo) {
+        public Schema(String schemaNs) {
             this.namespace = schemaNs;
-            this.batchId = batchNo;
             this.fields = new ArrayList<>();
             index = new HashMap<>();
         }
@@ -132,15 +133,17 @@ public class DbusMessage {
         public String getNamespace() {
             return namespace;
         }
-        public int getBatchId() {
-            return batchId;
-        }
+
         public List<Field> getFields() {
             return fields;
         }
 
         public Integer index(String name) {
             return index.containsKey(name) ? index.get(name) : -1;
+        }
+        //for DbusMessage14 addUnField
+        public void setIndex(String name, Integer size){
+            index.put(name, size);
         }
 
         public Field field(int idx) {
@@ -163,6 +166,9 @@ public class DbusMessage {
         private DataType type;
         private boolean nullable;
         private boolean encoded;
+
+        public Field() {
+        }
 
         public Field(String name, DataType type, boolean nullable) {
             this.name = name;

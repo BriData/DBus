@@ -23,6 +23,7 @@ package com.creditease.dbus.tools;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ZkService;
 import com.creditease.dbus.tools.common.ConfUtils;
+import com.creditease.dbus.utils.ZkConfTemplateHelper;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,38 +51,7 @@ public class InitZooKeeper {
     public static final String DS_NAME_PLACEHOLDER = "placeholder";
     public static final String BOOTSTRAP_SERVER_PLACEHOLDER = "[BOOTSTRAP_SERVER_PLACEHOLDER]";
     public static final String ZK_SERVER_PLACEHOLDER = "[ZK_SERVER_PLACEHOLDER]";
-    private static String[] CONF_PATHS = {
-            "Topology/dbus-fulldata-splitter/byte-producer-config.properties",
-            "Topology/dbus-fulldata-splitter/common-config.properties",
-            "Topology/dbus-fulldata-splitter/consumer-config.properties",
-            "Topology/dbus-fulldata-splitter/oracle-config.properties",
-            "Topology/dbus-fulldata-splitter/string-producer-config.properties",
-            "Topology/dbus-fulldata-splitter/placeholder-fullsplitter/common-config.properties",
 
-            "Topology/dbus-fulldata-puller/byte-producer-config.properties",
-            "Topology/dbus-fulldata-puller/common-config.properties",
-            "Topology/dbus-fulldata-puller/consumer-config.properties",
-            "Topology/dbus-fulldata-puller/oracle-config.properties",
-            "Topology/dbus-fulldata-puller/string-producer-config.properties",
-            "Topology/dbus-fulldata-puller/placeholder-fullpuller/common-config.properties",
-
-            "Topology/placeholder-appender/configure.properties",
-            "Topology/placeholder-appender/consumer-config.properties",
-            "Topology/placeholder-appender/ora-meta.properties",
-            "Topology/placeholder-appender/producer-config.properties",
-            "Topology/placeholder-appender/producer-control.properties",
-
-            "Topology/placeholder-dispatcher/dispatcher.configure.properties",
-            "Topology/placeholder-dispatcher/dispatcher.consumer.properties",
-            "Topology/placeholder-dispatcher/dispatcher.producer.properties",
-            "Topology/placeholder-dispatcher/dispatcher.raw.topics.properties",
-            "Topology/placeholder-dispatcher/dispatcher.schema.topics.properties",
-
-            "Extractor/placeholder-mysql-extractor/jdbc.properties",
-            "Extractor/placeholder-mysql-extractor/config.properties",
-            "Extractor/placeholder-mysql-extractor/producer.properties",
-            "Extractor/placeholder-mysql-extractor/consumer.properties"
-    };
 
     public static void main(String[] args) throws Exception {
         InitZooKeeper izk = new InitZooKeeper();
@@ -199,7 +169,7 @@ public class InitZooKeeper {
     }
 
     private void uploadTemplate() throws Exception {
-        for (String confFilePath : CONF_PATHS) {
+        for (String confFilePath : ZkConfTemplateHelper.ZK_CONF_PATHS) {
             // 拟添加节点的各级父节点需先生成好
             String[] confFilePathSplitted = confFilePath.split("/");
             int confFilePathPrefixsCount = confFilePathSplitted.length - 1;
@@ -224,7 +194,7 @@ public class InitZooKeeper {
 
     public void initializeDsZkConf(String dsName) throws Exception {
         insertNodeWithCheckDup(Constants.TOPOLOGY_ROOT, null);
-        for (String confFilePath : CONF_PATHS) {
+        for (String confFilePath : ZkConfTemplateHelper.ZK_CONF_PATHS) {
             // 拟添加节点的各级父节点需先生成好
             String[] confFilePathSplitted = confFilePath.split("/");
             int confFilePathPrefixsCount = confFilePathSplitted.length - 1;

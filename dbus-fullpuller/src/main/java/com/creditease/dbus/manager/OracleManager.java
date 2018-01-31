@@ -164,6 +164,7 @@ public class OracleManager
   // much as possible. This is especially important for JUnit tests which
   // may need to make 60 or more connections (serially), since each test
   // uses a different OracleManager instance.
+  @Deprecated
   private static class ConnCache {
     private Logger LOG = LoggerFactory.getLogger(getClass());
     private static class CacheKey {
@@ -274,10 +275,10 @@ public class OracleManager
     }
   }
 
-  private static final ConnCache CACHE;
-  static {
-    CACHE = new ConnCache();
-  }
+//  private static final ConnCache CACHE;
+//  static {
+//    CACHE = new ConnCache();
+//  }
 
     public OracleManager(final DBConfiguration opts, String conString) {
         super(DRIVER_CLASS, opts, conString);
@@ -296,15 +297,15 @@ public class OracleManager
 
     }
 
-  public void close() throws SQLException, Exception {
-    release(); // Release any open statements associated with the connection.
-    if (hasOpenConnection()) {
-      // Release our open connection back to the cache.
-        CACHE.recycle((String)(options.get(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY)), (String)(options.get(DBConfiguration.DataSourceInfo.USERNAME_PROPERTY)),
-                      getConnection());
-      discardConnection(false);
-    }
-  }
+//  public void close() throws SQLException, Exception {
+//    release(); // Release any open statements associated with the connection.
+//    if (hasOpenConnection()) {
+//      // Release our open connection back to the cache.
+//        CACHE.recycle((String)(options.get(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY)), (String)(options.get(DBConfiguration.DataSourceInfo.USERNAME_PROPERTY)),
+//                      getConnection());
+//      discardConnection(false);
+//    }
+//  }
   
   protected String getColNamesQuery(String tableName) {
     // SqlManager uses "tableName AS t" which doesn't work in Oracle.
@@ -1197,7 +1198,7 @@ public class OracleManager
                 cell.setColumnName(rs.getString("column_name"));
                 cell.setColumnId(rs.getInt("column_id"));
                 cell.setDataType(rs.getString("data_type"));
-                cell.setDataLength(rs.getInt("data_length"));
+                cell.setDataLength(rs.getLong("data_length"));
                 cell.setDataPrecision(rs.getInt("data_precision"));
                 Object scale=rs.getObject("data_scale");
                 if(cell.getDataType().equals(SupportedOraDataType.NUMBER.toString())&&scale==null){                	

@@ -30,6 +30,7 @@ import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.Constants.EmitFields;
 import com.creditease.dbus.stream.common.Constants.StormConfigKey;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerProvider;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltHandlerManager;
@@ -97,6 +98,8 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
                 this.zkconnect = (String) conf.get(StormConfigKey.ZKCONNECT);
                 PropertiesHolder.initialize(this.zkconnect, zkRoot);
                 GlobalCache.initialize(datasource);
+
+                String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.DBUS_STATISTIC_TOPIC);
 
                 if (producer != null) {
                     producer.close();
@@ -202,7 +205,7 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
                 synchronized (this.collector) {
                     this.collector.ack(input);
                 }
-                logger.info("kafka-message,original-offset:{}, key:{}", offset, record.key());
+                logger.debug("[appender-kafka-writer] kafka-message was sent, original-offset:{}, key:{}", offset, record.key());
             }
         });
     }
@@ -242,10 +245,12 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
         }*/
         DbusDatasourceType type = GlobalCache.getDatasourceType();
         String name;
-        if(type == DbusDatasourceType.ORACLE) {
+        if (type == DbusDatasourceType.ORACLE) {
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
-        } else if(type == DbusDatasourceType.MYSQL) {
+        } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
+        } else if (type == DbusDatasourceType.MONGO) {
+            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
         } else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
@@ -264,7 +269,7 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
                 if (exception != null) {
                     logger.error("Encounter error while writing statics message. topic:{}, key:{}, message:{}", topic, key, message, exception);
                 } else {
-                    logger.info("[heartbeat] Writing statics message. topic:{}, key:{}, message:{}", topic, key, message);
+                    logger.debug("[heartbeat] Writing statics message. topic:{}, key:{}, message:{}", topic, key, message);
                 }
             });
         }

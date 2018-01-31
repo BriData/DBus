@@ -11,6 +11,7 @@ import com.creditease.dbus.commons.msgencoder.EncodeColumnProvider;
 import com.creditease.dbus.commons.msgencoder.MessageEncoder;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
+import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
 import com.creditease.dbus.stream.common.appender.bolt.processor.CachedEncodeColumnProvider;
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
 import com.creditease.dbus.stream.common.appender.enums.Command;
@@ -68,7 +69,7 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
         int payloadMaxSize = getMaxSize();
         DbusMessageBuilder builder = createBuilderWithSchema(version, dataList.get(0));
 
-        EntryHeader header=null;
+        EntryHeader header = null;
         long uniquePos = 0;
 
         // 脱敏
@@ -79,41 +80,33 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
             header.setLastPos(lastPos);
             MsgColumn msgCol = msgEntry.getMsgColumn();
             for (RowData rowData : msgCol.getRowDataLst()) {
-                lastPos = Long.parseLong(header.getPos())+(++uniquePos);
-                // 对UPDATE类型的增量数据特殊处理，增加b类型的tuple，在同一个payload里
-                if(header.isUpdate() && this.table.getOutputBeforeUpdateFlg() != 0) {
-                    try {
+                try {
+                    lastPos = Long.parseLong(header.getPos()) + (++uniquePos);
+                    // 对UPDATE类型的增量数据特殊处理，增加b类型的tuple，在同一个payload里
+                    if (header.isUpdate() && this.table.getOutputBeforeUpdateFlg() != 0) {
                         PairWrapper<String, Object> beforeWrapper = Convertor.convertProtobufRecordBeforeUpdate(msgEntry.getEntryHeader(), rowData);
                         List<Object> beforePayload = new ArrayList<>();
                         beforePayload.add(header.getPos()); // ums_id
                         beforePayload.add(header.getTsTime()); // ums_ts
                         beforePayload.add(Constants.UmsMessage.BEFORE_UPDATE_OPERATION);// ums_op = "b"
-                        beforePayload.add(generateUmsUid()) ;// ums_uid
+                        beforePayload.add(generateUmsUid());// ums_uid
                         List<Column> beforeColumns = rowData.getBeforeColumnsList();
                         payloadSize += addPayloadColumns(beforePayload, beforeColumns, beforeWrapper);
                         builder.appendPayload(beforePayload.toArray());
                         payloadCount++;
-                    } catch (Exception e) {
-                        logger.error("Build dbus message error, abort this message, {}", e.getMessage(), e);
                     }
-                }
 
-                try {
                     PairWrapper<String, Object> wrapper = Convertor.convertProtobufRecord(msgEntry.getEntryHeader(), rowData);
                     List<Object> payloads = new ArrayList<>();
                     payloads.add(header.getPos()); // ums_id
                     payloads.add(header.getTsTime()); // ums_ts
                     payloads.add(Support.getOperTypeForUMS(header.getOperType()));// ums_op
-                    payloads.add(generateUmsUid()) ;// ums_uid
+                    payloads.add(generateUmsUid());// ums_uid
                     List<Column> columns = Support.getFinalColumns(header.getOperType(), rowData);
                     payloadSize += addPayloadColumns(payloads, columns, wrapper);
                     builder.appendPayload(payloads.toArray());
                     payloadCount++;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
 
-                try {
                     // 判断消息payload数量和大小是否超出限制
                     if (payloadCount >= payloadMaxCount) {
                         logger.debug("Payload count out of limitation[{}]!", payloadMaxCount);
@@ -129,7 +122,9 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
                         payloadSize = 0;
                     }
                 } catch (Exception e) {
+                    long errId = System.currentTimeMillis();
                     logger.error("Build dbus message error, abort this message, {}", e.getMessage(), e);
+                    BoltCommandHandlerHelper.onBuildMessageError(errId + "", version, e);
                 }
             }
         }
@@ -145,24 +140,20 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
 
     private String generateUmsUid() throws Exception {
         //生成ums_uid
-        return String.valueOf(listener.getZkService().nextValue(Utils.join(".", Utils.getDatasource().getDsName(), Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_SCHEMA,Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_TABLE, Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_VERSION)));
+        return String.valueOf(listener.getZkService().nextValue(Utils.join(".", Utils.getDatasource().getDsName(), Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_SCHEMA, Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_TABLE, Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_VERSION)));
     }
 
-    private int addPayloadColumns(List<Object> payloads ,  List<Column> columns , PairWrapper<String, Object> wrapper) {
+    private int addPayloadColumns(List<Object> payloads, List<Column> columns, PairWrapper<String, Object> wrapper) throws Exception {
         int payloadSize = 0;
-        try {
-            for (Column column : columns) {
-                if (Support.isSupported(column)) {
-                    Pair<String, Object> pair = wrapper.getPair(column.getName());
-                    Object value = pair.getValue();
-                    payloads.add(value);
-                    if (value != null) {
-                        payloadSize += value.toString().getBytes("utf-8").length;
-                    }
+        for (Column column : columns) {
+            if (Support.isSupported(column)) {
+                Pair<String, Object> pair = wrapper.getPair(column.getName());
+                Object value = pair.getValue();
+                payloads.add(value);
+                if (value != null) {
+                    payloadSize += value.toString().getBytes("utf-8").length;
                 }
             }
-        } catch (Exception e) {
-            logger.error("Build dbus message error while adding payload columns, abort this message, {}", e.getMessage(), e);
         }
         return payloadSize;
     }
@@ -216,7 +207,7 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
         pos = (Long) null;
         System.out.println(pos);*/
         long threadId = Thread.currentThread().getId();
-        threadId = threadId<<1;
+        threadId = threadId << 1;
         System.out.println(threadId);
     }
 }

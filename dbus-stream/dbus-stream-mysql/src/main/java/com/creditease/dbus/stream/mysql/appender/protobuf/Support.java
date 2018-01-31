@@ -48,8 +48,8 @@ public class Support {
 		return StringUtils.substringBefore(column.getMysqlType(), "(");
 	}
 	
-	public static int[] getColumnLengthAndPrecision(Column column){
-		int[] ret = new int[2];
+	public static long[] getColumnLengthAndPrecision(Column column){
+		long[] ret = new long[2];
 		String data = StringUtils.substringBetween(column.getMysqlType(), "(",")");
 		String length = StringUtils.substringBefore(data, ",");
 		String precision = StringUtils.substringAfter(data, ",");
@@ -61,12 +61,12 @@ public class Support {
 			if(StringUtils.isEmpty(length)){
 				ret[0] = 0;
 			}else{
-				ret[0] = Integer.parseInt(length);
+				ret[0] = Long.parseLong(length);
 			}
 			if(StringUtils.isEmpty(precision)){
 				ret[1] = 0;
 			}else{
-				ret[1] = Integer.parseInt(precision);
+				ret[1] = Long.parseLong(precision);
 			}
 		}
 		return ret;

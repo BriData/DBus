@@ -19,14 +19,19 @@ var actions = Reflux.createActions(['initialLoad','dataSourceSelected','search',
     'openVersionDifference',
     'readTableVersion',
     'versionChanged',
-    'openAddRule',
-    'confirmStatusChange']);
+    'configRule',
+    'confirmStatusChange',
+    'independentPullWhole',
+    'deleteTable',
+    'takeEffect',
+    'changeInactive']);
 
 var store = Reflux.createStore({
     state: {
         dsOptions: [],
         searchParam:[],
         data: [],
+        currentPageNum: 1,
         dialog: {
             show: false,
             content:"",
@@ -69,8 +74,16 @@ var store = Reflux.createStore({
             self.state.searchParam = result.data;
             self.onSearch({});
         });
-
-
+    },
+    onDeleteTable: function (param, search) {
+        var self = this;
+        $.get(utils.builPath("tables/deleteTable"), param, function(result) {
+            if(result.status !== 200) {
+                alert("Delete table failed");
+                return;
+            }
+            search(null, self.state.currentPageNum);
+        });
     },
     onCloseDialog: function() {
         this.state.dialog.show = false;
@@ -96,14 +109,30 @@ var store = Reflux.createStore({
 
     },
 
-    onOpenAddRule: function(obj, tableSelf) {
+    onConfigRule: function(obj, tableSelf) {
         var passParam = {
-            id: obj.id,
-            topic: obj.outputTopic
+            tableId: obj.id,
+            dsId: obj.dsID,
+            dsName: obj.dsName,
+            dsType: obj.dsType,
+            schemaName: obj.schemaName,
+            tableName: obj.tableName
         };
-        tableSelf.props.history.pushState({passParam: passParam}, "/data-table/add-rule");
+        utils.showLoading();
+        tableSelf.props.history.pushState({passParam: passParam}, "/data-table/config-rule");
     },
 
+    onChangeInactive: function(param) {
+        var self = this;
+        $.get(utils.builPath("tables/updateTable"), param, function(result) {
+            if(result.status !== 200) {
+                alert("修改表状态失败");
+                return;
+            }
+            alert("成功修改表状态为inactive");
+            self.onSearch({});
+        });
+    },
     onConfirmStatusChange: function (data, currentTarget) {
         var storeSelf = this;
         var param = {
@@ -162,9 +191,8 @@ var store = Reflux.createStore({
         });
     },
     createEncodeAlgorithmsList(data) {
-        data=JSON.parse(data);
         var list=[{text:'None',value:''}];
-        for(var i=0;i<data.length;i++) {
+        for(var i in data) {
             if(global.isDebug == false) {
                 if(data[i] == 'address_normalize') continue;
                 if(data[i] == 'yisou_data_clean') continue;
@@ -200,7 +228,7 @@ var store = Reflux.createStore({
             rowHeight={30}
             headerHeight={20}
             width={880}
-            height={500}>
+            height={450}>
             <Column
                 header={<cell>Column Name</cell>}
                 cell={<TextCell data={tableColumns} col="COLUMN_NAME" onDoubleClick={this.onOpenDialogByKey.bind(this,"COLUMN_NAME")}/>}
@@ -277,7 +305,7 @@ var store = Reflux.createStore({
                                     update_time: (new Date()).valueOf()
                                     };
                                 operationCount++;
-                                param["operation"+operationCount] = rowParam;
+                                param["ruleOperation"+operationCount] = rowParam;
                                 break;
                             }
                             //数据库有脱敏信息,弹框中无脱敏信息,执行删除操作
@@ -287,7 +315,7 @@ var store = Reflux.createStore({
                                     id: desensitizationInformations[j].id
                                 };
                                 operationCount++;
-                                param["operation"+operationCount] = rowParam;
+                                param["ruleOperation"+operationCount] = rowParam;
                                 break;
                             }
                         }
@@ -304,7 +332,7 @@ var store = Reflux.createStore({
                             update_time: (new Date()).valueOf()
                         };
                         operationCount++;
-                        param["operation"+operationCount] = rowParam;
+                        param["ruleOperation"+operationCount] = rowParam;
                     }
                     //数据库无脱敏信息,弹框中无脱敏信息,无任何操作
                 }
@@ -365,6 +393,130 @@ var store = Reflux.createStore({
         self.state.id = updateParam.id;
         self.state.tableName = updateParam.tableName;
     },
+
+    _reloadCount: 0,
+    onTakeEffect: function (obj) {
+        var self = this;
+
+        var ctrlTopic = obj.ctrlTopic;
+        var ds = obj.dsID;
+        var date = new Date();
+        var dsName = obj.dsName;
+        var dsType = obj.dsType;
+        var typeList;
+        if (obj.dsType == utils.dsType.mysql) {
+            typeList = ["EXTRACTOR_RELOAD_CONF",
+                "DISPATCHER_RELOAD_CONFIG",
+                "APPENDER_RELOAD_CONFIG",
+                "FULL_DATA_PULL_RELOAD_CONF",
+                "HEARTBEAT_RELOAD_CONFIG"];
+            self._reloadCount = typeList.length;
+        }
+        else if (obj.dsType == utils.dsType.oracle) {
+            typeList = ["DISPATCHER_RELOAD_CONFIG",
+                "APPENDER_RELOAD_CONFIG",
+                "FULL_DATA_PULL_RELOAD_CONF",
+                "HEARTBEAT_RELOAD_CONFIG"];
+            self._reloadCount = typeList.length;
+        } else if (obj.dsType.startsWith("log_")) {
+            typeList = ["LOG_PROCESSOR_RELOAD_CONFIG",
+                "HEARTBEAT_RELOAD_CONFIG"];
+            self._reloadCount = typeList.length;
+        } else {
+            alert("Unsupported data source");
+            return;
+        }
+
+        typeList.forEach(function (type) {
+            var message = self._buildReloadMessage(date, type, dsName, dsType);
+            self._takeEffect(ds, ctrlTopic, message);
+        })
+    },
+
+    _buildReloadMessage(date, type, dsName, dsType) {
+        return {
+            from: "dbus-web",
+            id: date.getTime(),
+            payload: {
+                dsName: dsName,
+                dsType: dsType
+            },
+            timestamp: date.format("yyyy-MM-dd hh:ss:mm:S"),
+            type: type
+        };
+    },
+
+
+    _takeEffect: function(ds,ctrlTopic,message) {
+        var self = this;
+        console.log("onSendMessage: " + JSON.stringify(message));
+        var param = {
+            ds: ds,
+            ctrlTopic: ctrlTopic,
+            message: message
+        };
+        $.ajax({
+            type: 'GET',
+            url: utils.builPath('ctlMessage/send'),
+            timeout: 30000,
+            data: param,
+            success: function(result) {
+                if(result.status === 200) {
+                    self._reloadCount--;
+                    if (self._reloadCount === 0) {
+                        alert("成功生效！");
+                    }
+                } else {
+                    alert(message.type + " 消息发送失败！");
+                }
+            },
+            error: function (xml, errType, e) {
+                alert(message.type + " 消息发送失败！");
+            }
+        });
+    },
+
+    onIndependentPullWhole:function(typeParam, data){
+        var self = this;
+        $.get(utils.builPath("fullPull"), typeParam ,function(result){
+            var t = result.data.find(function(t) {
+                if (t.text === typeParam.messageType) {
+                    return t.template;
+                }
+            });
+            if(t == null) return;
+            var date = typeParam.date;
+            t.template.payload.SEQNO = date.getTime()+'';
+            var message = utils.extends(t.template, {
+                id: date.getTime(),
+                timestamp: date.format('yyyy-MM-dd hh:mm:ss.S')
+            });
+            self._sendIndependentPullWholeMessage(typeParam,data, message);
+        });
+    },
+    _sendIndependentPullWholeMessage: function(typeParam,data, message) {
+        var ctrlTopic = typeParam.ctrlTopic;
+        var resultTopic = typeParam.resultTopic;
+        var strJson = JSON.stringify(message);
+        var param = {
+            id: message.id,
+            type: 'indepent',
+            dsName: data.dsName,
+            schemaName: data.schemaName,
+            tableName: data.tableName,
+            ctrlTopic: ctrlTopic,
+            outputTopic: resultTopic,
+            message: strJson
+        };
+        $.post(utils.builPath('fullPull/send'), param , function(result) {
+            if(result.status === 200) {
+                alert("消息发送成功！");
+            } else {
+                alert("消息发送失败！");
+            }
+        });
+    },
+
     onPullWhole:function(pullParam){
         var self = this;
         $.get(utils.builPath("tables/pullWhole"), pullParam, function(result) {
@@ -410,6 +562,12 @@ var store = Reflux.createStore({
             result.data.forEach(function(e) {
                 list.push({value:e, text:e});
             });
+            list.sort(function (a, b) {
+                a = String(a.value);
+                b = String(b.value);
+                if (a == b) return 0;
+                return a > b ? -1 : 1;
+            });
             self.state.tableVersion = list;
             self.state.dialog.identityZK = "/DBus/FullPuller/" + versionParam.dsName + "/" + versionParam.schemaName + "/" + versionParam.tableName;
             self.state.dialog.showZK = true;
@@ -430,15 +588,15 @@ var store = Reflux.createStore({
     },
     onSearch: function(p){
         var self = this;
-        //console.log("p: " + JSON.stringify(p));
         var param = {
             dsID: p.dsID,
             schemaName: p.schemaName,
             tableName: p.tableName,
-            pageSize:20,
+            pageSize: utils.getFixedDataTablePageSize(),
             pageNum: p.pageNum
         };
         $.get(utils.builPath("tables/search"), param, function(result) {
+            self.state.currentPageNum = param.pageNum;
             if(result.status !== 200) {
                 if(console)
                     console.error(JSON.stringify(result));

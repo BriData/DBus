@@ -7,25 +7,14 @@ var actions = Reflux.createActions([ 'storm_check','global_config','monitor_conf
                                      'maxAlarmCnt', 'heartBeatTimeout',"fullPullTimeout",'alarmTtl":"lifeInterval','correcteValue','fullPullCorrecteValue',
                                      'fullPullSliceMaxPending','leaderPath','controlPath','monitorPath','monitorFullPullPaht','excludeSchema',
                                      'checkPointPerHeartBeatCnt','fullPullOldVersionCnt','adminSMSNo','adminUseSMS','adminEmail',
-                                     'adminUseEmail','initialLoad','initialLoadds','initialLoadschema','load','savezk','save_heart_conf']);
+                                     'adminUseEmail','schemaChangeEmail','schemaChangeUseEmail','initialLoad','initialLoadds','initialLoadschema','load','savezk','save_heart_conf','stormRestChange','checkStormAvailable']);
 var store = Reflux.createStore({
     state: {
-        data:{
-                global_config:{
-                    bootstrap:'',
-                    zookeeper:'',
-                    monitor_url:'',
-                    storm:'',
-                    user:'',
-                },
-                heartbeat_config:{},
-               
-            },
+        data: null,
         dsOptions: [],
         schema:[],
         ds_schema_list:[],
-        storm_success:'N',
-
+        storm_success:'N'
     },
     initState: function() {
         return this.state;
@@ -47,6 +36,12 @@ var store = Reflux.createStore({
             }
             if(!self.state.data.heartbeat_config.hasOwnProperty("heartBeatTimeoutAdditional")){
                 self.state.data.heartbeat_config.heartBeatTimeoutAdditional = {};
+            }
+            if(!self.state.data.heartbeat_config.hasOwnProperty("schemaChangeEmail")){
+                self.state.data.heartbeat_config.schemaChangeEmail = " ";
+            }
+            if(!self.state.data.heartbeat_config.hasOwnProperty("schemaChangeUseEmail")){
+                self.state.data.heartbeat_config.schemaChangeUseEmail = " ";
             }
             self.trigger(self.state);
             utils.hideLoading();
@@ -134,122 +129,156 @@ var store = Reflux.createStore({
     onGlobal_config:function(new_value){
         var self = this;
         self.state.data.global_config.bootstrap= new_value;
-        self.trigger(self.state);
     },
     onMonitor_config:function(new_value){
         var self = this;
         self.state.data.global_config.monitor_url= new_value;
-        self.trigger(self.state);
     },
     onStorm_config:function(new_value){
         var self = this;
         self.state.data.global_config.storm= new_value;
-        self.trigger(self.state);
     },
     onUser_config:function(new_value){
         var self = this;
         self.state.data.global_config.user= new_value;
-        self.trigger(self.state);
+    },
+    onStormRestChange:function(new_value){
+        var self = this;
+        self.state.data.global_config.stormRest= new_value;
     },
     onHeartbeatInterval:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.heartbeatInterval = new_value;
-        self.trigger(self.state);
     },
     onCheckInterval:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.checkInterval = new_value;
-        self.trigger(self.state);
     },
     onCheckFullPullInterval:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.checkFullPullInterval = new_value;
-        self.trigger(self.state);
     },
     onDeleteFullPullOldVersionInterval:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.deleteFullPullOldVersionInterval = new_value;
-        self.trigger(self.state);
     },
     onMaxAlarmCnt:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.maxAlarmCnt = new_value;
-        self.trigger(self.state);
     },
     onHeartBeatTimeout:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.heartBeatTimeout = new_value;
-        self.trigger(self.state);
     },
     onFullPullTimeout:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.fullPullTimeout = new_value;
-        self.trigger(self.state);
     },
     onAlarmTtl:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.alarmTtl = new_value;
-        self.trigger(self.state);
     },
     onLifeInterval:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.lifeInterval = new_value;
-        self.trigger(self.state);
     },
     onCorrecteValue:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.correcteValue = new_value;
-        self.trigger(self.state);
     },
     onFullPullCorrecteValue:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.fullPullCorrecteValue = new_value;
-        self.trigger(self.state);
     },
     onFullPullSliceMaxPending:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.fullPullSliceMaxPending = new_value;
-        self.trigger(self.state);
     },
     onExcludeSchema:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.excludeSchema = new_value;
-        self.trigger(self.state);
     },
     onCheckPointPerHeartBeatCnt:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.checkPointPerHeartBeatCnt = new_value;
-        self.trigger(self.state);
     },
     onFullPullOldVersionCnt:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.fullPullOldVersionCnt = new_value;
-        self.trigger(self.state);
     },
     onAdminSMSNo:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.adminSMSNo = new_value;
-        self.trigger(self.state);
     },
     onAdminUseSMS:function(value){
         var self = this;
         self.state.data.heartbeat_config.adminUseSMS = value;
-        self.trigger(self.state);
     },
-     onAdminEmail:function(new_value){
+    onAdminEmail:function(new_value){
         var self = this;
         self.state.data.heartbeat_config.adminEmail = new_value;
-        self.trigger(self.state);
     },
-     onAdminUseEmail:function(value){
+    onAdminUseEmail:function(value){
         var self = this;
         self.state.data.heartbeat_config.adminUseEmail = value;
-        self.trigger(self.state);
+    },
+    onSchemaChangeEmail:function(new_value){
+        var self = this;
+        self.state.data.heartbeat_config.schemaChangeEmail = new_value;
+    },
+    onSchemaChangeUseEmail:function(value){
+        var self = this;
+        self.state.data.heartbeat_config.schemaChangeUseEmail = value;
     },
 
 
     //监听所有的actions
     listenables: [actions],
+
+    onCheckStormAvailable: function(p) {
+        var self = this;
+        var checkStormCount = 2;
+        $.ajax({
+            type: 'GET',
+            url: utils.builPath("jarManager/getJarList"),
+            timeout: 10000,
+            data: p,
+            success: function(result) {
+                if(result.status !== 200) {
+                    alert("storm启动脚本路径、storm机器登录用户名、免密登陆配置 错误");
+                    return;
+                }
+                checkStormCount--;
+                if(checkStormCount == 0) {
+                    alert("Storm配置检测正确");
+                }
+            },
+            error: function (xml, errType, e) {
+                alert("storm启动脚本路径、storm机器登录用户名、免密登陆配置 错误");
+            }
+        });
+        $.ajax({
+            type: 'GET',
+            url: utils.builPath("topology/list"),
+            timeout: 10000,
+            data: p,
+            success: function(result) {
+                if(result.status !== 200) {
+                    alert("Storm UI REST API 配置错误");
+                    return;
+                }
+                checkStormCount--;
+                if(checkStormCount == 0) {
+                    alert("Storm配置检测正确");
+                }
+            },
+            error: function (xml, errType, e) {
+                alert("Storm UI REST API 配置错误");
+            }
+        });
+        alert("正在验证，请稍后");
+    },
+
     onSavezk: function(p) {
         var self = this;
         $.post(utils.builPath("config/savezk"), p,function(result)

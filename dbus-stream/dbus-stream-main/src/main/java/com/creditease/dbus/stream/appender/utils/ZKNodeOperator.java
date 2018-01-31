@@ -75,6 +75,9 @@ public abstract class ZKNodeOperator {
         return obj.toString().getBytes();
     }
 
+
+
+
     public static void main(String[] args) {
         Object bytes = new Byte[]{1};
         System.out.println(bytes instanceof byte[]);

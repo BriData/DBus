@@ -4,20 +4,24 @@
 var conf = require('../../config');
 var $ = require('../utils/utils');
 var logger = require('../utils/logger');
+var PropertiesReader = require('properties-reader');
 
-var stormApi = conf.rest.stormRest;
+var config = require('../../config');
+var ZooKeeper = require('node-zookeeper-client');
+var client = ZooKeeper.createClient(config.zk.connect,{retries:3});
+
 
 module.exports = {
     /**
      * 使用storm rest api获取topology的状态
      * @returns {*}
      */
-    topologies: function () {
-        var url = $.url(stormApi, "/topology/summary");
+    listTopologies: function (param) {
+        var url = $.url(param.stormRest, "/topology/summary");
         return $.promiseHttp.get(url);
     },
-    workers : function(topologyId) {
-        var url = $.url(stormApi, "topology-workers/"+topologyId);
-        return $.promiseHttp.get(url, null, topologyId);
+    stopTopologies: function (param) {
+        var url = $.url(param.stormRest, "/topology/" + param.id + "/kill/" + param.waitTime);
+        return $.promiseHttp.post(url);
     }
 };

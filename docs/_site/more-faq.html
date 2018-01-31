@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>FAQ - DBus 0.4.0 Documentation</title>
+        
+          <meta name="description" content="FAQ 0.4.0">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+        
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="install-base-components.html">基础组件安装</a></li>
+                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
+                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
+								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
+								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
+								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+								<li><a href="config-datasource.html">数据源介绍</a></li>
+                                <li><a href="config-schema.html">Schema配置</a></li>
+                                <li><a href="config-table.html">Table配置</a></li>
+                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
+								<li><a href="config-dbus-web.html">Web基础配置</a></li>
+								<li><a href="config-inspect-data.html">源端数据查看</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+								<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+								<li><a href="more-license.html">License</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
+								
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">FAQ</h1>
+                
+
+                <p><a href="#faq_grafana_err"><em>Q1:为什么grafana不显示统计数据？</em></a></p>
+
+<p><a href="#faq_monitor_err"><em>Q2:为什么monitor页面无法显示？</em></a></p>
+
+<p><a href="#faq_control_message"><em>Q3:如何重新加载模块？</em></a></p>
+
+<p><a href="#faq_deployment_err"><em>Q4:一键上线为何失败？</em></a></p>
+
+<p><a href="#faq_view_monitor_alarm"><em>Q5:如何看监控和报警？</em></a></p>
+
+<p><a href="#faq_auth_tab2dbus"><em>Q6:如何授权dbus用户读取源端表</em></a>
+***</p>
+
+<h2 id="q1为什么grafana不显示统计数据"><a name="faq_grafana_err">Q1:为什么grafana不显示统计数据？</a></h2>
+<p>dbus是一个包含多个模块流式计算系统，实时数据需要经过的链路为：<code>canal</code>→<code>extractor</code>→<code>dispatcher</code>→<code>appender</code>，任何一个环节出现问题都可能导致grafana中无法显示统计数据，针对以下三种场景给出问题的可能的原因以及解决办法；</p>
+<ul>
+  <li>
+    <p>添加schema或table</p>
+
+    <p>可能原因：缓存没有成功刷新或者配置没有被重新加载，添加schema或者table时系统已经处于运行状态中，各个模块都有自己的本地缓存，新添加的table保存在数据库或者zookeeper中，正常情况下dbus web管理功能中添加schema或table后会自动发送控制消息通知相关模块重新加载配置、刷新缓存，如果由于某种原因导致发送控制消息失败或者相关模块处理控制消息失败则可能出现grafana中看不到统计数据折线图的情况</p>
+
+    <p>解决办法：手动调用相关模块的重新加载功能，需要重新加载的模块有<code>extractor</code>、<code>dispatcher</code>和<code>appender</code>，重新加载模块功能请参考：<a href="#faq_control_message">如何重新加载模块</a></p>
+  </li>
+  <li>
+    <p>新建数据线
+  可能原因一：新建数据线后并没有自动reload <code>heartbeat</code>模块</p>
+
+    <p>解决办法：手动reload <code>hreatbeat</code>模块，请参考：<a href="#faq_control_message">如何重新加载模块</a></p>
+
+    <p>可能原因二：请确认是否配置了canal抽取端
+  解决办法：参考canal抽取端配置</p>
+  </li>
+  <li>
+    <p>拉全量导致的问题</p>
+
+    <p>可能原因：拉全量时会暂时停止<code>appender</code>模块的数据流，在无论全量拉取成功或失败都会发送控制消息给<code>appender</code>模块，<code>appender</code>模块接收到控制消息后会唤醒数据接收线程(spout)继续处理数据，但如果全量模块因为某种原因没有发送控制消息给<code>appender</code>模块，则数据流会一直处于暂停状态，grafana监控中便无法显示<code>增量计数</code>，这样’增量计数’和<code>分发器计数</code>两条折线将会不同步。</p>
+
+    <p>解决办法：登录dbus web进入到<code>Data table</code>菜单，在查询条件中选择datasource，在schemaName输入框中输入相应的schema name点击Search并在列表中找到停止处理数据的表（状态为非<code>ok</code>状态），点击<code>IncrementPuller</code>按钮即可恢复数据流.</p>
+  </li>
+</ul>
+
+<h2 id="q2为什么monitor页面无法显示"><a name="faq_monitor_err">Q2:为什么monitor页面无法显示？</a></h2>
+<p>此页面的地址需在web配置页面进行配置，Global-Config的Monitor内容为此页面的地址。将统计数据的grafana页面的url填入Monitor保存即可。</p>
+
+<h2 id="q3如何重新加载模块"><a name="faq_control_message">Q3:如何重新加载模块？</a></h2>
+
+<p>模块重新加载功能通过发送 <code>control message</code> 实现，请登录dbus web管理系统进入 <code>control message</code> 页面，如下图所示，其中 <code>message type</code> 定义了要加载的模块，<code>data source</code> 定义了要加载的数据源，<code>ctrl_topic</code> 表示消息写入的kafka topic，此项不需要修改，下方为消息预览和 <code>Send Control Message</code> 按钮，点击这个按钮即可完成控制消息的发送从而完成模块重新加载.</p>
+
+<p><img src="img/faq-send-control-message.png" alt="" /></p>
+
+<h2 id="q4一键上线为何失败"><a name="faq_deployment_err">Q4:一键上线为何失败？</a></h2>
+
+<p>一键上线的作用是配置抽取新数据库数据的完整流程，因此影响一键上线的因素非常多，下面针对一键上线中步骤中需要注意的问题：</p>
+
+<ul>
+  <li>
+    <p>数据源基本信息需要填写user和password， 这里user指的是<strong>和待抽取的数据库在同一个Mysql实例的dbus用户的用户名和密码</strong>，dbus用户一键上线之前操作之前需要被赋予待抽取数据库表的 <code>select</code> 权限，可以参考FAQ：<a href="#faq_auth_tab2dbus">Q6:如何授权dbus用户读取源端表</a></p>
+  </li>
+  <li>
+    <p>选择schema这一步可以参考<a href="https://github.com/BriData/DBus/wiki/Usage(5)-add-schema-and-table">add schema and table流程</a></p>
+  </li>
+  <li>
+    <p>修改zk配置步骤中 ` Clone ZkConf From Templates<code> 的作用是将zookeeper 中的节点 </code>/DBus/ConfTemplates<code> 下的所有节点复制一份并做一些适当的修改以作为新创建的数据源的配置信息。这里能够成功的前提是在前期的准备过程中已经对</code>/DBus/ConfTemplates` 节点进行过初始化，初始化过程请参考：<a href="https://github.com/BriData/DBus/wiki/Usage(2)-Start-and-Check#4-storm">Usage(2) Start and Check</a></p>
+  </li>
+  <li>
+    <p>启动Topology步骤的作用是运行三个storm topology，启动storm topology之前需要首先将topology jar和启动脚本包上传的storm nimbus所在服务器的指定目录，同时在 <code>global config</code> 中配置启动脚本所在的目录，参考：<a href="https://github.com/BriData/DBus/wiki/Usage(3)-web-basic-configuration">Usage(3) web basic configuration</a>的全局配置部分，由于dbus web服务器和storm nimbus服务器通常不是同一台服务器，因此需要配置两台机器之间的ssh免密登录。</p>
+  </li>
+</ul>
+
+<h2 id="q5如何看监控和报警"><a name="faq_view_monitor_alarm">Q5:如何看监控和报警？</a></h2>
+
+<h3 id="邮件">邮件：</h3>
+
+<p>内容形式为：</p>
+
+<pre><code>Address: abc@126.com
+Subject: DBus心跳监控报警
+Contents: 尊敬的先生/女士您好，Dbus心跳监控发现数据线路:/DBus/HeartBeat/Monitor/db/schema/table发生异常，报警次数:1,超时次数:1,请及时处理.
+</code></pre>
+
+<h3 id="dbus-web">DBus-Web</h3>
+
+<ul>
+  <li>
+    <p>检查表状态是否ok</p>
+  </li>
+  <li>
+    <p>查看版本变更历史</p>
+  </li>
+  <li>
+    <p>查看Grafana</p>
+  </li>
+</ul>
+
+<h3 id="心跳日志">心跳日志</h3>
+
+<p>在心跳log中，搜索关键字：<code>Address</code>或<code>Subject</code>或<code>Contents</code>，即可找到报警记录</p>
+
+<h2 id="q6如何授权dbus用户读取源端表"><a name="faq_auth_tab2dbus">Q6:如何授权dbus用户读取源端表?</a></h2>
+
+<p>dbus web会通过<code>data source</code> 中的 <code>slave_url</code> 和 <code>dbus</code> 用户与源库建立jdbc连接，以便于通过dbus web配置以及使用dbus系统进行初始化数据拉取，因此为了能够读取到源库表的信息，需要给<code>dbus</code>用户赋带抽取表的查询权限，具体授权语句如下：</p>
+<pre><code class="language-sql">-- db.table 是需要同步的表名
+grant select on db1.table to dbus;
+</code></pre>
+
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

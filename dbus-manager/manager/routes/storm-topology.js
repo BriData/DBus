@@ -3,164 +3,102 @@ var router = express.Router();
 var service = require('../lib/service/topology-service');
 var stormApi = require('../lib/service/storm-rest');
 var logger = require('../lib/utils/logger');
-var util = require('util')
+var util = require('util');
+var child_process = require('child_process');
+var ConfUtils = require('../lib/utils/ConfUtils');
+
 
 router.get('/list', function (req, res) {
-    var param = helper.buildParam(req.query, ["dsId", "pageSize", "pageNum"]);
-    if (!param.pageSize) {
-        param.pageSize = 10;
-    }
-    if (!param.pageNum) {
-        param.pageNum = 1;
-    }
-    //var promiseMethods = [stormApi.topologies(), service.search(param)];
-
-    helper.stormTopologies().then(function (data) {
-        var stormTopologyList = data.topologySummary.topologies;
-        var fetcherMap = data.fetcherMap;
-        var methods = [service.search(param)];
-        for (var key in fetcherMap) {
-            methods.push(fetcherMap[key]);
-        }
-
-        Promise.all(methods).then(function (dataList) {
-            try {
-                var dbusTopology = JSON.parse(dataList[0]); // search的返回结果
-                dbusTopology.list.map(function (t) {
-                    var elem = stormTopologyList.find(function (element) {
-                        return element.name == t.topologyName;
-                    });
-                    if (elem) {
-                        t.stormToplogyId = elem.id;
-                        t.status = elem.status;
-                        t.workers = helper.buildWorkers(dataList, elem);
-                    }
-                });
-                service.listJars(function (err, jarList) {
-                    if(err) {
-                        res.json({status:-1, message:"List jar files error"});
-                        return;
-                    }
-                    dbusTopology.list.map(function(elem) {
-                        elem.jarList = jarList;
-                        elem.selectedJar = elem.jarName;
-                    });
-                    res.json({status: 200, data: dbusTopology});
-                });
-            } catch (error) {
-                logger.error("Error occurred while process topology list:%j.\n Error message -- %s \n%s", dataList, error.message, error.stack);
-                res.json({status: -1, error: error.message});
-            }
-
-        }).catch(function (e) {
-            res.json({status: -1, error: e.err.message || e.response.body});
-        });
-    }).catch(function (e) {
-        res.json({status: -1, error: e.err.message || e.response.body});
+    var param = req.query;
+    helper.listTopologies(param).then(function (data) {
+        res.json({status: 200, data: data});
     });
 });
 
-router.get('/selectList', function (req, res) {
-    var param = helper.buildParam(req.query, ["dsId"]);
-    //var promiseMethods = [stormApi.topologies(), service.search(param)];
-
-    helper.stormTopologies().then(function (data) {
-        var stormTopologyList = data.topologySummary.topologies;
-        var fetcherMap = data.fetcherMap;
-        var methods = [service.search(param)];
-        for (var key in fetcherMap) {
-            methods.push(fetcherMap[key]);
-        }
-
-        Promise.all(methods).then(function (dataList) {
-            try {
-                var dbusTopology = JSON.parse(dataList[0]); // search的返回结果
-                dbusTopology.list.map(function (t) {
-                    var elem = stormTopologyList.find(function (element) {
-                        return element.name == t.topologyName;
-                    });
-                    if (elem) {
-                        t.stormToplogyId = elem.id;
-                        t.status = elem.status;
-                        t.workers = helper.buildWorkers(dataList, elem);
-                    }
-                });
-                service.listJars(function (err, jarList) {
-                    if(err) {
-                        res.json({status:-1, message:"List jar files error"});
-                        return;
-                    }
-                    dbusTopology.list.map(function(elem) {
-                        elem.jarList = jarList;
-                        elem.selectedJar = elem.jarName;
-                    });
-                    res.json({status: 200, data: jarList});
-                });
-            } catch (error) {
-                logger.error("Error occurred while process topology list:%j.\n Error message -- %s \n%s", dataList, error.message, error.stack);
-                res.json({status: -1, error: error.message});
-            }
-
-        }).catch(function (e) {
-            res.json({status: -1, error: e.err.message || e.response.body});
-        });
-    }).catch(function (e) {
-        res.json({status: -1, error: e.err.message || e.response.body});
+router.get('/stop', function (req, res) {
+    var param = req.query;
+    helper.stopTopologies(param).then(function (data) {
+        res.json({status: 200, data: data});
     });
 });
 
-router.get('/addTopology', function (req, res) {
-    var param = helper.buildParam(req.query, [ "dsId", "jarName","topologyName"]);
-    service.add(param,function addTopology(err,response) {
-        if(err) {
-            res.json({status: 500, message: err.message});
+router.get('/start', function (req, res) {
+    var param = req.query;
+    helper.startTopologies(param, function (err, data) {
+        if (err) {
+            res.json({status: -1, data: data});
             return;
         }
-        res.json({status: 200,id:response.body});
+        res.json({status: 200, data: data});
     });
 });
 
+
 var helper = {
-    buildParam: function (query, params) {
+
+    buildParam: function (query, keyList) {
         var param = {};
-        params.forEach(function (key) {
+        keyList.forEach(function (key) {
             if (query[key]) {
                 param[key] = query[key];
             }
         });
         return param;
     },
-    stormTopologies: function () {
+
+    stopTopologies: function(param) {
         return new Promise(function (resolve, reject) {
-            stormApi.topologies().then(function (data) {
-                var topologies = JSON.parse(data).topologies;
-                var fetcherMap = {};
-                topologies.forEach(function (t) {
-                    fetcherMap[t.id] = stormApi.workers(t.id)
-                });
-                // 返回Topology信息和worker获取方法数组
-                resolve({topologySummary: JSON.parse(data), fetcherMap: fetcherMap});
+            stormApi.stopTopologies(param).then(function (data) {
+                resolve(data);
             }).catch(function (e) {
                 reject(e);
             });
         });
     },
-    buildWorkers: function (dataList, elem) {
-        var workers;
-        for (var i = 1; i < dataList.length; i++) {
-            if (dataList[i].key === elem.id) {
-                workers = JSON.parse(dataList[i].data).hostPortList;
-                break;
+
+    startTopologies: function(param, callback) {
+        var user = param.user;
+        var tid = param.tid;
+        var stormStartScriptPath = param.stormStartScriptPath;
+        var mainClass = param.mainClass;
+        var path = param.path;
+        var type = param.type;
+        
+        var idx1 = stormStartScriptPath.indexOf(":");
+        //ssh要连接的主机ip
+        var ip = stormStartScriptPath.substring(0, idx1);
+        var idx2 = stormStartScriptPath.indexOf("/");
+        //ssh要连接的主机port
+        var port = stormStartScriptPath.substring(idx1 + 1, idx2);
+        //var idx3 = path.lastIndexOf("/");
+        //ssh连接到主机的指定目录
+        var baseDir = stormStartScriptPath.substring(idx2);
+        console.log("baseDir: " + baseDir);
+
+        var cmd = "cd "+ baseDir + "/dbus_jars;" + " ../bin/storm jar " + path + " " + mainClass + " -zk " + ConfUtils.zookeeperServers() + tid + type;
+        console.log("cmd: " + cmd);
+        var sshCmd = "ssh -p " + port + " " + user + "@" + ip + " " + "'" + cmd + "'";
+        console.log("sshCmd: " + sshCmd);
+        child_process.exec(sshCmd, function (err, stdout, stderr) {
+            logger.info("err: " + err);
+            logger.info("stderr: " + stderr);
+            logger.info("stdout: " + stdout);
+            if(err) {
+                callback(err, err.message);
+            } else {
+                callback(null, stdout);
             }
-        }
-        if (workers) {
-            var result = [];
-            workers.map(function (t) {
-                result.push(t.host + ":" + t.port);
+        });
+    },
+
+    listTopologies: function (param) {
+        return new Promise(function (resolve, reject) {
+            stormApi.listTopologies(param).then(function (data) {
+                resolve(data);
+            }).catch(function (e) {
+                reject(e);
             });
-            return result.join(",");
-        }
-        return null;
+        });
     }
 }
 

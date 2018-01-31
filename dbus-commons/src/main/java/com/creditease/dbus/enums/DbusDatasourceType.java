@@ -27,13 +27,20 @@ import java.util.Map;
  * Created by Shrimp on 16/8/19.
  */
 public enum DbusDatasourceType {
-    ORACLE, MYSQL, JSONLOG, PLAINLOG, UNKNOWN;
+    ORACLE, MYSQL, LOG_LOGSTASH, LOG_LOGSTASH_JSON, LOG_UMS, LOG_FLUME, LOG_FILEBEAT, ES_SQL_BATCH, MONGO, UNKNOWN;
+
     public static Map<String, DbusDatasourceType> map;
+    public static final String ALIAS_FOR_ALL_LOG_DS_TYPE = "ALIAS_FOR_ALL_LOG_DS_TYPE";
+
     static {
         map = new HashMap<>();
         for (DbusDatasourceType type : values()) {
             map.put(type.name().toLowerCase(), type);
         }
+    }
+
+    public static boolean stringEqual(String type, DbusDatasourceType dbusDatasourceType) {
+        return parse(type) == dbusDatasourceType;
     }
 
     public static DbusDatasourceType parse(String type) {
@@ -48,14 +55,40 @@ public enum DbusDatasourceType {
         switch(dbusDatasourceType) {
             case    ORACLE: return "oracle.jdbc.OracleDriver";
             case    MYSQL: return "com.mysql.jdbc.Driver";
-            case    JSONLOG: return "jsonlog from flume";
-            case    PLAINLOG: return "plainlog from flume";
+            case    LOG_LOGSTASH: return "plainlog";
+            case    LOG_LOGSTASH_JSON: return "jsonlog";
+            case    LOG_UMS: return "log_ums";
+            case    LOG_FLUME: return "flume";
+            case    ES_SQL_BATCH: return "es";
+            case    MONGO: return "mongo";
             default:
                 throw new RuntimeException("Wrong Database type.");
         }
     }
-    
+
+    public static String getAliasOfDsType(DbusDatasourceType dbusDatasourceType) {
+        switch(dbusDatasourceType) {
+            case    ORACLE:
+                return DbusDatasourceType.ORACLE.name().toLowerCase();
+            case    MYSQL:
+                return DbusDatasourceType.MYSQL.name().toLowerCase();
+            //各种log类型数据源，共用一种形式的zk模板。通过常量配置一个别名DS_TYPE_LOG_ALIAS，统一各种log type
+            case    LOG_LOGSTASH:
+            case    LOG_LOGSTASH_JSON:
+            case    LOG_UMS:
+            case    LOG_FLUME:
+            case    LOG_FILEBEAT:
+                return ALIAS_FOR_ALL_LOG_DS_TYPE.toLowerCase();
+            case    ES_SQL_BATCH:
+                return DbusDatasourceType.ES_SQL_BATCH.name().toLowerCase();
+            case    MONGO:
+                return DbusDatasourceType.MONGO.name().toLowerCase();
+            default:
+                throw new RuntimeException("Wrong Database type.");
+        }
+    }
+
     public static void main(String[] args) {
-        System.out.println(parse("mysql"));
+        System.out.println(DbusDatasourceType.LOG_LOGSTASH_JSON.name());
     }
 }

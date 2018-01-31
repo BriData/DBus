@@ -5,9 +5,9 @@ PWD=$(cd `dirname $0`; pwd)
 PWD=$PWD/../
 
 #检查主包是否存在
-if [ ! -e $PWD/lib/dbus-tools-0.3.0.jar ]; then
+if [ ! -e $PWD/lib/dbus-tools-0.4.0.jar ]; then
 	echo "please execute shell in its path!"
-	exit	
+	exit
 fi
 
 #导入jar和config进入classpath
