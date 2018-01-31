@@ -293,7 +293,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
    ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 ### 2.3. 配置规则
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考[日志规则配置说明](./docs/config-table.md)）**
+* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考[日志规则配置说明](docs/config-table.md)）**
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
