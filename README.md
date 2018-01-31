@@ -1,9 +1,6 @@
----
-layout: global
-displayTitle: Dbus 概览
-title: 概览
-description: Dbus文档首页 DBUS_VERSION_SHORT
----
+### 项目主页
+
+[https://bridata.github.io/DBus/](https://bridata.github.io/DBus/)
 
 ### 背景
 
@@ -38,7 +35,7 @@ DBus的主要潜在客户包括：
 
 ### 相关文档
 
-详细介绍 DBus请参考 [wiki](docs/index.md)
+详细介绍 DBus请参考  https://bridata.github.io/DBus/
 
 常见问题可参考 [FAQ](docs/more-faq.md)
 
@@ -109,5 +106,3 @@ DBus 自身使用 Apache v2.0 协议
 邮件交流： [bridata@126.com](mailto:bridata@126.com)
 
 提交issue ： [issue](https://github.com/BriData/DBus/issues)
-
-微信群交流： ![weixin](https://github.com/BriData/DBus/raw/master/img/0weixi.png)
