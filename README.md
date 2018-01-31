@@ -1,10 +1,3 @@
----
-layout: global
-displayTitle: Dbus 概览
-title: 概览
-description: Dbus文档首页 DBUS_VERSION_SHORT
----
-
 ### 背景
 
 企业中大量业务数据保存在各个业务系统数据库中，过去通常的同步数据的方法有很多种，比如：
@@ -109,5 +102,3 @@ DBus 自身使用 Apache v2.0 协议
 邮件交流： [bridata@126.com](mailto:bridata@126.com)
 
 提交issue ： [issue](https://github.com/BriData/DBus/issues)
-
-微信群交流： ![weixin](https://github.com/BriData/DBus/raw/master/img/0weixi.png)

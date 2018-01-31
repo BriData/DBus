@@ -15,14 +15,12 @@ DBus docs说明文档以md文件提供，可使用专门的工具编译成HTML�
 https://github.com/oneclick/rubyinstaller2/releases/download/rubyinstaller-2.4.3-1/rubyinstaller-2.4.3-1-x64.exe
 
 双击打开，安装ruby。注意：安装路径不能有空格；记住选中选项“添加到path”。
-
 安装ruby执行后，会自动跳出msys2的安装界面。
-
 按回车键，把msys2 1 2 3 都装上。  
 
-#####如果msys2 安装失败，需要手动安装
-手动下载msys2安装文件：http://repo.msys2.org/distrib/x86_64/msys2-x86_64-20161025.exe 
 
+##### 如果msys2 安装失败，需要手动安装
+手动下载msys2安装文件：http://repo.msys2.org/distrib/x86_64/msys2-x86_64-20161025.exe 
 双击打开，安装。
 
 
