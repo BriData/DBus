@@ -19,7 +19,7 @@ description: FAQ DBUS_VERSION_SHORT
 [_Q6:如何授权dbus用户读取源端表_](#faq_auth_tab2dbus)
 ***
 
-## <a name="faq_grafana_err">Q1:为什么grafana不显示统计数据？</a>
+## <a name="faq_grafana_err" id="faq_grafana_err">Q1:为什么grafana不显示统计数据？</a>
 dbus是一个包含多个模块流式计算系统，实时数据需要经过的链路为：`canal`→`extractor`→`dispatcher`→`appender`，任何一个环节出现问题都可能导致grafana中无法显示统计数据，针对以下三种场景给出问题的可能的原因以及解决办法；
 * 添加schema或table
 
@@ -89,7 +89,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 在心跳log中，搜索关键字：`Address`或`Subject`或`Contents`，即可找到报警记录
 
-## <a name="faq_auth_tab2dbus">Q6:如何授权dbus用户读取源端表?</a>
+## <a name="faq_auth_tab2dbus" id="faq_auth_tab2dbus">Q6:如何授权dbus用户读取源端表?</a>
 
 dbus web会通过`data source` 中的 `slave_url` 和 `dbus` 用户与源库建立jdbc连接，以便于通过dbus web配置以及使用dbus系统进行初始化数据拉取，因此为了能够读取到源库表的信息，需要给`dbus`用户赋带抽取表的查询权限，具体授权语句如下：
 ```sql
