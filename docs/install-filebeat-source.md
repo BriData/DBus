@@ -318,7 +318,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 我们可以在grafana配置以下，看看实际流量情况。
 
-* **上传grafana配置文件[点击下载](dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_filebeat.json)： **点击Import，上传grafana json配置文件。
+* **上传grafana配置文件，下载地址：init-scripts/init-log-grafana-config/Heartbeat_log_filebeat.json ： **点击Import，上传grafana json配置文件。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png)
