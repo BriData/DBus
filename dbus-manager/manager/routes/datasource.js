@@ -24,7 +24,7 @@ router.get('/list', function (req, res) {
 router.get('/search', function (req, res) {
     var param = buildParam(req.query, [ "text", "pageSize", "pageNum"]);
     if (!param.pageSize) {
-        param.pageSize = 12;
+        param.pageSize = 10000;
     }
     if (!param.pageNum) {
         param.pageNum = 1;
