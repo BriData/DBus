@@ -60,7 +60,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 ### 1.2 配置文件说明
 
-   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考[[下载filebeat.yml]](https://github.com/BriData/DBus/releases/init-scripts/init-filebeat-config/filebeat.yml)。
+   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考[[下载filebeat.yml]](https://github.com/BriData/DBus/init-scripts/init-filebeat-config/filebeat.yml)。
 
 ```yaml
   filebeat.prospectors:			  # filebeat的探测器，可以对多个路径下的文件进行抽取
