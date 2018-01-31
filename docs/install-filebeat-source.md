@@ -135,7 +135,7 @@ filebeat-6.1.0-linux-x86_64]$ 2018/01/25 09:12:48.287446 beat.go:436: INFO Home 
 
 ### 1.4. 心跳脚本和crontab说明
 
-   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat/dbus-agent-heartbeat.tar.gz)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
+   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
 
 * **心跳脚本目录** 
 
