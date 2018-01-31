@@ -60,7 +60,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 ### 1.2 配置文件说明
 
-   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/filebeat.yml)。
+   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/)。
 
 ```yaml
   filebeat.prospectors:			  # filebeat的探测器，可以对多个路径下的文件进行抽取
@@ -284,7 +284,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 ### 2.2 数据源配置修改
 
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用。
+因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
 
 * **修改数据源信息：**点击modify按钮进行修改。
@@ -318,7 +318,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 我们可以在grafana配置以下，看看实际流量情况。
 
-* **上传grafana配置文件，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/Heartbeat_log_filebeat.json) ： **点击Import，上传grafana json配置文件。
+* **上传grafana配置文件，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config) ： **点击Import，上传grafana json配置文件。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png)
