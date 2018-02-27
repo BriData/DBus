@@ -933,5 +933,12 @@ service grafana-server start
 导入后出现如上图所示的两个dashboards
 
 
+# 13. 启动web后的基础设置
+
+启动dbus-web后，需要先设置web基础设置，包括设置kafka地址，storm启动地址等
+
+具体参考：[web-基础配置](config-dbus-web.html)
+
+
 
 
