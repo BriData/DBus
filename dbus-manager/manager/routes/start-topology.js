@@ -67,7 +67,7 @@ router.get('/getPath', function (req, res) {
                 }
 
                 for(var i = len - 1; i >= 0; i--) {
-                    if(data[i].val.indexOf(highestVersion + "/extractor") != -1) {
+                    if(data[i].val.indexOf(highestVersion + "/mysql_extractor") != -1) {
                         extractorHighVerPath = data[i].val;
                         break;
                     }
