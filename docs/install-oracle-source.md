@@ -106,6 +106,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
         Shell> ll /u01/arch
         --不存在则创建arch目录
         Shell> mkdir /u01/arch
+        Shell> chown oracle:oinstall
 
         --查看归档日志
         Shell> su - oracle
