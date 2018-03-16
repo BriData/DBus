@@ -101,7 +101,14 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
         使用oracle用户在 **ora-master 服务器**执行
 
         ```sql
-        --查看归档日志,
+        --切换到root用户，查看目录是否存在
+        Shell> sudo -i
+        Shell> ll /u01/arch
+        --不存在则创建arch目录
+        Shell> mkdir /u01/arch
+
+        --查看归档日志
+        Shell> su - oracle
         Shell> sqlplus / as sysdba;
         SQL> archive log list;
         --如果没有开启归档日志则执行以下命令开启
