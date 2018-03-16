@@ -106,7 +106,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
         Shell> ll /u01/arch
         --不存在则创建arch目录
         Shell> mkdir /u01/arch
-        Shell> chown oracle:oinstall
+        Shell> chown oracle:oinstall /u01/arch/
 
         --查看归档日志
         Shell> su - oracle
@@ -130,6 +130,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
         NO
         --如果未启用，使用如下命令启用：
         SQL> alter database add supplemental log data;
+        SQL> alter database open;
         --切换日志
         SQL> alter system archive log current;
         ```
@@ -145,7 +146,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
         ---
         NO
         --启用强制产生日志：
-        SQL> alter database force logging ;
+        SQL> alter database force logging;
         ```
 
     6. 安装环境准备
@@ -202,7 +203,8 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 
        ```sql
        --创建表空间
-       SQL> create tablespace tbs_gguser datafile '+DATA/rac/datafile/ogg.dbf' size 50m autoextend on; 
+       --请注意根据环境修改datafile路径
+       SQL> create tablespace tbs_gguser datafile '/u01/data/ogg.dbf' size 50m autoextend on; 
        --创建OGG用户
        SQL> create user ogg identified by ogg default tablespace tbs_gguser temporary tablespace temp quota unlimited on tbs_gguser;
 
@@ -368,7 +370,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 
    ```sql
    Shell> sqlplus / as sysdba;
-   SQL> create tablespace tbs_dbus datafile '+DATA' size 4G autoextend off;
+   SQL> create tablespace tbs_dbus datafile '/u01/dbus.dbf' size 4G autoextend off;
    SQL> create user dbus identified by dbus default tablespace tbs_dbus quota unlimited on tbs_dbus;
    SQL> grant connect,resource to dbus;
    SQL> grant execute on SYS.DBMS_FLASHBACK to dbus;
@@ -387,12 +389,23 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 
 2. 建表结构和sequence
 
-   sql语句详见：init-scripts/init-oracle-dbus/dbus-oracle.sql
+   sql语句详见：[dbus-oracle.sql](https://github.com/BriData/DBus/blob/master/init-scripts/init-oracle-dbus/dbus-oracle.sql)
 
 
 3. 创建系统ddl trigger
 
-   以DBA身份登录数据库，创建系统trigger，sql语句详见：init-scripts/init-oracle-dbus/tr_dbus_ddl.trg
+   以DBA身份登录数据库，创建系统trigger，sql语句详见：[tr_dbus_ddl.trg](https://github.com/BriData/DBus/blob/master/init-scripts/init-oracle-dbus/tr_dbus_ddl.trg)
+
+   ```sql
+   -- 确认trigger状态
+   SQL> select object_name,status from all_objects where object_name = 'TR_DBUS_DDL';
+
+   OBJECT_NAME                    STATUS
+   ------------------------------ -------
+   TR_DBUS_DDL                    VALID
+   ```
+
+   ​
 
 ## 2 接通一张表为例具体配置
 
@@ -423,7 +436,7 @@ SQL> alter table utest.t_customer add supplemental log data (all) columns;
 
 ### 2.4 OGG添加extract进程
 
-```shell
+```shell sql
 #编辑extract进程配置文件
 GGSCI> edit param extr01
 #输入以下内容并保存
@@ -450,7 +463,6 @@ GGSCI> add rmttrail /u01/golden123111/dirdat/ab, extract extr01
 #启动抽取进程
 GGSCI> start extr01
 #确认启动成功
-GGSCI> start extr01
 GGSCI> info extr01
 # Status RUNNING 表示启动成功
 EXTRACT    EXTR01    Last Started 2018-01-24 12:03   Status RUNNING
@@ -459,10 +471,17 @@ Process ID           15216
 Log Read Checkpoint  Oracle Redo Logs
                      2018-01-24 12:04:06  Seqno 4270, RBA 15248896
                      SCN 0.52999102 (52999102)
+                     
+# 如果出现
+#ERROR   OGG-02091  Oracle GoldenGate Capture for Oracle, orcl.prm:  Operation not supported because enable_goldengate_replication is not set to true.
+# 请在主库执行以下语句
+SQL> alter system set enable_goldengate_replication=true;
 ```
 
 ### 2.4 OGG for Bigdata添加replicat进程
 #### 2.4.1 环境准备
+
+以下操作在服务器**ogg-for-bigdata-server**上执行
 
 * 依赖的kafka相关jar包
 
