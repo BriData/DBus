@@ -436,7 +436,7 @@ SQL> alter table utest.t_customer add supplemental log data (all) columns;
 
 ### 2.4 OGG添加extract进程
 
-```shell sql
+```shell
 #编辑extract进程配置文件
 GGSCI> edit param extr01
 #输入以下内容并保存
