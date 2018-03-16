@@ -476,6 +476,7 @@ Log Read Checkpoint  Oracle Redo Logs
 #ERROR   OGG-02091  Oracle GoldenGate Capture for Oracle, orcl.prm:  Operation not supported because enable_goldengate_replication is not set to true.
 # 请在主库执行以下语句
 SQL> alter system set enable_goldengate_replication=true;
+
 ```
 
 ### 2.4 OGG for Bigdata添加replicat进程
