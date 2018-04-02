@@ -8,12 +8,13 @@ var child_process = require('child_process');
 
 var zk = config.zk.connect;
 module.exports = {
-    stormcheck: function (params, callback) {
-        var path = params;
+    stormcheck: function (param, callback) {
+
+        var path = param.storm;
         var idx1 = path.indexOf(":");
         var user_index1 = path.indexOf("/");
         var user_index2 = path.indexOf("/",user_index1+1);
-        var user = path.substring(user_index1+1, user_index2);
+        var user = param.user;
         //ssh要连接的主机ip
         var ip = path.substring(0, idx1);
         var idx2 = path.indexOf("/");

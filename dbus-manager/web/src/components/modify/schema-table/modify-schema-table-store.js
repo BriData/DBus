@@ -392,7 +392,7 @@ var store = Reflux.createStore({
             }
         });
 
-        newSelectedTable.forEach(function(e){
+        newSelectedTable.forEach(function(e) {
             if("" != e.tableName)
             {
                 sourceTable.push({dsName:dsName,schemaName:schemaName,tableName:e.tableName});
@@ -420,7 +420,7 @@ var store = Reflux.createStore({
             status:status,
             src_topic:src_topic,
             target_topic:target_topic,
-            tables:tables
+            tables:JSON.stringify(tables)
         }
         console.log("tables: " + JSON.stringify(tables));
         tablesCount = tables.length;
@@ -429,7 +429,13 @@ var store = Reflux.createStore({
             alert("Please select a schema!");
             return;
         }
-        $.when($.get(utils.builPath("insertSchemaAndTable/insert"),p), $.get(utils.builPath("insertTablesInSource/insertTable"),{sourceTable})).then(
+        
+        var p2 = {
+            sourceTable:JSON.stringify(sourceTable),
+            dsType:dsType
+        };
+        
+        $.when($.post(utils.builPath("insertSchemaAndTable/insert"),p), $.post(utils.builPath("insertTablesInSource/insertTable"), p2)).then(
             function(res1, res2) {
             console.log("res1: " + JSON.stringify(res1));
             console.log("res2: " + JSON.stringify(res2));

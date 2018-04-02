@@ -85,7 +85,7 @@ var store = Reflux.createStore({
                     etJarName = etJarPathFiled[4].substring(0, etJarPathFiled[4].indexOf(","));
                 }
             } else if("mysql" == self.state.dsType) {
-                alert("extractor最高版本下无jar包！");
+                alert("mysql_extractor最高版本下无jar包！");
             }
 
             var dahvPathFields = dispatcherAppenderHighVerPath.split("/");

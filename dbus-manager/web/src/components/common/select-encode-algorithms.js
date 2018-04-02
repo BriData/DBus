@@ -18,18 +18,16 @@ var Select = React.createClass({
        });
        return elems;
     },
-    onChange: function() {
+    onChange: function(e) {
         if(this.props.onChange) {
-            this.props.onChange(this.refs.select.value);
+            this.props.onChange(e.target.value);
         }
     },
-    getValue: function() {
-        return this.refs.select?this.refs.select.value:null;
-    },
     render: function() {
+        console.log(this.props);
         return (
             <div className="ui-select" style={this.props.style} >
-                <select ref="select"  onChange={ this.onChange } defaultValue={ this.props.defaultOpt } className={this.props.className}>
+                <select onChange={ this.onChange } defaultValue={ this.props.defaultOpt } className={this.props.className}>
                     {this.createOptions(this.props.options)}
                 </select>
             </div>

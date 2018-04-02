@@ -64,7 +64,10 @@ var initTableList = function(result) {
             value: e.tableName,
             text: e.tableName,
             outputTopic:e.outputTopic,
-            version:e.version
+            version:e.version,
+            fullpullCol: e.fullpullCol,
+            fullpullSplitShardSize: e.fullpullSplitShardSize,
+            fullpullSplitStyle: e.fullpullSplitStyle
         });
     });
     return list;
@@ -135,6 +138,9 @@ var store = Reflux.createStore({
            if(t == null) return;
            var date = new Date();
            t.template.payload.SEQNO = date.getTime()+'';
+           t.template.payload.SPLIT_COL = typeParam.fullpullCol;
+           t.template.payload.SPLIT_SHARD_SIZE = typeParam.fullpullSplitShardSize;
+           t.template.payload.SPLIT_SHARD_STYLE = typeParam.fullpullSplitStyle;
            self.state.editor.json = utils.extends(t.template, {
               id: date.getTime(),
               timestamp: date.format('yyyy-MM-dd hh:mm:ss.S')

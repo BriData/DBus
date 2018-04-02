@@ -29,6 +29,9 @@
         <result property="verChangeNoticeFlg" column="ver_change_notice_flg"/>
         <result property="outputBeforeUpdateFlg" column="output_before_update_flg"/>
         <result property="description" column="description"/>
+        <result property="fullpullCol" column="fullpull_col"/>
+        <result property="fullpullSplitShardSize" column="fullpull_split_shard_size"/>
+        <result property="fullpullSplitStyle" column="fullpull_split_style"/>
     </resultMap>
 
     <select id="findAll" resultMap="table">
@@ -121,6 +124,9 @@
         <if test="verID != null">ver_id = #{verID},</if>
         <if test="status != null">status = #{status},</if>
         <if test="description != null">description = #{description},</if>
+        <if test="fullpullCol != null">fullpull_col = #{fullpullCol},</if>
+        <if test="fullpullSplitShardSize != null">fullpull_split_shard_size = #{fullpullSplitShardSize},</if>
+        <if test="fullpullSplitStyle != null">fullpull_split_style = #{fullpullSplitStyle},</if>
         create_time = current_timestamp()
         where id = #{id}
     </update>

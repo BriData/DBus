@@ -26,7 +26,9 @@ var UpdateTable = React.createClass({
         ReactDOM.findDOMNode(this.refs.description).value = this.props.location.state.passParam.description;
         ReactDOM.findDOMNode(this.refs.physicalTableRegex).value = this.props.location.state.passParam.physicalTableRegex;
         ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value = this.props.location.state.passParam.outputBeforeUpdateFlg;
-
+        ReactDOM.findDOMNode(this.refs.fullpullCol).value = this.props.location.state.passParam.fullpullCol;
+        ReactDOM.findDOMNode(this.refs.fullpullSplitShardSize).value = this.props.location.state.passParam.fullpullSplitShardSize;
+        ReactDOM.findDOMNode(this.refs.fullpullSplitStyle).value = this.props.location.state.passParam.fullpullSplitStyle;
     },
 
     _onStatusChange: function(state) {
@@ -37,7 +39,10 @@ var UpdateTable = React.createClass({
             id: 0,
             description: ReactDOM.findDOMNode(this.refs.description).value,
             physicalTableRegex: ReactDOM.findDOMNode(this.refs.physicalTableRegex).value,
-            outputBeforeUpdateFlg: ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value
+            outputBeforeUpdateFlg: ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value,
+            fullpullCol: ReactDOM.findDOMNode(this.refs.fullpullCol).value,
+            fullpullSplitShardSize: ReactDOM.findDOMNode(this.refs.fullpullSplitShardSize).value,
+            fullpullSplitStyle: ReactDOM.findDOMNode(this.refs.fullpullSplitStyle).value
         };
         store.actions.handleSubmit(formdata);
         this.props.history.pushState({
@@ -81,6 +86,27 @@ var UpdateTable = React.createClass({
                                         <option value="1">Yes</option>
                                         <option value="0">No</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label for="fullpullCol" className="col-sm-2 control-label">split_col</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" ref="fullpullCol"/>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label for="fullpullSplitShardSize" className="col-sm-2 control-label">split_shard_size</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" ref="fullpullSplitShardSize"/>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label for="fullpullSplitStyle" className="col-sm-2 control-label">split_style</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" ref="fullpullSplitStyle"/>
                                 </div>
                             </div>
 

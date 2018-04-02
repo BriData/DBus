@@ -7,10 +7,12 @@ var logger = require('../lib/utils/logger');
 var util = require('util');
 
 //将要插入管理库的table信息，同时存入源库中。
-router.get('/insertTable', function (req, res) {
-    var tables = req.query["sourceTable"];
+router.post('/insertTable', function (req, res) {
+    // var tables = req.query["sourceTable"];
+    var tables = JSON.parse(req.body["sourceTable"]);
+    var dsType = req.body["dsType"];
     //如果tables非空，则执行以下逻辑。
-    if(typeof (tables) != "undefined")
+    if(typeof (tables) != "undefined" && dsType != "mysql")
     {
         var param = {
             dsName: tables[0]["dsName"]
@@ -62,16 +64,16 @@ router.get('/insertTable', function (req, res) {
     }
 });
 
-router.get('/insert', function (req, res) {
-    var dsId = parseInt(req.query["dsId"]);
-    var dsType = req.query["dsType"];
-    var dsName = req.query["dsName"];
-    var schemaName = req.query["schemaName"]|| 0;
-    var description = req.query["description"];
-    var status = req.query["status"];
-    var src_topic = req.query["src_topic"];
-    var target_topic = req.query["target_topic"];
-    var tables = req.query["tables"];
+router.post('/insert', function (req, res) {
+    var dsId = parseInt(req.body["dsId"]);
+    var dsType = req.body["dsType"];
+    var dsName = req.body["dsName"];
+    var schemaName = req.body["schemaName"]|| 0;
+    var description = req.body["description"];
+    var status = req.body["status"];
+    var src_topic = req.body["src_topic"];
+    var target_topic = req.body["target_topic"];
+    var tables = JSON.parse(req.body["tables"]);
 
     if(schemaName == 0)
     {

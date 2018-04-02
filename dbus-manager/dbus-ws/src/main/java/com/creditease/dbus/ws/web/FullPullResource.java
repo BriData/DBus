@@ -29,10 +29,12 @@ import com.creditease.dbus.mgr.base.ConfUtils;
 import com.creditease.dbus.utils.ControlMessageSender;
 import com.creditease.dbus.ws.common.Constants;
 import com.creditease.dbus.ws.common.Result;
+import com.creditease.dbus.ws.domain.DataTable;
 import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.creditease.dbus.ws.domain.FullPullHistory;
 import com.creditease.dbus.ws.service.DataSourceService;
 import com.creditease.dbus.ws.service.FullPullService;
+import com.creditease.dbus.ws.service.TablesService;
 import com.creditease.dbus.ws.tools.ControlMessageSenderProvider;
 import com.creditease.dbus.ws.tools.ZookeeperServiceProvider;
 import org.apache.commons.lang3.StringUtils;
@@ -73,6 +75,12 @@ public class FullPullResource {
         DbusDataSource dataSource = DataSourceService.getService().getDataSourceByName(dsName);
         if(dataSource == null) return Response.ok().entity(new Result(400, "Can not find dsName in DBus manager database")).build();
 
+        List<DataTable> dataTables = TablesService.getService().findTables(dataSource.getId(), schemaName, tableName);
+        if(dataTables.size() == 0) return Response.ok().entity(new Result(400, "Can not find table in DBus manager database")).build();
+
+        DataTable dataTable = dataTables.get(0);
+
+
         Date date = new Date();
         JSONObject payload = buildExternalPayload(map, date, dataSource);
         JSONObject message = buildExternalMessage(map, date);
@@ -85,6 +93,7 @@ public class FullPullResource {
         param.put("schemaName",schemaName);
         param.put("tableName",tableName);
         param.put("ctrlTopic", dataSource.getCtrlTopic());
+        param.put("tableOutputTopic", dataTable.getOutputTopic());
         param.put("outputTopic", payload.get("resultTopic").toString());
         param.put("message", JSON.toJSONString(message));
 
@@ -160,10 +169,11 @@ public class FullPullResource {
 
             KafkaConsumer<String, byte[]> consumer = new KafkaConsumer(consumerProps);
 
+            String tableOutputTopic = map.get("tableOutputTopic");
             String outputTopic = map.get("outputTopic");
             logger.info("[control message] Send control message to ctrlTopic: {} \n outputTopic: {} \n map: {}", ctrlTopic,outputTopic,map);
 
-            TopicPartition dataTopicPartition = new TopicPartition(outputTopic, 0);
+            TopicPartition dataTopicPartition = new TopicPartition(tableOutputTopic, 0);
             List<TopicPartition> topics = Arrays.asList(dataTopicPartition);
             consumer.assign(topics);
             //long offset0 = consumer.position(dataTopicPartition);

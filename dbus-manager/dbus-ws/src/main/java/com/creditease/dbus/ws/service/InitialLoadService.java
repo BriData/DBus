@@ -23,6 +23,8 @@ package com.creditease.dbus.ws.service;
 import com.creditease.dbus.ws.domain.DataTable;
 import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.regex.Matcher;
@@ -34,6 +36,8 @@ import java.util.regex.Pattern;
  */
 public class InitialLoadService {
     private static final String PROCEDURE_NAME = "create_full_data_req";
+
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
     public static InitialLoadService getService() {
         return new InitialLoadService();
@@ -145,7 +149,11 @@ public class InitialLoadService {
             pst.setString(4, ds.getDsName());
 
             pst.executeUpdate();
-        } finally {
+            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}",ds.getMasterURL(), ds.getDsName(), table.getSchemaName(), table.getTableName());
+        } catch (Exception e) {
+            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", ds.getDsName(), table.getSchemaName(), table.getTableName(), e);
+        }
+        finally {
             if (pst != null) {
                 pst.close();
             }
@@ -199,7 +207,11 @@ public class InitialLoadService {
             pst.setString(5, ds.getDsName());
 
             pst.executeUpdate();
-        } finally {
+            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}",ds.getMasterURL(), ds.getDsName(), table.getSchemaName(), table.getTableName());
+        } catch(Exception e) {
+            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", ds.getDsName(), table.getSchemaName(), table.getTableName(), e);
+        }
+        finally {
             if (pst != null) {
                 pst.close();
             }

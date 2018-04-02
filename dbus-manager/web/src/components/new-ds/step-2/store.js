@@ -1,5 +1,5 @@
 var Reflux = require('reflux');
-var $ = require('jquery')
+var $ = require('jquery');
 var utils = require('../../common/utils');
 var scriptGenerator = require('../../common/configScript/config-script-generator');
 
@@ -334,23 +334,27 @@ var store = Reflux.createStore({
             status:status,
             src_topic:src_topic,
             target_topic:target_topic,
-            tables:tables
-        }
+            tables:JSON.stringify(tables)
+        };
         console.log("tables: " + JSON.stringify(tables));
         tablesCount = tables.length;
-        if(p.schemaName == 0){
+        if(p.schemaName == 0) {
             callback(flag,tablesCount);
             alert("Please select a schema!");
             return;
         }
-        $.when($.get(utils.builPath("insertSchemaAndTable/insert"),p), $.get(utils.builPath("insertTablesInSource/insertTable"),{sourceTable})).then(
+
+        var p2 = {
+            sourceTable:JSON.stringify(sourceTable),
+            dsType:dsType
+        };
+        
+        $.when($.post(utils.builPath("insertSchemaAndTable/insert"), p), $.post(utils.builPath("insertTablesInSource/insertTable"), p2)).then(
             function(res1, res2) {
                 if(res1[0].status == 200 && res2[0].status == 200)
                 {
                     callback(flag,tablesCount);
-                }
-                else
-                {
+                } else {
                     flag = 0;
                     alert("insertSchemaAndTable and insertTablesInSource fail！");
                     callback(flag,tablesCount);

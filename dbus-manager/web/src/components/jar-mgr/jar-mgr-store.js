@@ -31,9 +31,7 @@ var store = Reflux.createStore({
             dbusVersion.push({value: "0.3.x", text: "0.3.x"});
         }
 
-
         dbusVersion.push({value: "0.4.x", text: "0.4.x"});
-
         var dbus2JarType = [];
 
         if(global.isDebug) {
@@ -45,8 +43,6 @@ var store = Reflux.createStore({
             dbus2JarType.push({value: "puller", text: "puller"});
             //<!-- #opensource_remove_end# -->
         }
-
-        
 
         var dbus3JarType = [];
         if(global.isDebug) {
@@ -119,7 +115,7 @@ var store = Reflux.createStore({
                 }
             };
             finalJarList.sort(compare);
-            
+
             self.state.jarList = finalJarList;
             self.state.validJarList = validJarList;
             self.trigger(self.state);

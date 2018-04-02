@@ -55,12 +55,18 @@ var DataTable = React.createClass({
     _closeDialog: function() {
         store.actions.closeDialog();
     },
+    readOutputTopic: function (obj) {
+        store.actions.readOutputTopic(obj);
+    },
+    closeReadOutputTopic: function () {
+        store.actions.closeReadOutputTopic();
+    },
     openDialogByKey: function(key, obj) {
         store.actions.openDialogByKey(key, obj);
     },
     openDialogConfigure: function(obj) {
         utils.showLoading();
-        store.actions.openDialogConfigure(obj);
+        store.actions.openDialogConfigure(obj, this);
     },
     saveConfigure: function(){
         store.actions.saveConfigure();
@@ -89,7 +95,10 @@ var DataTable = React.createClass({
             description:data.description,
             physicalTableRegex:data.physicalTableRegex,
             outputBeforeUpdateFlg:data.outputBeforeUpdateFlg,
-            status:data.status
+            status:data.status,
+            fullpullCol:data.fullpullCol,
+            fullpullSplitShardSize:data.fullpullSplitShardSize,
+            fullpullSplitStyle:data.fullpullSplitStyle
         };
         store.actions.openUpdate(updateParam);
         this.props.history.pushState({passParam: updateParam}, "/data-table/table-update");
@@ -118,7 +127,8 @@ var DataTable = React.createClass({
             schemaName: data.schemaName,
             tableName: data.tableName,
             ctrlTopic: data.ctrlTopic,
-            resultTopic: newResultTopic,
+            tableOutputTopic: data.outputTopic,
+            outputTopic: newResultTopic,
             version: false,
             batch: false,
             messageType: '单表独立全量拉取'
@@ -136,7 +146,8 @@ var DataTable = React.createClass({
             status:data.status,
             physicalTableRegex:data.physicalTableRegex,
             outputTopic:data.outputTopic,
-            version:data.version,
+            // 在拉全量时，传入后台会解析为''，为了避免toInt时出错，传入0
+            version:data.version || 0, 
             namespace:data.namespace,
             type:"load-data"
         };
@@ -343,15 +354,15 @@ var DataTable = React.createClass({
                         <Column
                             header={ <Cell>ds</Cell> }
                             cell={ <TextCell data={rows} col="dsName" onDoubleClick={this.openDialogByKey.bind(this,"dsName")}/>}
-                            width={70} />
+                            width={100} />
                         <Column
                             header={ <Cell>schema</Cell> }
                             cell={ <TextCell data={rows} col="schemaName" onDoubleClick={this.openDialogByKey.bind(this,"schemaName")}/>}
-                            width={70} />
+                            width={120} />
                         <Column
                             header={ <Cell>tableName</Cell> }
                             cell={ <TextCell data={rows} col="tableName" onDoubleClick={this.openDialogByKey.bind(this,"tableName")}/>}
-                            width={160} />
+                            width={210} />
                         <Column
                             header={ <Cell>status</Cell> }
                             cell={props => (
@@ -401,7 +412,14 @@ var DataTable = React.createClass({
                             width={200} />
                         <Column
                             header={ <Cell>outputTopic</Cell> }
-                            cell={ <TextCell data={rows} col="outputTopic" onDoubleClick={this.openDialogByKey.bind(this,"outputTopic")}/>}
+                            cell={props => (
+                            <div className="fixedDataTableCellLayout_wrap1 public_fixedDataTableCell_wrap1"><div className="fixedDataTableCellLayout_wrap2 public_fixedDataTableCell_wrap2"><div className="fixedDataTableCellLayout_wrap3 public_fixedDataTableCell_wrap3"><div className="public_fixedDataTableCell_cellContent">
+                            <span onClick={this.readOutputTopic.bind(this, rows[props.rowIndex])} title="Read output topic" style={{fontWeight:"bold",textDecoration:"underline",cursor:"pointer"}}>
+                                {rows[props.rowIndex]["outputTopic"]}
+                            </span>
+                            </div></div></div></div>
+                            )
+                            }
                             width={200} />
                         <Column
                             header={ <Cell>namespace</Cell> }
@@ -445,6 +463,7 @@ var DataTable = React.createClass({
                             </Modal.Footer>
                         </Modal>
                         <Modal
+                            backdrop='static'
                             bsSize="large"
                             show={this.state.dialog.showConfigure}
                             onHide={this.closeConfigure}>
@@ -459,6 +478,28 @@ var DataTable = React.createClass({
                                 <B.Button onClick={this.closeConfigure}>Close</B.Button>
                             </Modal.Footer>
                         </Modal>
+
+                        <Modal
+                            bsSize="large"
+                            show={this.state.showReadOutputTopic}
+                            onHide={this.closeReadOutputTopic}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>
+                                    <B.FormGroup>
+                                        <B.Col componentClass={B.ControlLabel} sm={2}>
+                                            Topic:{this.state.dialogOutputTopic}
+                                        </B.Col>
+                                    </B.FormGroup>
+                                </Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <B.Button onClick={this.closeReadOutputTopic}>Close</B.Button>
+                            </Modal.Footer>
+                        </Modal>
+
                     </div>
                 </TF.Body>
             </TF>

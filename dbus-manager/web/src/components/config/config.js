@@ -794,7 +794,7 @@ var Config = React.createClass({
                                 </Col>
                                 <Col sm={3}>
                                     <Input
-                                        value={this.state.data.heartbeat_config.adminEmail}
+                                        defaultValue={this.state.data.heartbeat_config.adminEmail}
                                         onChange={this.adminEmail}
                                         type="text"
                                         placeholder="管理者邮箱"/>
@@ -832,7 +832,7 @@ var Config = React.createClass({
                                 </Col>
                                 <Col sm={3}>
                                     <Input
-                                        value={this.state.data.heartbeat_config.schemaChangeEmail}
+                                        defaultValue={this.state.data.heartbeat_config.schemaChangeEmail}
                                         onChange={this.schemaChangeEmail}
                                         type="text"
                                         placeholder="表结构变更通知邮箱"/>

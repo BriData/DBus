@@ -26,6 +26,8 @@ import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.ws.domain.DataTable;
 import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.creditease.dbus.ws.domain.TableMeta;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
@@ -34,6 +36,8 @@ import java.util.*;
 public abstract class TableFetcher {
     private DbusDataSource ds;
     private Connection conn;
+
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
     public TableFetcher(DbusDataSource ds) {
         this.ds = ds;
@@ -212,98 +216,61 @@ public abstract class TableFetcher {
 
             String sql = params.get("sql").toString();
 
-            //分割字符串，后续查找的字符串必须整体对应，避免出现从XXX_ID找到ID的情况
-            String[] sqls = sql.split(" |,"); //为保证一致性，实际添加的字符串的大小写和原始字符串应当相同
-            String[] sqlsUpperCase = sql.toUpperCase().split(" |,");//为了方便比较，此处将字符串全部转为大写字母，以便后续比较忽略大小写
-
-            //不允许除select以外的语句执行
-            if (findString("select", sqlsUpperCase) != -1) {
-
-                if (findString(";", sqlsUpperCase) != -1) {
-                    sql = sql.substring(0, sql.length() - 1);
-                }
-                if (params.get("dsType").toString().equals("oracle")) {
-                    //如果是oracle
-                    if (findString("where", sqlsUpperCase) != -1) {
-                        sql = sql + " and " + sqls[findString("where", sqlsUpperCase)] + " rownum <= 100 ";
-                    } else {
-                        sql = sql + " WHERE " + " rownum <= 100 ";
-                    }
-
-
-                    //如果存在ID或SCN_NO，则按其倒排；否则按创建时间倒排
-                    if (findString("ID", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("ID", sqlsUpperCase)] + " desc";
-                    } else if (findString("SCN_NO", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("SEQNO", sqlsUpperCase)] + " desc";
-                        //sql = sql + " order by " + sqls[findString("SERNO", sqlsUpperCase)] + " desc";
-                    } else if (findString("CREATE_TIME", sqlsUpperCase) != -1) {
-                        if (findString("PULL_REQ_CREATE_TIME", sqlsUpperCase) != -1) {
-                            sql = sql + " order by " + sqls[findString("PULL_REQ_CREATE_TIME", sqlsUpperCase)] + " desc";
-                        } else {
-                            sql = sql + " order by " + sqls[findString("CREATE_TIME", sqlsUpperCase)] + " desc";
-                        }
-                    } else if (findString("EVENT_TIME", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("EVENT_TIME", sqlsUpperCase)] + " desc";
-                    } else if (findString("DDL_TIME", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("DDL_TIME", sqlsUpperCase)] + " desc";
-                    } else if (findString("DATE_TYPE", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("DATE_TYPE", sqlsUpperCase)] + " desc";
-                    } else if (findString("PULL_REQ_CREATE_TIME", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("PULL_REQ_CREATE_TIME", sqlsUpperCase)] + " desc";
-                    }
-                } else {
-                    //如果是mysql
-                    if (findString("ID", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("ID", sqlsUpperCase)] + " desc";
-                    } else if (findString("SCN_NO", sqlsUpperCase) != -1) {
-                        sql = sql + " order by " + sqls[findString("SEQNO", sqlsUpperCase)] + " desc";
-                    } else if (findString("create_time", sqlsUpperCase) != -1) {
-                        if (findString("pull_req_create_time", sqlsUpperCase) != -1) {
-                            sql = sql + " order by " + sqls[findString("pull_req_create_time", sqlsUpperCase)] + " desc";
-                        } else {
-                            sql = sql + " order by " + sqls[findString("create_time", sqlsUpperCase)] + " desc";
-                        }
-                    }
-                    sql = sql + " limit 100";
-                }
-
-                PreparedStatement statement = conn.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery();
-                List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-                ResultSetMetaData md = resultSet.getMetaData(); //获得结果集结构信息,元数据
-                int columnCount = md.getColumnCount();   //获得列数
-                boolean flag = false; //判断表格是否为空
-                while (resultSet.next()) {
-                    flag = true;
-                    Map<String, Object> rowData = new LinkedHashMap<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        if (md.getColumnName(i).indexOf("TIME") != -1 && params.get("dsType").toString().equals("oracle")) {
-                            if (sql.indexOf("HEARTBEAT") != -1) {
-                                rowData.put(md.getColumnName(i), resultSet.getObject(i));
-                            } else {
-                                rowData.put(md.getColumnName(i), resultSet.getTimestamp(md.getColumnName(i)));
-                            }
-                        } else {
-                            rowData.put(md.getColumnName(i), resultSet.getObject(i));
-                        }
-                    }
-                    list.add(rowData);
-                }
-                //表为空，取不到结果集结构，所以将sql语句中的列名取出
-                if (!(flag)) {
-                    String columns = sql.substring(sql.indexOf("select") + 6, sql.indexOf("from"));
-                    String[] column = columns.split(",");
-                    Map<String, Object> rowName = new HashMap<String, Object>();
-                    for (int j = 0; j < column.length; j++) {
-                        rowName.put(column[j], null);
-                    }
-                    list.add(rowName);
-                }
-                return list;
-            } else {
-                return null;
+            if(StringUtils.containsIgnoreCase(sql,"DDL_TIME")) {
+                sql += " order by DDL_TIME desc";
+            } else if(StringUtils.containsIgnoreCase(sql,"SEQNO")) {
+                sql += " order by SEQNO desc";
+            } else if(StringUtils.containsIgnoreCase(sql,"CREATE_TIME")) {
+                sql += " order by CREATE_TIME desc";
+            } else if(StringUtils.containsIgnoreCase(sql,"SERNO")) {
+                sql += " order by SERNO desc";
+            } else if(StringUtils.containsIgnoreCase(sql,"ID")) {
+                sql += " order by ID desc";
             }
+
+            if (params.get("dsType").toString().equals("oracle")) {
+                sql = "select * from ("+ sql +") where rownum <= 100";
+            } else if (params.get("dsType").toString().equals("oracle")) {
+                sql = sql + " limit 100";
+            }
+
+            logger.info("查询源库的SQL语句为: {}", sql);
+
+            PreparedStatement statement = conn.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+            List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+            ResultSetMetaData md = resultSet.getMetaData(); //获得结果集结构信息,元数据
+            int columnCount = md.getColumnCount();   //获得列数
+            boolean flag = false; //判断表格是否为空
+            while (resultSet.next()) {
+                flag = true;
+                Map<String, Object> rowData = new LinkedHashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    if (md.getColumnName(i).indexOf("TIME") != -1 && params.get("dsType").toString().equals("oracle")) {
+                        if (sql.indexOf("HEARTBEAT") != -1) {
+                            rowData.put(md.getColumnName(i), resultSet.getObject(i));
+                        } else {
+                            rowData.put(md.getColumnName(i), resultSet.getTimestamp(md.getColumnName(i)));
+                        }
+                    } else {
+                        rowData.put(md.getColumnName(i), resultSet.getObject(i));
+                    }
+                }
+                list.add(rowData);
+            }
+            resultSet.close();
+            statement.close();
+            //表为空，取不到结果集结构，所以将sql语句中的列名取出
+            if (!(flag)) {
+                String columns = sql.substring(sql.indexOf("select") + 6, sql.indexOf("from"));
+                String[] column = columns.split(",");
+                Map<String, Object> rowName = new HashMap<String, Object>();
+                for (int j = 0; j < column.length; j++) {
+                    rowName.put(column[j], null);
+                }
+                list.add(rowName);
+            }
+            return list;
 
         } finally {
             if (!conn.isClosed()) {
@@ -338,6 +305,8 @@ public abstract class TableFetcher {
                 }
                 list.add(rowData);
             }
+            resultSet.close();
+            statement.close();
             for(Map<String, Object> column: list) {
                 Object dataType = column.get("DATA_TYPE");
                 Object dataLength = column.get("DATA_LENGTH");
@@ -386,6 +355,8 @@ public abstract class TableFetcher {
                     }
                 }
             }
+            resultSet.close();
+            statement.close();
         } finally {
             if (!conn.isClosed()) {
                 conn.close();

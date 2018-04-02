@@ -90,6 +90,36 @@ public class DataTable implements Serializable {
 
     private String description;
 
+    private String fullpullCol;
+
+    private String fullpullSplitShardSize;
+
+    private String fullpullSplitStyle;
+
+    public String getFullpullSplitStyle() {
+        return fullpullSplitStyle;
+    }
+
+    public void setFullpullSplitStyle(String fullpullSplitStyle) {
+        this.fullpullSplitStyle = fullpullSplitStyle;
+    }
+
+    public String getFullpullCol() {
+        return fullpullCol;
+    }
+
+    public void setFullpullCol(String fullpullCol) {
+        this.fullpullCol = fullpullCol;
+    }
+
+    public String getFullpullSplitShardSize() {
+        return fullpullSplitShardSize;
+    }
+
+    public void setFullpullSplitShardSize(String fullpullSplitShardSize) {
+        this.fullpullSplitShardSize = fullpullSplitShardSize;
+    }
+
     public int getOutputBeforeUpdateFlg() {
         return outputBeforeUpdateFlg;
     }

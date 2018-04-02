@@ -91,7 +91,7 @@ router.post('/savezk', function (req, res) {
     var params = param.storm;
     var path_storm = params.substring(params.indexOf("/"),params.length);
     try {
-        storm_service.stormcheck(params, function startTopo(err, data) {
+        storm_service.stormcheck(param, function startTopo(err, data) {
             var idx = data.indexOf(path_storm);
             if (err) {
                 console.log(err);

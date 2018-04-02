@@ -24,7 +24,9 @@ var actions = Reflux.createActions(['initialLoad','dataSourceSelected','search',
     'independentPullWhole',
     'deleteTable',
     'takeEffect',
-    'changeInactive']);
+    'changeInactive',
+    'readOutputTopic',
+    'closeReadOutputTopic']);
 
 var store = Reflux.createStore({
     state: {
@@ -53,7 +55,13 @@ var store = Reflux.createStore({
         id:0,
         tableName:"",
         tableVersion:[],
-        versionData:""
+        versionData:"",
+
+        // 读kafka对话框
+        showReadOutputTopic: false,
+        dialogOutputTopic: null,
+
+
     },
     initState: function() {
         return this.state;
@@ -85,6 +93,20 @@ var store = Reflux.createStore({
             search(null, self.state.currentPageNum);
         });
     },
+
+    onReadOutputTopic: function (obj) {
+        var self = this;
+        self.state.dialogOutputTopic = obj.outputTopic;
+        self.state.showReadOutputTopic = true;
+        self.trigger(self.state);
+    },
+    onCloseReadOutputTopic: function () {
+        var self = this;
+        self.state.dialogOutputTopic = null;
+        self.state.showReadOutputTopic = false;
+        self.trigger(self.state);
+    },
+
     onCloseDialog: function() {
         this.state.dialog.show = false;
         this.trigger(this.state);
@@ -146,7 +168,7 @@ var store = Reflux.createStore({
             storeSelf.onSearch({});
         });
     },
-    onOpenDialogConfigure: function(obj) {
+    onOpenDialogConfigure: function(obj, dataTableSelf) {
         var self=this;
         this.state.dialog.contentConfigure = "没有返回数据";
         var param= {
@@ -155,8 +177,10 @@ var store = Reflux.createStore({
         $.get(utils.builPath("tables/desensitization"), param, function(result) {
             if(result.status == 200) {
                 var desensitizationInformations=result.data;
+                console.log("脱敏信息:",desensitizationInformations);
                 $.get(utils.builPath("tables/fetchTableColumns"), param, function(result){
                     if(result.status == 200) {
+                        console.log("源库中表的列信息:",result.data);
                         self.state.dialog.tableInformation.tableId=param.tableId;// 在保存的时候会用到
 
                         var tableColumns = result.data;
@@ -172,7 +196,7 @@ var store = Reflux.createStore({
                                 self.state.dialog.encodeAlgorithms = self.createEncodeAlgorithmsList(result.data);
 
                                 self.state.dialog.contentConfigure = self.createDesensitizationTableView(desensitizationInformations
-                                    ,tableColumns);
+                                    ,tableColumns, dataTableSelf);
                                 self.state.dialog.showConfigure = true;
                                 self.state.dialog.identityConfigure = obj["tableName"] + " encode configure" ; // 对话框标题
                                 self.trigger(self.state);
@@ -201,13 +225,14 @@ var store = Reflux.createStore({
         }
         return list;
     },
-    createDesensitizationTableView(desensitizationInformations, tableColumns) {
+    createDesensitizationTableView(desensitizationInformations, tableColumns, dataTableSelf) {
         for (var i=0;i<tableColumns.length;i++) {
             tableColumns[i].encode_type='';
             tableColumns[i].encode_param='';
             tableColumns[i].truncate='1';
             for (var j=0;j<desensitizationInformations.length;j++) {
                 if(tableColumns[i].COLUMN_NAME == desensitizationInformations[j].fieldName) {
+                    console.log(tableColumns[i], desensitizationInformations[j]);
                     tableColumns[i].encode_type=desensitizationInformations[j].encodeType;
                     tableColumns[i].encode_param=desensitizationInformations[j].encodeParam;
                     tableColumns[i].truncate=desensitizationInformations[j].truncate+'';
@@ -220,41 +245,40 @@ var store = Reflux.createStore({
             }
         }
 
-        var rows = [];
-        rows.push(<Table
+        return (<Table
             overflowX={'auto'}
             overflowY={'auto'}
             rowsCount={tableColumns.length}
             rowHeight={30}
             headerHeight={20}
             width={880}
-            height={450}>
+            height={30*(tableColumns.length+1)}>
             <Column
                 header={<cell>Column Name</cell>}
-                cell={<TextCell data={tableColumns} col="COLUMN_NAME" onDoubleClick={this.onOpenDialogByKey.bind(this,"COLUMN_NAME")}/>}
+                cell={<TextCell data={tableColumns} col="COLUMN_NAME" onDoubleClick={dataTableSelf.openDialogByKey.bind(this,"COLUMN_NAME")}/>}
                 width={130}
             />
             <Column
                 header={<cell>Type</cell>}
-                cell={<TextCell data={tableColumns} col="DATA_TYPE" onDoubleClick={this.onOpenDialogByKey.bind(this,"DATA_TYPE")}/>}
+                cell={<TextCell data={tableColumns} col="DATA_TYPE" onDoubleClick={dataTableSelf.openDialogByKey.bind(this,"DATA_TYPE")}/>}
                 width={130}
             />
             <Column
                 header={<cell>Encode Type</cell>}
-                cell={props => (
-                    <Select
+                cell={props => {
+                return (<Select
                     style={{width:"160px"}}
-                    className={"desensitization_"+this.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
+                    className={"desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
                     defaultOpt={tableColumns[props.rowIndex].encode_type}
-                    options={this.state.dialog.encodeAlgorithms}
+                    options={dataTableSelf.state.dialog.encodeAlgorithms}
                     />
-                )}
+                )}}
                 width={160}
             />
             <Column
                 header={<cell>Encode Param</cell>}
                 cell={props => (
-                    <textarea className={"form-control desensitization_"+this.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}  rows="1" cols="48" style={{resize:"none"}}>{tableColumns[props.rowIndex].encode_param}</textarea>
+                    <textarea className={"form-control desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}  rows="1" cols="48" style={{resize:"none"}}>{tableColumns[props.rowIndex].encode_param}</textarea>
                 )}
                 width={320}
             />
@@ -263,7 +287,7 @@ var store = Reflux.createStore({
                 cell={props => (
                     <Select
                     style={{width:"130px"}}
-                    className={"desensitization_"+this.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
+                    className={"desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
                     defaultOpt={tableColumns[props.rowIndex].truncate}
                     options={[{text:"是",value:"1"},{text:"否",value:"0"}]}
                     />
@@ -271,7 +295,6 @@ var store = Reflux.createStore({
                 width={130}
             />
         </Table>);
-        return rows;
     },
     onSaveConfigure: function() {
         utils.showLoading();
@@ -487,6 +510,9 @@ var store = Reflux.createStore({
             if(t == null) return;
             var date = typeParam.date;
             t.template.payload.SEQNO = date.getTime()+'';
+            t.template.payload.SPLIT_COL = data.fullpullCol || "";
+            t.template.payload.SPLIT_SHARD_SIZE = data.fullpullSplitShardSize || "";
+            t.template.payload.SPLIT_SHARD_STYLE = data.fullpullSplitStyle || "";
             var message = utils.extends(t.template, {
                 id: date.getTime(),
                 timestamp: date.format('yyyy-MM-dd hh:mm:ss.S')
@@ -496,7 +522,7 @@ var store = Reflux.createStore({
     },
     _sendIndependentPullWholeMessage: function(typeParam,data, message) {
         var ctrlTopic = typeParam.ctrlTopic;
-        var resultTopic = typeParam.resultTopic;
+        var outputTopic = typeParam.outputTopic;
         var strJson = JSON.stringify(message);
         var param = {
             id: message.id,
@@ -505,7 +531,8 @@ var store = Reflux.createStore({
             schemaName: data.schemaName,
             tableName: data.tableName,
             ctrlTopic: ctrlTopic,
-            outputTopic: resultTopic,
+            tableOutputTopic: data.outputTopic,
+            outputTopic: outputTopic,
             message: strJson
         };
         $.post(utils.builPath('fullPull/send'), param , function(result) {

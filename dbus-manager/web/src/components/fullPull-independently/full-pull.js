@@ -75,11 +75,19 @@ var FullPull = React.createClass({
         });
         var schemaId = ReactDOM.findDOMNode(this.refs.schema).value;
         var schemaName;
-        this.state.schemaList.forEach(function(schema, idx) {
+        this.state.schemaList.forEach(function(schema) {
             if(schema.value == schemaId){
                schemaName = schema.text;
             }
         });
+        var tableName = ReactDOM.findDOMNode(this.refs.table).value;
+        var tableOutputTopic;
+        this.state.tableList.forEach(function(table) {
+            if(table.value == tableName){
+                tableOutputTopic = table.outputTopic;
+            }
+        });
+
         var outputTopic = ReactDOM.findDOMNode(this.refs.resultTopic).value;
         var strMessage = JSON.stringify(message);
         var param = {
@@ -90,6 +98,7 @@ var FullPull = React.createClass({
             tableName: ReactDOM.findDOMNode(this.refs.table).value,
             ctrlTopic: ctrlTopic,
             outputTopic: outputTopic,
+            tableOutputTopic: tableOutputTopic,
             message: strMessage
         };
         store.actions.sendMessage(param,function(msg) {
@@ -134,7 +143,17 @@ var FullPull = React.createClass({
             }
         });
         var tableName = ReactDOM.findDOMNode(this.refs.table).value;
-        
+        var fullpullCol = "";
+        var fullpullSplitShardSize = "";
+        var fullpullSplitStyle = "";
+        this.state.tableList.forEach(function (e) {
+            if(e.value == tableName) {
+                fullpullCol = e.fullpullCol || "";
+                fullpullSplitShardSize = e.fullpullSplitShardSize || "";
+                fullpullSplitStyle = e.fullpullSplitStyle || "";
+            }
+        });
+
         var messageType = ReactDOM.findDOMNode(this.refs.messageType).value;
         //var resultTopic = ReactDOM.findDOMNode(this.refs.resultTopic).value;
          //初始化ds列表时赋值ctrl_topic
@@ -144,7 +163,18 @@ var FullPull = React.createClass({
 
         var version = ReactDOM.findDOMNode(this.refs.version).checked;
         var batch = ReactDOM.findDOMNode(this.refs.batch).checked;
-        this.createTypeList({dsId:dsId,schemaName:schemaName,tableName:tableName,resultTopic:resultTopic,version:version,batch:batch,messageType:messageType});
+        this.createTypeList({
+            dsId: dsId,
+            schemaName: schemaName,
+            tableName: tableName,
+            resultTopic: resultTopic,
+            version: version,
+            batch: batch,
+            messageType: messageType,
+            fullpullCol: fullpullCol,
+            fullpullSplitShardSize: fullpullSplitShardSize,
+            fullpullSplitStyle: fullpullSplitStyle
+        });
     },
     versionChanged:function(){
       var version = ReactDOM.findDOMNode(this.refs.version).checked;

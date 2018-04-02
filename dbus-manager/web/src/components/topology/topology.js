@@ -25,6 +25,10 @@ var Topologys = React.createClass({
     search: function(value) {
         store.actions.search({dsName: value, stormRest: this.state.stormRest}, this);
     },
+    refresh: function () {
+        var version = ReactDOM.findDOMNode(this.refs.ds).childNodes[0].value;
+        this.search(version);
+    },
 
     stop: function (name, id) {
         var waitTime = prompt("请输入等待时间(秒)", '10');
@@ -100,6 +104,11 @@ var Topologys = React.createClass({
                         defaultOpt={{value:0, text:"select a data source"}}
                         options={this.state.dsOptions}
                         onChange={this.search}/>
+                    <B.Button
+                        bsSize="sm"
+                        onClick={this.refresh}>
+                        Refresh
+                    </B.Button>
                 </TF.Header>
                 <TF.Body>
                     <antd.Table locale={{emptyText:"No topology"}} bordered size="middle"

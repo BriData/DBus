@@ -133,7 +133,7 @@ var store = Reflux.createStore({
         if(p == null) {
             alert("onExecuteDialogSqlonMaster is failed!");
         }
-        console.log("onExecuteDialogSqlonSlave: " + p);
+        console.log("onExecuteDialogSqlonMaster: " + p);
 
         $.get(utils.builPath("tables/executeSql"), p, function(result) {
             if(result.status !== 200) {

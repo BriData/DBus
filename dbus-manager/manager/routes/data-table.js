@@ -49,7 +49,7 @@ router.get('/list', function (req, res) {
 });
 
 router.get('/updateTable',function(req,res){
-    var param = buildParam(req.query,["id","physicalTableRegex","outputBeforeUpdateFlg","description","status"]);
+    var param = req.query;
     service.updateTable(param,function updateTable(err, response) {
             console.log(response.body);
             if(err) {
