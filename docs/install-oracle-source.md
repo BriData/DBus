@@ -297,8 +297,9 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
        GGSCI> edit param mgr
        #输入以下内容并保存
        PORT 7890
-       # 只保留 7 天的 trail file 文件
-       PURGEOLDEXTRACTS /u01/golden123111/dirdat/*, usecheckpoints, minkeepdays 7
+       PURGEOLDEXTRACTS /u01/golden123012/dirdat, USECHECKPOINTS
+       #自动重启的配置
+       AUTORESTART EXTRACT *,RETRIES 5,WAITMINUTES 1
        #启动mgr进程
        GGSCI> start mgr
        #确认mgr进程启动是否成功
@@ -346,7 +347,8 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
      GGSCI> edit param mgr
      # 输入以下内容并保存
      PORT 7890
-     PURGEOLDEXTRACTS /u01/golden123111/dirdat, USECHECKPOINTS
+     # 只保留 7 天的 trail file 文件
+     PURGEOLDEXTRACTS /u01/golden123111/dirdat/*, usecheckpoints, minkeepdays 7
      AUTORESTART REPLICAT *,RETRIES 5,WAITMINUTES 1
 
      GGSCI> start mgr
