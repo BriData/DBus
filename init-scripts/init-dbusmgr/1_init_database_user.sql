@@ -1,15 +1,8 @@
----ËµÃ÷£ºdbusmgrÊÇ dbusµÄ¹ÜÀí¿â£¬¹ÜÀíÔªÊı¾İ£¬Ö»ĞèÒª´´½¨Ò»´Î£¬Î»ÖÃÔÚÈÎºÎmysql¿â¶¼¿ÉÒÔ
-
-
---- 1 ´´½¨¿â£¬¿â´óĞ¡ÓÉdbaÖ¸¶¨ (ºÜĞ¡¾Í¿ÉÒÔ£¬´æÅäÖÃÊ¹ÓÃ£©
+ï»¿
 create database dbusmgr;
 
-
---- 2 ´´½¨ÓÃ»§£¬ÃÜÂëÓÉdbaÖ¸¶¨
 CREATE USER dbusmgr IDENTIFIED BY 'HxP31vevLw9PoiT/';
 
-
---- 3 ÊÚÈ¨ÓÃ»§£¬ÊÚÈ¨×Ô¼ºµÄ¿â, ÃÜÂëÓÉdbaÖ¸¶¨
 GRANT ALL ON dbusmgr.* TO dbusmgr@'%' IDENTIFIED BY 'HxP31vevLw9PoiT/';
 
 flush privileges; 
