@@ -276,6 +276,7 @@ listeners=PLAINTEXT://dbus-n3:9092
 分别在dbus-n1、dbus-n2、dbus-n3的/app/dbus/kafka_2.11-0.10.0.0/bin目录下执行如下命令：
 
 ```
+ export JMX_PORT=9999;
 ./kafka-server-start.sh -daemon ../config/server.properties &
 ```
 
