@@ -10,9 +10,16 @@ typora-root-url: ./
 
 ## 1 关系型数据库类型数据源添加Schema和表
 
-​	一般来说，添加schema，目的定是为了接入某张/某些表的数据，所以，DBus没有单独提供专门添加schema的功能，而是将其和添加表融合在一起。因此添加schema和添加表，打开的页面是一样的。在这个页面做完相关操作，点击Next按钮（相当于提交按钮），尚不存在的schema会自动添加到系统。
+​	一般来说，添加schema，目的是为了接入某张/某些表的数据，所以，DBus没有单独提供专门添加schema的功能，而是将其和添加表融合在一起。因此添加schema和添加表，打开的页面是一样的。在这个页面做完相关操作，点击Next按钮（相当于提交按钮），尚不存在的schema会自动添加到系统。
 
-> 前置条件：在添加schema或table之前，需要给源端数据库dbus用户授予相关表的 `select` 权限。请参考FAQ：[Q6:如何授权dbus用户读取源端表](more-faq.html#faq_auth_tab2dbus)
+> 前置条件：在添加schema或table之前，需要给源端数据库dbus用户授予相关表的 `select` 权限。
+>
+> 对于mysql数据库：授权操作如下：
+>
+> ```
+> -- db.table 是需要同步的表名
+> grant select on db1.table to dbus;
+> ```
 >
 > 正确授权后，有权限接入数据的schema/table会自动出现在配置操作页面。
 
@@ -42,6 +49,11 @@ typora-root-url: ./
 
 ![](img/config-schema/config-schema-enable_table.png)
 
+#### 1.1.4 使DBus心跳生效
+点击Send Control Message按钮，发送reload消息，使心跳生效。
+![](img/add-schema-table/add-schema-table-reload.png)
+
+
 ###   1.2 添加表
 
 #### 1.2.1 点击“add table”按钮 
@@ -63,7 +75,9 @@ typora-root-url: ./
 #### 1.2.3  使新增表生效 
 
 同 [1.1.3 使新增表生效](#make-table-ok)
-
+#### 1.2.4 使DBus心跳生效
+点击Send Control Message按钮，发送reload消息，使心跳生效。
+![](img/add-schema-table/add-schema-table-reload.png)
 
 
 ### <span id="confirm-schema-table-added-ok">1.3 确认schema或者table添加成功</span>
