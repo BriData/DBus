@@ -584,7 +584,7 @@ GGSCI> edit param oratest
 #输入以下内容并保存
 REPLICAT oratest
 SETENV (NLS_LANG= SIMPLIFIED CHINESE_CHINA.AL32UTF8)
-TARGETDB LIBFILE libggjava.so SET property=dirprm/ora-test.props
+TARGETDB LIBFILE libggjava.so SET property=dirprm/oratest.props
 DDL INCLUDE ALL
 
 GROUPTRANSOPS 500
