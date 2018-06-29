@@ -433,6 +433,8 @@ Table created.
 
 --赋select权限给dbus用户，用来执行拉全量
 SQL> grant select on utest.t_customer to dbus;
+--赋闪回权限给dbus用户(拉全量使用)
+SQL> grant flashback on utest.t_customer to dbus;
 --添加全量补充日志
 SQL> alter table utest.t_customer add supplemental log data (all) columns;
 ```
