@@ -353,7 +353,7 @@ nohup ./kafka-manager -Dconfig.file=../conf/application.conf >/dev/null 2>&1 &
 
 ## 4.5 验证
 
-打开浏览器输入：http://dbus-n2:9000/login，出现如下页面：
+打开浏览器输入：http://dbus-n2:9000，出现如下页面：
 
 用户名：admin 
 
