@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>zookeeper目录结构介绍 - DBus 0.4.0 Documentation</title>
+        
+          <meta name="description" content="Dbus Web zk节点介绍 0.4.0">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="install-base-components.html">基础组件安装</a></li>
+                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
+                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
+								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
+								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
+								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+								<li><a href="config-datasource.html">数据源介绍</a></li>
+                                <li><a href="config-schema.html">Schema配置</a></li>
+                                <li><a href="config-table.html">Table配置</a></li>
+                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
+								<li><a href="config-dbus-web.html">Web基础配置</a></li>
+								<li><a href="config-inspect-data.html">源端数据查看</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+								<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+								<li><a href="more-license.html">License</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
+								
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">zookeeper目录结构介绍</h1>
+                
+
+                <p>ZookeeperManager是Dbus web主目录之一，用来展示dbus系统中存储到中zookeeper的相关信息。dbus的zookeeper中主要有DBus的主目录，其中DBus目录下存放着Dbus相关的配置文件及运行过程中的中间状态。下面重点对DBus目录下面的配置结点进行介绍。</p>
+
+<p>DBus目录下面ConfTemplates存储Extractor和Topology的配置模板信息，新加线时，Dbus系统会从该目录下复制相应的部分，到新的数据线中。HeartBeat结点下记录着Dbus系统的心跳子系统的相关状态信息。Topology结点下记录着Dbus系统的Storm的Topology的配置信息。</p>
+
+<h2 id="1-心跳双活">1 心跳双活</h2>
+
+<p>Dbus的心跳配置成双活状态，以保证高可用状态。</p>
+
+<p><img src="img\config-zk-node\zknode-1-heartbeat_double_alive.PNG" alt="zknode-1-heartbeat_double_alive" /></p>
+
+<h2 id="2-心跳监控状态">2 心跳监控状态</h2>
+
+<p>在目录/Dbus/HeartBeat/Monitor下查看某数据表的心跳状态：</p>
+
+<p>​	<img src="img/config-zk-node/zknode_2_heartbeat_monitor.PNG" alt="zknode_2_heartbeat_monitor" /></p>
+
+<h2 id="3-全量拉取状态">3 全量拉取状态</h2>
+
+<p>在/Dbus/FullPuller目录下，选择相应的数据源数据表和版本，查看全量拉取状态。</p>
+
+<p><img src="img/config-zk-node/zknode_3_fullpuller.PNG" alt="zknode_3_fullpuller" /></p>
+
+<pre><code>其中：
+	Partitions: 分片数
+    TotalCount : 总分片数
+    FinishedCount : 当前完成分片数
+    TotalRows : 数据总行数
+    FinishedRows : 当前已拉取行数
+    StartSecs : 拉取开始时间
+    ConsumeSecs: 拉取数据已耗时多少
+    CreateTime : 拉取请求开始时间
+    UpdateTime : 更新时间
+    StartTime : 拉取开始时间
+    EndTime: 拉取结束时间
+    ErrorMsg : 拉取过程中产生的错误信息
+    Status :splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功 ## 4 Topology配置介绍
+</code></pre>
+
+<p>在/Dbus/Topology目录存放Storm Topology配置信息，主要包含Appender、Dispacher、Dbus-fulldata-puller、Dbus-fulldata-splitter、log-processor。每个数据源都有这些配置信息。如果要特别的修改Topology的配置信息，可以在Dbus Web的Zookeeper Manager中进行相应的修改，并保存修改。</p>
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

@@ -1,0 +1,1032 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>安装基础组件 - DBus 0.4.0 Documentation</title>
+        
+          <meta name="description" content="Dbus 安装基础组件 0.4.0">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="install-base-components.html">基础组件安装</a></li>
+                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
+                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
+								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
+								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
+								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+								<li><a href="config-datasource.html">数据源介绍</a></li>
+                                <li><a href="config-schema.html">Schema配置</a></li>
+                                <li><a href="config-table.html">Table配置</a></li>
+                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
+								<li><a href="config-dbus-web.html">Web基础配置</a></li>
+								<li><a href="config-inspect-data.html">源端数据查看</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+								<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+								<li><a href="more-license.html">License</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
+								
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">安装基础组件</h1>
+                
+
+                <h1 id="1-环境说明">1. 环境说明</h1>
+<h2 id="11-安装基础组件前提">1.1 安装基础组件前提</h2>
+
+<p>Dbus集群环境最少需要三台Linux服务器，例如服务器信息如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>No</th>
+      <th>IP</th>
+      <th>域名</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>192.168.0.1</td>
+      <td>dbus-n1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>192.168.0.2</td>
+      <td>dbus-n2</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>192.168.0.3</td>
+      <td>dbus-n3</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>192.168.0.4</td>
+      <td>db-dbusmgr</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>修改所有服务器/etc/hosts文件设置相应的域名信息如下：</p>
+
+<pre><code>192.168.0.1 dbus-n1
+192.168.0.2 dbus-n2
+192.168.0.3 dbus-n3
+192.168.0.4 db-dbusmgr
+</code></pre>
+
+<h2 id="12-相关依赖部件说明">1.2 相关依赖部件说明</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>名称</th>
+      <th>版本号</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Canal</td>
+      <td>v1.0.22</td>
+      <td>DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7</td>
+    </tr>
+    <tr>
+      <td>Zookeeper</td>
+      <td>v3.4.6+</td>
+      <td>用于构建整个系统和提供配置通知等</td>
+    </tr>
+    <tr>
+      <td>Kafka</td>
+      <td>v0.10</td>
+      <td>用于存储相关数据和消息，提供订阅和发布的能力</td>
+    </tr>
+    <tr>
+      <td>Storm</td>
+      <td>v1.0.1</td>
+      <td>用于提供DBus流式计算</td>
+    </tr>
+    <tr>
+      <td>Influxdb</td>
+      <td>v0.13.0</td>
+      <td>用于记录实时监控数据</td>
+    </tr>
+    <tr>
+      <td>Grafana</td>
+      <td>v4.2.0</td>
+      <td>用于展示监控信息</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="2-安装zookeeper">2. 安装ZooKeeper</h1>
+
+<h2 id="21-下载">2.1 下载</h2>
+
+<p>推荐下载zookeeper版本；zookeeper-3.4.8
+地址：<a href="http://zookeeper.apache.org/releases.html">http://zookeeper.apache.org/releases.html</a></p>
+
+<h2 id="22-安装">2.2 安装</h2>
+
+<p>zookeeper安装在目录：/app/dbus/zookeeper-3.4.8</p>
+
+<h2 id="23-配置">2.3 配置</h2>
+
+<h3 id="231-通用配置如下">2.3.1 通用配置如下：</h3>
+
+<p>分别配置dbus-n1、dbus-n2、dbus-n3的/app/dbus/zookeeper-3.4.8/conf/zoo.cfg文件</p>
+
+<pre><code># The number of milliseconds of each tick
+tickTime=2000
+
+# The number of ticks that the initial 
+# synchronization phase can take
+initLimit=10
+
+# The number of ticks that can pass between 
+# sending a request and getting an acknowledgement
+syncLimit=5
+
+# the directory where the snapshot is stored.
+# do not use /tmp for storage, /tmp here is just 
+# example sakes.
+# zk日志数据存储路径
+dataDir=/data/zookeeper-data/
+
+# the port at which the clients will connect
+clientPort=2181
+
+# Members in the zk cluster
+server.1=dbus-n1:2888:3888
+server.2=dbus-n2:2888:3888
+server.3=dbus-n3:2888:3888
+
+# 单个客户端最大连接数，0为不限制
+maxClientCnxns=0
+
+# 日志和快照文件保留3
+autopurge.snapRetainCount=3
+
+# 日志和快照文件清理周期为1小时
+autopurge.purgeInterval=1
+</code></pre>
+
+<h3 id="232-特殊配置">2.3.2 特殊配置：</h3>
+
+<p>分别在dbus-n1、dbus-n2、dbus-n3的/data/zookeeper-data/目录下执行如下命令：</p>
+
+<pre><code># dbus-n1
+echo "1" &gt;&gt; myid
+
+# dbus-n2
+echo "2" &gt;&gt; myid
+
+# dbus-n3
+echo "3" &gt;&gt; myid
+</code></pre>
+
+<h2 id="24-启动">2.4 启动</h2>
+<p>分别在dbus-n1、dbus-n2、dbus-n3的/app/dbus/zookeeper-3.4.8/bin目录下执行如下命令：</p>
+<pre><code>./zkServer.sh start &amp;
+</code></pre>
+
+<h2 id="25-关闭">2.5 关闭</h2>
+
+<p>分别在dbus-n1、dbus-n2、dbus-n3的/app/dbus/zookeeper-3.4.8/bin目录下执行如下命令：</p>
+<pre><code>./zkServer.sh stop
+</code></pre>
+
+<h1 id="3-安装kafka">3. 安装Kafka</h1>
+
+<h2 id="31-下载">3.1 下载</h2>
+
+<p>推荐下载kafka版本：kafka_2.11-0.10.0.0
+地址：<a href="http://kafka.apache.org/downloads">http://kafka.apache.org/downloads</a></p>
+
+<h2 id="32-安装">3.2 安装</h2>
+
+<p>kafka安装在目录：/app/dbus/kafka_2.11-0.10.0.0</p>
+
+<h2 id="33-配置">3.3 配置</h2>
+
+<p>dbus-n1的/app/dbus/kafka_2.11-0.10.0.0/config/server.properties配置如下：</p>
+
+<pre><code># The id of the broker. This must be set to a unique integer for each broker.
+broker.id=1
+
+############################# Socket Server Settings #############################
+
+# The address the socket server listens on. It will get the value returned from 
+# java.net.InetAddress.getCanonicalHostName() if not configured.
+#   FORMAT:
+#     listeners = security_protocol://host_name:port
+#   EXAMPLE:
+#     listeners = PLAINTEXT://your.host.name:9092
+listeners=PLAINTEXT://dbus-n1:9092
+
+# The port the socket server listens on
+port=9092
+
+# Hostname and port the broker will advertise to producers and consumers. If not set, 
+# it uses the value for "listeners" if configured.  Otherwise, it will use the value
+# returned from java.net.InetAddress.getCanonicalHostName().
+#advertised.listeners=PLAINTEXT://your.host.name:9092
+
+# The number of threads handling network requests
+num.network.threads=3
+
+# The number of threads doing disk I/O
+num.io.threads=8
+
+# The send buffer (SO_SNDBUF) used by the socket server
+socket.send.buffer.bytes=102400
+
+# The receive buffer (SO_RCVBUF) used by the socket server
+socket.receive.buffer.bytes=102400
+
+# The maximum size of a request that the socket server will accept (protection against OOM)
+socket.request.max.bytes=104857600
+
+
+############################# Log Basics #############################
+
+# A comma seperated list of directories under which to store log files
+log.dirs=/data/kafka-data
+
+# The default number of log partitions per topic. More partitions allow greater
+# parallelism for consumption, but this will also result in more files across
+# the brokers.
+num.partitions=1
+
+# default 2 replications
+default.replication.factor=2
+
+# The number of threads per data directory to be used for log recovery at startup and flushing at shutdown.
+# This value is recommended to be increased for installations with data dirs located in RAID array.
+num.recovery.threads.per.data.dir=1
+
+############################# Log Flush Policy #############################
+
+# Messages are immediately written to the filesystem but by default we only fsync() to sync
+# the OS cache lazily. The following configurations control the flush of data to disk.
+# There are a few important trade-offs here:
+#    1. Durability: Unflushed data may be lost if you are not using replication.
+#    2. Latency: Very large flush intervals may lead to latency spikes when the flush does occur as there will be a lot of data to flush.
+#    3. Throughput: The flush is generally the most expensive operation, and a small flush interval may lead to exceessive seeks.
+# The settings below allow one to configure the flush policy to flush data after a period of time or
+# every N messages (or both). This can be done globally and overridden on a per-topic basis.
+
+# The number of messages to accept before forcing a flush of data to disk
+#log.flush.interval.messages=10000
+
+# The maximum amount of time a message can sit in a log before we force a flush
+log.flush.interval.ms=1000
+
+############################# Log Retention Policy #############################
+
+# The following configurations control the disposal of log segments. The policy can
+# be set to delete segments after a period of time, or after a given size has accumulated.
+# A segment will be deleted whenever *either* of these criteria are met. Deletion always happens
+# from the end of the log.
+
+# The minimum age of a log file to be eligible for deletion
+log.retention.hours=168
+
+# A size-based retention policy for logs. Segments are pruned from the log as long as the remaining
+# segments don't drop below log.retention.bytes.
+log.retention.bytes=107374182400
+
+# The maximum size of a log segment file. When this size is reached a new log segment will be created.
+log.segment.bytes=1073741824
+
+# The interval at which log segments are checked to see if they can be deleted according
+# to the retention policies
+log.retention.check.interval.ms=300000
+
+# The number of bytes of messages to attempt to fetch
+replica.fetch.max.bytes=10485760
+
+# The maximum size of message that the server can receive
+message.max.bytes=10485760
+
+############################# Zookeeper #############################
+
+# Zookeeper connection string (see zookeeper docs for details).
+# This is a comma separated host:port pairs, each corresponding to a zk
+# server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002".
+# You can also append an optional chroot string to the urls to specify the
+# root directory for all kafka znodes.
+
+zookeeper.connect=dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka
+
+# Timeout in ms for connecting to zookeeper
+zookeeper.connection.timeout.ms=6000
+
+delete.topic.enable=true
+</code></pre>
+
+<p>dbus-n2的/app/dbus/kafka_2.11-0.10.0.0/config/server.properties的配置做如下修改，其它配置项和dbus-n1的配置相同：</p>
+
+<pre><code>broker.id=2
+listeners=PLAINTEXT://dbus-n2:9092
+</code></pre>
+
+<p>dbus-n3的/app/dbus/kafka_2.11-0.10.0.0/config/server.properties的配置做如下修改，其它配置项和dbus-n1的配置相同：</p>
+
+<pre><code>broker.id=3
+listeners=PLAINTEXT://dbus-n3:9092
+</code></pre>
+
+<h2 id="34-启动">3.4 启动</h2>
+
+<p>分别在dbus-n1、dbus-n2、dbus-n3的/app/dbus/kafka_2.11-0.10.0.0/bin目录下执行如下命令：</p>
+
+<pre><code>./kafka-server-start.sh -daemon ../config/server.properties &amp;
+</code></pre>
+
+<h1 id="4-安装kafka-manager">4. 安装Kafka-manager</h1>
+
+<h2 id="41-下载">4.1 下载</h2>
+
+<p>推荐下载kafka-manager版本：kafka-manager-1.3.0.8</p>
+
+<p>地址：<a href="https://github.com/yahoo/kafka-manager/releases">https://github.com/yahoo/kafka-manager/releases</a></p>
+
+<h2 id="42-安装">4.2 安装</h2>
+
+<p>选择一台机器安装kafka-manager，如dbus-n2</p>
+
+<p>kafka安装在目录：/app/dbus/kafka-manager-1.3.0.8</p>
+
+<h2 id="43-配置">4.3 配置</h2>
+
+<p>dbus-n2的/app/dbus/kafka-manager-1.3.0.8/conf/application.conf的配置如下：</p>
+
+<pre><code># Copyright 2015 Yahoo Inc. Licensed under the Apache License, Version 2.0
+# See accompanying LICENSE file.
+
+# This is the main configuration file for the application.
+# ~~~~~
+
+# Secret key
+# ~~~~~
+# The secret key is used to secure cryptographics functions.
+# If you deploy your application to several instances be sure to use the same key!
+play.crypto.secret="^&lt;csmm5Fx4d=r2HEX8pelM3iBkFVv?k[mc;IZE&lt;_Qoq8EkX_/7@Zt6dP05Pzea3U"
+play.crypto.secret=${?APPLICATION_SECRET}
+
+# The application languages
+# ~~~~~
+play.i18n.langs=["en"]
+
+play.http.requestHandler = "play.http.DefaultHttpRequestHandler"
+
+play.application.loader=loader.KafkaManagerLoader
+
+kafka-manager.zkhosts="dbus-n1:2181,dbus-n2:2181,dbus-n3:2181"
+kafka-manager.zkhosts=${?ZK_HOSTS}
+pinned-dispatcher.type="PinnedDispatcher"
+pinned-dispatcher.executor="thread-pool-executor"
+application.features=["KMClusterManagerFeature","KMTopicManagerFeature","KMPreferredReplicaElectionFeature","KMReassignPartitionsFeature"]
+
+akka {
+  loggers = ["akka.event.slf4j.Slf4jLogger"]
+  loglevel = "INFO"
+}
+
+
+basicAuthentication.enabled=true
+basicAuthentication.username="admin"
+basicAuthentication.password="admin"
+basicAuthentication.realm="Kafka-Manager"
+
+</code></pre>
+
+<h2 id="44-启动">4.4 启动</h2>
+
+<p>在dbus-n2的/app/dbus/kafka-manager-1.3.0.8/bin目录下执行如下命令：</p>
+
+<pre><code>nohup ./kafka-manager -Dconfig.file=../conf/application.conf &gt;/dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+
+<h2 id="45-验证">4.5 验证</h2>
+
+<p>打开浏览器输入：http://dbus-n1:9000/login，出现如下页面：</p>
+
+<p>用户名：admin</p>
+
+<p>密码：admin</p>
+
+<p><img src="img/install-base-components-12.png" alt="" /></p>
+
+<p>登陆后，如上图进行配置，配置Cluster Zookeeper Hosts为dbus-n1对应ip:2181,dbus-n2对应ip:2181,dbus-n3对应ip:2181/kafka，点击下面的save页面保存，即可使用Kafka manager。</p>
+
+<h1 id="5-安装storm">5. 安装Storm</h1>
+
+<h2 id="51-下载">5.1 下载</h2>
+
+<p>推荐下载storm版本：apache-storm-1.0.1
+地址：<a href="http://storm.apache.org/downloads.html">http://storm.apache.org/downloads.html</a></p>
+
+<h2 id="52-安装">5.2 安装</h2>
+
+<p>storm安装在目录：/app/dbus/app/dbus/apache-storm-1.0.1</p>
+
+<h2 id="53-配置">5.3 配置</h2>
+
+<p>dbus-n1的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下：</p>
+
+<pre><code>########### These MUST be filled in for a storm configuration
+storm.zookeeper.servers:
+    - "dbus-n1"
+    - "dbus-n2"
+    - "dbus-n3"
+
+# zookeeper port
+storm.zookeeper.port: 2181
+storm.zookeeper.root: '/storm'
+
+# Nimbus HA
+nimbus.seeds: ["dbus-n1", "dbus-n2"]
+storm.local.dir: "/data/storm-data"
+storm.local.hostname: "dbus-n1"
+
+ui.port: 8080
+
+supervisor.slots.ports:
+    - 6708
+    - 6709
+    - 6710
+    - 6711
+    - 6712
+
+#worker.childopts: "-Xms512m -Xmx2048m"
+worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
+</code></pre>
+
+<p>dbus-n2的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下：</p>
+
+<pre><code>########### These MUST be filled in for a storm configuration
+storm.zookeeper.servers:
+    - "dbus-n1"
+    - "dbus-n2"
+    - "dbus-n3"
+
+# zookeeper port
+storm.zookeeper.port: 2181
+storm.zookeeper.root: '/storm'
+
+# Nimbus HA
+nimbus.seeds: ["dbus-n1", "dbus-n2"]
+storm.local.dir: "/data/storm-data"
+storm.local.hostname: "dbus-n2"
+
+ui.port: 8080
+
+supervisor.slots.ports:
+    - 6708
+    - 6709
+    - 6710
+    - 6711
+    - 6712
+
+#worker.childopts: "-Xms512m -Xmx2048m"
+worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
+</code></pre>
+
+<p>dbus-n3的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下：</p>
+
+<pre><code>########### These MUST be filled in for a storm configuration
+storm.zookeeper.servers:
+    - "dbus-n1"
+    - "dbus-n2"
+    - "dbus-n3"
+
+# zookeeper port
+storm.zookeeper.port: 2181
+storm.zookeeper.root: '/storm'
+
+# Nimbus HA
+nimbus.seeds: ["dbus-n1", "dbus-n2"]
+storm.local.dir: "/data/storm-data"
+storm.local.hostname: "dbus-n3"
+
+ui.port: 8080
+
+supervisor.slots.ports:
+    - 6708
+    - 6709
+    - 6710
+    - 6711
+    - 6712
+
+#worker.childopts: "-Xms512m -Xmx2048m"
+worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
+</code></pre>
+
+<h2 id="54-启动">5.4 启动</h2>
+
+<p>在dbus-n1的/app/dbus/apache-storm-1.0.1/bin目录下执行如下命令：</p>
+
+<pre><code>./storm nimbus &amp;
+./storm supervisor &amp;
+./storm ui &amp;
+</code></pre>
+
+<p>在dbus-n2的/app/dbus/apache-storm-1.0.1/bin目录下执行如下命令：</p>
+
+<pre><code>./storm nimbus &amp;
+./storm supervisor &amp;
+</code></pre>
+
+<p>在dbus-n3的/app/dbus/apache-storm-1.0.1/bin目录下执行如下命令：</p>
+
+<pre><code>./storm supervisor &amp;
+</code></pre>
+
+<h2 id="55-验证">5.5 验证</h2>
+
+<p>在dbus-n1执行jps -l命令后看到如下信息：</p>
+
+<p><img src="img/install-base-components-02.png" alt="" /></p>
+
+<p>在dbus-n2执行jps -l命令后看到如下信息：</p>
+
+<p><img src="img/install-base-components-03.png" alt="" /></p>
+
+<p>在dbus-n3执行jps -l命令后看到如下信息：</p>
+
+<p><img src="img/install-base-components-04.png" alt="" /></p>
+
+<h1 id="6-安装influxdb">6. 安装InfluxDB</h1>
+
+<h2 id="61-下载">6.1 下载</h2>
+
+<p>推荐下载InfluxDB版本：influxdb-1.1.0.x86_64
+地址：<a href="https://portal.influxdata.com/downloads">https://portal.influxdata.com/downloads</a></p>
+
+<h2 id="62-安装">6.2 安装</h2>
+
+<p>在dbus-n1上切换到root用户，在influxdb-1.1.0.x86_64.rpm的存放目录下执行如下命令：</p>
+
+<pre><code>rpm -ivh influxdb-1.1.0.x86_64.rpm
+</code></pre>
+
+<h2 id="63-启动">6.3 启动</h2>
+
+<p>在dbus-n1上执行如下命令：</p>
+
+<pre><code>service influxdb start
+</code></pre>
+
+<h2 id="64-初始化配置">6.4 初始化配置</h2>
+
+<p>在dbus-n1上执行如下命令：</p>
+
+<pre><code>#登录influx
+influx
+
+#执行初始化脚本
+create database dbus_stat_db
+use dbus_stat_db
+CREATE USER "dbus" WITH PASSWORD 'dbus!@#123'
+ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
+</code></pre>
+
+<h1 id="7安装dbus-mgr库">7.安装Dbus mgr库</h1>
+
+<h2 id="71-前提">7.1 前提</h2>
+
+<p>已经安装好mysql数据库服务，我们假定为db-dbusmgr节点</p>
+
+<h2 id="72-下载">7.2 下载</h2>
+
+<p>下载dbus库的脚本，保存到/app/dbus/,  下载地址：</p>
+
+<ul>
+  <li>
+    <p>初始化数据库和用户SQL ：init-scripts/init-dbusmgr/1_init_database_user.sql</p>
+  </li>
+  <li>
+    <p>初始化表SQL:  init-scripts/init-dbusmgr/2_dbusmgr_tables/dbusmgr_tables.sql</p>
+  </li>
+</ul>
+
+<h2 id="73-导入初始化sql脚本">7.3 导入初始化SQL脚本</h2>
+
+<pre><code>#以root身份登录mysql客户端，执行初始化脚本
+source /app/dbus/1_init_database_user.sql
+source /app/dbus/dbusmgr_tables.sql
+</code></pre>
+
+<h1 id="8-安装dbus-tools">8. 安装Dbus-tools</h1>
+
+<h2 id="81-下载">8.1 下载</h2>
+
+<p>下载dbus-tools版本：0.4.0
+地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
+
+<h2 id="82-安装">8.2 安装</h2>
+
+<p>在dbus-n1上通过如下命令解压安装在目录：/app/dbus/dbus-tools-0.4.0</p>
+
+<pre><code>cd /app/dbus
+unzip dbus-tools-0.4.0.zip
+</code></pre>
+
+<h2 id="83-配置">8.3 配置</h2>
+
+<p>修改/app/dbus/dbus-tools-0.4.0/conf/zk.properties内容如下：</p>
+
+<pre><code>dbus.zookeeper.servers=dbus-n1:2181,dbus-n2:2181,dbus-n3:2181
+dbus.kafka.BootstrapServers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
+#dbus.zookeeper.session.timeout=5000
+</code></pre>
+
+<p>修改/app/dbus/dbus-tools-0.4.0/conf/InitZooKeeper/mysql.properties内容如下：</p>
+
+<pre><code># db-dbusmgr是已安装mysql服务所在机器的IP
+url=jdbc:mysql://db-dbusmgr:3306/dbusmgr?characterEncoding=utf-8
+# 将(#password_place_holder#}替换成/app/dbus/DBus-0.4.0.sql中dbusmgr用户的密码
+password=dmVvY9bibMGBGD3X
+</code></pre>
+
+<h2 id="84-执行sh脚本完成配置">8.4 执行sh脚本完成配置</h2>
+
+<p>在dbus-n1上进入/app/dbus/dbus-tools-0.4.0执行如下命令：</p>
+
+<pre><code>#先赋予脚本可执行权限
+chmod 744 -R bin
+bin/initZK.sh
+</code></pre>
+
+<h1 id="9-安装dbus-heartbeat">9. 安装Dbus-heartbeat</h1>
+
+<h2 id="91-下载">9.1 下载</h2>
+
+<p>下载dbus-heartbeat版本：0.4.0
+地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
+
+<h2 id="92-安装">9.2 安装</h2>
+
+<p>在dbus-n2上通过如下命令解压安装在目录：/app/dbus/dbus-heartbeat-0.4.0</p>
+
+<pre><code>unzip dbus-heartbeat-0.4.0.zip
+</code></pre>
+
+<p>在dbus-n3上的安装和dbus-n2上的步骤相同</p>
+
+<h2 id="93-配置">9.3 配置</h2>
+
+<p>修改/app/dbus/dbus-heartbeat-0.4.0/conf/zk.properties内容如下：</p>
+
+<pre><code>zk.str=dbus-n1:2181,dbus-n2:2181,dbus-n3:2181
+zk.session.timeout=20000
+zk.connection.timeout=25000
+zk.retry.interval=30
+
+dbus.heartbeat.config.path=/DBus/HeartBeat/Config/heartbeat_config.json
+dbus.heartbeat.leader.path=/DBus/HeartBeat/Leader
+</code></pre>
+
+<p>修改/app/dbus/dbus-heartbeat-0.4.0/conf/consumer.properties内容如下：</p>
+
+<pre><code>############################# Consumer Basics #############################
+bootstrap.servers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
+group.id=heartbeat_consumer_group
+#client.id=heartbeat_consumer
+enable.auto.commit=true
+auto.commit.interval.ms=1000
+session.timeout.ms=30000
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+max.partition.fetch.bytes=10485760
+max.poll.records=30
+session.timeout.ms=30000
+</code></pre>
+
+<p>修改/app/dbus/dbus-heartbeat-0.4.0/conf/producer.properties内容如下：</p>
+
+<pre><code>############################# Producer Basics #############################
+bootstrap.servers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
+acks=1
+retries=3
+batch.size=16384
+linger.ms=1
+buffer.memory=33554432
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
+
+</code></pre>
+
+<p>修改/app/dbus/dbus-heartbeat-0.4.0/conf/jdbc.properties内容如下：</p>
+
+<pre><code>DB_TYPE=mysql
+DB_KEY=dbus.conf
+DB_DRIVER_CLASS=com.mysql.jdbc.Driver
+# db-dbusmgr是已安装mysql服务所在机器的IP
+DB_URL=jdbc:mysql://db-dbusmgr:3306/dbusmgr?characterEncoding=utf-8
+DB_USER=dbusmgr
+# 将(#password_place_holder#}替换成/app/dbus/DBus-0.4.0.sql中dbusmgr用户的密码
+DB_PWD=(#password_place_holder#}
+DS_INITIAL_SIZE=1
+DS_MAX_ACTIVE=1
+DS_MAX_IDLE=1
+DS_MIN_IDLE=1
+</code></pre>
+
+<p>修改/app/dbus/dbus-heartbeat-0.4.0/conf/stat_config.properties内容如下：</p>
+
+<pre><code>dbus.statistic.topic=dbus_statistic
+kafka.offset=none
+influxdb.url=http://dbus-n1:8086
+influxdb.dbname=dbus_stat_db
+influxdb.tablename=dbus_statistic
+</code></pre>
+
+<p>在dbus-n3上的安装和dbus-n2上的步骤相同</p>
+
+<h2 id="94-启动">9.4 启动</h2>
+
+<p>在dbus-n2上进入/app/dbus/dbus-heartbeat-0.4.0目录执行如下命令：</p>
+
+<pre><code># 赋予heartbeat.sh可执行权限
+chmod 744 heartbeat.sh
+# 启动心跳
+./heartbeat.sh &amp;
+</code></pre>
+
+<p>在dbus-n3上的安装和dbus-n2上的步骤相同</p>
+
+<h1 id="10-安装dbus-web">10. 安装Dbus-web</h1>
+
+<h2 id="101-下载">10.1 下载</h2>
+
+<p>下载dbus-web版本：0.4.0
+地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
+
+<h2 id="102-安装">10.2 安装</h2>
+
+<p>在dbus-n1上通过如下命令解压安装在目录：/app/dbus/distribution-0.4.0-bin</p>
+
+<pre><code>cd /app/dbus
+mkdir distribution-0.4.0-bin
+</code></pre>
+
+<p>把distribution-0.4.0-bin.zip上传到distribution-0.4.0-bin目录下</p>
+
+<pre><code>cd distribution-0.4.0-bin
+unzip distribution-0.4.0-bin.zip
+</code></pre>
+
+<h2 id="103-配置">10.3 配置</h2>
+
+<p>修改/app/dbus/distribution-0.4.0-bin/conf/application.properties配置文件信息如下：</p>
+
+<pre><code># zk server
+zk.servers=dbus-n1:2181,dbus-n2:2181,dbus-n2:2181
+
+# simple http server port of static resources
+http.server.port = 65532
+
+# simple reverse proxy
+proxy.server.port = 65533
+
+# manager server port
+manager.server.port = 65534
+
+# webservice port
+rest.server.port = 65535
+
+# user name and password
+administrator = admin
+password = admin
+</code></pre>
+
+<p>修改/app/dbus/distribution-0.4.0-bin/conf/mybatis.properties配置文件信息如下：</p>
+
+<pre><code>driver=com.mysql.jdbc.Driver
+
+# db-dbusmgr是已安装mysql服务所在机器的IP
+url=jdbc:mysql://db-dbusmgr:3306/dbusmgr?characterEncoding=utf-8
+username=dbusmgr
+# 将dbus替换成/app/dbus/DBus-0.4.0.sql中dbusmgr用户的密码
+password=dbus
+poolMaximumActiveConnections=2
+poolMaximumIdleConnections=1
+poolPingEnabled=true
+poolPingQuery=select 1
+poolPingConnectionsNotUsedFor=600000
+</code></pre>
+
+<p>修改/app/dbus/distribution-0.4.0-bin/conf/consumer.properties配置文件信息如下：</p>
+
+<pre><code>bootstrap.servers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
+
+client.id=dbus-web.reader
+group.id=dbus-web.reader
+
+enable.auto.commit=true
+auto.commit.interval.ms=2000
+session.timeout.ms=30000
+
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+
+max.partition.fetch.bytes=10485760
+max.poll.records=30
+</code></pre>
+
+<h2 id="104-启动">10.4 启动</h2>
+
+<p>前提：</p>
+
+<p><em>保证部署web的机器能够免密登录到部署storm nimbus的机器；</em></p>
+
+<p>在dbus-n1上进入/app/dbus/distribution-0.4.0-bin目录执行如下命令：</p>
+
+<pre><code>cd /app/dbus/distribution-0.4.0-bin
+# 赋予manager.sh、httpserver.sh、proxy.sh、service.sh、start-all.sh、stop-all.sh可执行权限
+chmod 744 *.sh
+
+cd /app/dbus/distribution-0.4.0-bin/node-v6.9.2-linux-x64/bin
+chmod 744 *
+
+cd /app/dbus/distribution-0.4.0-bin/node-v6.9.2-linux-x64/lib/node_modules/pm2/bin
+chmod 744 *
+
+
+# 启动心跳
+./start-all.sh &amp;
+</code></pre>
+
+<h2 id="105-验证">10.5 验证</h2>
+
+<p>在浏览器中输入url：http://dbus-n1:65533/dbus/</p>
+
+<p><img src="img/install-base-components-11.png" alt="" /></p>
+
+<p>用户名：admin</p>
+
+<p>密码：admin</p>
+
+<h1 id="11-安装grafana">11. 安装Grafana</h1>
+
+<h2 id="111-下载">11.1 下载</h2>
+
+<p>推荐下载grafana版本：grafana-3.1.1
+地址：<a href="https://grafana.com/grafana/download">https://grafana.com/grafana/download</a></p>
+
+<h2 id="112-安装">11.2 安装</h2>
+
+<p>在dbus-n1上首先切换到root用户，执行如下命令</p>
+
+<pre><code>rpm -ivh grafana-3.1.1-1470047149.x86_64.rpm
+</code></pre>
+
+<h2 id="113-配置">11.3 配置</h2>
+
+<p>在dbus-n1上修改配置文件/etc/grafana/grafana.ini的[decurity]部分如下，其它部分不用修改：</p>
+
+<pre><code>[security]
+# default admin user, created on startup
+admin_user = admin
+
+# default admin password, can be changed before first start of grafana,  or in profile settings
+admin_password = admin
+</code></pre>
+
+<h2 id="114-启动">11.4 启动</h2>
+
+<p>在dbus-n1上执行如下命令：</p>
+
+<pre><code>service grafana-server start
+</code></pre>
+
+<h2 id="115-验证">11.5 验证</h2>
+
+<h3 id="1151-登录grafana">11.5.1 登录grafana</h3>
+
+<p>打开浏览器输入：http://dbus-n1:3000/login，出现如下页面：</p>
+
+<p>用户名：admin</p>
+
+<p>密码：admin</p>
+
+<p><img src="img/install-base-components-05.png" alt="" /></p>
+
+<h3 id="1152-配置grafana">11.5.2 配置grafana</h3>
+
+<h4 id="11521-配置grafana-influxdb数据源如下图">11.5.2.1 配置Grafana influxdb数据源如下图：</h4>
+
+<p><img src="img/install-base-components-06.png" alt="" /></p>
+
+<p><img src="img/install-base-components-07.png" alt="" /></p>
+
+<p>密码：dbus!@#123 (安装influxdb初始化配置脚本设置的密码)</p>
+
+<h4 id="11522-配置grafana-dashboard">11.5.2.2 配置Grafana Dashboard</h4>
+
+<p>下载Schema Dashboard配置：initScript/init-table-grafana-config/grafana-schema.cfg</p>
+
+<p>下载Table Dashboard配置：initScript/init-table-grafana-config/grafana-table.cfg</p>
+
+<p>下载log Dashboard 配置：init-scripts/init-log-grafana-config/*.cfg</p>
+
+<p>操作步骤如下：</p>
+
+<p><img src="img/install-base-components-08.png" alt="" /></p>
+
+<p><img src="img/install-base-components-09.png" alt="" /></p>
+
+<p>分别上传schema.json和table.json的配置文件</p>
+
+<p><img src="img/install-base-components-10.png" alt="" /></p>
+
+<p>导入后出现如上图所示的两个dashboards</p>
+
+<h1 id="12-安装dbus-jars">12. 安装Dbus jars</h1>
+
+<h2 id="121-下载">12.1 下载</h2>
+
+<p>dbus jars 地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
+
+<h2 id="122-安装">12.2 安装</h2>
+
+<p>dbus jars需要安装在storm nimbus所在服务器节点上，dbus-n1、dbus-n2都安装有storm nimbus，因此我们需要把dbus jars安装dbus-n1、dbus-n2的storm根目录：/app/dbus/apache-storm-1.0.1</p>
+
+<pre><code>cd /app/dbus/apache-storm-1.0.1
+tar -zxvf dbus_jars.tar.gz
+</code></pre>
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

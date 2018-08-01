@@ -1,0 +1,445 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>logstash作为数据源接入DBus - DBus 0.4.0 Documentation</title>
+        
+          <meta name="description" content="Dbus 安装Logstash源 0.4.0">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="install-base-components.html">基础组件安装</a></li>
+                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
+                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
+								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
+								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
+								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+								<li><a href="config-datasource.html">数据源介绍</a></li>
+                                <li><a href="config-schema.html">Schema配置</a></li>
+                                <li><a href="config-table.html">Table配置</a></li>
+                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
+								<li><a href="config-dbus-web.html">Web基础配置</a></li>
+								<li><a href="config-inspect-data.html">源端数据查看</a></li>
+                            </ul>
+                        </li>
+						<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+								<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+								<li><a href="more-license.html">License</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
+								
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">logstash作为数据源接入DBus</h1>
+                
+
+                <p><strong>系统架构：</strong></p>
+
+<p><img src="img/install-logstash-source/install-logstash-source-system-architecture.png" alt="系统架构" /></p>
+
+<p><strong>总体说明：</strong></p>
+
+<p>​	DBus可以接入三种数据源：logstash、flume、filebeat，下面以使用logstash为数据抽取端，抽取DBus自身产生的监控和报警日志数据。DBus监控和报警模块部署在 dbus-n2和dbus-n3 上，路径为：/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log。因此，logstash的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。</p>
+
+<p>​	我们在dbus-n2，dbus-n3两台机器上分别部署了logstash程序，用于对普通日志进行抽取，两台机器上的logstash程序配置完全一致。心跳数据由logstash自带的心跳插件产生（心跳数据的作用是便于DBus对数据进行统计和输出），logstash程序抽取到kafka topic中的数据中既有普通格式的数据，同时也有心跳数据，而且这两种格式的数据分别来自不同的主机。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">No</th>
+      <th style="text-align: center">域名</th>
+      <th style="text-align: center">是否有监控和报警日志？</th>
+      <th style="text-align: center">是否部署logstash？</th>
+      <th style="text-align: center">是否部署心跳shell脚本？</th>
+      <th style="text-align: center">抽取日志</th>
+      <th style="text-align: center">输出topic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">dbus-n1</td>
+      <td style="text-align: center">否</td>
+      <td style="text-align: center">否</td>
+      <td style="text-align: center">否</td>
+      <td style="text-align: center">无</td>
+      <td style="text-align: center">无</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">dbus-n2</td>
+      <td style="text-align: center">是</td>
+      <td style="text-align: center">是</td>
+      <td style="text-align: center">否</td>
+      <td style="text-align: center">1.DBus自身产生的监控和报警日志</td>
+      <td style="text-align: center">heartbeat_log_logstash</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">dbus-n3</td>
+      <td style="text-align: center">是</td>
+      <td style="text-align: center">是</td>
+      <td style="text-align: center">否</td>
+      <td style="text-align: center">1.DBus自身产生的监控和报警日志</td>
+      <td style="text-align: center">heartbeat_log_logstash</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>主要配置步骤：</strong></p>
+
+<p>1 配置 和 安装logstash源相关</p>
+
+<p>2 一键加线和配置</p>
+
+<p>3 检验结果</p>
+
+<h2 id="1--配置-和-安装logstash源相关">1  配置 和 安装logstash源相关</h2>
+
+<p>监控和报警日志在dbus-n2和dbus-n3上，因此 logstash的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。</p>
+
+<h3 id="11-logstash安装">1.1 logstash安装</h3>
+
+<ul>
+  <li>
+    <p><strong>logstash版本</strong>
+DBus使用的logstash的版本是v5.6.1。</p>
+  </li>
+  <li>
+    <p><strong>下载</strong></p>
+
+    <p><a href="https://www.elastic.co/downloads/past-releases/logstash-5-6-1">https://www.elastic.co/downloads/past-releases/logstash-5-6-1</a></p>
+  </li>
+  <li>
+    <p><strong>logstah目录说明</strong></p>
+    <ul>
+      <li>
+        <p><strong>logstash目录</strong></p>
+
+        <p><img src="img/install-logstash-source/install-logstash-source-dir-info.png" alt="logstah目录" /></p>
+
+        <p>​</p>
+
+        <p><strong>etc目录：</strong>该目录是DBus新建的，用于放置logstash的配置文件，例如被抽取文件路径、心跳及kafka配置等。</p>
+
+        <p><strong>logs目录：</strong>放置logstash产生的日志，建议将日志放置在一个磁盘较大的目录，这里为其建立一个软连接，指向/data/dbus/logstash-logs目录。</p>
+
+        <p><strong>patterns目录：</strong> 放置logstah产生心跳的时间戳格式，DBus在该目录下新建了一个名为heartbeat的文件，该文件中定义了logstash产生的心跳格式。heartbeat文件中定义的心跳格式如下：
+<code>HEARTBEATTIMESTAMP %{YEAR}[./-]%{MONTHNUM}[./-]%{MONTHDAY}[T ]%{HOUR}:?%{MINUTE}(?::?%{SECOND})?</code></p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="12-logstash配置文件说明">1.2. logstash配置文件说明</h3>
+
+<p>以logstash抽取DBus的监控和报警日志为例，说明该如何去写logstash的配置文件。我们在logstash的目录下面新建了一个etc文件夹，用于存放logstash的抽取配置文件，然后在etc目录下新建了一个heartbeat.conf的文件<a href="dbus-main/init-scripts/init-logstash-config/heartbeat.conf">下载heartbeat.conf</a>，下面解析下该文件的各项配置。</p>
+
+<pre><code>input {
+    file {
+        path =&gt; ["/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/*.*"]	# 所要读取的日志文件路径
+        sincedb_path =&gt; "/app/dbus/logstash-5.6.1-heartbeat/etc/sincedb_heartbeat" # 保存了抽取文件的inode、文件偏移量等信息，自动生成
+        codec =&gt; multiline {
+             pattern =&gt; "^\["  # 根据所要合并的多行进行设置（此处为正则表达式，表示以[为开头的行才作为一条记录，其余的向前合并）
+             negate =&gt; "true"
+             what =&gt; "previous" # 表示不符合上述pattern的行，向前合并
+        }
+        type =&gt; "heartbeat_log_logstash"         # 改成相应的数据源名，这里我们是要通过logstash对dbus心跳日志进行抽取，所以数据源名定义为heartbeat_log_logstash
+        start_position =&gt; "end"         # 表示从什么位置开始读取文件数据，默认是结束位置；
+        #close_older =&gt; 3600            # fd 无数据关闭文件时间间隔默认 1小时 3600
+        #max_open_files =&gt; 4095         # 运行打开最大文件上线，默认 4095
+        #add_field =&gt; {"test"=&gt;"test"}  # 添加自定义的字段   未使用
+        #tags =&gt; "tag1"                 # 增加标签           未使用
+        #discover_interval =&gt; 15        # 设置多长时间扫描目录，发现新文件  使用默认即可
+        #stat_interval =&gt; 1             # 设置多长时间检测文件是否修改      使用默认即可
+        #sincedb_write_interval =&gt; 15   # sincedb 写文件时间频率 默认 15秒
+    }
+    #logstash本身的心跳信息
+    heartbeat {
+        message =&gt; "epoch"
+        interval =&gt; 60				   # 每60s产生一次心跳
+        type =&gt; "dbus-heartbeat"	    # 心跳类型定义为dbus-heartbeat
+    }
+}
+
+filter {
+     if [type] == "heartbeat_log_logstash" { # 与上面input file中的type名对应，意为对上述input file中取得的数据进行进一步过滤抽取
+                 grok {
+                        patterns_dir =&gt; "../patterns" # 此处为自定义的pattern，如果要添加或修改自定义的pattern,可以放在此目录下。下面HEARTBEATTIMESTAMP即是定义在此目录下的
+                         match =&gt; {
+                        # logstash本身配置了约120种pattern，其中DATA、LOGLEVEL和GREEDYDATA都在其中，详细参考https://github.com/logstash-plugins/logstash-patterns-core/tree/master/patterns
+                         "message" =&gt; "\[%{DATA:thread}\] %{LOGLEVEL:level} ?\: %{HEARTBEATTIMESTAMP:timestamp}%{GREEDYDATA:log}"
+                         }
+                 }
+       }
+}
+
+output {
+	# stdout{codec=&gt;rubydebug}  # 将抽取日志输出到控制台
+	# 代表输出到kafka，以下要配置kafka的服务器IP，端口，topic id
+    kafka {
+            bootstrap_servers =&gt; "dbus-n1:9092,dbus-n2:9092,dbus-n3:9092"  # kafka 服务器IP:端口
+            topic_id =&gt; "heartbeat_log_logstash"  # 要输出到kafka的topic
+            acks =&gt; "all"
+            compression_type =&gt; "lz4"
+            retries =&gt; 3
+            codec =&gt; json {
+                charset =&gt; "UTF-8"
+            }
+            batch_size =&gt; 1048576         # batch max than 1MB size, larger than it, send batch
+            linger_ms =&gt; 1000             # batch wait 1 seconds
+            max_request_size =&gt; 10485760  # set as 10MB, max_request_size =&gt; Default value is 1048576
+            buffer_memory =&gt; 67108864     # default size 33554432=32M. 67108864=64M
+
+            #message_key =&gt; "heartbeat-logstash"
+            # max_request_size =&gt; Default value is 1048576
+            # send_buffer_bytes =&gt; Default value is 131072
+            # key_serializer =&gt; Default value is "org.apache.kafka.common.serialization.StringSerializer"
+            # value_serializer =&gt; Default value is "org.apache.kafka.common.serialization.StringSerializer"
+         }
+  }
+</code></pre>
+
+<h3 id="13-logstash启动">1.3. logstash启动</h3>
+
+<p><strong>在logstash解压目录下执行以下命令：</strong></p>
+
+<ul>
+  <li>
+    <p><strong>前台启动命令：</strong> bin/logstash -f ./etc/heartbeat.conf</p>
+  </li>
+  <li>
+    <p><strong>后台启动命令：</strong> bin/logstash -f ./etc/heartbeat.conf &amp;</p>
+
+    <p>当用<strong>前台启动命令时</strong>出现以下信息，则说明启动成功（<strong>注意控制台是否出现报错信息</strong>）：</p>
+
+    <pre><code> [2018-01-23T16:08:51,288][INFO ][logstash.pipeline        ] Starting pipeline {"id"=&gt;"main", "pipeline.workers"=&gt;1, "pipeline.batch.size"=&gt;125, "pipeline.batch.delay"=&gt;5, "pipeline.max_inflight"=&gt;125}
+ [2018-01-23T16:08:53,032][INFO ][logstash.pipeline        ] Pipeline main started
+ [2018-01-23T16:08:53,700][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=&gt;9600}
+</code></pre>
+  </li>
+</ul>
+
+<h3 id="14-logstash验证">1.4. logstash验证</h3>
+
+<p><strong>读取kafka的topic: heartbeat_log_logstash，确认是否有数据：</strong></p>
+
+<ul>
+  <li>
+    <p><strong>进入kafka安装目录。</strong></p>
+  </li>
+  <li>
+    <p><strong>执行以下命令，查看数据，如果有数据，则说明logstash可以成功抽取文件：</strong></p>
+
+    <p><code>bin/kafka-console-consumer.sh --zookeeper dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka  --topic heartbeat_log_logstash</code></p>
+  </li>
+  <li>
+    <p><strong>logstash的心跳数据样例：</strong></p>
+
+    <pre><code class="language-json">{
+    "host": "dbus-n3",
+    "@version": "1",
+    "clock": 1516762833,
+    "@timestamp": "2018-01-24T03:00:33.831Z",
+    "type": "dbus-heartbeat"
+}
+</code></pre>
+  </li>
+  <li>
+    <p><strong>logstash抽取之后产生的数据样例：</strong></p>
+
+    <pre><code class="language-json">{
+    "path": "/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log",
+    "@timestamp": "2018-01-24T02:59:39.494Z",
+    "level": "WARN",
+    "log": "CheckHeartBeatEvent 196 - 节点:/DBus/HeartBeat/Monitor/test/dbus/db_heartbeat_monitor/0,状态:异常,报警次数:1,超时次数:1",
+    "@version": "1",
+    "host": "dbus-n3",
+    "thread": "check-heartbeat-event",
+    "message": "[check-heartbeat-event] WARN : 2018/01/24 10:59:37.906 CheckHeartBeatEvent 196 - 节点:/DBus/HeartBeat/Monitor/test/dbus/db_heartbeat_monitor/0,状态:异常,报警次数:1,超时次数:1",
+    "type": "heartbeat_log_logstash",
+    "timestamp": "2018/01/24 10:59:37.906 "
+}
+</code></pre>
+  </li>
+</ul>
+
+<h2 id="2-dbus-一键加线和配置">2 DBus 一键加线和配置</h2>
+
+<h3 id="21-dbus一键加线">2.1 DBus一键加线</h3>
+
+<p>logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对该topic数据进行处理了，在DBus web进行数据源和table的配置工作。</p>
+
+<ul>
+  <li>
+    <p><strong>新建数据源：</strong>首先新建数据源，进入New DataLine页面，由于我们是用logstash对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_logstash，topic必须和logstash配置文件中的topic一致。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-new-ds-1.png" alt="img/install-logstash-source/install-logstash-source-new-ds-1.png" /></p>
+  </li>
+  <li>
+    <p><strong>新增表：</strong>点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击Next。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-new-ds-2-1.png" alt="img/install-logstash-source/install-logstash-source-new-ds-2-1.png" /></p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-new-ds-2-2.png" alt="img/install-logstash-source/install-logstash-source-new-ds-2-2.png" /></p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-new-ds-2-3.png" alt="img/install-logstash-source/install-logstash-source-new-ds-2-3.png" /></p>
+  </li>
+  <li>
+    <p><strong>clone模板，生成配置信息：</strong>每个数据源都会起一个storm程序，每个程序都会在zookeeper上存放一些配置信息，通过模板clone，为每个数据源生成一份自己的配置信息。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-new-ds-3.png" alt="img/install-logstash-source/install-logstash-source-new-ds-3.png" /></p>
+  </li>
+  <li>
+    <p><strong>启动log_processor程序：</strong>启动storm程序，对数据进行处理，后面会对新增表进行规则配置。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-new-ds-4-1.png" alt="img/install-logstash-source/install-logstash-source-new-ds-4-1.png" />
+<strong>启动结果：</strong>点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过查看Topology start log定位失败原因。
+<img src="img/install-logstash-source/install-logstash-source-new-ds-4-2.png" alt="img/install-logstash-source/install-logstash-source-new-ds-4-2.png" /></p>
+  </li>
+</ul>
+
+<h3 id="22-数据源配置修改">2.2 数据源配置修改</h3>
+
+<p>因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用。</p>
+
+<ul>
+  <li>
+    <p><strong>修改数据源信息：</strong>点击modify按钮进行修改。
+ <img src="img/install-logstash-source/install-logstash-source-modify-ds-1.png" alt="img/install-logstash-source/install-logstash-source-modify-ds-1.png" /></p>
+
+    <p>该数据源的数据可能来自于多个主机上的logstash程序，要在dsPartition中，配置上所有主机的host信息，为DBus心跳监控及报警程序使用。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-modify-ds-2.png" alt="img/install-logstash-source/install-logstash-source-modify-ds-2.png" /></p>
+  </li>
+</ul>
+
+<h3 id="23-配置规则详细配置方式请参考todo">2.3. 配置规则（详细配置方式请参考todo）</h3>
+<ul>
+  <li>
+    <p><strong>进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则</strong></p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-1.png" alt="img/install-logstash-source/install-logstash-source-add-table-1.png" /></p>
+  </li>
+  <li>
+    <p><strong>点击Rules按钮，进行规则配置</strong></p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-2.png" alt="img/install-logstash-source/install-logstash-source-add-table-2.png" /></p>
+  </li>
+  <li>
+    <p><strong>新增规则组：</strong>点击Add group按钮，新增一个规则组，点击规则组名字，进入规则配置页面。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-3.png" alt="img/install-logstash-source/install-logstash-source-add-table-3.png" /></p>
+  </li>
+  <li>
+    <p><strong>配置规则:</strong> topic是在logstash配置文件中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则（详细规则配置请参考todo），对数据进行处理。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-4.png" alt="img/install-logstash-source/install-logstash-source-add-table-4.png" /></p>
+  </li>
+  <li>
+    <p><strong>数据过滤完成：</strong>配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-5.png" alt="img/install-logstash-source/install-logstash-source-add-table-5.png" /></p>
+  </li>
+  <li>
+    <p><strong>升级版本：</strong>首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-6.png" alt="img/install-logstash-source/install-logstash-source-add-table-6.png" /></p>
+  </li>
+  <li>
+    <p>**拉取增量 : ** 使该表的状态变为ok。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-7.png" alt="img/install-logstash-source/install-logstash-source-add-table-7.png" /></p>
+  </li>
+  <li>
+    <p>**点击生效按钮，使该表生效 : **点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。</p>
+
+    <p><img src="img/install-logstash-source/install-logstash-source-add-table-8.png" alt="img/install-logstash-source/install-logstash-source-add-table-8.png" /></p>
+  </li>
+</ul>
+
+<h2 id="3--验证数据">3  验证数据</h2>
+
+<p>我们可以在grafana配置以下，看看实际流量情况。</p>
+
+<ul>
+  <li>**上传grafana配置文件<a href="dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_logstash.json">点击下载</a>： **点击Import，上传grafana json配置文件。
+ <img src="img/install-logstash-source/install-logstash-source-monitor-config-import-1.png" alt="img/install-logstash-source/install-logstash-source-monitor-config-import-1.png" /></li>
+  <li>
+    <p><strong>选择InDB数据库：</strong>ds的名字必须与新建数据线中的数据源名字一致。
+ <img src="img/install-logstash-source/install-logstash-source-monitor-config-import-2.png" alt="img/install-logstash-source/install-logstash-source-monitor-config-import-2.png" /></p>
+  </li>
+  <li><strong>之前新增表的流量监控信息，type表示来自于哪台主机的数据</strong>
+ <img src="img/install-logstash-source/install-logstash-source-monitor-1.png" alt="img/install-logstash-source/install-logstash-source-monitor-1.png" /></li>
+  <li><strong>_unknown_table_表示不满足任何表的数据</strong>
+ <img src="img/install-logstash-source/install-logstash-source-monitor-2.png" alt="img/install-logstash-source/install-logstash-source-monitor-2.png" /></li>
+</ul>
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>
