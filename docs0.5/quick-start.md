@@ -1,6 +1,6 @@
 ---
 layout: global
-title: 快速开始
+title: 快速体验
 description: Dbus快速开始手册 DBUS_VERSION_SHORT
 ---
 
