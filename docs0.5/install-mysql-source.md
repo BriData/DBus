@@ -221,51 +221,42 @@ Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTE
 
 ## 2 Dbus一键加线
 
-Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus web添加新数据线的步骤进行介绍
+Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus keeper页面添加新数据线的步骤进行介绍
 
-##### 2.1 进入dbus web页面，点击New DataLine
+##### 2.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线
 
-![install-mysql-1-new-dataline](img/install-mysql/install-mysql-1-new-dataline.png)
+![install-mysql-1-new-dataline](img/install-mysql/new-data-line.png)
 
 
 
 ##### 2.2 填写数据源基本信息 （master和slave jdbc连接串信息）
 
-其中dbmysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。dbmysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。 
+其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。 
 
-![数据基本信息填写标注](img/install-mysql/install-mysql-2-DataSource-info-config.jpg)
+![数据基本信息填写标注](img/install-mysql/mysql-add-ds.png)
 
 
 
-##### 2.3 下拉选择要添加的schema，勾选要添加的表，点击next；
+##### 2.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；
 
-![选择schema标注](img/install-mysql/install-mysql-3-select-schemas.jpg)
+![选择schema标注](img/install-mysql/mysql-add-schema-table.png)
 
-##### 2.4 修改ZK配置
 
-首先展开ZK节点，显示提示信息节点Not Existed，点击Clone ZkConf From Templates，修改ZK配置
-
-![修改zk配置标注](img/install-mysql/install-mysql-4-clone-zkconfig.jpg)
-
-刷新后如下图，不再显示Not Existed，ZK配置完成
-
-![修改zk配置2](img/install-mysql/install-mysql-5-clone-zkconfig-result.JPG)
-
-##### 2.5 启动Topology
+##### 2.4 启动Topology
 
 在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。
 
 然后分别点击dispatcher-appender、splitter-puller、extractor的启动按钮，系统则根据path路径自动执行相应 topology的shell脚本，启动成功后Status状态变为running。
 
-![install-mysql-7-Topology-have-started](img/install-mysql/install-mysql-7-Topology-have-started.PNG)
+![install-mysql-7-Topology-have-started](img/install-mysql/myl-start-full-pull-appender.png)
 
 新线部署完成
 
 **2.6 拉取增量和全量数据**
 
-新添加的数据线，其schema中的table处于abort状态。需要到dbus web中对相应的表，先拉取增量数据，才能让其变成OK状态。处于OK状态的表才会正常的从mysql数据源同步数据到相应的kafka中。拉取完成增量之后，可以根据业务需要确定是否需要拉取全量数据。
+新添加的数据线，其schema中的table处于stopped状态。需要到dbus keeper中对相应的表，先拉取增量数据，才能让其变成OK状态。处于OK状态的表才会正常的从mysql数据源同步数据到相应的kafka中。拉取完成增量之后，可以根据业务需要确定是否需要拉取全量数据。
 
-![install-mysql-11-appender-fullpuller-data](img\install-mysql\install-mysql-11-appender-fullpuller-data.PNG)
+![install-mysql-11-appender-fullpuller-data](img/install-mysql/myl-start-full-pull-appender.png)
 
 
 
@@ -273,7 +264,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 如果新加线过程中出现问题时，可以先删除已经添加到一半的新线Datasource，然后再重新添加新线。
 
-​	![删除database标注](img/install-mysql/install-mysql-8-delete-datasource-when-fail.jpg)
+​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
 
 
 

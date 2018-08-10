@@ -20,7 +20,7 @@ description: 安装部署说明
 
 # 2 快速体验 - All In One包部署
 
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
 
 
 
@@ -30,27 +30,27 @@ description: 安装部署说明
 
 ### 3.1.1 硬件基础
 
-Dbus集群环境最少需要三台Linux服务器，例如服务器信息如下：
+Dbus集群环境最少需要三台Linux服务器，以下以三台服务器为例进行说明：
 
-| No   | IP          | 域名          |
-| ---- | ----------- | ----------- |
-| 1    | 192.168.0.1 | dbus-n1     |
-| 2    | 192.168.0.2 | dbus-n2     |
-| 3    | 192.168.0.3 | dbus-n3     |
-| 4    | 192.168.0.4 | dbus-keeper |
+| No   | IP          | 域名      | 运行环境   |
+| ---- | ----------- | ------- | ------ |
+| 1    | 192.168.0.1 | dbus-n1 | JDK1.8 |
+| 2    | 192.168.0.2 | dbus-n2 | JDK1.8 |
+| 3    | 192.168.0.3 | dbus-n3 | JDK1.8 |
 
-**所有服务器安装JDK1.8**
+****
 
-修改所有服务器/etc/hosts文件设置相应的域名信息如下：
+**HOST配置**：修改所有服务器/etc/hosts文件设置相应的域名信息如下：
 
 ```
 192.168.0.1 dbus-n1
 192.168.0.2 dbus-n2
 192.168.0.3 dbus-n3
-192.168.0.4 dbus-keeper
 ```
 
-### 3.1.2 依赖服务
+**SSH免密登录配置**：配通dbus-n3到dbus-n1、dbus-n2、dbus-n3之间的SSH免密登录。
+
+### 3.1.2 软件依赖
 
 | 名称            | 版本号      | 说明                                       |
 | ------------- | -------- | ---------------------------------------- |
@@ -59,26 +59,42 @@ Dbus集群环境最少需要三台Linux服务器，例如服务器信息如下�
 | Kafka         | v0.10    | 用于存储相关数据和消息，提供订阅和发布的能力                   |
 | Storm         | v1.0.1   | 用于提供DBus流式计算                             |
 | Influxdb      | v0.13.0  | 用于记录实时监控数据。**创建好账号。后续配置需提供。**            |
-| Grafana       | v4.2.0   | 用于展示监控信息。**需生成Token信息备用。**[点击查看Grafana生成Token步骤](#gen-grafana-token) |
+| Grafana       | v4.2.0   | 用于展示监控信息。                                |
 | MySql         | v5.6.x   | 创建数据库dbus_mgr。**创建好账号。后续配置需提供。**         |
-| SSH免密         | -        | 配通dbus-keeper到dbus-n1、dbus-n2、dbus-n3之间的SSH免密登录。 |
-| kafka-manager | v1.3.0.8 | **选装 **。用于便捷地查看、管理Kafka集群。建议安装。          |
+| Nginx         | v1.9.3   | 用于存放静态html、js文件及反向代理。                    |
+| kafka-manager | v1.3.3.4 | **选装**。用于便捷地查看、管理Kafka集群。建议安装。           |
 
-<span id="gen-grafana-token">**[Grafana生成Token信息步骤]**</span>
+### 3.1.3 推荐部署说明
 
-**步骤一**:点击打开API Keys管理页面。  
+```
+zookeeper：     推荐部署dbus-n1、dbus-n2、dbus-n3。
+Storm：         推荐部署dbus-n1、dbus-n2、dbus-n3。
+Storm Nimbus：  推荐部署dbus-n1。
+Storm UI：      推荐部署dbus-n1。
+Kafka：         推荐部署dbus-n1、dbus-n2、dbus-n3。
+DBUS Keeper：   推荐部署dbus-n3（若部署集群，可部署到dbus-n2、dbus-n3）。
+DBUS HeartBeat：推荐部署dbus-n2、dbus-n3。
+```
+
+有关上述基础组件的配置，可参考：[基础组件安装配置](install-base-components.html)
+
+### 3.1.4 前期准备 
+
+#### 3.1.4.1 生成GrafanaToken
+
+ DBUS使用Grafana展示数据线监控信息。需要提供Grafana Token进行监控模板的初始化。
+
+**1** 点击打开API Keys管理页面。  
 
 ![grafana-token-01](img/install-base-components/grafana-token-01.png)
 
-**步骤二**:添加Key。
+**2** 添加Key。
 
 ![grafana-token-02](img/install-base-components/grafana-token-02.png)
 
-**步骤三**:在跳出来的页面拷贝Key，并保存好。
+**3** 在跳出来的页面拷贝Key，并保存好。
 
 ![grafana-token-03](img/install-base-components/grafana-token-03.png)
-
-
 
 ## 3.2 DBUS安装配置
 
@@ -86,17 +102,22 @@ Dbus集群环境最少需要三台Linux服务器，例如服务器信息如下�
 
 访问[Release Downloads](https://github.com/BriData/DBus/releases)，到该Release页面提供的云盘地址下载 dbuskeeper_web.zip 压缩包，上传到你指定的服务器，解压 unzip dbuskeeper_web.zip。
 
-### 3.2.2 修改Dbus-Keeper启动配置
+### 3.2.2  Nginx配置
 
-修改解压后根目录conf.properties，提供dbus-keeper初始化启动参数
+复制dbuskeeper_web下的nginx.conf到nginx安装目录的conf下替换默认配置文件。
+复制dbuskeeper_web下的build.zip到nginx安装目录的html下解压(unzip build.zip)，启动nginx。
+
+### 3.2.3 修改Dbus-Keeper启动配置
+
+修改解压后根目录config.properties，提供dbus-keeper初始化启动参数
 
 ```
-# eureka地址：如果用非自带的，需改成您自己的eurecka地址。否则，维持不变即可。
+# eureka地址：如果用dbus自带的，不用改。否则，改成您自己的eurecka地址。
 eureka.client.serviceUrl.defaultZone=http://localhost:9090/eureka/
 # eureka预警邮箱
 eureka.instance.metadataMap.alarmEmail=example@example.com
 # ZK地址
-zk.str=zk_server_ip:2181
+zk.str=zk_server_ip1:2181,zk_server_ip2:2181,zk_server_ip3:2181
 # mysql管理库相关配置，其中mysql驱动可以不改
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbus?characterEncoding=utf-8
@@ -104,7 +125,7 @@ spring.datasource.username=dbus
 spring.datasource.password=dbus!@#123
 ```
 
-### **3.2.3 启动/停止Dbus-Keeper**
+### **3.2.4 启动/停止Dbus-Keeper**
 
 ```
 >>初始化jar包。
@@ -115,9 +136,9 @@ spring.datasource.password=dbus!@#123
 	./stop.sh
 ```
 
-### 3.2.4 初始化配置
+### 3.2.5 初始化配置
 
-登陆web:  http://localhost:3088，首次登陆会自动跳转到初始化页面，根据页面提示提供相关信息：
+登录web:  http://dbus-keeper:8080，首次登陆会自动跳转到初始化页面，根据页面提示提供相关信息：
 
 ![](img/web_init1.png)
 
@@ -137,7 +158,7 @@ spring.datasource.password=dbus!@#123
     10、初始化脱敏包
 初始化过程中，如果某个环节连通性检测失败，请根据错误提示修配置信息。
 如果确认配置没有问题，仍然初始化失败，请查看后台日志进行诊断。
-初始化完成后，会自动跳转到登录界面，输入用户名密码即可开启DBus之旅。
-管理员初始账号/密码：admin/12345678。
 ```
 
+**初始化完成后，会自动跳转到登录界面，输入用户名密码即可开启DBus之旅。**
+**管理员初始账号/密码：admin/12345678。**
