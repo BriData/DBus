@@ -1,0 +1,80 @@
+@import "../../assets/less/variable";
+
+.app {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  .layout{
+    min-width: 1200px;
+  }
+  .slider{
+    background:@layout-slider-color;
+  }
+  .navigator {
+    width:100%;
+    background-color:@layout-topbar-color;
+    flex-shrink: 0;
+  }
+
+  .main {
+    flex: 1;
+    .header {
+      flex-shrink: 0;
+    }
+
+    .bread {
+      padding: 10px 0;
+      flex-shrink: 0;
+    }
+
+    .content {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      background:@layout-content-color;
+    }
+  }
+}
+/*---鼠标点击滚动条显示样式--*/
+::-webkit-scrollbar-thumb:hover{
+  background-color:@primary-color ;
+  height:20px;
+  -webkit-border-radius:4px;
+}
+
+::-webkit-scrollbar-thumb:active{
+  height:20px;
+  background-color:@primary-color ;
+  -webkit-border-radius:4px;
+}
+
+/*---滚动条大小--*/
+::-webkit-scrollbar {  
+  width: 14px;  
+  height: 14px;  
+}  
+
+/*---滚动框背景样式--*/
+::-webkit-scrollbar-track,  
+::-webkit-scrollbar-thumb {  
+  border-radius:4px;  
+  border: 5px solid transparent;  
+}  
+  
+::-webkit-scrollbar-track {  
+  box-shadow: 1px 1px 5px rgba(0,0,0,.2) inset;  
+}  
+  
+::-webkit-scrollbar-thumb {  
+  min-height: 20px;  
+  background-clip: content-box;  
+  box-shadow: 0 0 0 5px rgba(0,0,0,.2) inset;  
+}  
+  
+::-webkit-scrollbar-corner {  
+  background: transparent;  
+}  

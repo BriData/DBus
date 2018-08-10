@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,13 @@ public class Constants {
     public static final String ZOOKEEPER_SERVERS = "dbus.zookeeper.servers";
     public static final String KAFKA_BOOTSTRAP_SERVERS = "dbus.kafka.BootstrapServers";
     public static final String ZOOKEEPER_SESSION_TIMEOUT = "dbus.zookeeper.session.timeout";
+    public static final String MANGER_DB_CONNECT_URL = "dbus.manger.DB.connect.url";
     public static final String TOPOLOGY_ID =       "dbus.storm.topology.dispatcher.id";
+    public static final String ROUTER_PROJECT_NAME = "dbus.storm.topology.router.project.name";
 
     public static final String STATISTIC_TOPIC = "dbus.statistic.topic";
+
+    public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url";
 
     //顶级目录
     public static final String DBUS_ROOT = "/DBus";
@@ -49,7 +53,9 @@ public class Constants {
     //一级目录
     public static final String COMMON_ROOT = DBUS_ROOT + "/Commons";
     public static final String MYSQL_PROPERTIES = "mysql.properties";
+    public static final String MYSQL_PROPERTIES_ROOT = COMMON_ROOT + "/mysql.properties";
     public static final String GLOBAL_PROPERTIES = "global.properties";
+    public static final String GLOBAL_PROPERTIES_ROOT = COMMON_ROOT + "/global.properties";
 
     public static final String  TEMPLATE_NODE_NAME = "/ConfTemplates";
     public static final String DBUS_CONF_TEMPLATE_ROOT = DBUS_ROOT + "/ConfTemplates";
@@ -63,13 +69,28 @@ public class Constants {
 
     public static final String HEARTBEAT_ROOT = DBUS_ROOT + "/HeartBeat";
     public static final String HEARTBEAT_CONFIG = HEARTBEAT_ROOT + "/Config";
+    public static final String HEARTBEAT_PROJECT_MONITOR = HEARTBEAT_ROOT + "/ProjectMonitor";
     public static final String HEARTBEAT_JSON = "heartbeat_config.json";
+    public static final String HEARTBEAT_LEADER = HEARTBEAT_ROOT + "/Leader";
+    public static final String HEARTBEAT_CONFIG_JSON = HEARTBEAT_CONFIG + "/heartbeat_config.json";
 
     public static final String NAMESPACE_ROOT = DBUS_ROOT + "/NameSpace";
 
     public static final String TOPOLOGY_ROOT = DBUS_ROOT + "/Topology";
 
+    public static final String ROUTER_ROOT = DBUS_ROOT + "/Router";
+
     public static final String STREAMING_ROOT = DBUS_ROOT + "/Streaming";
+
+    /**
+     * zookeeper kafka节点path
+     */
+    public static final String KAFKA_ROOT = "/kafka";
+    public static final String BROKERS_ROOT = KAFKA_ROOT + "/brokers";
+    public static final String BROKERS_IDS = BROKERS_ROOT + "/ids";
+
+
+    public static final String SECURITY_ROOT = "/security";
 
     public static final String RULE_TYPE_STRING = "string";
 
@@ -88,14 +109,21 @@ public class Constants {
 
     public static final String LOG_PROCESSOR = "log-processor";
 
+	public static final String GLOBAL_SECURITY_CONF = "global_security.conf";
+
+    public static final String ROUTER = "router";
     //full puller
     public static final String HEARTBEAT_CONTROL_NODE = HEARTBEAT_ROOT + "/Control";
     public static final String FULL_SPLITTING_PROPS_ROOT = "dbus-fulldata-splitter";
     public static final String FULL_PULLING_PROPS_ROOT = "dbus-fulldata-puller";
     public static final String FULL_SPLITTER_TYPE = "full-splitter";
     public static final String FULL_PULLER_TYPE = "full-puller";
+    //full puller mode
+    public static final String FULL_PULLER_MODE = "/DBus/Keeper/safeMode/full_puller_mode.properties";
 
     public static final String CANAL_ROOT = DBUS_ROOT + "/Canal";
+
+    public static final String KEEPER_ROOT = DBUS_ROOT + "/Keeper";
 
     public static final String DB_CONF_PROP_KEY_URL = "url";
     public static final String DB_CONF_PROP_KEY_USERNAME = "username";

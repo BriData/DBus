@@ -325,6 +325,12 @@ var EditRuleGrammarLine = React.createClass({
                                   defaultValue={ruleGrammar[RuleConst.rule.ruleParamter]}
                                   onChange={this.handleRuleParamterChange}/>);
         }
+        else if (ruleType == RuleConst.type.jsonPath) {
+            line.push(<antd.Input key={ruleGrammar.key+"parameter"} addonBefore="parameter"
+                                  style={{width: 700}}
+                                  defaultValue={ruleGrammar[RuleConst.rule.ruleParamter]}
+                                  onChange={this.handleRuleParamterChange}/>);
+        }
 
         line.push(<span className="ant-divider"/>);
         line.push(<antd.Button title="Add" icon="plus"

@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,9 +34,15 @@ import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
+//  #opensource_remove_begin#
+import com.creditease.dbus.heartbeat.util.KafkaUtil;
+//  #opensource_remove_end#
 import com.creditease.dbus.heartbeat.vo.PacketVo;
 
 import org.apache.commons.lang.StringUtils;
+//  #opensource_remove_begin#
+import org.apache.kafka.clients.CommonClientConfigs;
+//  #opensource_remove_end#
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -92,6 +98,13 @@ public class KafkaConsumerEvent extends AbstractEvent {
         Properties props = HeartBeatConfigContainer.getInstance().getKafkaConsumerConfig();
         Properties producerProps = HeartBeatConfigContainer.getInstance().getKafkaProducerConfig();
         try {
+            //  #opensource_remove_begin#
+            if(KafkaUtil.checkSecurity()){
+                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+                producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
+            //  #opensource_remove_end#
+
             dataConsumer = new KafkaConsumer<>(props);
             assignTopics = new ArrayList<>();
             for (PartitionInfo pif : dataConsumer.partitionsFor(this.topic)) {
@@ -196,7 +209,9 @@ public class KafkaConsumerEvent extends AbstractEvent {
                             schemaName = vals[3];
                             tableName = vals[4];
                             dsPartition = vals[6];
-                            if (vals[0].equals("data_increment_data")) {
+                            if (vals[0].equals("data_increment_data") ||
+                                vals[0].equals("data_initial_data") ||
+                                vals[0].equals("data_increment_termination")) {
                                 //有数据来, table正常的情况
                                 // ojjTime
                                 //cpTime = Long.valueOf(vals[8]);

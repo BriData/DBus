@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectEncodeHintMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectEncodeHint">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="field_name" jdbcType="VARCHAR" property="fieldName" />
+    <result column="encode_plugin_id" jdbcType="INTEGER" property="encodePluginId" />
+    <result column="encode_type" jdbcType="VARCHAR" property="encodeType" />
+    <result column="encode_param" jdbcType="VARCHAR" property="encodeParam" />
+    <result column="desc_" jdbcType="VARCHAR" property="desc" />
+    <result column="truncate" jdbcType="INTEGER" property="truncate" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_encode_hint
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectEncodeHint">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_encode_hint (project_id, table_id, field_name, encode_plugin_id,
+      encode_type, encode_param, desc_,
+      truncate, update_time)
+    values (#{projectId,jdbcType=INTEGER}, #{tableId,jdbcType=INTEGER}, #{fieldName,jdbcType=VARCHAR}, #{encodePluginId,jdbcType=INTEGER},
+    #{encodeType,jdbcType=VARCHAR}, #{encodeParam,jdbcType=VARCHAR}, #{desc,jdbcType=VARCHAR},
+      #{truncate,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectEncodeHint">
+    update t_project_encode_hint
+    set
+      <if test="projectId != null">project_id = #{projectId,jdbcType=INTEGER},</if>
+      <if test="tableId != null">table_id = #{tableId,jdbcType=INTEGER},</if>
+      <if test="fieldName != null">field_name = #{fieldName,jdbcType=VARCHAR},</if>
+      <if test="encodePluginId != null">encode_plugin_id = #{encodePluginId,jdbcType=INTEGER},</if>
+      <if test="encodeType != null">encode_type = #{encodeType,jdbcType=VARCHAR},</if>
+      <if test="encodeParam != null">encode_param = #{encodeParam,jdbcType=VARCHAR},</if>
+      <if test="desc != null">desc_ = #{desc,jdbcType=VARCHAR},</if>
+      <if test="truncate != null">truncate = #{truncate,jdbcType=INTEGER},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP}</if>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, project_id, table_id, field_name, encode_plugin_id, encode_type, encode_param, desc_, truncate,
+    update_time
+    from t_project_encode_hint
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, project_id, table_id, field_name, encode_plugin_id, encode_type, encode_param, desc_, truncate,
+    update_time
+    from t_project_encode_hint
+  </select>
+  <select id="selectByProjectId" resultType="java.util.Map" parameterType="java.lang.Integer">
+    select
+      peh.table_id tid,
+      tm.id cid,
+      peh.field_name columnName,
+      tm.data_type dataType,
+      peh.encode_type encodeType,
+      peh.encode_param encodeParam,
+      peh.desc_,
+      peh.truncate,
+      peh.encode_plugin_id encodePluginId
+    from
+      t_project_encode_hint peh,
+      t_data_tables dt,
+      t_table_meta tm
+    where
+      peh.project_id = #{projectId} AND
+      peh.table_id = dt.id AND
+      dt.ver_id = tm.ver_id AND
+      tm.column_name = peh.field_name
+  </select>
+  <delete id="deleteByProjectId" parameterType="java.lang.Integer">
+      delete from t_project_encode_hint
+      where project_id = #{projectId,jdbcType=INTEGER}
+  </delete>
+  <select id="selectByPidAndTid" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT
+      hint.project_id projectId,
+      hint.table_id tableId,
+      tm.id columnId,
+      hint.field_name fieldName,
+      tm.data_type dataType,
+      hint.encode_type encodeType,
+      hint.encode_param encodeParam,
+      hint.truncate,
+      hint.encode_plugin_id encodePluginId,
+      tm.data_precision dataPrecision,
+      tm.data_scale dataScale
+    FROM
+      t_project_encode_hint hint,
+      t_data_tables dt,
+      t_table_meta tm
+    WHERE
+      hint.project_id = #{projectId,jdbcType=INTEGER} AND
+      hint.table_id = #{tableId, jdbcType=INTEGER} AND
+      hint.table_id = dt.id AND
+      tm.ver_id = dt.ver_id AND
+      tm.column_name = hint.field_name
+
+  </select>
+</mapper>

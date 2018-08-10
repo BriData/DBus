@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,19 @@ import org.apache.commons.lang.StringUtils;
 
 public class TableMatchContainer {
 	private static TableMatchContainer tableMatchContainer;
-	
+
 	private Map<String, String> map = new HashMap<String, String>();
-	
+
 	private TableMatchContainer(){
 	}
-	
+
 	public static TableMatchContainer getInstance(){
 		if(tableMatchContainer==null){
 			tableMatchContainer = new TableMatchContainer();
 		}
 		return tableMatchContainer;
 	}
-	
+
 	public void addTableRegex(String tableRegex){
 		String[] tableRegexs = StringUtils.split(tableRegex, ",");
 		for(String regex : tableRegexs){
@@ -47,9 +47,9 @@ public class TableMatchContainer {
 			String partitionTblRegex = StringUtils.substringAfter(regex.trim(), ".");
 			map.put(localTbl, partitionTblRegex);
 		}
-		
+
 	}
-	
+
 	public String getLocalTable(String table){
 		for(Map.Entry<String, String> entry : map.entrySet()){
 			if(!table.contains(entry.getKey()))
@@ -63,4 +63,5 @@ public class TableMatchContainer {
 	public void clear(){
 		map.clear();
 	}
+
 }

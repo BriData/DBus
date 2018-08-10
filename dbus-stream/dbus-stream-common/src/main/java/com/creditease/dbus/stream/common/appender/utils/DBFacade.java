@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package com.creditease.dbus.stream.common.appender.utils;
 
 import com.alibaba.druid.util.StringUtils;
 import com.creditease.dbus.commons.MetaWrapper;
-import com.creditease.dbus.commons.msgencoder.EncodeColumn;
+import com.creditease.dbus.msgencoder.EncodeColumn;
 import com.creditease.dbus.stream.common.appender.bean.*;
 import com.creditease.dbus.stream.common.appender.exception.RuntimeSQLException;
 import com.google.common.collect.Lists;
@@ -1011,6 +1011,7 @@ public class DBFacade {
                 col.setId(rs.getLong("id"));
                 col.setDesc(rs.getString("desc_"));
                 col.setEncodeParam(rs.getString("encode_param"));
+                col.setPluginId(rs.getLong("plugin_id"));
                 col.setEncodeType(rs.getString("encode_type"));
                 col.setTableId(rs.getLong("table_id"));
                 col.setFieldName(rs.getString("field_name"));
@@ -1026,5 +1027,23 @@ public class DBFacade {
     public void updateMetaChangeFlag(long tableId, int flag) {
         String sql = "update t_data_tables set meta_change_flg = ? where id = ?";
         executeUpdate(sql, flag, tableId);
+    }
+
+    public List<EncoderPluginConfig> loadEncodePlugins(Long projectId) {
+        String sql = "select * from t_encode_plugins where project_id = ? and status= ?";
+        return query(sql, new Object[]{projectId, EncoderPluginConfig.ACTIVE}, rs -> {
+            List<EncoderPluginConfig> plugins = new LinkedList<>();
+            while (rs.next()) {
+                EncoderPluginConfig plugin = new EncoderPluginConfig();
+                plugin.setId(rs.getLong("id"));
+                plugin.setName(rs.getString("name"));
+                plugin.setJarPath(rs.getString("path"));
+                plugin.setProjectId(projectId);
+                plugin.setStatus(rs.getString("status"));
+                plugin.setUpdateTime(rs.getDate("update_time"));
+                plugins.add(plugin);
+            }
+            return plugins;
+        });
     }
 }

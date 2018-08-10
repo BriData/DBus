@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectSinkMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectSink">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="sink_id" jdbcType="VARCHAR" property="sinkId" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_sink
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectSink">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_sink (project_id, sink_id, update_time
+      )
+    values (#{projectId,jdbcType=INTEGER}, #{sinkId,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectSink">
+    update t_project_sink
+    set
+      <if test="projectId != null">project_id = #{projectId,jdbcType=INTEGER},</if>
+      <if test="sinkId != null">sink_id = #{sinkId,jdbcType=VARCHAR},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP}</if>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, project_id, sink_id, update_time
+    from t_project_sink
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, project_id, sink_id, update_time
+    from t_project_sink
+  </select>
+  <select id="selectByProjectId" resultType="java.util.Map" parameterType="java.lang.Integer">
+    select
+      ts.id,
+      ts.sink_name sinkName,
+      ts.sink_desc sinkDesc,
+      ts.url
+    from
+      t_project_sink tps
+      LEFT JOIN t_sink ts ON tps.sink_id = ts.id
+    where project_id = #{projectId}
+  </select>
+  <delete id="deleteByProjectId" parameterType="java.lang.Integer">
+    delete from t_project_sink
+    where project_id = #{projectId,jdbcType=INTEGER}
+  </delete>
+  <select id="getBySinkId" resultType="java.lang.Integer">
+    select count(1) from t_project_sink where sink_id = #{sinkId}
+  </select>
+</mapper>

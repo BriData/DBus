@@ -1,3 +1,23 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 package com.creditease.dbus.stream.mysql.appender.bolt.processor.wrapper;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
@@ -7,8 +27,7 @@ import com.creditease.dbus.commons.DataType;
 import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.commons.DbusMessageBuilder;
 import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.commons.msgencoder.EncodeColumnProvider;
-import com.creditease.dbus.commons.msgencoder.MessageEncoder;
+import com.creditease.dbus.msgencoder.*;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
@@ -32,7 +51,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -69,12 +90,15 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
         int payloadMaxSize = getMaxSize();
         DbusMessageBuilder builder = createBuilderWithSchema(version, dataList.get(0));
 
-        EntryHeader header = null;
+        EntryHeader header;
         long uniquePos = 0;
 
         // 脱敏
         EncodeColumnProvider provider = new CachedEncodeColumnProvider(version.getTableId());
-        MessageEncoder encoder = new MessageEncoder();
+        final MetaVersion v = version;
+        UmsEncoder encoder = new PluggableMessageEncoder(PluginManagerProvider.getManager(), (e, column, message) -> {
+            BoltCommandHandlerHelper.onEncodeError(message, v, column, e);
+        });
         for (MessageEntry msgEntry : dataList) {
             header = msgEntry.getEntryHeader();
             header.setLastPos(lastPos);
@@ -91,7 +115,7 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
                         beforePayload.add(Constants.UmsMessage.BEFORE_UPDATE_OPERATION);// ums_op = "b"
                         beforePayload.add(generateUmsUid());// ums_uid
                         List<Column> beforeColumns = rowData.getBeforeColumnsList();
-                        payloadSize += addPayloadColumns(beforePayload, beforeColumns, beforeWrapper);
+                        payloadSize += addPayloadColumns(beforePayload, beforeColumns, beforeWrapper, builder);
                         builder.appendPayload(beforePayload.toArray());
                         payloadCount++;
                     }
@@ -103,7 +127,7 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
                     payloads.add(Support.getOperTypeForUMS(header.getOperType()));// ums_op
                     payloads.add(generateUmsUid());// ums_uid
                     List<Column> columns = Support.getFinalColumns(header.getOperType(), rowData);
-                    payloadSize += addPayloadColumns(payloads, columns, wrapper);
+                    payloadSize += addPayloadColumns(payloads, columns, wrapper, builder);
                     builder.appendPayload(payloads.toArray());
                     payloadCount++;
 
@@ -123,7 +147,7 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
                     }
                 } catch (Exception e) {
                     long errId = System.currentTimeMillis();
-                    logger.error("Build dbus message error, abort this message, {}", e.getMessage(), e);
+                    logger.error("[%s]Build dbus message error, abort this message, {}", errId + "", e.getMessage(), e);
                     BoltCommandHandlerHelper.onBuildMessageError(errId + "", version, e);
                 }
             }
@@ -143,10 +167,20 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
         return String.valueOf(listener.getZkService().nextValue(Utils.join(".", Utils.getDatasource().getDsName(), Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_SCHEMA, Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_TABLE, Constants.UmsMessage.NAMESPACE_INDISTINCTIVE_VERSION)));
     }
 
-    private int addPayloadColumns(List<Object> payloads, List<Column> columns, PairWrapper<String, Object> wrapper) throws Exception {
+    private int addPayloadColumns(List<Object> payloads, List<Column> columns,
+                                  PairWrapper<String, Object> wrapper, DbusMessageBuilder builder) throws Exception {
         int payloadSize = 0;
+        Map<String, Column> map = new HashMap<>();
         for (Column column : columns) {
-            if (Support.isSupported(column)) {
+            map.put(column.getName(), column);
+        }
+        List<DbusMessage.Field> fields = builder.getMessage().getSchema().getFields();
+
+        for (int i = builder.getUmsFixedFields(); i < fields.size(); i++) {
+            DbusMessage.Field field = fields.get(i);
+            // 这里避免，源端表中包含ums_id_/ums_ts_等字段
+            Column column = map.get(field.getName());
+            if (column != null && Support.isSupported(column)) {
                 Pair<String, Object> pair = wrapper.getPair(column.getName());
                 Object value = pair.getValue();
                 payloads.add(value);
@@ -172,7 +206,8 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
         List<Column> columns = Support.getFinalColumns(eventType, rowData);
         for (Column column : columns) {
             String colType = Support.getColumnType(column);
-            if (Support.isSupported(colType)) {
+            // 这里避免，源端表中包含ums_id_/ums_ts_等字段
+            if (Support.isSupported(colType) && !builder.getMessage().containsFiled(column.getName())) {
                 builder.appendSchema(column.getName(), DataType.convertMysqlDataType(colType), true);
             }
         }

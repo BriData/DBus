@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,11 @@
 
 package com.creditease.dbus.extractor.spout;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.CanalEntry;
@@ -27,30 +32,29 @@ import com.alibaba.otter.canal.protocol.CanalPacket;
 import com.alibaba.otter.canal.protocol.Message;
 import com.alibaba.otter.canal.protocol.exception.CanalClientException;
 import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.DbusHelper;
+import com.creditease.dbus.commons.Pair;
+import com.creditease.dbus.extractor.common.utils.ZKHelper;
 import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
 import com.creditease.dbus.extractor.container.MsgStatusContainer;
 import com.creditease.dbus.extractor.container.TableMatchContainer;
 import com.creditease.dbus.extractor.manager.ContainerMng;
 import com.creditease.dbus.extractor.vo.MessageVo;
-import com.creditease.dbus.extractor.common.utils.ZKHelper;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
 import com.creditease.dbus.extractor.vo.SendStatusVo;
-import com.creditease.dbus.commons.Pair;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichSpout;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
-
-import org.apache.kafka.clients.consumer.*;
-import com.creditease.dbus.commons.DbusHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by ximeiwang on 2017/8/15.
@@ -135,6 +139,7 @@ public class CanalClientSpout extends BaseRichSpout  {
                 consumer.close();
                 consumer = null;
             }
+            //不需要for循环 20180307 review
             for (OutputTopicVo vo : ExtractorConfigContainer.getInstances().getOutputTopic()) {
                 extractorControlTopic = vo.getControlTopic();
                 break;
@@ -224,7 +229,7 @@ public class CanalClientSpout extends BaseRichSpout  {
         if (hasSentBatchSize >= flowSize) {
             logger.info("Flow control: Spout gets {} bytes data.", hasSentBatchSize);
             try {
-                System.out.println();
+                ackOrRollback();
                 TimeUnit.MILLISECONDS.sleep(100);
             } catch (InterruptedException e) {
                 logger.error(e.getMessage(), e);
@@ -348,6 +353,7 @@ public class CanalClientSpout extends BaseRichSpout  {
     public void ack(Object msgId) {
         try{
             Pair<Long, String> pair = (Pair<Long, String>)msgId;
+            logger.info("spout ack batchId: " + pair.getKey());
             MsgStatusContainer.getInstance().setCompleted(pair.getKey(), 1);
             //设定一个时间间隔
             long curTime = System.currentTimeMillis();
@@ -363,6 +369,7 @@ public class CanalClientSpout extends BaseRichSpout  {
     public void fail(Object msgId) {
         try{
             Pair<Long, String> pair = (Pair<Long, String>)msgId;
+            logger.error("spout fail batchId: " + pair.getKey());
             MsgStatusContainer.getInstance().setError(pair.getKey(), true);
             ackOrRollbackStartTime = System.currentTimeMillis();
             ackOrRollback();
@@ -449,9 +456,9 @@ public class CanalClientSpout extends BaseRichSpout  {
                     //进行rollback，会出现rollback失败，具体可参考canal源码
                     connector.rollback();
                     // connector.rollback(vo.getBatchId());
-                    MsgStatusContainer.getInstance().clear();
                     int totalBatchSize = MsgStatusContainer.getInstance().getSize();
                     logger.info("rollback to canal, the batchId is {}, haven't ack total batch size {}", vo.getBatchId(), totalBatchSize);
+                    MsgStatusContainer.getInstance().clear();
                     break;
                 } else if (vo.getResult() == Constants.SEND_NOT_COMPLETED) {
                     break;

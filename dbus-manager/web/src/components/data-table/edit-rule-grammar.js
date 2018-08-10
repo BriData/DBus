@@ -41,6 +41,15 @@ var EditRuleGrammar = React.createClass({
             }
         }
     },
+
+    autoFillField: (rule, no) => {
+        if (rule[RuleConst.rule.ruleTypeName] != RuleConst.type.jsonPath) return
+        const ruleGrammars = rule[RuleConst.rule.ruleGrammar]
+        if(!ruleGrammars || ruleGrammars.length < 2) return
+        ruleGrammars[no + 1][RuleConst.rule.ruleScope] = ruleGrammars[no][RuleConst.rule.ruleScope]
+        ruleGrammars[no + 1][RuleConst.rule.ruleParamter] = ruleGrammars[no][RuleConst.rule.ruleParamter]
+    },
+
     arrangeToIndexOrder: function (rule) {
         if (rule[RuleConst.rule.ruleTypeName] != RuleConst.type.toIndex) return;
         var ruleGrammars = rule[RuleConst.rule.ruleGrammar];
@@ -53,6 +62,7 @@ var EditRuleGrammar = React.createClass({
         var rule = JSON.parse(JSON.stringify(this.props.rule));
         var ruleGrammars = rule[RuleConst.rule.ruleGrammar];
         ruleGrammars.splice(no + 1, 0, RuleConst.generateRuleGrammar());
+        this.autoFillField(rule, no)
         this.arrangeToIndexOrder(rule);
         this.props.onRuleGrammarChange(rule);
     },

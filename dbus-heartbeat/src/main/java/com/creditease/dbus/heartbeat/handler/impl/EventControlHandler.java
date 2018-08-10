@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 
 package com.creditease.dbus.heartbeat.handler.impl;
 
-import com.creditease.dbus.heartbeat.event.impl.SendStatMessageEvent;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,11 +27,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.creditease.dbus.heartbeat.container.EventContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.event.IEvent;
-import com.creditease.dbus.heartbeat.event.impl.CheckFullPullEvent;
-import com.creditease.dbus.heartbeat.event.impl.CheckHeartBeatEvent;
-import com.creditease.dbus.heartbeat.event.impl.DeleteFullPullOldVersionEvent;
-import com.creditease.dbus.heartbeat.event.impl.EmitHeartBeatEvent;
-import com.creditease.dbus.heartbeat.event.impl.FullPullEndDelayEvent;
+import com.creditease.dbus.heartbeat.event.impl.*;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 
 public class EventControlHandler extends AbstractHandler {
@@ -55,6 +50,13 @@ public class EventControlHandler extends AbstractHandler {
         Thread chkt = new Thread(checkEvent, "check-heartbeat-event");
         chkt.start();
         EventContainer.getInstances().put(checkEvent, chkt);
+
+        //2.1 启动 keeper的ZK心跳线程
+        long keeperCheckInterval = HeartBeatConfigContainer.getInstance().getHbConf().getCheckInterval();
+        IEvent checkProjectEvent = new ProjectCheckHeartBeatEvent(keeperCheckInterval,cdl);
+        Thread chpkt = new Thread(checkProjectEvent,"check-project-heartbeat-event");
+        chpkt.start();
+        EventContainer.getInstances().put(checkProjectEvent, chpkt);
 
         //3 启动  检查拉全量 线程
         Lock lock = new ReentrantLock();
@@ -82,6 +84,13 @@ public class EventControlHandler extends AbstractHandler {
         Thread ssmEvent = new Thread(sendStatMsgEvent, "send-stat-msg-event");
         ssmEvent.start();
         EventContainer.getInstances().put(sendStatMsgEvent, ssmEvent);
+
+        //7 启动 检测主备延时 线程
+        long checkMasterSlaveDelayInterval = HeartBeatConfigContainer.getInstance().getHbConf().getCheckMasterSlaveDelayInterval();
+        IEvent checkMasterSlaveDelayEvent = new CheckMasterSlaveDelayEvent(checkMasterSlaveDelayInterval);
+        Thread cmsdEvent = new Thread(checkMasterSlaveDelayEvent, "check-master-slave-delay-event");
+        cmsdEvent.start();
+        EventContainer.getInstances().put(checkMasterSlaveDelayEvent, cmsdEvent);
     }
 
 }

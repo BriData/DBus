@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.UserMapper">
+    <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.User">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="role_type" jdbcType="VARCHAR" property="roleType"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="user_name" jdbcType="VARCHAR" property="userName"/>
+        <result column="password" jdbcType="VARCHAR" property="password"/>
+        <result column="email" jdbcType="VARCHAR" property="email"/>
+        <result column="phone_num" jdbcType="VARCHAR" property="phoneNum"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete from t_user
+        where id = #{id,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="com.creditease.dbus.domain.model.User">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into t_user (user_name, password, email, phone_num
+        <if test="status != null">, status</if>
+        <if test="roleType != null">, role_type</if>
+        <if test="updateTime != null">, update_time</if>)
+        values (#{userName,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{phoneNum,jdbcType=VARCHAR}
+        <if test="status != null">, #{status,jdbcType=VARCHAR}</if>
+        <if test="roleType != null">, #{roleType,jdbcType=VARCHAR}</if>
+        <if test="updateTime != null">, #{updateTime,jdbcType=TIMESTAMP}</if>)
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.User">
+        update t_user
+        set role_type = #{roleType,jdbcType=VARCHAR},
+        status = #{status,jdbcType=VARCHAR},
+        user_name = #{userName,jdbcType=VARCHAR},
+        password = #{password,jdbcType=VARCHAR},
+        email = #{email,jdbcType=VARCHAR},
+        phone_num = #{phoneNum,jdbcType=VARCHAR},
+        update_time = #{updateTime,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select id, role_type, status, user_name, password, email, phone_num, update_time
+        from t_user
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select id, role_type, status, user_name, password, email, phone_num, update_time
+        from t_user
+    </select>
+    <select id="search" resultMap="BaseResultMap" parameterType="com.creditease.dbus.domain.model.User">
+        select * from t_user
+        <where>
+            <if test="email != null">email like "%"#{email}"%"</if>
+            <if test="userName != null">and user_name like "%"#{userName}"%"</if>
+            <if test="phoneNum != null">and phone_num like #{phoneNum}"%"</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        <if test="sortby != null">
+            order by ${sortby} <if test="order != null">${order}</if>
+        </if>
+    </select>
+    <select id="selectByEmail" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select * from t_user where email like "%"#{email}"%"
+    </select>
+    <update id="modifyPassword">
+        update t_user set password = #{password} where id = #{id}
+    </update>
+</mapper>

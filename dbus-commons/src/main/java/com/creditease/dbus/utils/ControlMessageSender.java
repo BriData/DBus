@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,15 @@ public class ControlMessageSender {
         producer = new KafkaProducer<>(properties);
     }
 
-    public void send(String topic, ControlMessage msg) throws Exception {
+    public long send(String topic, ControlMessage msg) throws Exception {
         String key = msg.getType();
         String jsonMessage = msg.toJSONString();
         byte[] message = jsonMessage.getBytes();
 
         try {
             Future<RecordMetadata> result = producer.send(new ProducerRecord<>(topic, key, message), null);
-            result.get();
+            RecordMetadata recordMetadata = result.get();
+            return recordMetadata.offset();
         } finally {
             producer.close();
         }

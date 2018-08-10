@@ -86,6 +86,11 @@ public class InitZooKeeper {
             logger.error("Zookeeper server cannot be null!");
             return;
         }
+        if (Strings.isNullOrEmpty(kafkaBootstrapServers)) {
+            logger.error("kafka server cannot be null!");
+            return;
+        }
+
         // Connect to ZooKeeper securely with auth info
         this.myZk = new ZkService(zkServer);
     }

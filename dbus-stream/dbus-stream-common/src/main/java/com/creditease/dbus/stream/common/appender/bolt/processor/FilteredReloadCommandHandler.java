@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ public class FilteredReloadCommandHandler implements BoltCommandHandler {
     public FilteredReloadCommandHandler(CommandHandlerListener listener) {
         this.listener = listener;
         handler = new CommonReloadHandler(listener);
-        cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
+        // 将cache清理时间缩短，避免有些线程无法reload的bug
+        cache = CacheBuilder.newBuilder().expireAfterWrite(2, TimeUnit.SECONDS).build();
     }
     @Override
     public void handle(Tuple tuple) {

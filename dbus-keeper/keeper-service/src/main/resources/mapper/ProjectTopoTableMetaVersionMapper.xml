@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectTopoTableMetaVersionMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectTopoTableMetaVersion">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="topo_id" jdbcType="INTEGER" property="topoId" />
+    <result column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="column_name" jdbcType="VARCHAR" property="columnName" />
+    <result column="data_type" jdbcType="VARCHAR" property="dataType" />
+    <result column="data_length" jdbcType="INTEGER" property="dataLength" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="schema_change_flag" jdbcType="TINYINT" property="schemaChangeFlag" />
+    <result column="schema_change_comment" jdbcType="TINYINT" property="schemaChangeComment" />
+    <result column="data_precision" jdbcType="INTEGER" property="dataPrecision" />
+    <result column="data_scale" jdbcType="INTEGER" property="dataScale" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_topo_table_meta_versionz
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTopoTableMetaVersion">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_topo_table_meta_version (project_id, topo_id, table_id,
+    version, column_name, data_type,
+    data_length, update_time, schema_change_flag,
+    data_precision, data_scale)
+    values (#{projectId,jdbcType=INTEGER}, #{topoId,jdbcType=INTEGER}, #{tableId,jdbcType=INTEGER},
+    #{version,jdbcType=INTEGER}, #{columnName,jdbcType=VARCHAR}, #{dataType,jdbcType=VARCHAR},
+    #{dataLength,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT},
+    #{dataPrecision,jdbcType=INTEGER}, #{dataScale,jdbcType=INTEGER})
+  </insert>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, project_id, topo_id, table_id, version, column_name, data_type, data_length,
+    update_time, schema_change_flag, data_precision, data_scale
+    from t_project_topo_table_meta_version
+  </select>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectTopoTableMetaVersion">
+    update t_project_topo_table_meta_version
+    <set>
+      <if test="projectId !=null">project_id = #{projectId,jdbcType=INTEGER},</if>
+      <if test="topoId !=null">topo_id = #{topoId,jdbcType=INTEGER},</if>
+      <if test="tableId !=null">table_id = #{tableId,jdbcType=INTEGER},</if>
+      <if test="columnName !=null">column_name = #{columnName,jdbcType=INTEGER},</if>
+      <if test="version !=null">version = #{version,jdbcType=INTEGER},</if>
+      <if test="dataType != null">data_type = #{dataType,jdbcType=VARCHAR},</if>
+      <if test="dataLength != null">data_length = #{dataLength,jdbcType=INTEGER},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+      <if test="schemaChangeFlag != null">schema_change_flag = #{schemaChangeFlag,jdbcType=TINYINT},</if>
+      <if test="dataScale != null">data_scale = #{dataScale,jdbcType=INTEGER},</if>
+      <if test="dataPrecision != null">data_precision = #{dataPrecision,jdbcType=INTEGER},</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, project_id, topo_id, table_id, version, column_name, data_type, data_length,
+    update_time, schema_change_flag, data_precision, data_scale, schema_change_comment
+    from t_project_topo_table_meta_version
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByNonPrimaryKey" resultMap="BaseResultMap">
+    SELECT *
+    FROM t_project_topo_table_meta_version
+    WHERE
+      project_id = #{projectId,jdbcType=INTEGER}
+      AND topo_id = #{topoId,jdbcType=INTEGER}
+      AND table_id = #{tableId,jdbcType=INTEGER}
+      AND version = #{version,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByNonPrimaryKey">
+    delete from t_project_topo_table_meta_version
+    where
+      project_id = #{projectId,jdbcType=INTEGER} AND
+      topo_id = #{topoId,jdbcType=INTEGER} AND
+      table_id = #{tableId,jdbcType=INTEGER}
+      <if test="columnName != null"> AND column_name = #{columnName,jdbcType=VARCHAR}</if>
+  </delete>
+</mapper>

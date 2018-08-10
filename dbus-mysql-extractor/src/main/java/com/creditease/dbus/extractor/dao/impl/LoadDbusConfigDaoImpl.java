@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ package com.creditease.dbus.extractor.dao.impl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.creditease.dbus.extractor.common.utils.DBUtil;
 import com.creditease.dbus.extractor.container.DataSourceContainer;
@@ -36,9 +35,12 @@ import com.creditease.dbus.extractor.dao.ILoadDbusConfigDao;
 import com.creditease.dbus.extractor.vo.ExtractorVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
-	
+
 	private final static Logger logger = LoggerFactory.getLogger(LoadDbusConfigDaoImpl.class);
     private String getQueryConfigSql() {
         StringBuilder sql = new StringBuilder();
@@ -91,6 +93,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         //where dbus.id = tds.ds_id and dbus.status = 'active' and tds.status = 'active' and tds.id = tdt.schema_id and tdt.status <> 'inactive'
         sql.append(" select ");
         sql.append("     tds.schema_name,");
+        sql.append("     tdt.table_name,");
+        sql.append("     tdt.table_name_alias,");
         sql.append("     tdt.physical_table_regex");
         sql.append(" from ");
         sql.append("     t_dbus_datasource dbus, ");
@@ -107,9 +111,9 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         return sql.toString();
     }
     @Override
-    public String queryActiveTable(String dsName, String key) {
+    public List<String> queryActiveTable(String dsName, String key) {
+        List<String> ret = new ArrayList<>();
         StringBuilder activeTables = new StringBuilder();
-
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -119,6 +123,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             ps.setString(1, dsName);
             rs = ps.executeQuery();
             StringBuilder activeTable = new StringBuilder();
+            StringBuilder tablePartitionRegex = new StringBuilder();
             while (rs.next()) {
                 //activeTable.append(rs.getString("ds_name"));
                 //activeTable.append(".");
@@ -129,8 +134,21 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
                 activeTables.append(activeTable.toString());
                 activeTables.append(",");
                 activeTable.delete(0, activeTable.length());
+
+                tablePartitionRegex.append(rs.getString("table_name_alias"));
+                tablePartitionRegex.append(".");
+                tablePartitionRegex.append(rs.getString("physical_table_regex"));
+                tablePartitionRegex.append(",");
             }
             activeTables.append("dbus\\..*");
+
+            if (tablePartitionRegex.length() > 0) {
+                tablePartitionRegex.delete(tablePartitionRegex.length() - 1, tablePartitionRegex.length());
+            }
+
+            ret.add(activeTables.toString());
+            ret.add(tablePartitionRegex.toString());
+
         } catch (Exception e) {
             logger.error("[db-LoadDbusConfigDao]", e);
         } finally {
@@ -139,7 +157,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             DBUtil.close(conn);
         }
         logger.info("[db-LoadDbusConfigDao] key: " + key + ", Active tables is " + activeTables.toString());
-        return activeTables.toString();
+        return ret;
     }
 
 }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@
 
 package com.creditease.dbus.commons;
 
-import com.google.common.base.Joiner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.base.Joiner;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Shrimp on 16/5/20.
@@ -36,6 +37,8 @@ public class DbusMessageBuilder {
     private DbusMessage message;
     private String version;
 
+    private int umsFixedFields = 0;
+
     public DbusMessageBuilder() {
         //缺省是1.3版本
         this(Constants.VERSION_13);
@@ -43,11 +46,11 @@ public class DbusMessageBuilder {
 
     public DbusMessageBuilder(String intendVersion) {
         if (intendVersion.equals(Constants.VERSION_12)) {
-           version = Constants.VERSION_12;
-        } else if(intendVersion.equals(Constants.VERSION_14)){
+            version = Constants.VERSION_12;
+        } else if (intendVersion.equals(Constants.VERSION_14)) {
             version = Constants.VERSION_14;
-        }else {
-           version = Constants.VERSION_13;
+        } else {
+            version = Constants.VERSION_13;
         }
     }
 
@@ -68,21 +71,25 @@ public class DbusMessageBuilder {
                 message.getSchema().addField(DbusMessage.Field._UMS_ID_, DataType.LONG, false);
                 message.getSchema().addField(DbusMessage.Field._UMS_TS_, DataType.DATETIME, false);
                 message.getSchema().addField(DbusMessage.Field._UMS_OP_, DataType.STRING, false);
+                umsFixedFields = 3;
                 switch (version) {
                     case Constants.VERSION_12:
                         break;
                     default:
                         // 1.3 or later
                         message.getSchema().addField(DbusMessage.Field._UMS_UID_, DataType.STRING, false);
+                        umsFixedFields++;
                         break;
                 }
                 break;
             case DATA_INCREMENT_TERMINATION:
                 message.getSchema().addField(DbusMessage.Field._UMS_TS_, DataType.DATETIME, false);
+                umsFixedFields = 1;
                 break;
             case DATA_INCREMENT_HEARTBEAT:
                 message.getSchema().addField(DbusMessage.Field._UMS_ID_, DataType.LONG, false);
                 message.getSchema().addField(DbusMessage.Field._UMS_TS_, DataType.DATETIME, false);
+                umsFixedFields = 2;
                 break;
             default:
                 break;
@@ -93,6 +100,7 @@ public class DbusMessageBuilder {
 
     /**
      * DbusMessager14 unsetFeild的处理
+     *
      * @param type
      * @param schemaNs
      * @param batchNo
@@ -113,19 +121,23 @@ public class DbusMessageBuilder {
                 message.getSchema().addField(DbusMessage.Field._UMS_TS_, DataType.DATETIME, false);
                 message.getSchema().addField(DbusMessage.Field._UMS_OP_, DataType.STRING, false);
                 message.getSchema().addField(DbusMessage.Field._UMS_UID_, DataType.STRING, false);
+                umsFixedFields = 4;
                 break;
             case DATA_INCREMENT_TERMINATION:
                 message.getSchema().addField(DbusMessage.Field._UMS_TS_, DataType.DATETIME, false);
+                umsFixedFields = 1;
                 break;
             case DATA_INCREMENT_HEARTBEAT:
                 message.getSchema().addField(DbusMessage.Field._UMS_ID_, DataType.LONG, false);
                 message.getSchema().addField(DbusMessage.Field._UMS_TS_, DataType.DATETIME, false);
+                umsFixedFields = 2;
                 break;
             default:
                 break;
         }
         return this;
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public String buildNameSpace(String datasourceNs, String dbSchema, String table, int ver) {
         return Joiner.on(".").join(datasourceNs, dbSchema, table, ver, "0", "0");
@@ -141,6 +153,12 @@ public class DbusMessageBuilder {
         return this;
     }
 
+    public DbusMessageBuilder appendSchema(String name, DataType type, boolean nullable, boolean encoded) {
+        validateState();
+        message.getSchema().addField(name, type, nullable, encoded);
+        return this;
+    }
+
     public DbusMessageBuilder appendPayload(Object[] tuple) {
         validateState();
         validateAndConvert(tuple);
@@ -152,6 +170,10 @@ public class DbusMessageBuilder {
     public DbusMessage getMessage() {
         validateState(); // 验证
         return message;
+    }
+
+    public int getUmsFixedFields() {
+        return umsFixedFields;
     }
 
     /**

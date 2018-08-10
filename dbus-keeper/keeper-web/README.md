@@ -1,0 +1,1 @@
+EDP group react single page application starter

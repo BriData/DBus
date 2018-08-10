@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,13 @@ package com.creditease.dbus.stream.appender.bolt;
 import com.creditease.dbus.commons.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.stream.appender.exception.InitializationException;
-import com.creditease.dbus.stream.appender.kafka.DataOutputTopicProvider;
-import com.creditease.dbus.stream.appender.kafka.TopicProvider;
 import com.creditease.dbus.stream.appender.utils.AppenderMetricReporter;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.Constants.EmitFields;
 import com.creditease.dbus.stream.common.Constants.StormConfigKey;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
-import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
+import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerProvider;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltHandlerManager;
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.KafkaBoltHandlerListener;
@@ -40,6 +38,8 @@ import com.creditease.dbus.stream.common.appender.bolt.processor.stat.TableMessa
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
+import com.creditease.dbus.stream.common.appender.kafka.DataOutputTopicProvider;
+import com.creditease.dbus.stream.common.appender.kafka.TopicProvider;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.google.common.base.Joiner;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -56,7 +56,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -99,7 +98,7 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
                 PropertiesHolder.initialize(this.zkconnect, zkRoot);
                 GlobalCache.initialize(datasource);
 
-                String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.DBUS_STATISTIC_TOPIC);
+//                String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.DBUS_STATISTIC_TOPIC);
 
                 if (producer != null) {
                     producer.close();
@@ -191,7 +190,7 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
         }
 
         String message = dbusMessage.toString();
-        ProducerRecord<String, String> record = new ProducerRecord<>(topics.get(0), buildKey(dbusMessage), message);
+        ProducerRecord<String, String> record = new ProducerRecord<>(topics.get(0), BoltCommandHandlerHelper.buildKey(dbusMessage), message);
         reporter.report(message.getBytes().length, dbusMessage.getPayload().size());
         Object offsetObj = data.get(EmitData.OFFSET);
         String offset = offsetObj != null ? offsetObj.toString() : "0";
@@ -210,16 +209,21 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
         });
     }
 
-    private String buildKey(DbusMessage dbusMessage) {
-        long opts;
-        try {
-            opts = Utils.getTimeMills(dbusMessage.messageValue(DbusMessage.Field._UMS_TS_, 0).toString());
-        } catch (ParseException e) {
-            opts = System.currentTimeMillis();
+    @Override
+    public void sendHeartbeat(DbusMessage message, String topic, String key) {
+        ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, message.toString());
+        producer.send(record);
+        //  logger.info("Write heartbeat message to kafka:{topic:{}, key:{}}", record.topic(), record.key());
+        //logger.info("Write heartbeat message to kafka:{topic:{}, key:{}, message:{}}", record.topic(), record.key(), record.value());
+    }
+
+    @Override
+    public String getTargetTopic(String dbSchema, String tableName) {
+        List<String> topics = topicProvider.provideTopics(dbSchema, tableName);
+        if (topics != null && !topics.isEmpty()) {
+            return topics.get(0);
         }
-        String type = dbusMessage.getProtocol().getType();
-        String ns = dbusMessage.getSchema().getNamespace();
-        return Utils.join(".", type, ns, opts + "", "wh_placeholder");
+        return null;
     }
 
     private Producer<String, String> createProducer() throws Exception {

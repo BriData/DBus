@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
-import com.creditease.dbus.commons.msgencoder.EncodeColumn;
-import com.creditease.dbus.commons.msgencoder.EncodeColumnProvider;
+import com.creditease.dbus.msgencoder.EncodeColumn;
+import com.creditease.dbus.msgencoder.EncodeColumnProvider;
 
 import java.util.List;
 

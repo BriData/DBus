@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.DataSourceMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.DataSource">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
+    <result column="ds_type" jdbcType="VARCHAR" property="dsType" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="ds_desc" jdbcType="VARCHAR" property="dsDesc" />
+    <result column="topic" jdbcType="VARCHAR" property="topic" />
+    <result column="ctrl_topic" jdbcType="VARCHAR" property="ctrlTopic" />
+    <result column="schema_topic" jdbcType="VARCHAR" property="schemaTopic" />
+    <result column="split_topic" jdbcType="VARCHAR" property="splitTopic" />
+    <result column="master_url" jdbcType="VARCHAR" property="masterUrl" />
+    <result column="slave_url" jdbcType="VARCHAR" property="slaveUrl" />
+    <result column="dbus_user" jdbcType="VARCHAR" property="dbusUser" />
+    <result column="dbus_pwd" jdbcType="VARCHAR" property="dbusPwd" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="ds_partition" jdbcType="VARCHAR" property="dsPartition" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete td,ts,tt,tc,tv,tm from t_dbus_datasource td
+        left join t_data_schema ts on td.id = ts.ds_id
+        left join t_data_tables tt on ts.id = tt.schema_id
+        left join t_encode_columns tc on tt.id=tc.table_id
+        left join t_meta_version tv on tt.id = tv.table_id
+        left join t_table_meta tm on tv.id = tm.ver_id
+        where td.id =  #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.DataSource">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_dbus_datasource (ds_name, ds_type, status, 
+      ds_desc, topic, ctrl_topic, 
+      schema_topic, split_topic, master_url, 
+      slave_url, dbus_user, dbus_pwd, 
+      update_time, ds_partition)
+    values (#{dsName,jdbcType=VARCHAR}, #{dsType,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, 
+      #{dsDesc,jdbcType=VARCHAR}, #{topic,jdbcType=VARCHAR}, #{ctrlTopic,jdbcType=VARCHAR}, 
+      #{schemaTopic,jdbcType=VARCHAR}, #{splitTopic,jdbcType=VARCHAR}, #{masterUrl,jdbcType=VARCHAR}, 
+      #{slaveUrl,jdbcType=VARCHAR}, #{dbusUser,jdbcType=VARCHAR}, #{dbusPwd,jdbcType=VARCHAR}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{dsPartition,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.DataSource">
+    update t_dbus_datasource
+    <set>
+      <if test="dsName !=null">ds_name = #{dsName,jdbcType=VARCHAR},</if>
+      <if test="dsType !=null"> ds_type = #{dsType,jdbcType=VARCHAR},</if>
+      <if test="status !=null">status = #{status,jdbcType=VARCHAR},</if>
+      <if test="dsDesc !=null">ds_desc = #{dsDesc,jdbcType=VARCHAR},</if>
+      <if test="topic !=null">topic = #{topic,jdbcType=VARCHAR},</if>
+      <if test="ctrlTopic !=null"> ctrl_topic = #{ctrlTopic,jdbcType=VARCHAR},</if>
+      <if test="schemaTopic !=null"> schema_topic = #{schemaTopic,jdbcType=VARCHAR},</if>
+      <if test="splitTopic !=null">split_topic = #{splitTopic,jdbcType=VARCHAR},</if>
+      <if test="masterUrl != null">master_url = #{masterUrl,jdbcType=VARCHAR},</if>
+      <if test="slaveUrl != null">slave_url = #{slaveUrl,jdbcType=VARCHAR},</if>
+      <if test="dbusUser != null">dbus_user = #{dbusUser,jdbcType=VARCHAR},</if>
+      <if test="dbusPwd !=null">dbus_pwd = #{dbusPwd,jdbcType=VARCHAR},</if>
+      <if test="updateTime !=null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+      <if test="dsPartition !=null">ds_partition = #{dsPartition,jdbcType=VARCHAR}</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, ds_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic, 
+    master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
+    from t_dbus_datasource
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, ds_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic, 
+    master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
+    from t_dbus_datasource
+  </select>
+  <select id="search" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT id, ds_name name, ds_type type, status, ds_desc description,
+      DATE_FORMAT(update_time,'%Y-%m-%d %H:%i:%s') updateTime
+    FROM t_dbus_datasource
+    <where>
+      <if test="dsName != null">ds_name LIKE "%"#{dsName,jdbcType=VARCHAR}"%"</if>
+    </where>
+    ORDER BY
+    <choose>
+      <when test="sortBy != null">${sortBy}</when>
+      <otherwise>update_time</otherwise>
+    </choose>
+    <choose>
+      <when test="order != null">${order}</when>
+      <otherwise>DESC</otherwise>
+    </choose>
+  </select>
+
+  <select id="getDataSourceByName" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select * from t_dbus_datasource
+    where ds_name = #{dsName,jdbcType=VARCHAR}
+  </select>
+
+  <update id="updateDsStatusByPrimaryKey" parameterType="java.util.Map">
+    update  t_dbus_datasource td
+    left join  t_data_schema ts on td.id = ts.ds_id
+    left join  t_data_tables tt on ts.id = tt.schema_id
+    set td.status=#{status}, td.update_time  = current_timestamp(),
+    ts.status=#{status},
+    tt.status =#{status}
+    where td.id = #{id};
+  </update>
+  <select id="getDSNames" resultType="java.util.Map">
+    select id dsId,ds_name,ds_type,concat(ds_type,'/',ds_name) dsTypeName, ctrl_topic,master_url, slave_url,dbus_user,dbus_pwd
+    from t_dbus_datasource
+  </select>
+</mapper>

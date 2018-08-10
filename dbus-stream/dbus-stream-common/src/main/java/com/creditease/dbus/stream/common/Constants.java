@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,18 @@ public class Constants {
         public static final String UMS_PAYLOAD_MAX_COUNT = "ums.payload.max.count"; // ums中payload记录数的最大值
         public static final String UMS_PAYLOAD_MAX_SIZE = "ums.payload.max.size"; // ums中payload大小最大值,单位Byte
         public static final String DBUS_STATISTIC_TOPIC = "dbus.statistic.topic"; // 统计信息topic
-        public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
         public static final String GLOBAL_EVENT_TOPIC = "global.event.topic"; // 全局事件topic
         public static final String LOGFILE_NUM_COMPENSATION = "logfile.num.compensation"; // mysql binlog 文件号补偿值
+        public static final String META_FETCHER_BOLT_PARALLELISM = "metafetcher.bolt.parallelism";
+        public static final String KAFKA_WRITTER_BOLT_PARALLELISM = "kafkawritter.bolt.parallelism";
+        public static final String WRAPPER_BOLT_PARALLELISM = "wrapper.bolt.parallelism";
+        public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
+
+        /**
+         * oracle for bigdata 12.3.1.1.1版本解决了函数索引的问题，在生成avro schema时需要过滤掉虚拟列和隐藏列
+         * 在12.2版本中需要配置为: 0 ，在12.3版本中配置为: 1
+         */
+        public static final String IGNORE_VIRTUAL_FIELDS = "ignore.virtual.fields";
 
     }
 
@@ -115,6 +124,8 @@ public class Constants {
         public static final String TAB_SCHEMA = "dbus_table_schema_cache";
         /** 需要脱敏的列缓存 */
         public static final String TAB_ENCODE_FIELDS = "tab_encode_fields";
+        /** 脱敏插件缓存 */
+        public static final String TAB_CENCODE_PLUGINS = "tab_encode_plugins";
         /** 输出版本号缓存 */
         public static final String OUTPUT_VERSION_CACHE = "output_meta_version_cache";
     }

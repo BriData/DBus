@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,29 +20,29 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+
 import com.creditease.dbus.components.sms.DBusSmsFactory;
 import com.creditease.dbus.components.sms.ISms;
 import com.creditease.dbus.components.sms.SmsMessage;
 import com.creditease.dbus.components.sms.SmsType;
 import com.creditease.dbus.heartbeat.container.AlarmResultContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
+import com.creditease.dbus.heartbeat.dao.ILoadDbusConfigDao;
+import com.creditease.dbus.heartbeat.dao.impl.LoadDbusConfigDaoImpl;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.event.AlarmType;
 import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
 import com.creditease.dbus.heartbeat.util.MsgUtil;
-import com.creditease.dbus.heartbeat.vo.CheckVo;
-import com.creditease.dbus.heartbeat.vo.DsVo;
-import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
-import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
-import com.creditease.dbus.heartbeat.vo.PacketVo;
+import com.creditease.dbus.heartbeat.vo.*;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
-import java.text.MessageFormat;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -55,8 +55,17 @@ import org.apache.commons.lang.StringUtils;
  */
 public class CheckHeartBeatEvent extends AbstractEvent {
 
+    private StringBuilder html = null;
+
+    private String emailAddress = StringUtils.EMPTY;
+
+    private String dsNameWk = StringUtils.EMPTY;
+
+    private String schemaNameWk = StringUtils.EMPTY;
+
     public CheckHeartBeatEvent(long interval, CountDownLatch cdl) {
         super(interval, cdl);
+        html = new StringBuilder();
     }
 
     @Override
@@ -92,10 +101,9 @@ public class CheckHeartBeatEvent extends AbstractEvent {
             // 当前时间和接收到时间的差值
             long diffVal = currentTime - time + correcteValue;
 
-                        // 根据不同的数据库决定是否需要修改heartBeatTimeout
+            // 根据不同的数据库决定是否需要修改heartBeatTimeout
             Map<String, Map<String, String>> heartBeatTimeoutAdditional = hbConf.getHeartBeatTimeoutAdditional();
             String databaseSchemaName = node.getDsName() + "/" + node.getSchema();
-
 
             if (heartBeatTimeoutAdditional != null) {
                 for (Map.Entry<String, Map<String, String>> entry : heartBeatTimeoutAdditional.entrySet()) {
@@ -112,6 +120,71 @@ public class CheckHeartBeatEvent extends AbstractEvent {
 
 //            LOG.info("nznode:{},diffVal:{}, heartBeatTimeout:{}",
 //                    new Object[]{path, String.valueOf(diffVal),  String.valueOf(heartBeatTimeout)});
+
+            if ((!StringUtils.equals(dsNameWk, node.getDsName()) ||
+                    !StringUtils.equals(schemaNameWk, node.getSchema())) &&
+                    StringUtils.isNotBlank(dsNameWk) &&
+                    StringUtils.isNotBlank(schemaNameWk)) {
+
+                long masterSlaveDelayTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getMasterSlaveDelayTimeout();
+                String masterSlaveDealyPath = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
+                masterSlaveDealyPath = StringUtils.join(new String[] {masterSlaveDealyPath, dsNameWk, schemaNameWk}, "/");
+                MasterSlaveDelayVo msdVo = deserialize(masterSlaveDealyPath, MasterSlaveDelayVo.class);
+                long delayTime = 0l;
+                long synTime = 0l;
+                if (msdVo != null) {
+                    delayTime = msdVo.getDiff() == null ? 0l : msdVo.getDiff();
+                    synTime = msdVo.getSynTime() == null ? 0l : msdVo.getSynTime();
+                }
+
+                LOG.info("[check-event] znode:{}, 主备延时:{}, 同步上时间:{}, eamail:{}.", masterSlaveDealyPath, delayTime, synTime, emailAddress);
+
+                if (StringUtils.isNotBlank(emailAddress)) {
+                    if (delayTime > masterSlaveDelayTimeout) {
+                        IMail mail = DBusMailFactory.build();
+                        String subject = "DBus主备不同步报警 ";
+                        String contents = MsgUtil.format(Constants.MAIL_MASTER_SLAVE_DELAY,
+                                "主备不同步报警", dsNameWk, schemaNameWk,
+                                msdVo.getStrDiff(), msdVo.getMasterLatestTime(), msdVo.getSlaveLatestTime(),
+                                IMail.ENV, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
+
+                        Message msg = new Message();
+                        String projectRelatedEmail = getProjectRelatedSlaveDelayEmail(node.getDsName(), node.getSchema(), node.getTableName());
+                        if (StringUtils.isNotBlank(projectRelatedEmail)) {
+                            emailAddress += "," + projectRelatedEmail;
+                        }
+                        msg.setAddress(emailAddress);
+                        msg.setContents(contents);
+                        msg.setSubject(subject);
+                        mail.send(msg);
+                        html.delete(0, html.length());
+                        emailAddress = "";
+                    } else {
+                        // 为了防止主备库刚刚追上产生的延时报警, 给程序10分钟的一个追数据的时间
+                        // 如果10分钟还有追上数据就报警
+                        if (html.length() > 0 && ((currentTime - synTime) > 1000 * 60 * 10)) {
+                            IMail mail = DBusMailFactory.build();
+                            String subject = "DBus超时报警 ";
+                            String contents = MsgUtil.format(Constants.MAIL_HEART_BEAT_NEW,
+                                    "超时报警", dsNameWk, schemaNameWk,
+                                    DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
+                                    IMail.ENV,
+                                    MsgUtil.format(AlarmResultContainer.getInstance().html(), html.toString()));
+                            Message msg = new Message();
+                            String projectRelatedEmail = getProjectRelatedTopologyDelayEmail(node.getDsName(), node.getSchema(), node.getTableName());
+                            if (StringUtils.isNotBlank(projectRelatedEmail)) {
+                                emailAddress += "," + projectRelatedEmail;
+                            }
+                            msg.setAddress(emailAddress);
+                            msg.setContents(contents);
+                            msg.setSubject(subject);
+                            mail.send(msg);
+                            html.delete(0, html.length());
+                            emailAddress = "";
+                        }
+                    }
+                }
+            }
 
             if (diffVal > heartBeatTimeout) {
 
@@ -183,14 +256,17 @@ public class CheckHeartBeatEvent extends AbstractEvent {
                     }
                     if (StringUtils.isNotBlank(email)) {
                         LOG.info("[check-event] 接收心跳邮件报警收件人EMail地址:{}.", email);
-                        String subject = "DBus心跳监控报警";
+                        // 旧的报警方式为以表为单位,每张表超时都要发邮件报警
+                        /*String subject = "DBus心跳监控报警";
                         String contents = MsgUtil.format(Constants.MAIL_HEART_BEAT, path, check.getAlarmCnt(), check.getTimeoutCnt());
                         Message msg = new Message();
                         msg.setAddress(email);
                         msg.setContents(contents);
                         msg.setSubject(subject);
                         IMail mail = DBusMailFactory.build();
-                        mail.send(msg);
+                        mail.send(msg);*/
+                        html.append(check.html(DateUtil.diffDate(diffVal)));
+                        emailAddress = email;
                     }
                 }
                 LOG.warn(check.toString());
@@ -201,9 +277,36 @@ public class CheckHeartBeatEvent extends AbstractEvent {
                 check.setLastAlarmTime(0);
             }
 
+            dsNameWk = node.getDsName();
+            schemaNameWk = node.getSchema();
+
         } catch (Exception e) {
             LOG.error("[check-event]", e);
         }
+    }
+
+    private String getProjectRelatedSlaveDelayEmail(String datasource, String schema, String table) {
+        ILoadDbusConfigDao dao = new LoadDbusConfigDaoImpl();
+        List<ProjectNotifyEmailsVO> emailsVOs = dao.queryRelatedNotifyEmails(Constants.CONFIG_DB_KEY, datasource, schema, table);
+        Set<String> emails = new HashSet<>();
+        for (ProjectNotifyEmailsVO emailsVO : emailsVOs) {
+            if (emailsVO.getMasterSlaveDelayEmails() != null) {
+                Collections.addAll(emails, emailsVO.getMasterSlaveDelayEmails());
+            }
+        }
+        return StringUtils.join(emails, ",");
+    }
+
+    private String getProjectRelatedTopologyDelayEmail(String datasource, String schema, String table) {
+        ILoadDbusConfigDao dao = new LoadDbusConfigDaoImpl();
+        List<ProjectNotifyEmailsVO> emailsVOs = dao.queryRelatedNotifyEmails(Constants.CONFIG_DB_KEY, datasource, schema, table);
+        Set<String> emails = new HashSet<>();
+        for (ProjectNotifyEmailsVO emailsVO : emailsVOs) {
+            if (emailsVO.getTopologyDelayEmails() != null) {
+                Collections.addAll(emails, emailsVO.getTopologyDelayEmails());
+            }
+        }
+        return StringUtils.join(emails, ",");
     }
 
 }

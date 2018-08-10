@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,16 @@
 
 package com.creditease.dbus.extractor.common.utils;
 
-import com.creditease.dbus.commons.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.commons.CtlMessageResult;
+import com.creditease.dbus.commons.CtlMessageResultSender;
+import com.creditease.dbus.commons.ZkService;
 import com.creditease.dbus.extractor.container.DataSourceContainer;
 import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
 import com.creditease.dbus.extractor.container.TableMatchContainer;
@@ -29,14 +38,9 @@ import com.creditease.dbus.extractor.dao.impl.LoadDbusConfigDaoImpl;
 import com.creditease.dbus.extractor.vo.ExtractorVo;
 import com.creditease.dbus.extractor.vo.JdbcVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.creditease.dbus.commons.Constants;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 
 
 public class ZKHelper {
@@ -76,6 +80,8 @@ public class ZKHelper {
         //ExtractorConfigContainer.getInstances().setControlTopic();//todo 参数
         logger.info("output topics:{}",topics);
     }
+
+    //此处的tableregex是从zookeeper的config.property中读取的，要改 20180307 review
     public void loadExtractorConifg(){
         //TODO
         String path = extractorRoot + extractorName + "/config.properties";
@@ -83,7 +89,7 @@ public class ZKHelper {
             Properties extractorConfigs = zkService.getProperties(path);
             ExtractorVo extVo = extractorConfigParse(extractorConfigs);
             ExtractorConfigContainer.getInstances().setExtractorConfig(extVo);
-            TableMatchContainer.getInstance().addTableRegex(extVo.getPartitionTableRegex());
+            // TableMatchContainer.getInstance().addTableRegex(extVo.getPartitionTableRegex());
             logger.info("extractor configs:{}",extVo);
         }catch (Exception e){
             //logger.info(e.getMessage());
@@ -116,8 +122,11 @@ public class ZKHelper {
         ILoadDbusConfigDao dbusDao =  new LoadDbusConfigDaoImpl();
 
         String dsName = ExtractorConfigContainer.getInstances().getExtractorConfig().getDbName();
-        String filter = dbusDao.queryActiveTable(dsName, Constants.CONFIG_DB_KEY);
+        List<String> ret = dbusDao.queryActiveTable(dsName, Constants.CONFIG_DB_KEY);
+        String filter = ret.get(0);
         ExtractorConfigContainer.getInstances().setFilter(filter);
+        TableMatchContainer.getInstance().addTableRegex(ret.get(1));
+
         logger.info("active tables filter is :{}", filter);
         //存储到zookeeper中
         String path = extractorRoot + extractorName + "/filter.properties";

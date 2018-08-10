@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 package com.creditease.dbus.extractor.dao;
 
+import java.util.List;
 import java.util.Set;
 
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
@@ -27,5 +28,5 @@ import com.creditease.dbus.extractor.vo.OutputTopicVo;
 public interface ILoadDbusConfigDao {
 
     Set<OutputTopicVo> queryOutputTopic(String key);
-    String queryActiveTable(String dsName, String key);
+    List<String> queryActiveTable(String dsName, String key);
 }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,14 @@
 
 package com.creditease.dbus.commons;
 
-import com.alibaba.fastjson.JSON;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
+import com.alibaba.fastjson.JSON;
 
 /**
  * 定义自解释的消息协议
@@ -74,9 +79,9 @@ public abstract class DbusMessage {
     public int payloadSizeWithoutBefore() {
         int operationIndex = schema.index(Field._UMS_OP_);
         int result = 0;
-        for(Payload onePayload : payload) {
+        for (Payload onePayload : payload) {
             Object operation = onePayload.getTuple().get(operationIndex);
-            if("b".equals(operation)) continue;
+            if ("b".equals(operation)) continue;
             result++;
         }
         return result;
@@ -87,15 +92,20 @@ public abstract class DbusMessage {
     }
 
     public void addTuple(int idx, List<Object> list) {
-        if(this.payload.size() <= idx) {
+        if (this.payload.size() <= idx) {
             this.payload.add(new Payload());
         }
         this.payload.get(idx).getTuple().addAll(list);
     }
 
+    public boolean containsFiled(String fieldName) {
+        return schema.index(fieldName) >= 0;
+    }
+
     public static class Protocol {
         private ProtocolType type;
         private String version;
+
         public Protocol(ProtocolType type, String version) {
             this.type = type;
             this.version = version;
@@ -124,6 +134,13 @@ public abstract class DbusMessage {
             this.fields.add(new Field(name, type, nullable));
         }
 
+        public void addField(String name, DataType type, boolean nullable, boolean encoded) {
+            index.put(name, this.fields.size());
+            Field field = new Field(name, type, nullable);
+            field.setEncoded(encoded);
+            this.fields.add(field);
+        }
+
         public Schema(String schemaNs) {
             this.namespace = schemaNs;
             this.fields = new ArrayList<>();
@@ -141,14 +158,16 @@ public abstract class DbusMessage {
         public Integer index(String name) {
             return index.containsKey(name) ? index.get(name) : -1;
         }
+
         //for DbusMessage14 addUnField
-        public void setIndex(String name, Integer size){
+        public void setIndex(String name, Integer size) {
             index.put(name, size);
         }
 
         public Field field(int idx) {
             return this.fields.get(idx);
         }
+
         public Field field(String name) {
             return field(index(name));
         }

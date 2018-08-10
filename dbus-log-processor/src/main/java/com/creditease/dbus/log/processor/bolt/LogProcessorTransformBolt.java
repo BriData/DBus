@@ -1,6 +1,24 @@
-package com.creditease.dbus.log.processor.bolt;
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
 
-import java.util.*;
+package com.creditease.dbus.log.processor.bolt;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -25,7 +43,6 @@ import com.creditease.dbus.log.processor.vo.RecordWrapper;
 import com.creditease.dbus.log.processor.vo.RuleInfo;
 import com.creditease.dbus.log.processor.window.HeartBeatWindowInfo;
 import com.creditease.dbus.log.processor.window.StatWindowInfo;
-
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -38,6 +55,8 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 
 public class LogProcessorTransformBolt extends BaseRichBolt {
@@ -395,7 +414,7 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
     }
 
     private String buildNameSpace(String datasourceNs, String dbSchema, String table, int ver, String host) {
-        return Joiner.on(".").join(datasourceNs, dbSchema, table, ver, host, "0");
+        return Joiner.on(".").join(inner.logProcessorConf.getProperty("log.type"), datasourceNs, dbSchema, table, ver, host, "0");
     }
 
     private String buildNameSpaceForZkUidFetch(String dsName) {

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,114 @@ public class Constants {
 
     public static final String GLOBAL_CTRL_TOPIC = "global_ctrl_topic";
 
+    //  #opensource_remove_begin#
+    /** 安全相关配置*/
+    public static final String SECURITY_CONFIG_TRUE_VALUE = "kerberos_kafkaACL";
+    public static final String SECURITY_CONFIG_KEY = "AuthenticationAndAuthorization";
+    //  #opensource_remove_end#
+
     /** 心跳邮件报警内容 */
     public static final String MAIL_HEART_BEAT = "尊敬的先生/女士您好，Dbus心跳监控发现数据线路:{0}发生异常，报警次数:{1},超时次数:{2},请及时处理.";
     /** 全量邮件报警内容 */
     public static final String MAIL_FULL_PULLER = "尊敬的先生/女士您好，Dbus全量拉取监控发现拉取表:{0}数据时发生异常，报警次数:{1},超时次数:{2},请及时处理.";
+    public static final String MAIL_FULL_PULLER_NEW = "您好:</br>" +
+                                                      "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                      "&nbsp;&nbsp;数据源:{1}</br>" +
+                                                      "&nbsp;&nbsp;数据库:{2}</br>" +
+                                                      "&nbsp;&nbsp;表:{3}</br>" +
+                                                      "&nbsp;&nbsp;版本:{4}</br>" +
+                                                      "&nbsp;&nbsp;报警时间:{5}</br>" +
+                                                      "&nbsp;&nbsp;报警环境:{6}</br>" +
+                                                      ",请及时处理.</br></br>" +
+                                                      "详细信息:</br>{7}";
+
+    /** 新版心跳邮件报警内容 */
+    // public static final String MAIL_HEART_BEAT_NEW = "尊敬的先生/女士您好:</br>&nbsp;&nbsp;Dbus心跳监控发现数据源:{0}</br>&nbsp;&nbsp;schema:{1}</br>以下表格中table发生超时,请及时处理.</br></br>{2}";
+    public static final String MAIL_HEART_BEAT_NEW = "您好:</br>" +
+                                                     "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                     "&nbsp;&nbsp;数据源:{1}</br>" +
+                                                     "&nbsp;&nbsp;数据库:{2}</br>" +
+                                                     "&nbsp;&nbsp;报警时间:{3}</br>" +
+                                                     "&nbsp;&nbsp;报警环境:{4}</br>" +
+                                                     "以下表格中table发生报警,请及时处理.</br></br>{5}";
+    /** 数据库主备延时报警邮件内容 */
+    // public static final String MAIL_MASTER_SLAVE_DELAY = "尊敬的先生/女士您好:</br>&nbsp;&nbsp;Dbus心跳监控发现数据源:{0}</br>&nbsp;&nbsp;schema:{1}</br>所在主备数据库延时过长发生超时,请及时处理.";
+    public static final String MAIL_MASTER_SLAVE_DELAY = "您好:</br>" +
+                                                         "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                         "&nbsp;&nbsp;数据源:{1}</br>" +
+                                                         "&nbsp;&nbsp;数据库:{2}</br>" +
+                                                         "&nbsp;&nbsp;主备延时:{3}</br>" +
+                                                         "&nbsp;&nbsp;主库时间:{4}</br>" +
+                                                         "&nbsp;&nbsp;备库时间:{5}</br>" +
+                                                         "&nbsp;&nbsp;报警环境:{6}</br>" +
+                                                         "&nbsp;&nbsp;报警时间:{7}</br>" +
+                                                         "请及时处理.";
+
+    public static final String MAIL_SCHEMA_CHANGE = "您好:</br>" +
+                                                    "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                    "&nbsp;&nbsp;数据源:{1}</br>" +
+                                                    "&nbsp;&nbsp;数据库:{2}</br>" +
+                                                    "&nbsp;&nbsp;表名:{3}</br>" +
+                                                    "&nbsp;&nbsp;报警时间:{4}</br>" +
+                                                    "&nbsp;&nbsp;报警环境:{5}</br>" +
+                                                    "请及时处理.</br></br>{6}";
+    /** 全量邮件报警内容-project */
+    public static final String MAIL_FULL_PULLER_PROJECT = "尊敬的先生/女士您好，Dbus全量拉取监控发现拉取表:{0}数据时发生异常，报警次数:{1},超时次数:{2},请及时处理.";
+    public static final String MAIL_FULL_PULLER_NEW_PROJECT =   "您好:</br>" +
+                                                                "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                                "&nbsp;&nbsp;项目:{1}</br>" +
+                                                                "&nbsp;&nbsp;拓扑:{2}</br>" +
+                                                                "&nbsp;&nbsp;数据源:{3}</br>" +
+                                                                "&nbsp;&nbsp;数据库:{4}</br>" +
+                                                                "&nbsp;&nbsp;表:{5}</br>" +
+                                                                "&nbsp;&nbsp;版本:{6}</br>" +
+                                                                "&nbsp;&nbsp;报警时间:{7}</br>" +
+                                                                "&nbsp;&nbsp;报警环境:{8}</br>" +
+                                                                ",请及时处理.</br></br>" +
+                                                                "详细信息:</br>{9}";
+    /** 数据库主备延时报警邮件内容-project */
+    public static final String MAIL_MASTER_SLAVE_DELAY_PROJECT = "您好:</br>" +
+                                                    "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                    "&nbsp;&nbsp;项目:{1}</br>" +
+                                                    "&nbsp;&nbsp;拓扑:{2}</br>" +
+                                                    "&nbsp;&nbsp;数据源:{3}</br>" +
+                                                    "&nbsp;&nbsp;数据库:{4}</br>" +
+                                                    "&nbsp;&nbsp;主备延时:{5}</br>" +
+                                                    "&nbsp;&nbsp;主库时间:{6}</br>" +
+                                                    "&nbsp;&nbsp;备库时间:{7}</br>" +
+                                                    "&nbsp;&nbsp;报警环境:{8}</br>" +
+                                                    "&nbsp;&nbsp;报警时间:{9}</br>" +
+                                                    "请及时处理.";
+    /** 新版心跳邮件报警内容 */
+    // public static final String MAIL_HEART_BEAT_NEW = "尊敬的先生/女士您好:</br>&nbsp;&nbsp;Dbus心跳监控发现数据源:{0}</br>&nbsp;&nbsp;schema:{1}</br>以下表格中table发生超时,请及时处理.</br></br>{2}";
+    public static final String MAIL_HEART_BEAT_NEW_PROJECT = "您好:</br>" +
+                                                            "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                            "&nbsp;&nbsp;项目:{1}</br>" +
+                                                            "&nbsp;&nbsp;拓扑:{2}</br>" +
+                                                            "&nbsp;&nbsp;数据源:{3}</br>" +
+                                                            "&nbsp;&nbsp;数据库:{4}</br>" +
+                                                            "&nbsp;&nbsp;报警时间:{5}</br>" +
+                                                            "&nbsp;&nbsp;报警环境:{6}</br>" +
+                                                            "以下表格中table发生报警,请及时处理.</br></br>{7}";
+
+    public static final String MAIL_SCHEMA_CHANGE_PROJECT = "您好:</br>" +
+                                                            "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                            "&nbsp;&nbsp;项目:{1}</br>" +
+                                                            "&nbsp;&nbsp;拓扑:{2}</br>" +
+                                                            "&nbsp;&nbsp;数据源:{3}</br>" +
+                                                            "&nbsp;&nbsp;数据库:{4}</br>" +
+                                                            "&nbsp;&nbsp;表名:{5}</br>" +
+                                                            "&nbsp;&nbsp;报警时间:{6}</br>" +
+                                                            "&nbsp;&nbsp;报警环境:{7}</br>" +
+                                                            "请及时处理.</br></br>{8}";
+
+    public static final String PROJECT_EXPIRE_TIME = "您好:</br>" +
+                                                            "&nbsp;&nbsp;报警类型:{0}</br>" +
+                                                            "&nbsp;&nbsp;项目名称:{1}</br>" +
+                                                            "&nbsp;&nbsp;有效期至:{2}</br>" +
+                                                            "&nbsp;&nbsp;剩余:{3}天</br>" +
+                                                            "&nbsp;&nbsp;报警环境:{4}</br>" +
+                                                            "{5}. 请及时处理.</br>";
+
 
 }

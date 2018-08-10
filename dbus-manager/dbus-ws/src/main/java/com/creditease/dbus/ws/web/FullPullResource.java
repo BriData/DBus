@@ -34,6 +34,7 @@ import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.creditease.dbus.ws.domain.FullPullHistory;
 import com.creditease.dbus.ws.service.DataSourceService;
 import com.creditease.dbus.ws.service.FullPullService;
+import com.creditease.dbus.ws.service.InitialLoadService;
 import com.creditease.dbus.ws.service.TablesService;
 import com.creditease.dbus.ws.tools.ControlMessageSenderProvider;
 import com.creditease.dbus.ws.tools.ZookeeperServiceProvider;
@@ -48,6 +49,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -82,7 +85,7 @@ public class FullPullResource {
 
 
         Date date = new Date();
-        JSONObject payload = buildExternalPayload(map, date, dataSource);
+        JSONObject payload = buildExternalPayload(map, date, dataSource, dataTable);
         JSONObject message = buildExternalMessage(map, date);
         message.put("payload", payload);
         Map<String, String> param = new HashMap<>();
@@ -100,7 +103,7 @@ public class FullPullResource {
         return sendMessage(param);
     }
 
-    private JSONObject buildExternalPayload(Map<String, Object> map, Date date, DbusDataSource dataSource) {
+    private JSONObject buildExternalPayload(Map<String, Object> map, Date date, DbusDataSource dataSource, DataTable dataTable) {
 
         String dsName = map.get("dsName").toString();
         String schemaName = map.get("schemaName").toString();
@@ -120,12 +123,15 @@ public class FullPullResource {
         }
         payload.put("SEQNO", String.valueOf(date.getTime()));
 
-        payload.put("PHYSICAL_TABLES", "");
+        payload.put("PHYSICAL_TABLES", dataTable.getPhysicalTableRegex());
         payload.put("PULL_REMARK", "");
         payload.put("SPLIT_BOUNDING_QUERY", "");
         payload.put("PULL_TARGET_COLS", "");
         payload.put("SCN_NO", "");
-        payload.put("SPLIT_COL", "");
+        payload.put("SPLIT_COL", dataTable.getFullpullCol());
+        payload.put("SPLIT_SHARD_SIZE", dataTable.getFullpullSplitShardSize());
+        payload.put("SPLIT_SHARD_STYLE", dataTable.getFullpullSplitStyle());
+
         return payload;
     }
 
@@ -143,6 +149,7 @@ public class FullPullResource {
     public Response sendMessage(Map<String, String> map) {
         String ctrlTopic = null;
         String strMessage = null;
+        KafkaConsumer<String, byte[]> consumer = null;
         try {
             if (!validate(map)) {
                 throw new Exception("参数验证失败");
@@ -156,6 +163,34 @@ public class FullPullResource {
             ctrlTopic = map.get("ctrlTopic");
 
             Map<String, Object> payload = message.getPayload();
+
+            /**
+             * 对于mysql
+             * 需要去源端查询physical_table_regex中的内容
+             */
+            String dsName = map.get("dsName").toString();
+            String schemaName = map.get("schemaName").toString();
+            String tableName = map.get("tableName").toString();
+            DbusDataSource dataSource = DataSourceService.getService().getDataSourceByName(dsName);
+            List<DataTable> dataTables = TablesService.getService().findTables(dataSource.getId(), schemaName, tableName);
+            DataTable dataTable = dataTables.get(0);
+            if(StringUtils.equalsIgnoreCase(dataSource.getDsType(),"mysql")) {
+                Class.forName("com.mysql.jdbc.Driver");
+                Connection conn = DriverManager.getConnection(dataSource.getMasterURL(), dataSource.getDbusUser(), dataSource.getDbusPassword());
+                InitialLoadService ilService = InitialLoadService.getService();
+                String physicalTables = ilService.getMysqlTables(conn, dataTable);
+                conn.close();
+                payload.put("PHYSICAL_TABLES", physicalTables);
+            } else if(StringUtils.equalsIgnoreCase(dataSource.getDsType(),"oracle")) {
+                Class.forName("oracle.jdbc.driver.OracleDriver");
+                Connection conn = DriverManager.getConnection(dataSource.getMasterURL(), dataSource.getDbusUser(), dataSource.getDbusPassword());
+                InitialLoadService ilService = InitialLoadService.getService();
+                String physicalTables = ilService.getOracleTables(conn, dataTable);
+                conn.close();
+                payload.put("PHYSICAL_TABLES", physicalTables);
+            }
+            logger.info("处理后control message 为: {}", message.toJSONString());
+
             String key;
             String value;
 
@@ -167,7 +202,7 @@ public class FullPullResource {
             Properties globalConf = zk.getZkService().getProperties(Constants.GLOBAL_CONF);
             consumerProps.setProperty("bootstrap.servers", globalConf.getProperty("bootstrap.servers"));
 
-            KafkaConsumer<String, byte[]> consumer = new KafkaConsumer(consumerProps);
+            consumer = new KafkaConsumer(consumerProps);
 
             String tableOutputTopic = map.get("tableOutputTopic");
             String outputTopic = map.get("outputTopic");
@@ -181,7 +216,7 @@ public class FullPullResource {
             long offset = consumer.position(dataTopicPartition);
             final String OP_TS = "OP_TS";
             long step = Integer.valueOf(consumerProps.getProperty("max.poll.records"));
-            if(message.getPayload().get("POS") == null || message.getPayload().get(OP_TS) == null) {
+            while(message.getPayload().get("POS") == null || message.getPayload().get(OP_TS) == null) {
                 ConsumerRecords<String, byte[]> results = consumer.poll(100);
                 while (results.isEmpty()) {
                     offset = offset - step ;
@@ -194,10 +229,15 @@ public class FullPullResource {
                     consumer.seek(dataTopicPartition, offset);
                     results = consumer.poll(100);
                 }
+                if(offset < 0) {
+                    logger.info("没有找到op_ts");
+                    break;
+                }
 
                 for (ConsumerRecord record : results) {
                     key = record.key().toString();
                     value = record.value().toString();
+                    logger.info("取出记录 offset:{}, value: {}", record.offset(), value);
                     JSONObject jsonDbusMessage = JSON.parseObject(value);
                     int iPos = findDbusMessageFieldIndex(jsonDbusMessage, DbusMessage.Field._UMS_ID_);
                     int iOpTs = findDbusMessageFieldIndex(jsonDbusMessage, DbusMessage.Field._UMS_TS_);
@@ -205,12 +245,16 @@ public class FullPullResource {
                     String pos = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple").getString(iPos);
                     String op_ts = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple").getString(iOpTs);
                     if (key.indexOf("data_increment_heartbeat") != -1 || key.indexOf("data_increment_data") != -1) {
-                        logger.info("pos : {} ,op_ts : {}", pos, op_ts);
+                        logger.info("找到了op_ts, pos : {} ,op_ts : {}", pos, op_ts);
                         payload.put("POS", pos);
                         payload.put(OP_TS, op_ts);
                         message.setPayload(payload);
                         break;
                     }
+                }
+                logger.error("这一批数据没有找到op_ts，数据如下");
+                for (ConsumerRecord record : results) {
+                    logger.error("错误数据：offset={}, value={}", record.offset(), record.value().toString());
                 }
             }
 
@@ -233,6 +277,10 @@ public class FullPullResource {
         } catch (Exception e) {
             logger.error("[control message] Error encountered while sending control message.\ncontrol ctrlTopic:{}\nmessage:{}", ctrlTopic,strMessage, e);
             return Response.status(200).entity(new Result(-1, e.getMessage())).build();
+        } finally {
+            if (consumer != null) {
+                consumer.close();
+            }
         }
     }
 

@@ -32,6 +32,8 @@ public class DesensitizationInformation {
 
     private String fieldName;
 
+    private Integer pluginId;
+
     private String encodeType;
 
     private String encodeParam;
@@ -65,6 +67,14 @@ public class DesensitizationInformation {
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+    public Integer getPluginId() {
+        return pluginId;
+    }
+
+    public void setPluginId(Integer pluginId) {
+        this.pluginId = pluginId;
     }
 
     public String getEncodeType() {

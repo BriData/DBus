@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public abstract class SqlManager
      */
     public static final String SUBSTITUTE_TOKEN = "$CONDITIONS";
 
-    protected static final int DEFAULT_FETCH_SIZE = 1000;
+    //protected static final int DEFAULT_FETCH_SIZE = 1000;
 
     protected DBConfiguration options;
     private Statement lastStatement;
@@ -111,8 +111,8 @@ public abstract class SqlManager
      */
     protected void initOptionDefaults() {
         if (options.get(DBConfiguration.SPLIT_SHARD_SIZE) == null) {
-            LOG.info("Using default fetchSize of " + DEFAULT_FETCH_SIZE);
-            options.set(DBConfiguration.SPLIT_SHARD_SIZE,(Integer)DEFAULT_FETCH_SIZE);
+            LOG.info("Using default split shard size: " + DataPullConstants.DEFAULT_SPLIT_SHARD_SIZE);
+            options.set(DBConfiguration.SPLIT_SHARD_SIZE, DataPullConstants.DEFAULT_SPLIT_SHARD_SIZE);
         }
     }
 
@@ -785,8 +785,7 @@ public abstract class SqlManager
      */
     public String getSplitColumn() {
         String splitCol = options.getString(DBConfiguration.INPUT_SPLIT_COL);
-
-        if(StringUtils.isNotBlank(splitCol)){
+        if(StringUtils.isNotBlank(splitCol)) {
             return splitCol;
         }
 
@@ -818,7 +817,8 @@ public abstract class SqlManager
         if(StringUtils.isBlank(splitCol)){
             splitCol = "";
         }
-        options.set(DBConfiguration.INPUT_SPLIT_COL,splitCol);
+        options.set(DBConfiguration.INPUT_SPLIT_COL, splitCol);
+        LOG.info("getSplitColumn() set split col is : {}", splitCol);
         return splitCol;
     }
 
@@ -900,7 +900,7 @@ public abstract class SqlManager
      * @return A ResultSet encapsulating the results or null on error
      */
     protected ResultSet execute(String stmt, Object... args) throws SQLException, Exception {
-        return execute(stmt, options.getInt(DBConfiguration.SPLIT_SHARD_SIZE,DEFAULT_FETCH_SIZE), args);
+        return execute(stmt, options.getInt(DBConfiguration.SPLIT_SHARD_SIZE, DataPullConstants.DEFAULT_SPLIT_SHARD_SIZE), args);
     }
 
     public void close() throws SQLException {
@@ -1355,18 +1355,19 @@ public abstract class SqlManager
         return physicalTables;
     }
 
-    public int queryTotalRows(String table, String splitCol, String tablePartition) {
+    public long queryTotalRows(String table, String splitCol, String tablePartition) {
         Connection conn = null;
         PreparedStatement pStmt = null;
         ResultSet results = null;
-        int totalCountOfCurShard = 0;
+        long totalCountOfCurShard = 0;
         try {
             String query = getTotalRowsCountQuery(table, splitCol, tablePartition);
             conn = getConnection();
             pStmt = conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             results = pStmt.executeQuery();
             if (results.next()) {
-                totalCountOfCurShard = results.getInt("TOTALCOUNT");
+                totalCountOfCurShard = results.getLong("TOTALCOUNT");
+                LOG.info("queryTotalRows(), query: {}, totalRows : {}", query, totalCountOfCurShard);
             }
         } catch (SQLException e) {
             try {
@@ -1445,7 +1446,7 @@ public abstract class SqlManager
                     inputSplit.setCollate(pullCollate);
                     inputSplit.setTablePartitionInfo(tablePartition);
                 }
-                LOG.info("Physical Table:{} - Partition:{} , {} shards generated.", table, tablePartition, inputSplitListOfCurShard.size());
+                LOG.info("Physical Table:{}.{} , {} shards generated.", table, tablePartition, numSplitsOfCurShard);
             } catch (ValidationException e) {
                 throw new IOException(e);
             }catch (Exception e) {

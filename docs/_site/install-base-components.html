@@ -29,7 +29,7 @@
 
         <link rel="stylesheet" href="css/pygments-default.css">
 
-
+        
 
     </head>
     <body>
@@ -77,7 +77,7 @@
 								<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
 								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
 								
                             </ul>
                         </li>
@@ -620,42 +620,28 @@ worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRati
 
 <p><img src="img/install-base-components-04.png" alt="" /></p>
 
-<h1 id="6-安装dbus-jars">6. 安装Dbus jars</h1>
+<h1 id="6-安装influxdb">6. 安装InfluxDB</h1>
 
 <h2 id="61-下载">6.1 下载</h2>
-
-<p>dbus jars 地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
-
-<h2 id="62-安装">6.2 安装</h2>
-
-<p>dbus jars需要安装在storm nimbus所在服务器节点上，dbus-n1、dbus-n2都安装有storm nimbus，因此我们需要把dbus jars安装dbus-n1、dbus-n2的storm根目录：/app/dbus/apache-storm-1.0.1</p>
-
-<pre><code>cd /app/dbus/apache-storm-1.0.1
-tar -zxvf dbus_jars.tar.gz
-</code></pre>
-
-<h1 id="7-安装influxdb">7. 安装InfluxDB</h1>
-
-<h2 id="71-下载">7.1 下载</h2>
 
 <p>推荐下载InfluxDB版本：influxdb-1.1.0.x86_64
 地址：<a href="https://portal.influxdata.com/downloads">https://portal.influxdata.com/downloads</a></p>
 
-<h2 id="72-安装">7.2 安装</h2>
+<h2 id="62-安装">6.2 安装</h2>
 
 <p>在dbus-n1上切换到root用户，在influxdb-1.1.0.x86_64.rpm的存放目录下执行如下命令：</p>
 
 <pre><code>rpm -ivh influxdb-1.1.0.x86_64.rpm
 </code></pre>
 
-<h2 id="73-启动">7.3 启动</h2>
+<h2 id="63-启动">6.3 启动</h2>
 
 <p>在dbus-n1上执行如下命令：</p>
 
 <pre><code>service influxdb start
 </code></pre>
 
-<h2 id="74-初始化配置">7.4 初始化配置</h2>
+<h2 id="64-初始化配置">6.4 初始化配置</h2>
 
 <p>在dbus-n1上执行如下命令：</p>
 
@@ -669,13 +655,13 @@ CREATE USER "dbus" WITH PASSWORD 'dbus!@#123'
 ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
 </code></pre>
 
-<h1 id="8安装dbus-mgr库">8.安装Dbus mgr库</h1>
+<h1 id="7安装dbus-mgr库">7.安装Dbus mgr库</h1>
 
-<h2 id="81-前提">8.1 前提</h2>
+<h2 id="71-前提">7.1 前提</h2>
 
 <p>已经安装好mysql数据库服务，我们假定为db-dbusmgr节点</p>
 
-<h2 id="82-下载">8.2 下载</h2>
+<h2 id="72-下载">7.2 下载</h2>
 
 <p>下载dbus库的脚本，保存到/app/dbus/,  下载地址：</p>
 
@@ -688,21 +674,21 @@ ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
   </li>
 </ul>
 
-<h2 id="83-导入初始化sql脚本">8.3 导入初始化SQL脚本</h2>
+<h2 id="73-导入初始化sql脚本">7.3 导入初始化SQL脚本</h2>
 
 <pre><code>#以root身份登录mysql客户端，执行初始化脚本
 source /app/dbus/1_init_database_user.sql
 source /app/dbus/dbusmgr_tables.sql
 </code></pre>
 
-<h1 id="9-安装dbus-tools">9. 安装Dbus-tools</h1>
+<h1 id="8-安装dbus-tools">8. 安装Dbus-tools</h1>
 
-<h2 id="91-下载">9.1 下载</h2>
+<h2 id="81-下载">8.1 下载</h2>
 
 <p>下载dbus-tools版本：0.4.0
 地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
 
-<h2 id="92-安装">9.2 安装</h2>
+<h2 id="82-安装">8.2 安装</h2>
 
 <p>在dbus-n1上通过如下命令解压安装在目录：/app/dbus/dbus-tools-0.4.0</p>
 
@@ -710,7 +696,7 @@ source /app/dbus/dbusmgr_tables.sql
 unzip dbus-tools-0.4.0.zip
 </code></pre>
 
-<h2 id="93-配置">9.3 配置</h2>
+<h2 id="83-配置">8.3 配置</h2>
 
 <p>修改/app/dbus/dbus-tools-0.4.0/conf/zk.properties内容如下：</p>
 
@@ -727,7 +713,7 @@ url=jdbc:mysql://db-dbusmgr:3306/dbusmgr?characterEncoding=utf-8
 password=dmVvY9bibMGBGD3X
 </code></pre>
 
-<h2 id="94-执行sh脚本完成配置">9.4 执行sh脚本完成配置</h2>
+<h2 id="84-执行sh脚本完成配置">8.4 执行sh脚本完成配置</h2>
 
 <p>在dbus-n1上进入/app/dbus/dbus-tools-0.4.0执行如下命令：</p>
 
@@ -736,14 +722,14 @@ chmod 744 -R bin
 bin/initZK.sh
 </code></pre>
 
-<h1 id="10-安装dbus-heartbeat">10. 安装Dbus-heartbeat</h1>
+<h1 id="9-安装dbus-heartbeat">9. 安装Dbus-heartbeat</h1>
 
-<h2 id="101-下载">10.1 下载</h2>
+<h2 id="91-下载">9.1 下载</h2>
 
 <p>下载dbus-heartbeat版本：0.4.0
 地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
 
-<h2 id="102-安装">10.2 安装</h2>
+<h2 id="92-安装">9.2 安装</h2>
 
 <p>在dbus-n2上通过如下命令解压安装在目录：/app/dbus/dbus-heartbeat-0.4.0</p>
 
@@ -752,7 +738,7 @@ bin/initZK.sh
 
 <p>在dbus-n3上的安装和dbus-n2上的步骤相同</p>
 
-<h2 id="103-配置">10.3 配置</h2>
+<h2 id="93-配置">9.3 配置</h2>
 
 <p>修改/app/dbus/dbus-heartbeat-0.4.0/conf/zk.properties内容如下：</p>
 
@@ -822,7 +808,7 @@ influxdb.tablename=dbus_statistic
 
 <p>在dbus-n3上的安装和dbus-n2上的步骤相同</p>
 
-<h2 id="104-启动">10.4 启动</h2>
+<h2 id="94-启动">9.4 启动</h2>
 
 <p>在dbus-n2上进入/app/dbus/dbus-heartbeat-0.4.0目录执行如下命令：</p>
 
@@ -834,14 +820,14 @@ chmod 744 heartbeat.sh
 
 <p>在dbus-n3上的安装和dbus-n2上的步骤相同</p>
 
-<h1 id="11-安装dbus-web">11. 安装Dbus-web</h1>
+<h1 id="10-安装dbus-web">10. 安装Dbus-web</h1>
 
-<h2 id="111-下载">11.1 下载</h2>
+<h2 id="101-下载">10.1 下载</h2>
 
 <p>下载dbus-web版本：0.4.0
 地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
 
-<h2 id="112-安装">11.2 安装</h2>
+<h2 id="102-安装">10.2 安装</h2>
 
 <p>在dbus-n1上通过如下命令解压安装在目录：/app/dbus/distribution-0.4.0-bin</p>
 
@@ -855,7 +841,7 @@ mkdir distribution-0.4.0-bin
 unzip distribution-0.4.0-bin.zip
 </code></pre>
 
-<h2 id="113-配置">11.3 配置</h2>
+<h2 id="103-配置">10.3 配置</h2>
 
 <p>修改/app/dbus/distribution-0.4.0-bin/conf/application.properties配置文件信息如下：</p>
 
@@ -913,7 +899,7 @@ max.partition.fetch.bytes=10485760
 max.poll.records=30
 </code></pre>
 
-<h2 id="114-启动">11.4 启动</h2>
+<h2 id="104-启动">10.4 启动</h2>
 
 <p>前提：</p>
 
@@ -936,7 +922,7 @@ chmod 744 *
 ./start-all.sh &amp;
 </code></pre>
 
-<h2 id="115-验证">11.5 验证</h2>
+<h2 id="105-验证">10.5 验证</h2>
 
 <p>在浏览器中输入url：http://dbus-n1:65533/dbus/</p>
 
@@ -946,21 +932,21 @@ chmod 744 *
 
 <p>密码：admin</p>
 
-<h1 id="12-安装grafana">12. 安装Grafana</h1>
+<h1 id="11-安装grafana">11. 安装Grafana</h1>
 
-<h2 id="121-下载">12.1 下载</h2>
+<h2 id="111-下载">11.1 下载</h2>
 
 <p>推荐下载grafana版本：grafana-3.1.1
 地址：<a href="https://grafana.com/grafana/download">https://grafana.com/grafana/download</a></p>
 
-<h2 id="122-安装">12.2 安装</h2>
+<h2 id="112-安装">11.2 安装</h2>
 
 <p>在dbus-n1上首先切换到root用户，执行如下命令</p>
 
 <pre><code>rpm -ivh grafana-3.1.1-1470047149.x86_64.rpm
 </code></pre>
 
-<h2 id="123-配置">12.3 配置</h2>
+<h2 id="113-配置">11.3 配置</h2>
 
 <p>在dbus-n1上修改配置文件/etc/grafana/grafana.ini的[decurity]部分如下，其它部分不用修改：</p>
 
@@ -972,16 +958,16 @@ admin_user = admin
 admin_password = admin
 </code></pre>
 
-<h2 id="124-启动">12.4 启动</h2>
+<h2 id="114-启动">11.4 启动</h2>
 
 <p>在dbus-n1上执行如下命令：</p>
 
 <pre><code>service grafana-server start
 </code></pre>
 
-<h2 id="125-验证">12.5 验证</h2>
+<h2 id="115-验证">11.5 验证</h2>
 
-<h3 id="1251-登录grafana">12.5.1 登录grafana</h3>
+<h3 id="1151-登录grafana">11.5.1 登录grafana</h3>
 
 <p>打开浏览器输入：http://dbus-n1:3000/login，出现如下页面：</p>
 
@@ -991,9 +977,9 @@ admin_password = admin
 
 <p><img src="img/install-base-components-05.png" alt="" /></p>
 
-<h3 id="1252-配置grafana">12.5.2 配置grafana</h3>
+<h3 id="1152-配置grafana">11.5.2 配置grafana</h3>
 
-<h4 id="12521-配置grafana-influxdb数据源如下图">12.5.2.1 配置Grafana influxdb数据源如下图：</h4>
+<h4 id="11521-配置grafana-influxdb数据源如下图">11.5.2.1 配置Grafana influxdb数据源如下图：</h4>
 
 <p><img src="img/install-base-components-06.png" alt="" /></p>
 
@@ -1001,7 +987,7 @@ admin_password = admin
 
 <p>密码：dbus!@#123 (安装influxdb初始化配置脚本设置的密码)</p>
 
-<h4 id="12522-配置grafana-dashboard">12.5.2.2 配置Grafana Dashboard</h4>
+<h4 id="11522-配置grafana-dashboard">11.5.2.2 配置Grafana Dashboard</h4>
 
 <p>下载Schema Dashboard配置：initScript/init-table-grafana-config/grafana-schema.cfg</p>
 
@@ -1021,6 +1007,19 @@ admin_password = admin
 
 <p>导入后出现如上图所示的两个dashboards</p>
 
+<h1 id="12-安装dbus-jars">12. 安装Dbus jars</h1>
+
+<h2 id="121-下载">12.1 下载</h2>
+
+<p>dbus jars 地址： <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
+
+<h2 id="122-安装">12.2 安装</h2>
+
+<p>dbus jars需要安装在storm nimbus所在服务器节点上，dbus-n1、dbus-n2都安装有storm nimbus，因此我们需要把dbus jars安装dbus-n1、dbus-n2的storm根目录：/app/dbus/apache-storm-1.0.1</p>
+
+<pre><code>cd /app/dbus/apache-storm-1.0.1
+tar -zxvf dbus_jars.tar.gz
+</code></pre>
 
             </div>
         </div>

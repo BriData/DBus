@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,28 @@
  */
 package com.creditease.dbus.extractor.bolt;
 
+import java.util.Map;
+
 import com.creditease.dbus.extractor.common.utils.Constants;
 import com.creditease.dbus.extractor.common.utils.ZKHelper;
-import com.creditease.dbus.extractor.container.*;
+import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
+import com.creditease.dbus.extractor.container.KafkaContainer;
 import com.creditease.dbus.extractor.vo.MessageVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.storm.task.TopologyContext;
 import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 /**
  * Created by ximeiwang on 2017/8/15.
@@ -150,10 +151,10 @@ public class KafkaProducerBolt extends BaseRichBolt {
                 synchronized (collector) {
                 if (e != null) {
                     collector.fail(input);
-                    logger.error("kafka ack failed to the message which batchId is " + batchId, e);
+                    logger.info("kafka ack failed to the message which batchId is " + batchId, e);
                 } else {
                     collector.ack(input);
-                    logger.debug("kafka ack to the message which batchId is " + batchId, e);
+                    logger.info("kafka ack to the message which batchId is " + batchId, e);
                 }
             }}
         });

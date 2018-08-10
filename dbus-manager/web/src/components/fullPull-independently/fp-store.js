@@ -65,6 +65,7 @@ var initTableList = function(result) {
             text: e.tableName,
             outputTopic:e.outputTopic,
             version:e.version,
+            physicalTables: e.physicalTableRegex,
             fullpullCol: e.fullpullCol,
             fullpullSplitShardSize: e.fullpullSplitShardSize,
             fullpullSplitStyle: e.fullpullSplitStyle

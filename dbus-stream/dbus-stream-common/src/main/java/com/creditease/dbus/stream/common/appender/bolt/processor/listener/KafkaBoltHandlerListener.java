@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,6 @@ import org.apache.storm.tuple.Tuple;
 /**
  * Created by Shrimp on 16/7/4.
  */
-public interface KafkaBoltHandlerListener extends CommandHandlerListener {
+public interface KafkaBoltHandlerListener extends CommandHandlerListener, HeartbeatHandlerListener {
     void writeData(String dbSchema, String table, DbusMessage message, Tuple input);
 }

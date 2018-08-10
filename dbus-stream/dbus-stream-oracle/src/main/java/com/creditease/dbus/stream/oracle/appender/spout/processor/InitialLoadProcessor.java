@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,10 @@ public class InitialLoadProcessor extends AbstractProcessor {
 
         try {
             List<GenericData> schemaList = decoder.unwrap(consumerRecord.value());
-            if(schemaList.isEmpty()) return;
+            if(schemaList.isEmpty()) {
+                listener.reduceFlowSize(consumerRecord.serializedValueSize());
+                return;
+            }
 
             // 拉全量请求已经被拆分成独立的record,不会出现unwrap出来多条记录的情况
             GenericData data = schemaList.get(0);
@@ -148,6 +151,7 @@ public class InitialLoadProcessor extends AbstractProcessor {
             //consumerListener.syncOffset(consumerRecord);
             cache.put(record.get("pos").toString(), record.toString());
         } catch (Exception e) {
+            listener.reduceFlowSize(consumerRecord.serializedValueSize());
             throw new RuntimeException(e);
         }
     }

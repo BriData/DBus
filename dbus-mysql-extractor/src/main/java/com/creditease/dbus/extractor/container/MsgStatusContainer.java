@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class MsgStatusContainer {
 
     private static final long timeout = 10 * 60 * 1000;
 
+    //key是batchId
     private ConcurrentMap<Long, SendStatusVo> map = new ConcurrentHashMap<Long, SendStatusVo>();
 
     private MsgStatusContainer() {
@@ -107,6 +108,9 @@ public class MsgStatusContainer {
         }
     }
 
+    //从map中复制一份sendstatusvo对象完成状态到treeset中
+    //map的对象没有被修改
+    // treeset按照batchId进行排序
     public Set<SendStatusVo> getNeedAckOrRollbackBatch() {
         Set<SendStatusVo> setRet = new TreeSet<SendStatusVo>();
         SendStatusVo vo = null;

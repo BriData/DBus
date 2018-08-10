@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,13 @@
 
 package com.creditease.dbus.heartbeat.dao.impl;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLRecoverableException;
+
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.dao.IHeartBeatDao;
@@ -27,13 +34,8 @@ import com.creditease.dbus.heartbeat.exception.SQLTimeOutException;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.DBUtil;
 import com.creditease.dbus.heartbeat.util.DateUtil;
+import com.creditease.dbus.heartbeat.vo.HeartBeatMonitorVo;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLRecoverableException;
 
 public class HeartBeatDaoImpl implements IHeartBeatDao {
 
@@ -227,6 +229,78 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             }
         }
 
+    }
+
+    private String getQueryHeartbeatSql2Mysql() {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" select ");
+        sql.append("     DS_NAME,");
+        sql.append("     SCHEMA_NAME,");
+        sql.append("     CREATE_TIME");
+        sql.append(" from");
+        sql.append("     db_heartbeat_monitor");
+        sql.append(" where");
+        sql.append("     DS_NAME = ? and");
+        sql.append("     SCHEMA_NAME = ?");
+        sql.append(" order by");
+        sql.append("     CREATE_TIME desc");
+        sql.append(" limit 1");
+        return sql.toString();
+    }
+
+    private String getQueryHeartbeatSql2Oracle() {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" select");
+        sql.append("     wk.DS_NAME, wk.SCHEMA_NAME, wk.CREATE_TIME");
+        sql.append(" from ");
+        sql.append("     (select");
+        sql.append("          DS_NAME,");
+        sql.append("          SCHEMA_NAME,");
+        sql.append("          CREATE_TIME");
+        sql.append("      from");
+        sql.append("          db_heartbeat_monitor");
+        sql.append("      where");
+        sql.append("          DS_NAME = ? and");
+        sql.append("          SCHEMA_NAME = ?");
+        sql.append("      order by");
+        sql.append("          CREATE_TIME desc");
+        sql.append("      ) wk");
+        sql.append(" where");
+        sql.append("     rownum = 1");
+        return sql.toString();
+    }
+
+    @Override
+    public HeartBeatMonitorVo queryLatestHeartbeat(String key, String dsName, String schemaName, boolean isMysql) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        HeartBeatMonitorVo hbmVo = null;
+        try {
+            conn = DataSourceContainer.getInstance().getConn(key);
+            if (isMysql) {
+                ps = conn.prepareStatement(getQueryHeartbeatSql2Mysql());
+            } else {
+                ps = conn.prepareStatement(getQueryHeartbeatSql2Oracle());
+            }
+            ps.setString(1, dsName);
+            ps.setString(2, schemaName);
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                hbmVo = new HeartBeatMonitorVo();
+                hbmVo.setDsName(rs.getString("DS_NAME"));
+                hbmVo.setSchemaName(rs.getString("SCHEMA_NAME"));
+                hbmVo.setCreateTime(rs.getString("CREATE_TIME"));
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger().error("[db-HeartBeatDao]", e);
+        } finally {
+            DBUtil.close(rs);
+            DBUtil.close(ps);
+            DBUtil.close(conn);
+        }
+        return hbmVo;
     }
 
 }

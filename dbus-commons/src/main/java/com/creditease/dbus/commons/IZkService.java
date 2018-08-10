@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@
 package com.creditease.dbus.commons;
 
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public interface IZkService extends Closeable {
@@ -34,6 +36,7 @@ public interface IZkService extends Closeable {
 
 
     Stat getStat(String path) throws Exception;
+    Map<String, Object> getACL(String path) throws Exception;
     boolean isExists(String path) throws Exception;
     int getVersion(String path) throws Exception;
 

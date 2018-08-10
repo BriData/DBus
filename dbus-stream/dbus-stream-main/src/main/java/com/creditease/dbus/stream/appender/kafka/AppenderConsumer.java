@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.creditease.dbus.stream.appender.utils.JsonNodeOperator;
 import com.creditease.dbus.stream.appender.utils.ZKNodeOperator;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
+import com.creditease.dbus.stream.common.appender.kafka.TopicProvider;
 import com.creditease.dbus.stream.common.appender.spout.processor.ConsumerListener;
 import com.creditease.dbus.stream.common.appender.spout.processor.CtrlMessagePostOperation;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
@@ -175,10 +176,13 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
     @Override
     public void syncOffset(DBusConsumerRecord<String, byte[]> record) {
         logger.debug("Ack offset {topic:{},partition:{},offset:{}}", record.topic(), record.partition(), record.offset() + 1);
+        final String topic = record.topic();
+        final int partition = record.partition();
+        final long offset = record.offset();
         Map<TopicPartition, OffsetAndMetadata> map = Collections.singletonMap(new TopicPartition(record.topic(), record.partition()), new OffsetAndMetadata(record.offset() + 1, ""));
         consumer.commitAsync(map, (metadata, exception) -> {
             if (exception != null) {
-                logger.error("Exception happened when commit offset, error message: {}", exception.getMessage());
+                logger.error("[appender-consumer] commit error [topic:{},partition:{},offset:{}]., error message: {}", topic, partition, offset, exception.getMessage());
             }
         });
     }

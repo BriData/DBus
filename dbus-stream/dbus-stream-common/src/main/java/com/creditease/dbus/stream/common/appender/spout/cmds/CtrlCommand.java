@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.creditease.dbus.stream.common.appender.spout.cmds;
 
 import com.creditease.dbus.commons.ControlMessage;
+import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ public abstract class CtrlCommand {
                 cmd.setSchema(message.payloadValue("SCHEMA_NAME", String.class));
                 cmd.setTable(message.payloadValue("TABLE_NAME", String.class));
                 cmd.setStatus(message.payloadValue("STATUS", String.class));
+                cmd.setCommandSender(message.getFrom());
                 cmd.setTopic(message.payloadValue("topic", String.class));
                 try {
                     cmd.setBatchId(Integer.parseInt(message.payloadValue("BATCH_NO", String.class)));

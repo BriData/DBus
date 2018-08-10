@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectResourceMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectResource">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="fullpull_enable_flag" jdbcType="TINYINT" property="fullpullEnableFlag" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_resource
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectResource">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_resource (project_id, table_id, fullpull_enable_flag,
+      update_time)
+    values (#{projectId,jdbcType=INTEGER}, #{tableId,jdbcType=INTEGER}, #{fullpullEnableFlag,jdbcType=TINYINT},
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectResource">
+    update t_project_resource
+    set
+      <if test="projectId != null">project_id = #{projectId,jdbcType=INTEGER},</if>
+      <if test="tableId != null">table_id = #{tableId,jdbcType=INTEGER},</if>
+      <if test="fullpullEnableFlag != null">fullpull_enable_flag = #{fullpullEnableFlag,jdbcType=TINYINT},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP}</if>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, project_id, table_id, fullpull_enable_flag, update_time
+    from t_project_resource
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, project_id, table_id, fullpull_enable_flag, update_time
+    from t_project_resource
+  </select>
+  <select id="selectByProjectId" resultType="java.util.Map" parameterType="java.lang.Integer">
+    select
+      tpr.id resourceId,
+      dds.ds_type,
+      dds.ds_name,
+      dt.id,
+      ds.schema_name,
+      dt.status,
+      dt.table_name,
+      mv.version,
+      dt.description,
+      DATE_FORMAT(dt.create_time,'%Y-%m-%d %H:%i:%s') create_time,
+      tpr.fullpull_enable_flag
+    from
+      t_project_resource tpr,
+      t_dbus_datasource dds,
+      t_data_schema ds,
+      t_data_tables dt,
+      t_meta_version mv
+    where
+      tpr.project_id = #{projectId} AND
+      tpr.table_id = dt.id AND
+      dt.ds_id = dds.id AND
+      dt.schema_id = ds.id AND
+      dt.ver_id = mv.id
+  </select>
+  <delete id="deleteByProjectId" parameterType="java.lang.Integer">
+    delete from t_project_resource
+    where project_id = #{projectId,jdbcType=INTEGER}
+  </delete>
+  <select id="search" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+      dsource.ds_type dsType,
+      project.project_name projectName,
+      project.project_display_name projectDisplayName,
+      dsource.ds_name dsName,
+      dtable.id tableId,
+      project.id projectId,
+      dschema.schema_name schemaName,
+      dtable.table_name tableName,
+      meta.version,
+      dtable.status,
+      dtable.description,
+      DATE_FORMAT(dtable.create_time,'%Y-%m-%d %H:%i:%s') createTime,
+      presource.fullpull_enable_flag ifFullpull
+    FROM
+      t_dbus_datasource dsource,
+      t_data_schema dschema,
+      t_data_tables dtable,
+      t_meta_version meta,
+      t_project_resource presource,
+      t_project project
+    <where>
+      dtable.id=presource.table_id AND
+      presource.project_id=project.id AND
+      dtable.ds_id = dsource.id AND
+      dtable.schema_id = dschema.id AND
+      dtable.ver_id = meta.id
+      <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
+      <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
+      <if test="projectId != null">AND presource.project_id=#{projectId}</if>
+    </where>
+    ORDER BY
+    <choose>
+      <when test="sortBy != null">${sortBy}</when>
+      <otherwise>dtable.create_time</otherwise>
+    </choose>
+    <choose>
+      <when test="order != null">${order}</when>
+      <otherwise>DESC</otherwise>
+    </choose>
+  </select>
+
+  <select id="searchTableResource" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT DISTINCT *
+    FROM (
+      SELECT
+      dsource.ds_type dsType,
+      dsource.ds_name dsName,
+      dtable.id tableId,
+      project.id projectId,
+      dschema.schema_name schemaName,
+      dtable.table_name tableName,
+      dtable.status,
+      dtable.description,
+      presource.fullpull_enable_flag ifFullpull
+      FROM
+      t_dbus_datasource dsource,
+      t_data_schema dschema,
+      t_data_tables dtable,
+      t_project_resource presource,
+      t_project project
+      <where>
+        dtable.id=presource.table_id AND
+        presource.project_id=project.id AND
+        dtable.ds_id = dsource.id AND
+        dtable.schema_id = dschema.id
+        <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
+        <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
+        <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
+        <if test="projectId != null">AND presource.project_id=#{projectId}</if>
+      </where>
+    ) tresource
+    WHERE
+    tresource.tableId not in(
+      SELECT DISTINCT table_id
+      FROM t_project_topo_table
+      WHERE
+        project_id = #{projectId} AND
+        topo_id = #{topoId}
+    )
+  </select>
+  <select id="searchStatus" parameterType="java.lang.Integer" resultType="java.lang.String">
+    SELECT
+      IF(COUNT(id)>0,'use','unuse') as stat
+    FROM
+      t_project_topo_table
+    WHERE
+      project_id = #{projectId} AND table_id = #{tableId}
+  </select>
+  <select id="searchEncodeType" parameterType="java.lang.Integer" resultType="java.lang.String">
+    SELECT
+      IF(COUNT(id)>0,'request','none') as encode
+    FROM
+      t_project_encode_hint
+    WHERE
+      table_id = #{tableId}
+  </select>
+
+  <select id="selectColumns" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT
+    t_wk.*,
+    ec.encode_type
+    FROM
+    (SELECT
+    tm.column_name,
+    tm.data_type,
+    tm.comments,
+    dt.id tid,
+    tm.id cid
+    FROM
+    t_data_tables dt,
+    t_table_meta tm
+    WHERE
+    dt.ver_id = tm.ver_id AND
+    dt.id = #{id, jdbcType=INTEGER}) t_wk
+    LEFT JOIN t_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
+  </select>
+  <select id="getDSNames" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT DISTINCT
+      ds.id dsId,
+      ds.ds_name dsName
+    FROM
+      t_project_resource resource,
+      t_dbus_datasource ds,
+      t_data_tables dtable
+    <where>
+      resource.table_id = dtable.id AND
+      dtable.ds_id = ds.id
+      <if test="projectId != null">AND resource.project_id = #{projectId,jdbcType=INTEGER}</if>
+    </where>
+  </select>
+  <select id="getProjectNames" resultType="java.util.Map">
+    SELECT DISTINCT
+      project.id,
+      project.project_name projectName,
+      project.project_display_name projectDisplayName
+    FROM
+      t_project_resource resource,
+      t_project project
+    WHERE
+      resource.project_id = project.id
+  </select>
+  <select id="selectByPIdTId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select *
+    from t_project_resource
+    where project_id = #{projectId,jdbcType=INTEGER} AND table_id = #{tableId,jdbcType=INTEGER}
+  </select>
+
+</mapper>

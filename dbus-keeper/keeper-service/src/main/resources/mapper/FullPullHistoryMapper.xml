@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.FullPullHistoryMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.FullPullHistory">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="dsName" jdbcType="VARCHAR" property="dsName" />
+    <result column="schemaName" jdbcType="VARCHAR" property="schemaName" />
+    <result column="tableName" jdbcType="VARCHAR" property="tableName" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="batch_id" jdbcType="INTEGER" property="batchId" />
+    <result column="state" jdbcType="VARCHAR" property="state" />
+    <result column="error_msg" jdbcType="VARCHAR" property="errorMsg" />
+    <result column="init_time" jdbcType="TIMESTAMP" property="initTime" />
+    <result column="start_split_time" jdbcType="TIMESTAMP" property="startSplitTime" />
+    <result column="start_pull_time" jdbcType="TIMESTAMP" property="startPullTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="finished_partition_count" jdbcType="BIGINT" property="finishedPartitionCount" />
+    <result column="total_partition_count" jdbcType="BIGINT" property="totalPartitionCount" />
+    <result column="finished_row_count" jdbcType="BIGINT" property="finishedRowCount" />
+    <result column="total_row_count" jdbcType="BIGINT" property="totalRowCount" />
+    <result column="project_display_name" jdbcType="VARCHAR" property="projectDisplayName" />
+    <result column="project_name" jdbcType="VARCHAR" property="projectName" />
+    <result column="topology_table_id" jdbcType="INTEGER" property="topologyTableId" />
+    <result column="target_sink_id" jdbcType="INTEGER" property="targetSinkId" />
+    <result column="target_sink_topic" jdbcType="VARCHAR" property="targetSinkTopic" />
+    <result column="full_pull_req_msg_offset" jdbcType="BIGINT" property="fullPullReqMsgOffset" />
+    <result column="first_shard_msg_offset" jdbcType="BIGINT" property="firstShardMsgOffset" />
+    <result column="last_shard_msg_offset" jdbcType="BIGINT" property="lastShardMsgOffset" />
+    <result column="cost_time" jdbcType="VARCHAR" property="costTime" />
+    <result column="complete_rate" jdbcType="INTEGER" property="completeRate" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from t_fullpull_history
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.FullPullHistory">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    replace into t_fullpull_history (id,type, dsName, schemaName,
+    tableName, version, batch_id,
+    state, error_msg, init_time,
+    start_split_time, start_pull_time, end_time,
+    update_time, finished_partition_count, total_partition_count,
+    finished_row_count, total_row_count, project_name,
+    topology_table_id, target_sink_id, target_sink_topic,
+    full_pull_req_msg_offset, first_shard_msg_offset,
+    last_shard_msg_offset, cost_time, complete_rate)
+    values (#{id,jdbcType=BIGINT}, #{type,jdbcType=VARCHAR}, #{dsName,jdbcType=VARCHAR}, #{schemaName,jdbcType=VARCHAR},
+    #{tableName,jdbcType=VARCHAR}, #{version,jdbcType=INTEGER}, #{batchId,jdbcType=INTEGER},
+    #{state,jdbcType=VARCHAR}, #{errorMsg,jdbcType=VARCHAR}, #{initTime,jdbcType=TIMESTAMP},
+    #{startSplitTime,jdbcType=TIMESTAMP}, #{startPullTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP},
+    #{updateTime,jdbcType=TIMESTAMP}, #{finishedPartitionCount,jdbcType=BIGINT}, #{totalPartitionCount,jdbcType=BIGINT},
+    #{finishedRowCount,jdbcType=BIGINT}, #{totalRowCount,jdbcType=BIGINT}, #{projectName,jdbcType=VARCHAR},
+    #{topologyTableId,jdbcType=INTEGER}, #{targetSinkId,jdbcType=INTEGER}, #{targetSinkTopic,jdbcType=VARCHAR},
+    #{fullPullReqMsgOffset,jdbcType=BIGINT}, #{firstShardMsgOffset,jdbcType=BIGINT},
+    #{lastShardMsgOffset,jdbcType=BIGINT}, #{costTime,jdbcType=VARCHAR}, #{completeRate,jdbcType=INTEGER})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.FullPullHistory">
+    update t_fullpull_history
+    set type = #{type,jdbcType=VARCHAR},
+    dsName = #{dsName,jdbcType=VARCHAR},
+    schemaName = #{schemaName,jdbcType=VARCHAR},
+    tableName = #{tableName,jdbcType=VARCHAR},
+    version = #{version,jdbcType=INTEGER},
+    batch_id = #{batchId,jdbcType=INTEGER},
+    state = #{state,jdbcType=VARCHAR},
+    error_msg = #{errorMsg,jdbcType=VARCHAR},
+    init_time = #{initTime,jdbcType=TIMESTAMP},
+    start_split_time = #{startSplitTime,jdbcType=TIMESTAMP},
+    start_pull_time = #{startPullTime,jdbcType=TIMESTAMP},
+    end_time = #{endTime,jdbcType=TIMESTAMP},
+    update_time = #{updateTime,jdbcType=TIMESTAMP},
+    finished_partition_count = #{finishedPartitionCount,jdbcType=BIGINT},
+    total_partition_count = #{totalPartitionCount,jdbcType=BIGINT},
+    finished_row_count = #{finishedRowCount,jdbcType=BIGINT},
+    total_row_count = #{totalRowCount,jdbcType=BIGINT},
+    project_name = #{projectName,jdbcType=VARCHAR},
+    topology_table_id = #{topologyTableId,jdbcType=INTEGER},
+    target_sink_id = #{targetSinkId,jdbcType=INTEGER},
+    target_sink_topic = #{targetSinkTopic,jdbcType=VARCHAR},
+    full_pull_req_msg_offset = #{fullPullReqMsgOffset,jdbcType=BIGINT},
+    first_shard_msg_offset = #{firstShardMsgOffset,jdbcType=BIGINT},
+    last_shard_msg_offset = #{lastShardMsgOffset,jdbcType=BIGINT},
+    cost_time = #{costTime,jdbcType=VARCHAR},
+    complete_rate = #{completeRate,jdbcType=INTEGER}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select id, type, dsName, schemaName, tableName, version, batch_id, state, error_msg,
+    init_time, start_split_time, start_pull_time, end_time, update_time, finished_partition_count,
+    total_partition_count, finished_row_count, total_row_count, project_name, topology_table_id,
+    target_sink_id, target_sink_topic, full_pull_req_msg_offset, first_shard_msg_offset,
+    last_shard_msg_offset, cost_time, complete_rate
+    from t_fullpull_history
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, type, dsName, schemaName, tableName, version, batch_id, state, error_msg,
+    init_time, start_split_time, start_pull_time, end_time, update_time, finished_partition_count,
+    total_partition_count, finished_row_count, total_row_count, project_name, topology_table_id,
+    target_sink_id, target_sink_topic, full_pull_req_msg_offset, first_shard_msg_offset,
+    last_shard_msg_offset, cost_time, complete_rate
+    from t_fullpull_history
+  </select>
+  <select id="search" resultMap="BaseResultMap">
+    select pro.project_display_name, fh.* from t_fullpull_history fh left join t_project pro
+    on fh.project_name = pro.project_name
+    where 1=1
+    <if test="projectName != null"> and fh.project_name = #{projectName}</if>
+    <if test="dsName != null"> and fh.dsName = #{dsName}</if>
+    <if test="schemaName != null"> and fh.schemaName like "%"#{schemaName}"%"</if>
+    <if test="tableName != null"> and fh.tableName like  "%"#{tableName}"%" </if>
+    order by fh.update_time desc
+  </select>
+  <select id="searchIdsByUid" resultType="java.lang.Long">
+    SELECT h.id FROM
+    t_fullpull_history h,t_project_topo_table tt,t_project_user u
+    WHERE h.topology_table_id = tt.id
+    AND tt.project_id = u.project_id
+    AND u.user_id = #{userId};
+  </select>
+  <select id="getDSNames" resultType="java.util.Map">
+    SELECT DISTINCT
+    ds.id dsId,
+    fh.dsName dsName
+    FROM
+    t_fullpull_history fh,
+    t_dbus_datasource ds
+    <where>
+      fh.dsName = ds.ds_name
+      <if test="userId != null">
+        AND ds.id in(select ds_id from t_data_tables dt, t_project_resource pr, t_project_user pu
+        where dt.id = pr.table_id AND pr.project_id = pu.project_id and pu.user_id = #{userId,jdbcType=INTEGER})
+      </if>
+      <if test="projectId != null">
+        AND fh.project_name = (select project_name from t_project where id = #{projectId,jdbcType=INTEGER})
+      </if>
+    </where>
+
+  </select>
+  <select id="getProjectNames" resultType="java.util.Map">
+    SELECT DISTINCT
+    project_name projectName
+    FROM
+    t_fullpull_history
+    where project_name is not null
+    <if test="userId != null">
+      AND project_name in (select project_name from t_project p, t_project_user pu
+      where p.id = pu.project_id and pu.user_id=#{userId,jdbcType=INTEGER})
+    </if>
+    <if test="projectId != null">
+      AND project_name = (select project_name from t_project where id = #{projectId,jdbcType=INTEGER})
+    </if>
+  </select>
+  <update id="updateReqMsgOffset">
+    update t_fullpull_history set full_pull_req_msg_offset = #{fullPullReqMsgOffset}
+    where id =#{id}
+  </update>
+</mapper>

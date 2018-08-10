@@ -1,0 +1,25 @@
+@import "../../../node_modules/antd/lib/style/themes/default";
+
+@blue                               : #00c1de;
+@white                              : #fff;
+@black                              : #000;
+
+@bg-color                           : #EAEDF1;
+@primary-color                      : @blue;
+@light-text-color                   : lighten(@text-color, 25%);
+@disabled-text-color                : lighten(@text-color, 35%);
+
+
+@layout-topbar-color                :lighten(@black, 20%);
+@layout-slider-color                :lighten(@black, 20%);
+@layout-bar-text-color              :@white;  
+@layout-content-color               :#f5f5f5;   
+/*** z-index ***/
+@header-index                       : 2;
+
+/*** global mixins ***/
+.ellipsis {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

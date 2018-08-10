@@ -1,14 +1,32 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 package com.creditease.dbus.log.processor.helper;
 
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.CtlMessageResult;
-import com.creditease.dbus.commons.CtlMessageResultSender;
-import com.creditease.dbus.commons.IZkService;
-import com.creditease.dbus.commons.ZkService;
-import java.util.Properties;
+import com.creditease.dbus.commons.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Properties;
 
 import static com.creditease.dbus.commons.Constants.LOG_PROCESSOR;
 
@@ -54,23 +72,59 @@ public class ZkHelper {
     }
 
     public Properties loadKafkaConsumerConf() {
+        Properties consumerProps;
         String path = Constants.TOPOLOGY_ROOT + "/" + topologyId + "-" + LOG_PROCESSOR + "/consumer.properties";
         try {
-            return zkService.getProperties(path);
+            consumerProps = zkService.getProperties(path);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("load consumer.properties error.", e);
             throw new RuntimeException("load consumer.properties error", e);
         }
+
+        Properties props = loadSecurityConf();
+        if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "kerberos_kafkaACL")) {
+            consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            logger.info("consumer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT" );
+        } else if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
+            logger.info("consumer security_protocol is disabled!" );
+        } else {
+            logger.error("zk node[/DBus/Commons/global_security.conf] content is error!" );
+        }
+
+        return consumerProps;
     }
 
     public Properties loadKafkaProducerConf() {
+        Properties producerProps;
         String path = Constants.TOPOLOGY_ROOT + "/" + topologyId + "-" + LOG_PROCESSOR + "/producer.properties";
         try {
-            return zkService.getProperties(path);
+            producerProps = zkService.getProperties(path);
         } catch (Exception e) {
             logger.error("load producer.properties error.", e);
             throw new RuntimeException("load producer.properties error", e);
+        }
+
+        Properties props = loadSecurityConf();
+        if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "kerberos_kafkaACL")) {
+            producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            logger.info("producer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT" );
+        } else if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
+            logger.info("producer security_protocol is disabled!" );
+        } else {
+            logger.error("zk node[/DBus/Commons/global_security.conf] content is error!" );
+        }
+        return producerProps;
+    }
+
+
+    private Properties loadSecurityConf() {
+        String path = Constants.COMMON_ROOT + "/" + Constants.GLOBAL_SECURITY_CONF;
+        try {
+            return zkService.getProperties(path);
+        } catch (Exception e) {
+            logger.error("load global_security.conf error: ", e);
+            throw new RuntimeException("load global_security.conf error: ", e);
         }
     }
 

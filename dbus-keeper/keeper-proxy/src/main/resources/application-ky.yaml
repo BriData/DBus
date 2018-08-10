@@ -1,0 +1,8 @@
+server.port: 6090
+spring.application.name: dbus-keeper-proxy
+
+spring:
+  http:
+    multipart:
+      max-file-size: 50Mb
+      max-request-size: 50Mb

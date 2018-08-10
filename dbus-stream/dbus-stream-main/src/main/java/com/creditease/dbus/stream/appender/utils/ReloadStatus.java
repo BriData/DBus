@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,13 @@ public class ReloadStatus implements Serializable {
     }
 
     public boolean isReadyToReload() {
-        if (ready2reloading) {
-            if (System.currentTimeMillis() - lastReloadTime > RELOAD_TIME_THRESHOLD * 1000) {
-                return true;
-            }
-            logger.warn("Can't reload too frequently, limitation is {}s", RELOAD_TIME_THRESHOLD);
-        }
-        return false;
+        //if (ready2reloading) {
+            //if (System.currentTimeMillis() - lastReloadTime > RELOAD_TIME_THRESHOLD * 1000) {
+            //    return true;
+            //}
+            //logger.warn("Can't reload too frequently, limitation is {}s", RELOAD_TIME_THRESHOLD);
+        //}
+        return ready2reloading;
     }
 
     public void markReloading(Object param) {

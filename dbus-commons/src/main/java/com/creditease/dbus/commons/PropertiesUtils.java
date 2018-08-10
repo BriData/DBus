@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,15 @@
 
 package com.creditease.dbus.commons;
 
-import com.google.common.io.Resources;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.Properties;
+
+import com.google.common.io.Resources;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 配置文件读取工具
@@ -55,5 +57,16 @@ public class PropertiesUtils {
                 is.close();
             }
         }
+    }
+
+    public static Properties copy(Properties props) {
+        if (props == null) return null;
+        Properties dest = new Properties();
+        Enumeration<?> keys = props.propertyNames();
+        while (keys.hasMoreElements()) {
+            String key = (String) keys.nextElement();
+            dest.setProperty(key, (String) props.get(key));
+        }
+        return dest;
     }
 }

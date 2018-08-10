@@ -221,13 +221,14 @@ public class InitialLoadService {
         }
     }
 
-    private String getMysqlTables(Connection conn, DataTable tab) throws Exception {
+    public String getMysqlTables(Connection conn, DataTable tab) throws Exception {
         String sql = "select table_name from information_schema.tables t where t.table_schema = ?";
         PreparedStatement statement = null;
+        ResultSet rs = null;
         try {
             statement = conn.prepareStatement(sql);
             statement.setString(1, tab.getSchemaName());
-            ResultSet rs = statement.executeQuery();
+            rs = statement.executeQuery();
             StringBuilder buf = new StringBuilder();
             String name = "";
             Pattern p = Pattern.compile(tab.getPhysicalTableRegex());
@@ -243,9 +244,54 @@ public class InitialLoadService {
             }
             return buf.toString();
         } finally {
+            if (rs != null) {
+                rs.close();
+            }
             if (statement != null) {
                 statement.close();
             }
         }
+    }
+
+    public String getOracleTables(Connection conn, DataTable tab) throws Exception {
+        String sql = "SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER= ?";
+        PreparedStatement statement = null;
+        ResultSet rs = null;
+        try {
+            statement = conn.prepareStatement(sql);
+            statement.setString(1, tab.getSchemaName());
+            rs = statement.executeQuery();
+            StringBuilder buf = new StringBuilder();
+            String name = "";
+            Pattern p = Pattern.compile(tab.getPhysicalTableRegex());
+            logger.info("正则表达式为：{}", tab.getPhysicalTableRegex());
+            while (rs.next()) {
+                name = rs.getString("TABLE_NAME");
+                logger.info("查询到表名：{}",name);
+                Matcher matcher = p.matcher(name);
+                if (matcher.matches()) {
+                    logger.info("匹配到表名：{}",name);
+                    buf.append(name).append(";");
+                }
+            }
+            if (buf.length() > 0) {
+                buf.deleteCharAt(buf.length() - 1);
+            }
+            return buf.toString();
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (statement != null) {
+                statement.close();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        Pattern p = Pattern.compile("abc");
+        Matcher matcher = p.matcher("xxabcxx");
+        System.out.println(matcher.find());
+        System.out.println(matcher.matches());
     }
 }

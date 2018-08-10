@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,10 @@ public class DbusCacheLoader implements LocalCacheLoader {
                 case CacheNames.TAB_ENCODE_FIELDS:
                     logger.info("Query encode table columns from database with parameter:{}", key);
                     result = db.getEncodeColumns(Long.parseLong(key));
+                    break;
+                case CacheNames.TAB_CENCODE_PLUGINS:
+                    logger.info("Query encode plugins from database with parameter:{}", key);
+                    result = db.loadEncodePlugins(Long.parseLong(key));
                     break;
                 default:
                     logger.warn("Unsupported type[{}] of CacheLoader", type);

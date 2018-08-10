@@ -103,3 +103,5 @@ DBus 自身使用 Apache v2.0 协议
 邮件交流： [bridata@126.com](mailto:bridata@126.com)
 
 提交issue ： [issue](https://github.com/BriData/DBus/issues)
+
+微信群交流： ![weixin](https://github.com/BriData/DBus/raw/master/img/0weixi.png)

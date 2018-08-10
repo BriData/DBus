@@ -26,7 +26,8 @@ var actions = Reflux.createActions(['initialLoad','dataSourceSelected','search',
     'takeEffect',
     'changeInactive',
     'readOutputTopic',
-    'closeReadOutputTopic']);
+    'closeReadOutputTopic',
+    'encodePackageChange']);
 
 var store = Reflux.createStore({
     state: {
@@ -34,6 +35,8 @@ var store = Reflux.createStore({
         searchParam:[],
         data: [],
         currentPageNum: 1,
+
+        dialogSelectPlugin: [],
         dialog: {
             show: false,
             content:"",
@@ -46,6 +49,7 @@ var store = Reflux.createStore({
             showConfigure: false,
             contentConfigure:"",
             identityConfigure:"",
+            encodePackages: [],
             encodeAlgorithms:[],
             tableInformation:{
                 tableId:null,
@@ -168,6 +172,11 @@ var store = Reflux.createStore({
             storeSelf.onSearch({});
         });
     },
+    onEncodePackageChange: function(value, rowIndex) {
+        const {dialogSelectPlugin} = this.state
+        dialogSelectPlugin[rowIndex] = value
+        this.trigger(this.state);
+    },
     onOpenDialogConfigure: function(obj, dataTableSelf) {
         var self=this;
         this.state.dialog.contentConfigure = "没有返回数据";
@@ -193,15 +202,23 @@ var store = Reflux.createStore({
 
                         $.get(utils.builPath("tables/fetchEncodeAlgorithms"), function(result){
                             if(result.status == 200) {
-                                self.state.dialog.encodeAlgorithms = self.createEncodeAlgorithmsList(result.data);
-
-                                self.state.dialog.contentConfigure = self.createDesensitizationTableView(desensitizationInformations
-                                    ,tableColumns, dataTableSelf);
-                                self.state.dialog.showConfigure = true;
-                                self.state.dialog.identityConfigure = obj["tableName"] + " encode configure" ; // 对话框标题
-                                self.trigger(self.state);
+                                var builtInEncode = result.data
+                                $.get(utils.builPath("tables/fetchEncodePlugin"), function(result) {
+                                    if(result.status === 200) {
+                                        var encodePlugins = result.data
+                                        self.state.dialog.encodePackages = self.createEncodePackages(encodePlugins);
+                                        self.state.dialog.encodeAlgorithms = self.createEncodeAlgorithms(builtInEncode, encodePlugins);
+                                        self.state.dialog.contentConfigure = self.createDesensitizationTableView(desensitizationInformations
+                                            ,tableColumns, dataTableSelf);
+                                        self.state.dialog.showConfigure = true;
+                                        self.state.dialog.identityConfigure = obj["tableName"] + " encode configure" ; // 对话框标题
+                                        self.trigger(self.state);
+                                    }
+                                    utils.hideLoading();
+                                })
+                            } else {
+                                utils.hideLoading();
                             }
-                            utils.hideLoading();
                         });
                     }
                     else {
@@ -214,35 +231,73 @@ var store = Reflux.createStore({
             }
         });
     },
-    createEncodeAlgorithmsList(data) {
-        var list=[{text:'None',value:''}];
-        for(var i in data) {
-            if(global.isDebug == false) {
-                if(data[i] == 'address_normalize') continue;
-                if(data[i] == 'yisou_data_clean') continue;
-            }
-            list.push({text:data[i],value:data[i]});
-        }
+    createEncodePackages(encodePlugins) {
+        // 内置脱敏合集在这里当做-1
+        const list = [{text: '不脱敏', value: ''}, {text: '内置脱敏', value: '-1'}];
+        encodePlugins.forEach(plugin => {
+            list.push({
+                text: plugin.name,
+                value: plugin.id+''
+            })
+        })
         return list;
     },
+
+    createEncodeAlgorithms(builtInEncode, encodePlugins) {
+        const list = []
+        for (let key in builtInEncode) {
+            list.push({
+                text: builtInEncode[key],
+                value: builtInEncode[key],
+                pkg: '-1'
+            })
+        }
+        encodePlugins.forEach(plugin => {
+            const algorithmString = plugin.encoders
+            if (algorithmString && algorithmString !== '') {
+                const algorithmList = algorithmString.split(',')
+                algorithmList.forEach(algorithm => {
+                    list.push({
+                        text: algorithm,
+                        value: algorithm,
+                        pkg: plugin.id+''
+                    })
+                })
+            }
+        })
+        console.info("构造的脱敏算法",list)
+        return list
+    },
+
     createDesensitizationTableView(desensitizationInformations, tableColumns, dataTableSelf) {
+        const dialogSelectPlugin = new Array(tableColumns.length)
         for (var i=0;i<tableColumns.length;i++) {
+            dialogSelectPlugin[i] = ''
+            tableColumns[i].plugin_id='';
             tableColumns[i].encode_type='';
             tableColumns[i].encode_param='';
             tableColumns[i].truncate='1';
             for (var j=0;j<desensitizationInformations.length;j++) {
                 if(tableColumns[i].COLUMN_NAME == desensitizationInformations[j].fieldName) {
-                    console.log(tableColumns[i], desensitizationInformations[j]);
+                    dialogSelectPlugin[i] = desensitizationInformations[j].pluginId ? desensitizationInformations[j].pluginId + '' : '-1'
+                    tableColumns[i].plugin_id=dialogSelectPlugin[i];
                     tableColumns[i].encode_type=desensitizationInformations[j].encodeType;
                     tableColumns[i].encode_param=desensitizationInformations[j].encodeParam;
                     tableColumns[i].truncate=desensitizationInformations[j].truncate+'';
                 }
             }
         }
+        this.state.dialogSelectPlugin = dialogSelectPlugin
+        this.trigger(this.state);
+
         for(var i=0;i<tableColumns.length;i++) {
             if(tableColumns[i].IS_PRIMARY == "YES") {
                 tableColumns[i].COLUMN_NAME = tableColumns[i].COLUMN_NAME + " PK";
             }
+        }
+
+        const filterPackage = (pluginId, algorithms) => {
+            return algorithms.filter(a => a.pkg === pluginId)
         }
 
         return (<Table
@@ -264,16 +319,29 @@ var store = Reflux.createStore({
                 width={130}
             />
             <Column
+                header={<cell>Encode Package</cell>}
+                cell={props => {
+                    return (<Select
+                            onChange={value => dataTableSelf.handleEncodePackageChange(value, props.rowIndex)}
+                            style={{minWidth: "120px"}}
+                            className={"desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
+                            defaultOpt={tableColumns[props.rowIndex].plugin_id}
+                            options={dataTableSelf.state.dialog.encodePackages}
+                        />
+                    )}}
+                width={130}
+            />
+            <Column
                 header={<cell>Encode Type</cell>}
                 cell={props => {
                 return (<Select
-                    style={{width:"160px"}}
-                    className={"desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
-                    defaultOpt={tableColumns[props.rowIndex].encode_type}
-                    options={dataTableSelf.state.dialog.encodeAlgorithms}
-                    />
+                        style={{minWidth: "120px"}}
+                        className={"desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
+                        defaultOpt={tableColumns[props.rowIndex].encode_type}
+                        options={filterPackage(dataTableSelf.state.dialogSelectPlugin[props.rowIndex], dataTableSelf.state.dialog.encodeAlgorithms)}
+                        />
                 )}}
-                width={160}
+                width={130}
             />
             <Column
                 header={<cell>Encode Param</cell>}
@@ -286,13 +354,13 @@ var store = Reflux.createStore({
                 header={<cell>Trunc</cell>}
                 cell={props => (
                     <Select
-                    style={{width:"130px"}}
+                    style={{minWidth: "30px"}}
                     className={"desensitization_"+dataTableSelf.state.dialog.tableInformation.tableColumnNames[props.rowIndex]}
                     defaultOpt={tableColumns[props.rowIndex].truncate}
                     options={[{text:"是",value:"1"},{text:"否",value:"0"}]}
                     />
                 )}
-                width={130}
+                width={40}
             />
         </Table>);
     },
@@ -322,9 +390,10 @@ var store = Reflux.createStore({
                                 var rowParam={
                                     sql_type: 'update',
                                     id: desensitizationInformations[j].id,
-                                    encode_type: row[0].value,
-                                    encode_param: row[1].value,
-                                    truncate: row[2].value,
+                                    plugin_id: row[0].value === '-1' ? undefined : row[0].value,
+                                    encode_type: row[1].value,
+                                    encode_param: row[2].value,
+                                    truncate: row[3].value,
                                     update_time: (new Date()).valueOf()
                                     };
                                 operationCount++;
@@ -349,9 +418,10 @@ var store = Reflux.createStore({
                             sql_type: 'insert',
                             table_id: tableId,
                             field_name: names[i],
-                            encode_type: row[0].value,
-                            encode_param: row[1].value,
-                            truncate: row[2].value,
+                            plugin_id: row[0].value === '-1' ? undefined : row[0].value,
+                            encode_type: row[1].value,
+                            encode_param: row[2].value,
+                            truncate: row[3].value,
                             update_time: (new Date()).valueOf()
                         };
                         operationCount++;

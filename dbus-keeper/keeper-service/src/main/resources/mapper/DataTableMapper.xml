@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.DataTableMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.DataTable">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="ds_id" jdbcType="INTEGER" property="dsId" />
+    <result column="schema_id" jdbcType="INTEGER" property="schemaId" />
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName" />
+    <result column="table_name" jdbcType="VARCHAR" property="tableName" />
+    <result column="table_name_alias" jdbcType="VARCHAR" property="tableNameAlias" />
+    <result column="physical_table_regex" jdbcType="VARCHAR" property="physicalTableRegex" />
+    <result column="output_topic" jdbcType="VARCHAR" property="outputTopic" />
+    <result column="ver_id" jdbcType="INTEGER" property="verId" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="meta_change_flg" jdbcType="INTEGER" property="metaChangeFlg" />
+    <result column="batch_id" jdbcType="INTEGER" property="batchId" />
+    <result column="ver_change_history" jdbcType="VARCHAR" property="verChangeHistory" />
+    <result column="ver_change_notice_flg" jdbcType="INTEGER" property="verChangeNoticeFlg" />
+    <result column="output_before_update_flg" jdbcType="INTEGER" property="outputBeforeUpdateFlg" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="fullpull_col" jdbcType="VARCHAR" property="fullpullCol" />
+    <result column="fullpull_split_shard_size" jdbcType="VARCHAR" property="fullpullSplitShardSize" />
+    <result column="fullpull_split_style" jdbcType="VARCHAR" property="fullpullSplitStyle" />
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
+    <result column="ds_type" jdbcType="VARCHAR" property="dsType" />
+    <result column="ctrl_topic" jdbcType="VARCHAR" property="ctrlTopic" />
+    <result column="master_url" jdbcType="VARCHAR" property="masterUrl" />
+    <result column="slave_url" jdbcType="VARCHAR" property="slaveUrl" />
+    <result column="dbus_user" jdbcType="VARCHAR" property="dbusUser" />
+    <result column="dbus_pwd" jdbcType="VARCHAR" property="dbusPassword" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="innerVersion" jdbcType="INTEGER" property="inner_version" />
+  </resultMap>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.DataTable">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_data_tables
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="dsId !=null">ds_id,</if>
+      <if test="schemaId !=null">schema_id,</if>
+      <if test="schemaName !=null">schema_name,</if>
+      <if test="tableName !=null">table_name,</if>
+      <if test="tableName !=null">table_name_alias,</if>
+      <if test="physicalTableRegex !=null">physical_table_regex,</if>
+      <if test="outputTopic !=null">output_topic,</if>
+      <if test="verId !=null">ver_id,</if>
+      <if test="status !=null">status,</if>
+      <if test="createTime !=null">create_time,</if>
+      <if test="metaChangeFlg !=null">meta_change_flg,</if>
+      <if test="batchId !=null">batch_id,</if>
+      <if test="verChangeHistory !=null">ver_change_history,</if>
+      <if test="verChangeNoticeFlg !=null">ver_change_notice_flg,</if>
+      <if test="outputBeforeUpdateFlg !=null">output_before_update_flg,</if>
+      <if test="description !=null">description,</if>
+      <if test="fullpullCol !=null">fullpull_col,</if>
+      <if test="fullpullSplitShardSize !=null">fullpull_split_shard_size,</if>
+      <if test="fullpullSplitStyle !=null">fullpull_split_style,</if>
+    </trim >
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="dsId !=null">#{dsId,jdbcType=INTEGER},</if>
+      <if test="schemaId !=null">#{schemaId,jdbcType=INTEGER},</if>
+      <if test="schemaName !=null">#{schemaName,jdbcType=VARCHAR},</if>
+      <if test="tableName !=null">#{tableName,jdbcType=VARCHAR},</if>
+      <if test="tableName !=null">#{tableName,jdbcType=VARCHAR},</if>
+      <if test="physicalTableRegex !=null">#{physicalTableRegex,jdbcType=VARCHAR},</if>
+      <if test="outputTopic !=null">#{outputTopic,jdbcType=VARCHAR},</if>
+      <if test="verId !=null">#{verId,jdbcType=INTEGER},</if>
+      <if test="status !=null">#{status,jdbcType=VARCHAR},</if>
+      <if test="createTime !=null">#{createTime,jdbcType=TIMESTAMP},</if>
+      <if test="metaChangeFlg !=null">#{metaChangeFlg,jdbcType=INTEGER},</if>
+      <if test="batchId !=null">#{batchId,jdbcType=INTEGER},</if>
+      <if test="verChangeHistory !=null">#{verChangeHistory,jdbcType=VARCHAR},</if>
+      <if test="verChangeNoticeFlg !=null">#{verChangeNoticeFlg,jdbcType=INTEGER},</if>
+      <if test="outputBeforeUpdateFlg !=null">#{outputBeforeUpdateFlg,jdbcType=INTEGER},</if>
+      <if test="description !=null">#{description,jdbcType=VARCHAR},</if>
+      <if test="fullpullCol !=null">#{fullpullCol,jdbcType=VARCHAR},</if>
+      <if test="fullpullSplitShardSize !=null">#{fullpullSplitShardSize,jdbcType=VARCHAR},</if>
+      <if test="fullpullSplitStyle !=null">#{fullpullSplitStyle,jdbcType=VARCHAR},</if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.DataTable">
+    update t_data_tables
+    set
+      <if test="dsId!=null">ds_id = #{dsId,jdbcType=INTEGER},</if>
+      <if test="schemaId != null">schema_id = #{schemaId,jdbcType=INTEGER},</if>
+      <if test="schemaName!=null">schema_name = #{schemaName,jdbcType=VARCHAR},</if>
+      <if test="tableName  != null">table_name = #{tableName,jdbcType=VARCHAR},</if>
+      <if test="tableNameAlias  != null">table_name_alias = #{tableNameAlias,jdbcType=VARCHAR},</if>
+      <if test="physicalTableRegex != null">physical_table_regex = #{physicalTableRegex,jdbcType=VARCHAR},</if>
+      <if test="outputTopic != null">output_topic = #{outputTopic,jdbcType=VARCHAR},</if>
+      <if test="verId!= null">ver_id = #{verId,jdbcType=INTEGER},</if>
+      <if test="status!= null">status = #{status,jdbcType=VARCHAR},</if>
+      <if test="metaChangeFlg!= null">meta_change_flg = #{metaChangeFlg,jdbcType=INTEGER},</if>
+      <if test="batchId!= null">batch_id = #{batchId,jdbcType=INTEGER},</if>
+      <if test="verChangeHistory!= null">ver_change_history = #{verChangeHistory,jdbcType=VARCHAR},</if>
+      <if test="verChangeNoticeFlg!= null">ver_change_notice_flg = #{verChangeNoticeFlg,jdbcType=INTEGER},</if>
+      <if test="metaChangeFlg!= null">output_before_update_flg = #{outputBeforeUpdateFlg,jdbcType=INTEGER},</if>
+      <if test="outputBeforeUpdateFlg!= null">description = #{description,jdbcType=VARCHAR},</if>
+      <if test="fullpullCol!= null">fullpull_col = #{fullpullCol,jdbcType=VARCHAR},</if>
+      <if test="fullpullSplitShardSize!= null">fullpull_split_shard_size = #{fullpullSplitShardSize,jdbcType=VARCHAR},</if>
+      <if test="fullpullSplitStyle!= null">fullpull_split_style = #{fullpullSplitStyle,jdbcType=VARCHAR},</if>
+      create_time = current_timestamp()
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="confirmVerChange">
+    update t_data_tables
+    set ver_change_history = null, ver_change_notice_flg = 0, create_time = create_time
+    where id = #{id}
+  </update>
+  <update id="updateVerId">
+    UPDATE t_data_tables SET ver_id= #{verId} WHERE id = #{tableId}
+  </update>
+  <select id="findTables" resultMap="BaseResultMap">
+    select t1.*, t2.ds_name, t2.ds_type,t2.ctrl_topic, t3.version, t3.inner_version
+    from t_data_tables t1 left join t_dbus_datasource t2 on t1.ds_id = t2.id left join t_meta_version t3 on t1.ver_id = t3.id
+    where 1=1
+    <if test ="dsId != null"> and t1.ds_id = #{dsId}</if>
+    <if test ="schemaName != null"> and t1.schema_name like "%"#{schemaName}"%"</if>
+    <if test = "tableName != null"> and t1.table_name like  "%"#{tableName}"%"</if>
+    order by t1.create_time desc
+  </select>
+  <select id="findById" resultMap="BaseResultMap">
+    select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.id = #{id}
+  </select>
+  <select id="findByStatus" resultMap="BaseResultMap">
+    select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.status = #{status}
+  </select>
+  <select id="findByDsID" resultMap="BaseResultMap">
+    select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t2.id = #{dsID}
+  </select>
+  <select id="findBySchemaID" resultMap="BaseResultMap">
+    select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.schema_id = #{schemaID}
+  </select>
+  <!--通过schemaName获取tables-->
+  <select id="findByDsIdAndSchemaName" resultMap="BaseResultMap">
+    select *, t2.ds_name from t_data_tables t1 left join t_dbus_datasource t2 on t1.ds_id = t2.id where t1.ds_id = #{dsID} and t1.schema_name = #{schemaName}
+  </select>
+  <select id="findTablesNoVer" resultMap="BaseResultMap">
+    select * from t_data_tables t1 ,t_dbus_datasource t2 where t1.ds_id = t2.id and t1.ver_id is null and t1.schema_id = #{schemaId}
+  </select>
+  <update id="changeStatus">
+    update t_data_tables
+    set status = #{status}
+    where id = #{id}
+  </update>
+  <delete id="deleteByTableId">
+    delete tt,tc,tv,tm from t_data_tables tt
+	left join t_encode_columns tc on tt.id=tc.table_id
+    left join t_meta_version tv on tt.id = tv.table_id
+    left join t_table_meta tm on tv.id = tm.ver_id
+    where tt.id = #{id};
+  </delete>
+  <select id="getDSList" resultType="java.util.Map">
+    SELECT DISTINCT ds.id,ds.ds_name dsName, ds.ds_type dsType
+    FROM
+      t_data_tables tables,t_dbus_datasource ds
+    WHERE
+      tables.ds_id = ds.id
+  </select>
+  <select id="getByDsSchemaTableName" resultMap="BaseResultMap">
+    select * from t_dbus_datasource d,t_data_tables t
+    where t.ds_id = d.id and d.ds_name=#{dsName} and t.schema_name=#{schemaName} and t.table_name=#{tableName}
+  </select>
+  <select id="findBySchemaIdTableName" resultMap="BaseResultMap">
+    select * from t_dbus_datasource d,t_data_tables t
+    where t.ds_id = d.id and t.schema_id=#{schemaId} and t.table_name=#{tableName}
+  </select>
+  <select id="getFlowLineCheckInfo" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT
+    	tdds.`ds_name`,
+        tdds.`ds_type`,
+        tdds.`master_url`,
+        tdds.`slave_url`,
+        tdds.`dbus_user`,
+        tdds.`dbus_pwd`,
+        ifnull (tdds.`ds_partition`, 0) ds_partition,
+        tdds.`topic`,
+        tds.`schema_name`,
+        tds.`src_topic`,
+        tdt.`table_name`,
+        tdt.`output_topic`
+    FROM
+        `t_data_tables` tdt,
+        `t_data_schema` tds,
+        `t_dbus_datasource` tdds
+    WHERE
+        tdt.`id` = #{id,jdbcType=INTEGER}
+        AND tdt.`schema_id` = tds.`id`
+        AND tdt.`ds_id` = tdds.`id`
+  </select>
+</mapper>

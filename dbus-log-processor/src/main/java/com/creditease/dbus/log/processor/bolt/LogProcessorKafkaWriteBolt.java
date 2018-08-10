@@ -1,10 +1,25 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 package com.creditease.dbus.log.processor.bolt;
 
-
-import java.io.UnsupportedEncodingException;
-import java.text.ParseException;
-import java.util.Map;
-import java.util.Properties;
 
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.ControlType;
@@ -15,7 +30,6 @@ import com.creditease.dbus.log.processor.util.Constants;
 import com.creditease.dbus.log.processor.util.DateUtil;
 import com.creditease.dbus.log.processor.window.HeartBeatWindowInfo;
 import com.creditease.dbus.log.processor.window.StatWindowInfo;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -28,6 +42,11 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.util.Map;
+import java.util.Properties;
 
 public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
 
@@ -119,7 +138,7 @@ public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
         String ns = dbusMessage.getSchema().getNamespace();
 
         //TODO joinWith
-        return StringUtils.join(type, ".", inner.logProcessorConf.getProperty("log.type"), "." , ns, "." + opts + ".", "wh_placeholder");
+        return StringUtils.join(type, "." , ns, "." + opts + ".", "wh_placeholder");
     }
 
     private String buildKey(DbusMessage dbusMessage, Long timeStamp, String status) {

@@ -1,0 +1,65 @@
+@import "../../../assets/less/variable";
+
+.header {
+  height: 50px;
+  background:@layout-topbar-color;
+  color:@layout-bar-text-color;
+  display: flex;
+  flex-direction: row;
+  .logo {
+    padding: 9px 0;
+    transition:all 0.15s @ease-in-out;
+    min-width:160px;
+    h2 {
+      color:@layout-bar-text-color;
+      text-align: center;
+      font-weight: bold;
+      line-height: 32px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  }
+  .left {
+    flex: 1;
+    display: flex;
+    li{
+      i{
+        margin-right:5px;
+        font-size:14px;
+      }
+      i,span{
+        display:inline-block;
+        vertical-align:middle;
+      }
+    }
+  }
+
+  .right {
+    flex-shrink: 0;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: row;
+
+    li {
+      height: 50px;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size:@font-size-lg;
+      i {
+        font-size: 18px;
+      }
+      &:hover {
+        background-color: lighten(@layout-topbar-color, 10%);
+      }
+      &.active{
+        background-color: #00deff;
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+@import "../../../../assets/less/variable";
+
+.registerContainer {
+  background-size:cover;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height:100%;
+  background:#fff;
+  overflow:auto;
+  font-size:14px;
+  .footer{
+    padding:8px 50px;
+    font-size:12px;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+  }
+}
+.header{
+  height: 64px;
+  padding: 0 30px;
+  box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.1);
+  min-width:1200px;
+  background:#fff;
+  .title{
+    font-size: 20px;
+    color:#333;
+    height:64px;
+    line-height:64px;
+    float:left;
+  }
+  .right{
+    float: right;
+    margin-top:25px;
+    height:35px;
+    line-height:35px;
+    color:#333;
+  }
+}
+
+.layout{
+  width:1200px;
+  overflow:hidden;
+  margin:0 auto;
+  .layoutLeft{
+    float: left;
+    width:60%;
+    padding-right:30px;
+    padding-left:15px;
+    border-right:1px solid #e5e5e5;
+  }
+  .layoutRight{
+    overflow:hidden;
+    padding-left:30px;
+  }
+}
+
+@media (max-width:992px) {
+  .header{
+   min-width:0;
+  }
+  .footer{
+    display:none;
+  }
+  .layout {
+    width:100%;
+    .layoutLeft{
+      width:100%;
+      border:0;
+      padding-right: 15px;
+    }
+    .layoutRight{
+      display:none;
+    }
+  }
+}

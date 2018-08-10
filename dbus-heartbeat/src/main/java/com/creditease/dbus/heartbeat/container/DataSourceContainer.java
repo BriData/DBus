@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,11 @@ import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.JdbcVo;
 
 import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.lang.StringUtils;
 
 public class DataSourceContainer {
 
@@ -75,9 +77,34 @@ public class DataSourceContainer {
                 bds.setValidationQuery("select 1");
                 bds.setValidationQueryTimeout(1);
             }*/
+            LoggerFactory.getLogger().info("create datasource key:" + conf.getKey() + " url:" + conf.getUrl());
             cmap.put(conf.getKey(), bds);
+
+            // 为了支持查询主库和被库的延时，一个ds需要同时建立同主库和被库的连接
+            if (conf instanceof DsVo) {
+                DsVo ds = (DsVo) conf;
+                if (StringUtils.isNotBlank(ds.getSlvaeUrl())) {
+                    BasicDataSource slaveBds = new BasicDataSource();
+                    slaveBds.setDriverClassName(ds.getDriverClass());
+                    slaveBds.setUrl(ds.getSlvaeUrl());
+                    slaveBds.setUsername(ds.getUserName());
+                    slaveBds.setPassword(ds.getPassword());
+                    slaveBds.setInitialSize(ds.getInitialSize());
+                    slaveBds.setMaxActive(ds.getMaxActive());
+                    slaveBds.setMaxIdle(ds.getMaxIdle());
+                    slaveBds.setMinIdle(ds.getMinIdle());
+                    slaveBds.setTestOnBorrow(false);
+                    slaveBds.setTestWhileIdle(false);
+                    String key = StringUtils.join(new String[] {ds.getKey(), "slave"}, "_");
+                    LoggerFactory.getLogger().info("create datasource key:" + key + " url:" + ds.getSlvaeUrl());
+                    cmap.put(key, slaveBds);
+                } else {
+                    LoggerFactory.getLogger().warn("db container initDsPool key " + ds.getKey() + " of slave url is empty.");
+                }
+            }
+
         } catch (Exception e) {
-            LoggerFactory.getLogger().error("[db container initThreadPool key " + conf.getKey() + " datasource error!]", e);
+            LoggerFactory.getLogger().error("[db container initDsPool key " + conf.getKey() + " datasource error!]", e);
             isOk = false;
         }
         return isOk;

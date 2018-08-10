@@ -17,6 +17,7 @@
         <id property="id" column="id"/>
         <result property="tableId" column="table_id"/>
         <result property="fieldName" column="field_name"/>
+        <result property="pluginId" column="plugin_id"/>
         <result property="encodeType" column="encode_type"/>
         <result property="encodeParam" column="encode_param"/>
         <result property="desc" column="desc_"/>
@@ -24,12 +25,27 @@
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
+    <resultMap id="encodePlugin" type="com.creditease.dbus.ws.domain.EncodePlugin">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="projectId" column="project_id"/>
+        <result property="path" column="path"/>
+        <result property="encoders" column="encoders"/>
+        <result property="status" column="status"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="getEncodePlugin" resultMap="encodePlugin">
+        SELECT * FROM `t_encode_plugins` where status = 'active';
+    </select>
+
     <select id="getDesensitizationInformation" resultMap="desensitizationInformation">
         select * from t_encode_columns where table_id=#{tableId}
     </select>
 
     <update id="updateDesensitizationInformation">
         update t_encode_columns set
+        plugin_id = #{pluginId},
         encode_type = #{encodeType},
         encode_param = #{encodeParam},
         truncate = #{truncate},
@@ -43,8 +59,8 @@
 
     <insert id="insertDesensitizationInformation">
         insert into t_encode_columns
-        ( table_id,   field_name,  encode_type,   encode_param,  truncate, update_time) values(
-         #{tableId},#{fieldName},#{encodeType},#{encodeParam},#{truncate},#{updateTime})
+        ( table_id,   field_name, plugin_id, encode_type,   encode_param,  truncate, update_time) values(
+         #{tableId},#{fieldName},#{pluginId},#{encodeType},#{encodeParam},#{truncate},#{updateTime})
     </insert>
 
 

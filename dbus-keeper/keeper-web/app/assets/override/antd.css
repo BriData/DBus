@@ -1,0 +1,207 @@
+/***************用来替换and样式***************/
+
+/* 替换input填充样式 */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #fff inset !important;
+  -webkit-text-fill-color: #666 !important;
+}
+/*sider Menu*/
+.DBus-menu .ant-menu-item .anticon + span {
+  color: #fff;
+}
+.DBus-menu.ant-menu-inline-collapsed {
+  width: auto;
+}
+.DBus-menu.ant-menu-inline-collapsed > .ant-menu-item,
+.DBus-menu.ant-menu-inline-collapsed
+  > .ant-menu-submenu
+  > .ant-menu-submenu-title {
+  padding: 0;
+}
+.ant-layout-sider-trigger{
+  position: absolute;
+}
+/*footer*/
+.ant-layout-footer{
+  padding: 6px 50px;
+}
+/*modal*/
+/*居中显示弹窗*/
+.vertical-center-modal {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.vertical-center-modal:before {
+  content: '';
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+  width: 0;
+}
+
+.vertical-center-modal .ant-modal {
+  display: inline-block;
+  vertical-align: middle;
+  top: 0;
+  text-align: left;
+}
+
+/* login style */
+.form-login .ant-input {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  color: #fff;
+  border: 1px solid transparent;
+}
+.form-login .ant-input::-webkit-input-placeholder {
+  color: #fff;
+}
+.form-login .ant-input::-moz-placeholder {
+  color: #fff;
+}
+.form-login .ant-input::-ms-input-placeholder {
+  color: #fff;
+}
+.form-login .ant-input-affix-wrapper .ant-input:not(:first-child) {
+  padding-left: 35px;
+}
+.form-login .ant-input-affix-wrapper .ant-input-prefix {
+  left: 10px;
+}
+.form-login .ant-input-prefix .anticon {
+  color: #f5f5f5;
+  font-size: 16px;
+}
+.form-search{
+  background: #f0f0f0;
+  padding: 15px 0 15px 16px;
+  border: 1px solid #e9e9e9;
+  border-bottom: 0;
+}
+/*ant-table style*/
+.ant-table table {
+  border: 1px solid #e9e9e9;
+  border-bottom: 0;
+  border-radius: 0;
+  table-layout:fixed;
+}
+.ant-table,.ant-table-small{
+  border-radius: 0;
+  background:#fff;
+}
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #e9e9e9;
+  padding-right:5px;
+}
+.ant-table-small .ant-table-thead > tr > th{
+    background:#f7f7f7;
+}
+.ant-table-small .ant-table-header > table,
+.ant-table-small .ant-table-body > table {
+  padding: 0;
+}
+.ant-table-small .ant-table-thead > tr > th,
+.ant-table-small .ant-table-tbody > tr > td {
+  padding: 4px 0;
+  padding-left:10px;
+  padding-right:5px;
+}
+.ant-table-fixed-header .ant-table-scroll .ant-table-header{
+  overflow: hidden;
+  padding-bottom: 20px !important;
+  margin-bottom: -20px !important;
+}
+.ant-table-fixed-right table{
+  border-left:0;
+}
+.ant-table-fixed-left table{
+  border-right:0;
+}
+/* ProjectManage Modal Tabs title */
+.project-modal-tabs .ant-tabs-extra-content {
+  float: left !important;
+  padding: 2px 0;
+}
+.project-modal-tabs .ant-tabs-bar{
+    margin-bottom:12px;
+}
+/*tabs modal title*/
+.modal-min-height .ant-modal-body{
+  min-height:300px;
+}
+.tabs-modal .ant-modal-header {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+.tabs-modal .ant-modal-body {
+  padding-top: 0;
+  padding-bottom: 5px;
+}
+/*small modal*/
+.small-modal .ant-modal-header{
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+.small-modal .ant-modal-body {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/*ProjectManage alarm Mention*/
+.mention-select .ant-select-selection--multiple{
+  min-height:50px;
+}
+.alarm .ant-form-explain{margin-left:60px;}
+
+.sinkTopicSelect .ant-select-selection {
+  border-radius: 0 4px 4px 0;
+}
+
+
+
+.ant-table-row-custom-td > td {
+  max-width: 1000px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ant-table-tbody > tr > .ant-table-long-td-min-width {
+  min-width: 96px;
+  padding-right: 16px;
+  padding-left: 16px;
+}
+.ant-table-short-td-min-width {
+  min-width: 32px;
+}
+
+.rule-edit-grid .ant-table-tbody > tr > td > div > div> .ant-input-group-wrapper{
+  width: auto;
+}
+
+.ant-tree li ul {
+  padding-left: 21px;
+}
+
+form.ant-form.ant-form-horizontal.data-source-modify-form > div.ant-row.ant-form-item {
+  margin-bottom: 0;
+}
+
+form.ant-form.ant-form-horizontal.heartbeat-advance-config-form > div.ant-row.ant-form-item {
+  margin-bottom: 5px;
+}
+
+.ant-tooltip-inner {
+  max-width: none;
+}
+
+div.ant-table-body > table > thead.ant-table-thead > tr > th > span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+div.ant-layout.ant-layout-has-sider > div.ant-layout-sider.ant-layout-sider-has-trigger > div.ant-layout-sider-children > div > ul > li.ant-menu-item-selected.ant-menu-item {
+  background-color: #00a7c7;
+}

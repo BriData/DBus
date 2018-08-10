@@ -1,0 +1,46 @@
+{
+   "resource-manage": [
+     { "name": "data-source", "id": "app.components.resourceManage.dataSource","text":"数据源管理", "icon": "hdd" },
+     { "name": "data-schema", "id": "app.components.resourceManage.dataSchema","text":"Schema管理", "icon": "database" },
+     { "name": "data-table", "id": "app.components.resourceManage.dataTable","text":"表管理", "icon": "layout" },
+     { "name": "dbus-data", "id": "app.components.resourceManage.dbusData","text":"DBus源端数据", "icon": "bars" },
+     { "name": "jar-manager", "id": "app.components.resourceManage.jarUpload","text":"Jar包管理", "icon": "coffee" }
+      ],
+    "project-manage": [
+        { "name": "home", "id": "app.components.menu.projectList","text":"项目列表", "icon": "appstore-o"},
+        { "name": "resource", "id": "app.components.menu.resource","text":"资源管理", "icon": "hdd"},
+        { "name": "table", "id": "app.components.menu.table","text":"项目表管理", "icon": "layout" },
+        { "name": "topology", "id": "app.components.menu.topologyManage","text":"拓扑管理", "icon": "share-alt" },
+        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量拉取记录", "icon": "switcher" },
+        { "name": "encode-manager", "id": "app.components.resourceManage.encodeManager","text":"脱敏配置查看", "icon": "lock" },
+        { "name": "encode-plugin-manager", "id": "app.components.resourceManage.encodePlugin","text":"脱敏插件管理", "icon": "usb" }
+    ],
+    "config-manage": [
+        { "name": "zk-manage", "id": "app.components.menu.zkManage","text":"ZK管理", "icon": "setting" },
+        { "name": "global-config", "id": "app.components.menu.globalConfig","text":"全局配置", "icon": "global" },
+        { "name": "heartbeat-config", "id": "app.components.menu.heartbeatConfig","text":"心跳配置", "icon": "heart-o" },
+        { "name": "dbus-mgr-config", "id": "app.components.menu.mgrConfig","text":"管理库配置", "icon": "database" }
+    ],
+    "source-monitor": [
+        { "name": "topology", "id": "app.components.menu.topologyManage","text":"Topology", "icon": "book" }
+    ],
+    "project": [
+        { "name": "home", "id": "app.components.menu.projectList", "text":"项目列表", "icon": "database","href":"/project-manage"},
+        { "name": "resource", "id": "app.components.menu.resource","text":"资源管理", "icon": "folder"},
+        { "name": "table",  "id": "app.components.menu.table","text":"项目表管理", "icon": "share-alt"  },
+        { "name": "topology", "id": "app.components.menu.topologyManage","text":"拓扑管理", "icon": "file"  },
+        { "name": "sink", "id": "app.components.menu.sink", "text":"Sink", "icon": "schedule" },
+        { "name": "user", "id": "app.components.menu.user", "text":"用户管理", "icon": "solution" },
+        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量拉取记录", "icon": "exception"},
+        { "name": "monitor", "id": "app.components.navigator.sourceMonitor","text":"贴源监控","icon": "exclamation-circle-o" }
+    ],
+    "tool-set": [
+      { "name": "control-message", "id": "app.components.menu.controlMessage","text":"控制消息", "icon": "message" },
+      { "name": "global-fullpull", "id": "app.components.menu.globalFullpull","text":"独立拉全量", "icon": "export" },
+      { "name": "kafka-reader", "id": "app.components.menu.kafkaReader","text":"Kafka读取", "icon": "usb" }
+    ],
+    "self-check": [
+      { "name": "cluster-check", "id": "app.components.menu.clusterCheck","text":"集群状态", "icon": "api" },
+      { "name": "topo-check", "id": "app.components.menu.topoCheck","text":"拓扑状态", "icon": "share-alt" }
+    ]
+}

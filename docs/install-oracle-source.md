@@ -433,8 +433,6 @@ Table created.
 
 --赋select权限给dbus用户，用来执行拉全量
 SQL> grant select on utest.t_customer to dbus;
---赋闪回权限给dbus用户(拉全量使用)
-SQL> grant flashback on utest.t_customer to dbus;
 --添加全量补充日志
 SQL> alter table utest.t_customer add supplemental log data (all) columns;
 ```
@@ -586,7 +584,7 @@ GGSCI> edit param oratest
 #输入以下内容并保存
 REPLICAT oratest
 SETENV (NLS_LANG= SIMPLIFIED CHINESE_CHINA.AL32UTF8)
-TARGETDB LIBFILE libggjava.so SET property=dirprm/oratest.props
+TARGETDB LIBFILE libggjava.so SET property=dirprm/ora-test.props
 DDL INCLUDE ALL
 
 GROUPTRANSOPS 500

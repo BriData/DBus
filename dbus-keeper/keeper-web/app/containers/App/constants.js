@@ -1,0 +1,6 @@
+export const DEFAULT_LOCALE = 'zh'
+export const NAVIGATOR_OPEN = 'app/App/NAVIGATOR_OPEN'
+export const NAVIGATOR_CLOSE = 'app/App/NAVIGATOR_CLOSE'
+export const LOAD_NAVSOURCE = 'app/App/LOAD_NAVSOURCE'
+export const LOAD_TOP_NAVSOURCE = 'app/App/LOAD_TOP_NAVSOURCE'
+export const LOAD_BREAD = 'app/App/LOAD_BREAD'

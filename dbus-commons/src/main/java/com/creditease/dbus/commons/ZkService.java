@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,14 @@
 
 package com.creditease.dbus.commons;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.collect.Lists;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
@@ -30,15 +37,10 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class ZkService implements IZkService {
     // 0.4.0 秘钥
@@ -98,6 +100,23 @@ public class ZkService implements IZkService {
     }
 
     /**
+     * 获得节点ACL信息
+     * @param path
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Map<String, Object> getACL(String path) throws Exception {
+        ACL acl = client.getACL().forPath(path).get(0);
+        Id id = acl.getId();
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("perms",acl.getPerms());
+        map.put("id",id.getId());
+        map.put("scheme",id.getScheme());
+        return map;
+    }
+
+    /**
      * 获得节点的version号，如果节点不存在，返回 -1
      * @param path
      * @return
@@ -136,7 +155,7 @@ public class ZkService implements IZkService {
      */
     @Override
     public void createNode(String path, byte[] payload) throws Exception {
-        client.create().forPath(path, payload);
+        client.create().creatingParentsIfNeeded().forPath(path, payload);
         logger.info("节点创建成功, Path: " + path );
     }
 

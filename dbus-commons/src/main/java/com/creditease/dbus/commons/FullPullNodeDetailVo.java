@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,16 @@ public class FullPullNodeDetailVo implements Serializable {
     private Long FinishedCount;
 
     private Integer Partitions;
+
+    private String TotalRows;
+
+    private String FinishedRows;
+
+    private String StartSecs;
+
+    private String ConsumeSecs;
+
+    private String Status;
 
     public String getUpdateTime() {
         return UpdateTime;
@@ -107,6 +117,105 @@ public class FullPullNodeDetailVo implements Serializable {
 
     public void setPartitions(Integer partitions) {
         Partitions = partitions;
+    }
+
+    public String getTotalRows() {
+        return TotalRows;
+    }
+
+    public void setTotalRows(String totalRows) {
+        TotalRows = totalRows;
+    }
+
+    public String getFinishedRows() {
+        return FinishedRows;
+    }
+
+    public void setFinishedRows(String finishedRows) {
+        FinishedRows = finishedRows;
+    }
+
+    public String getStartSecs() {
+        return StartSecs;
+    }
+
+    public void setStartSecs(String startSecs) {
+        StartSecs = startSecs;
+    }
+
+    public String getConsumeSecs() {
+        return ConsumeSecs;
+    }
+
+    public void setConsumeSecs(String consumeSecs) {
+        ConsumeSecs = consumeSecs;
+    }
+
+    public String getStatus() {
+        return Status;
+    }
+
+    public void setStatus(String status) {
+        Status = status;
+    }
+
+    public String toHtml() {
+        StringBuilder html = new StringBuilder();
+        html.append("<table bgcolor=\"#c1c1c1\">");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">Partitions</th>");
+        html.append("    <th align=\"left\">" + getPartitions() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">TotalCount</th>");
+        html.append("    <th align=\"left\">" + getTotalCount() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">FinishedCount</th>");
+        html.append("    <th align=\"left\">" + getFinishedCount() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">TotalRows</th>");
+        html.append("    <th align=\"left\">" + getTotalRows() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">FinishedRows</th>");
+        html.append("    <th align=\"left\">" + getFinishedRows() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">StartSecs</th>");
+        html.append("    <th align=\"left\">" + getStartSecs() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">ConsumeSecs</th>");
+        html.append("    <th align=\"left\">" + getConsumeSecs() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">CreateTime</th>");
+        html.append("    <th align=\"left\">" + getCreateTime() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">UpdateTime</th>");
+        html.append("    <th align=\"left\">" + getUpdateTime() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">StartTime</th>");
+        html.append("    <th align=\"left\">" + getStartTime() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">EndTime</th>");
+        html.append("    <th align=\"left\">" + getEndTime() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">Status</th>");
+        html.append("    <th align=\"left\">" + getStatus() + "</th>");
+        html.append("</tr>");
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">ErrorMsg</th>");
+        html.append("    <th align=\"left\">" + getErrorMsg() + "</th>");
+        html.append("</tr>");
+        html.append("</table>");
+        return html.toString();
     }
 
 }

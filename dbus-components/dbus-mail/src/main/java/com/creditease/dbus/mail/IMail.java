@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ package com.creditease.dbus.mail;
 /**
  * Created by Administrator on 2017/8/10.
  */
-public interface IMail {
+public abstract class IMail {
 
-    boolean send(Message msg);
+    public static String ENV;
+
+    public abstract boolean send(Message msg);
 
 }

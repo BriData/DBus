@@ -1,0 +1,421 @@
+{
+    "dashboard": {
+        "__inputs": [
+            {
+                "name": "DS_INDB",
+                "label": "inDB",
+                "description": "",
+                "type": "datasource",
+                "pluginId": "influxdb",
+                "pluginName": "InfluxDB"
+            }
+        ],
+        "__requires": [
+            {
+                "type": "panel",
+                "id": "graph",
+                "name": "Graph",
+                "version": ""
+            },
+            {
+                "type": "grafana",
+                "id": "grafana",
+                "name": "Grafana",
+                "version": "3.1.1"
+            },
+            {
+                "type": "datasource",
+                "id": "influxdb",
+                "name": "InfluxDB",
+                "version": "1.0.0"
+            }
+        ],
+        "id": null,
+        "title": "Table detail board",
+        "tags": [],
+        "style": "dark",
+        "timezone": "browser",
+        "editable": true,
+        "hideControls": false,
+        "sharedCrosshair": false,
+        "rows": [
+            {
+                "collapse": false,
+                "editable": true,
+                "height": "250px",
+                "panels": [
+                    {
+                        "aliasColors": {},
+                        "bars": false,
+                        "datasource": "${DS_INDB}",
+                        "editable": true,
+                        "error": false,
+                        "fill": 1,
+                        "grid": {
+                            "threshold1": null,
+                            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                            "threshold2": null,
+                            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                        },
+                        "id": 1,
+                        "isNew": true,
+                        "legend": {
+                            "avg": true,
+                            "current": false,
+                            "max": true,
+                            "min": true,
+                            "show": true,
+                            "total": true,
+                            "values": true
+                        },
+                        "lines": true,
+                        "linewidth": 2,
+                        "links": [],
+                        "nullPointMode": "connected",
+                        "percentage": false,
+                        "pointradius": 5,
+                        "points": false,
+                        "renderer": "flot",
+                        "seriesOverrides": [],
+                        "span": 12,
+                        "stack": false,
+                        "steppedLine": false,
+                        "targets": [
+                            {
+                                "alias": "$([char]20998)$([char]21457)$([char]22120)$([char]35745)$([char]25968)",
+                                "dsType": "influxdb",
+                                "groupBy": [],
+                                "hide": false,
+                                "measurement": "dbus_statistic",
+                                "policy": "default",
+                                "refId": "A",
+                                "resultFormat": "time_series",
+                                "select": [
+                                    [
+                                        {
+                                            "params": [
+                                                "count"
+                                            ],
+                                            "type": "field"
+                                        }
+                                    ]
+                                ],
+                                "tags": [
+                                    {
+                                        "key": "table",
+                                        "operator": "=~",
+                                        "value": "/^$table$/"
+                                    },
+                                    {
+                                        "condition": "AND",
+                                        "key": "type",
+                                        "operator": "=",
+                                        "value": "DISPATCH_TYPE"
+                                    }
+                                ]
+                            },
+                            {
+                                "alias": "$([char]22686)$([char]37327)$([char]35745)$([char]25968)",
+                                "dsType": "influxdb",
+                                "groupBy": [],
+                                "hide": false,
+                                "measurement": "dbus_statistic",
+                                "policy": "default",
+                                "refId": "B",
+                                "resultFormat": "time_series",
+                                "select": [
+                                    [
+                                        {
+                                            "params": [
+                                                "count"
+                                            ],
+                                            "type": "field"
+                                        }
+                                    ]
+                                ],
+                                "tags": [
+                                    {
+                                        "key": "table",
+                                        "operator": "=~",
+                                        "value": "/^$table$/"
+                                    },
+                                    {
+                                        "condition": "AND",
+                                        "key": "type",
+                                        "operator": "=",
+                                        "value": "APPENDER_TYPE"
+                                    }
+                                ]
+                            }
+                        ],
+                        "timeFrom": null,
+                        "timeShift": null,
+                        "title": "$([char]34920)$([char]32479)$([char]35745)$([char]35745)$([char]25968)",
+                        "tooltip": {
+                            "msResolution": true,
+                            "shared": true,
+                            "sort": 0,
+                            "value_type": "cumulative"
+                        },
+                        "type": "graph",
+                        "xaxis": {
+                            "show": true
+                        },
+                        "yaxes": [
+                            {
+                                "format": "short",
+                                "label": null,
+                                "logBase": 1,
+                                "max": null,
+                                "min": null,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "label": null,
+                                "logBase": 1,
+                                "max": null,
+                                "min": null,
+                                "show": true
+                            }
+                        ]
+                    },
+                    {
+                        "aliasColors": {},
+                        "bars": false,
+                        "datasource": "${DS_INDB}",
+                        "editable": true,
+                        "error": false,
+                        "fill": 1,
+                        "grid": {
+                            "threshold1": null,
+                            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                            "threshold2": null,
+                            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                        },
+                        "id": 2,
+                        "isNew": true,
+                        "legend": {
+                            "avg": true,
+                            "current": false,
+                            "max": true,
+                            "min": true,
+                            "show": true,
+                            "total": false,
+                            "values": true
+                        },
+                        "lines": true,
+                        "linewidth": 2,
+                        "links": [],
+                        "nullPointMode": "connected",
+                        "percentage": false,
+                        "pointradius": 5,
+                        "points": false,
+                        "renderer": "flot",
+                        "seriesOverrides": [],
+                        "span": 12,
+                        "stack": false,
+                        "steppedLine": false,
+                        "targets": [
+                            {
+                                "alias": "$([char]20998)$([char]21457)$([char]22120)$([char]24310)$([char]26102)",
+                                "dsType": "influxdb",
+                                "groupBy": [],
+                                "hide": false,
+                                "measurement": "dbus_statistic",
+                                "policy": "default",
+                                "refId": "A",
+                                "resultFormat": "time_series",
+                                "select": [
+                                    [
+                                        {
+                                            "params": [
+                                                "latency"
+                                            ],
+                                            "type": "field"
+                                        }
+                                    ]
+                                ],
+                                "tags": [
+                                    {
+                                        "key": "table",
+                                        "operator": "=~",
+                                        "value": "/^$table$/"
+                                    },
+                                    {
+                                        "condition": "AND",
+                                        "key": "type",
+                                        "operator": "=",
+                                        "value": "DISPATCH_TYPE"
+                                    }
+                                ]
+                            },
+                            {
+                                "alias": "$([char]22686)$([char]37327)$([char]24310)$([char]26102)",
+                                "dsType": "influxdb",
+                                "groupBy": [],
+                                "hide": false,
+                                "measurement": "dbus_statistic",
+                                "policy": "default",
+                                "refId": "B",
+                                "resultFormat": "time_series",
+                                "select": [
+                                    [
+                                        {
+                                            "params": [
+                                                "latency"
+                                            ],
+                                            "type": "field"
+                                        }
+                                    ]
+                                ],
+                                "tags": [
+                                    {
+                                        "key": "table",
+                                        "operator": "=~",
+                                        "value": "/^$table$/"
+                                    },
+                                    {
+                                        "condition": "AND",
+                                        "key": "type",
+                                        "operator": "=",
+                                        "value": "APPENDER_TYPE"
+                                    }
+                                ]
+                            },
+                            {
+                                "alias": "$([char]26411)$([char]31471)$([char]24310)$([char]26102)",
+                                "dsType": "influxdb",
+                                "groupBy": [],
+                                "hide": false,
+                                "measurement": "dbus_statistic",
+                                "policy": "default",
+                                "refId": "C",
+                                "resultFormat": "time_series",
+                                "select": [
+                                    [
+                                        {
+                                            "params": [
+                                                "latency"
+                                            ],
+                                            "type": "field"
+                                        }
+                                    ]
+                                ],
+                                "tags": [
+                                    {
+                                        "key": "table",
+                                        "operator": "=~",
+                                        "value": "/^$table$/"
+                                    },
+                                    {
+                                        "condition": "AND",
+                                        "key": "type",
+                                        "operator": "=",
+                                        "value": "HEART_BEAT"
+                                    }
+                                ]
+                            }
+                        ],
+                        "timeFrom": null,
+                        "timeShift": null,
+                        "title": "$([char]24310)$([char]26102)",
+                        "tooltip": {
+                            "msResolution": true,
+                            "shared": true,
+                            "sort": 0,
+                            "value_type": "cumulative"
+                        },
+                        "type": "graph",
+                        "xaxis": {
+                            "show": true
+                        },
+                        "yaxes": [
+                            {
+                                "format": "s",
+                                "label": null,
+                                "logBase": 1,
+                                "max": null,
+                                "min": null,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "label": null,
+                                "logBase": 1,
+                                "max": null,
+                                "min": null,
+                                "show": true
+                            }
+                        ]
+                    }
+                ],
+                "title": "Row"
+            }
+        ],
+        "time": {
+            "from": "now-24h",
+            "to": "now"
+        },
+        "timepicker": {
+            "refresh_intervals": [
+                "5s",
+                "10s",
+                "30s",
+                "1m",
+                "5m",
+                "15m",
+                "30m",
+                "1h",
+                "2h",
+                "1d"
+            ],
+            "time_options": [
+                "5m",
+                "15m",
+                "1h",
+                "6h",
+                "12h",
+                "24h",
+                "2d",
+                "7d",
+                "30d"
+            ]
+        },
+        "templating": {
+            "list": [
+                {
+                    "current": {},
+                    "datasource": "${DS_INDB}",
+                    "hide": 0,
+                    "includeAll": false,
+                    "multi": false,
+                    "name": "table",
+                    "options": [],
+                    "query": "SHOW TAG VALUES WITH KEY = \"table\"",
+                    "refresh": 1,
+                    "regex": "",
+                    "type": "query",
+                    "useTags": false
+                }
+            ]
+        },
+        "annotations": {
+            "list": []
+        },
+        "refresh": "1m",
+        "schemaVersion": 12,
+        "version": 40,
+        "links": [],
+        "gnetId": null
+    },
+    "overwrite": true,
+    "inputs": [
+        {
+            "name": "DS_INDB",
+            "type": "datasource",
+            "pluginId": "influxdb",
+            "value": "inDB"
+        }
+    ]
+}

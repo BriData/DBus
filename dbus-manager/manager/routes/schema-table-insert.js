@@ -91,12 +91,12 @@ router.post('/insert', function (req, res) {
         targetTopic: target_topic
     };
     helper.listSchemaId(param).then(function (data) {
-        var schemaId1 = data.schemaId1;
-        var schemaId2 = data.schemaId2;
+        var schemaId1 = data.schemaId1; // 该schema是否在管理库中存在
+        var schemaId2 = data.schemaId2; // dbus在管理库中是否存在
         var dsType = param.dsType;
         var schemaInsertMethods = [];
         var schemaName = param.schemaName;
-        var flag = true;
+        var flag = true; //传入的schema是不是dbus库
 
         if("mysql" == dsType) {
              flag = "dbus" != schemaName.toString();
@@ -106,10 +106,10 @@ router.post('/insert', function (req, res) {
         }
 
 
-        if(schemaId1 == -1 && flag) {
+        if(schemaId1 == -1 && flag) { // schema不是dbus，且在管理库中不存在  --->插入
             schemaInsertMethods.push(service.insertSchema(param));
         }
-        if(schemaId2 == -1) {
+        if(schemaId2 == -1) { //该ds下不存在dbus schema， 插入dbus schema
             if("mysql" == dsType) {
                 var srcTopic = param.dsName + ".dbus";
                 var targetTopic = param.dsName + ".dbus" + ".result";
@@ -137,9 +137,11 @@ router.post('/insert', function (req, res) {
             }
         }
         if(schemaId1 == -1 || schemaId2 == -1) {
+            //异步执行： 插入schema或构造dbus schema插入
             Promise.all(schemaInsertMethods).then(function (dataList) {
                 try {
                     var length = dataList.length;
+                    // 用schemaId记录插入的结果
                     if(length == 1) {
                         if(schemaId1 == -1) {
                             schemaId1 = JSON.parse(dataList[0]);
@@ -159,6 +161,7 @@ router.post('/insert', function (req, res) {
                     if(typeof (tables) != "undefined")
                     {
                         var tableParams = [];
+                        // 如果需要插入的表，不是固定的这几个表，构造插入信息。
                         for (var e in tables) {
                             var tName = tables[e].tableName;
                             if("db_full_pull_requests" != tName
@@ -180,6 +183,7 @@ router.post('/insert', function (req, res) {
                         }
 
                         var dsType = param.dsType;
+                        //构造dbus库的表： mysql/ oracle分开
                         if("mysql" == dsType) {
                             var outputTopic = param.dsName + ".dbus" + ".result";
                             tableParams.push({
@@ -232,6 +236,7 @@ router.post('/insert', function (req, res) {
                         }
                 
                         //列出已经插入到管理库中的所有表信息
+                        //TODO 把全部的表load过来？？？ 为啥不去查询一下
                         TableService.listAllManagerTables( function searchManagerTables(err,response){
                             if (err) {
                                 res.json({status: 500, message: err.message});

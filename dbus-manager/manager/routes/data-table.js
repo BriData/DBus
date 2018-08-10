@@ -231,6 +231,18 @@ router.get('/fetchTableColumns',function(req,res){
     );
 });
 
+// 获取encode plugin列表
+router.get('/fetchEncodePlugin',function(req,res){
+    service.fetchEncodePlugin(function (err, response) {
+            if(err) {
+                res.json({status: 500, message: err.message});
+                return;
+            }
+            res.json({status: 200, data: response.body});
+        }
+    );
+});
+
 //获取脱敏类型
 router.get('/fetchEncodeAlgorithms', function (req, res) {
     var client = ZooKeeper.createClient(config.zk.connect,{retries:3});

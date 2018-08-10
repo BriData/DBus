@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,9 +92,20 @@ public class CheckVo implements Serializable {
         this.timeoutCnt = timeoutCnt;
     }
 
+    public String html(String diffVal) {
+        StringBuilder html = new StringBuilder();
+        html.append("<tr bgcolor=\"#ffffff\">");
+        html.append("    <th align=\"left\">" + getPath() + "</th>");
+        html.append("    <th align=\"right\">" + getAlarmCnt() + "</th>");
+        html.append("    <th align=\"right\">" + diffVal + "</th>");
+        html.append("    <th align=\"right\">" + getTimeoutCnt() + "</th>");
+        html.append("</tr>");
+        return html.toString();
+    }
+
     @Override
     public String toString() {
-        return MessageFormat.format("节点:{0},状态:{1},报警次数:{2},超时次数:{3}", 
+        return MessageFormat.format("节点:{0},状态:{1},报警次数:{2},超时次数:{3}",
                 getPath(), (isNormal() ? "正常" : "异常"), getAlarmCnt(), getTimeoutCnt());
     }
 

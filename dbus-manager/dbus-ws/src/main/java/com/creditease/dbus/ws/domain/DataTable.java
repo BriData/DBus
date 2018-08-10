@@ -58,6 +58,8 @@ public class DataTable implements Serializable {
 
     private String tableName;
 
+    private String tableNameAlias;
+
     private String physicalTableRegex;
 
     private String outputTopic;
@@ -241,6 +243,14 @@ public class DataTable implements Serializable {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    public String getTableNameAlias() {
+        return tableNameAlias;
+    }
+
+    public void setTableNameAlias(String tableNameAlias) {
+        this.tableNameAlias = tableNameAlias;
     }
 
     public String getPhysicalTableRegex() {

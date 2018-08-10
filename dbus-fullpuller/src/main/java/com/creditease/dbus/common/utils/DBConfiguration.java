@@ -1,3 +1,23 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -77,8 +97,6 @@ public class DBConfiguration {
   public static final String CONNECTION_PARAMS_PROPERTY = "jdbc.params";
 
   /** Fetch size. */
-  public static final String SPLIT_SHARD_SIZE = "split.shard.size";
-  
   public static final String PREPARE_STATEMENT_FETCH_SIZE = "prepare.statement.fetch.size";
   public static final String DB_RECORD_ROW_SIZE = "db.record.row.size";
   
@@ -107,7 +125,9 @@ public class DBConfiguration {
   public static final String INPUT_BOUNDING_QUERY = "jdbc.input.bounding.query";
 
   public static final String INPUT_SPLIT_COL = "jdbc.input.split.column";
-  
+  public static final String SPLIT_SHARD_SIZE = "split.shard.size";
+  public static final String SPLIT_STYLE = "split.style";
+
   public static final String INPUT_SPLIT_NUM_MAPPERS = "jdbc.input.split.mappers.num";
   
   public static final String INPUT_SPLIT_LIMIT = "jdbc.input.split.limit";
@@ -368,11 +388,7 @@ public class DBConfiguration {
   public int getSplitShardSize() {
       return properties.get(DBConfiguration.SPLIT_SHARD_SIZE) == null
               ? DataPullConstants.DEFAULT_SPLIT_SHARD_SIZE
-              : (Integer)(properties.get(DBConfiguration.SPLIT_SHARD_SIZE));
-  }
-  
-  public void setSplitShardSize(Integer splitShardSize) {
-      properties.put(DBConfiguration.SPLIT_SHARD_SIZE, splitShardSize);
+              : (Integer) properties.get(DBConfiguration.SPLIT_SHARD_SIZE);
   }
   
     public boolean getAllowTextSplitter() {
@@ -515,7 +531,7 @@ public class DBConfiguration {
 //      return consistentReadScnObj==null?0L:(Long)consistentReadScnObj;
 //  }
   
-  public String getDbTypeAndNameSpace(String dataSourceInfo, String tablePartition) {
+  public String getDbTypeAndNameSpace(String dataSourceInfo, String seriesTableName, String tablePartition) {
       String dbType = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DS_TYPE));
       String dbName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_NAME));
       JSONObject ds = JSONObject.parseObject(dataSourceInfo);
@@ -523,8 +539,24 @@ public class DBConfiguration {
       String dbSchema = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
       String tableName = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
       String version = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
-      // 约定格式：database.db.table.v2.dbpar01.tablepar01
-      return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", tablePartition);
+      // 约定格式：database.db.table.v2.dbpar01.tablepar01-----20180418废弃
+      // return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", tablePartition);
+      /*
+      * 20180418约定:partition没啥用。可不考虑。
+      * 系列表中每个分表的表名却有了现实的需求。
+      * 所以，partition的位置放系列表名。
+      * 约定格式：database.db.table.v2.dbpar.seriesTableName
+      * 非系列表的情况，置为 “0”
+      * */
+      if(seriesTableName.indexOf(".")!=-1){
+          seriesTableName = seriesTableName.split("\\.")[1];// 传入参数可能是schema.seriesTableName形式。需要剔除schema信息
+      }
+      if(seriesTableName.equals(tableName)){
+          // 只有系列表，才需要将系列表名放置到namespace末级。
+          // 如果seriesTableName和输出表名一致，表明是本表，而非系列表，partition部分需置为"0"。
+          seriesTableName = "0";
+      }
+      return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", seriesTableName);
   }
 
   public String buildSlashedNameSpace(String dataSourceInfo, String outputVersion) {
