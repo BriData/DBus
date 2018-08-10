@@ -20,7 +20,7 @@ description: 安装部署说明
 
 # 2 快速体验 - All In One包部署
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
+请参考[All In One包快速安装](quick-start.html)。
 
 
 
