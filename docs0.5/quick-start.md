@@ -61,15 +61,29 @@ hostname dbus-n1
 
 ### 1.3 创建app用户及配置免密登录
 
-由于dbus启动拓扑采用的ssh调用storm命令，all in one包中默认的调用ssh使用app用户和22端口，因此要正常体验all in one需要创建app账户和配置ssh免密登录
+由于dbus启动拓扑采用的ssh调用storm命令，all in one包中默认的调用ssh使用app用户和22端口，因此要正常体验all in one需要创建app账户和配置ssh免密登录，免密登录配置的从dbus-n1到dbus-n1的免密登录
 
-# 2. 安装Mysql
+配置完成后执行如下命令看时候配置成功
 
-### 2.1 下载
+解压mysql-5.7.19-1.el6.x86_64.rpm-bundle.tar包后，执行以下命令安装：
+
+```
+[app@dbus-n1 ~]$ ssh -p 22 app@dbus-n1
+Last login: Fri Aug 10 15:54:45 2018 from 10.10.169.53
+[app@dbus-n1 ~]$
+```
+
+
+
+# 2. 前期准备
+
+## 2.1 安装Mysql
+
+### 2.1.1 下载
 
 推荐下载Mysql版本：5.7.19 地址：[https://dev.mysql.com/downloads/mysql/](https://dev.mysql.com/downloads/mysql/)
 
-### 2.2 安装
+### 2.1.2 安装
 
 解压mysql-5.7.19-1.el6.x86_64.rpm-bundle.tar包后，执行以下命令安装：
 
@@ -81,7 +95,7 @@ rpm -ivh mysql-community-common-5.7.19-1.el6.x86_64.rpm --nodeps
 rpm -ivh mysql-community-libs-compat-5.7.19-1.el6.x86_64.rpm --nodeps
 ```
 
-### 2.3 配置
+### 2.1.3 配置
 
 在/etc/my.cnf配置文件中，只是增加bin-log相关配置，其他不用修改，关注以下汉字注释部分
 
@@ -94,7 +108,7 @@ server_id=1
 # dbus相关配置结束
 ```
 
-### 2.4 启动
+### 2.1.4 启动
 
 执行以下命令启动mysql:
 
@@ -102,16 +116,14 @@ server_id=1
 service mysqld start
 ```
 
+## 2.2. 安装InfluxDB
 
-
-# 3. 安装InfluxDB
-
-### 3.1 下载
+### 2.2.1 下载
 
 推荐下载InfluxDB版本：influxdb-1.1.0.x86_64
 地址：[https://portal.influxdata.com/downloads](https://portal.influxdata.com/downloads)
 
-### 3.2 安装
+### 2.2.2 安装
 
 在dbus-n1上切换到root用户，在influxdb-1.1.0.x86_64.rpm的存放目录下执行如下命令：
 
@@ -119,7 +131,7 @@ service mysqld start
 rpm -ivh influxdb-1.1.0.x86_64.rpm
 ```
 
-### 3.3 启动
+### 2.2.3 启动
 
 在dbus-n1上执行如下命令：
 
@@ -127,7 +139,7 @@ rpm -ivh influxdb-1.1.0.x86_64.rpm
 service influxdb start
 ```
 
-### 3.4 初始化配置
+### 2.2.4 初始化配置
 
 在dbus-n1上执行如下命令：
 
@@ -143,13 +155,13 @@ CREATE USER "dbus" WITH PASSWORD 'dbus!@#123'
 
 
 
-# 4. 安装Dbus-allinone包
+# 3. 安装Dbus-allinone包
 
-### 4.1 下载
+### 3.1 下载
 
 在百度网盘提供dbus-allinone.tar.gz  包，访问 [release 页面下载最新包](https://github.com/BriData/DBus/releases)
 
-### 4.2 安装
+### 3.2 安装
 
 将下载的dbus-allinone包上传到服务器 /app目录下，且必须在此目录下
 
@@ -160,7 +172,7 @@ cd /app
 tar -zxvf dbus-allinone.tar.gz
 ```
 
-### 4.3 初始化数据库
+### 3.3 初始化数据库
 
 以root身份登录mysql客户端，执行以下命令进行数据库初始化，会创建dbmgr库以及用户、canal用户、dbus库以及用户、testschema库以及用户：
 
@@ -168,7 +180,7 @@ tar -zxvf dbus-allinone.tar.gz
 source /app/dbus-allinone/sql/init.sql
 ```
 
-### 4.4 启动
+### 3.4 启动
 
 执行start.sh一键启动dbus所有服务，启动项比较多。
 
@@ -241,7 +253,7 @@ Dbus keeper started.
 
 
 
-### 4.5 生成检查报告看是否启动正常
+### 3.5 生成检查报告看是否启动正常
 
 进入目录/app/dbus-allinone/allinone-auto-check-0.5.0，执行自动检测脚本auto-check.sh，稍等待一会儿
 
@@ -369,13 +381,13 @@ check CheckFlowLineHandler end
 
 
 
-# 5. Grafana配置
+# 4. Grafana配置
 
-### 5.1 登录到http://dbus-n1:3000/login
+### 4.1 登录到http://dbus-n1:3000/login
 
 ![](img/quick-start-5-1.png)
 
-### 5.2 修改grafana数据源
+### 4.2 修改grafana数据源
 
 ![](img/quick-start-5-2.png)
 
@@ -385,9 +397,9 @@ check CheckFlowLineHandler end
 
 
 
-# 6. 验证Mysql是否安装成功
+# 5. 验证Mysql是否安装成功
 
-### 6.1 插入数据验证
+### 5.1 插入数据验证
 
 ```
 #登录测试用户
@@ -404,7 +416,7 @@ INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:0
 
 ![](img/quick-start-6-1.png)
 
-### 6.2 查看DBus是否实时获取到数据
+### 5.2 查看DBus是否实时获取到数据
 
 ![](img/quick-start-6-2.png)
 
