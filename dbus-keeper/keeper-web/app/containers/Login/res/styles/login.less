@@ -1,0 +1,31 @@
+.loginContainer {
+  background-size:cover;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height:100%;
+
+  .loginBg {
+    z-index: 100;
+  }
+}
+.loginContainer::before{
+  content: '';
+  position: absolute;
+  top:0;
+  right:0;
+  bottom: 0;
+  left:0;
+  filter: blur(20px);
+  margin: -30px;
+}
+
+// @media (max-width: 768px) {
+//   .loginContainer {
+//     .loginPanel {
+//       width: 90%;
+//     }
+//   }
+// }

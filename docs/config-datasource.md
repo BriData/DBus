@@ -5,7 +5,7 @@ description: Dbus Web 数据源管理 BUS_VERSION_SHORT
 typora-root-url: ./
 ---
 
-​	数据源（DataSource）管理界面主要展示数据源有关的一些基本信息，例如数据源名称、类型、状态、url等。其中mysql/Oracle这样的关系型数据库，masterURL和slaveURL不能为空。
+​	数据源（DataSource）管理界面主要展示数据源有关的一些基本信息，例如数据源名称、类型、状态、url等。其中mysql/Oracle这样的关系型数据库，masterURL和slaveURL不能为空。log型（log_filebeat、log_logstash_json、log_logstash、log_logstash、log_ums、log_flume的masterURL和slaveURL*`会自动被置为empty`*，json类型数据源的masterURL/slaveURL为空。
 
 ​	在数据源（DataSource）管理界面，可以进行数据源基本信息的修改、数据源删除及为数据源添加schema等操作。
 

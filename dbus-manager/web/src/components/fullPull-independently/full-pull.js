@@ -146,8 +146,10 @@ var FullPull = React.createClass({
         var fullpullCol = "";
         var fullpullSplitShardSize = "";
         var fullpullSplitStyle = "";
+        var physicalTables = "";
         this.state.tableList.forEach(function (e) {
             if(e.value == tableName) {
+                physicalTables = e.physicalTables || "";
                 fullpullCol = e.fullpullCol || "";
                 fullpullSplitShardSize = e.fullpullSplitShardSize || "";
                 fullpullSplitStyle = e.fullpullSplitStyle || "";
@@ -168,6 +170,7 @@ var FullPull = React.createClass({
             schemaName: schemaName,
             tableName: tableName,
             resultTopic: resultTopic,
+            physicalTables: physicalTables,
             version: version,
             batch: batch,
             messageType: messageType,

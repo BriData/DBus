@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectTopoTableMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectTopoTable">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="topo_id" jdbcType="INTEGER" property="topoId" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="output_topic" jdbcType="VARCHAR" property="outputTopic" />
+    <result column="output_type" jdbcType="VARCHAR" property="outputType" />
+    <result column="sink_id" jdbcType="INTEGER" property="sinkId" />
+    <result column="output_list_type" jdbcType="INTEGER" property="outputListType" />
+    <result column="meta_ver" jdbcType="INTEGER" property="metaVer" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="schema_change_flag" jdbcType="TINYINT" property="schemaChangeFlag" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_topo_table
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTopoTable">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_topo_table (project_id, table_id, topo_id,
+    status, output_topic, output_type,
+    sink_id, output_list_type, meta_ver,
+    update_time, schema_change_flag)
+    values (#{projectId,jdbcType=INTEGER}, #{tableId,jdbcType=INTEGER}, #{topoId,jdbcType=INTEGER},
+    #{status,jdbcType=VARCHAR}, #{outputTopic,jdbcType=VARCHAR}, #{outputType,jdbcType=VARCHAR},
+    #{sinkId,jdbcType=INTEGER}, #{outputListType,jdbcType=INTEGER}, #{metaVer,jdbcType=INTEGER},
+    #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectTopoTable">
+    update t_project_topo_table
+    <set>
+      <if test="projectId != null">project_id = #{projectId,jdbcType=INTEGER},</if>
+      <if test="tableId != null">table_id = #{tableId,jdbcType=INTEGER},</if>
+      <if test="topoId != null">topo_id = #{topoId,jdbcType=INTEGER},</if>
+      <if test="status != null">status = #{status,jdbcType=VARCHAR},</if>
+      <if test="outputTopic != null">output_topic = #{outputTopic,jdbcType=VARCHAR},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+      <if test="outputType != null">output_type = #{outputType,jdbcType=VARCHAR},</if>
+      <if test="outputListType != null">output_list_type = #{outputListType,jdbcType=INTEGER},</if>
+      <if test="sinkId != null">sink_id = #{sinkId,jdbcType=INTEGER},</if>
+      <if test="metaVer != null">meta_ver = #{metaVer,jdbcType=INTEGER},</if>
+      <if test="schemaChangeFlag != null">schema_change_flag = #{schemaChangeFlag,jdbcType=TINYINT},</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, project_id, table_id, topo_id, status, output_topic, output_type, sink_id,
+    output_list_type, meta_ver, update_time, schema_change_flag
+    from t_project_topo_table
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, project_id, table_id, topo_id, status, output_topic, output_type, sink_id,
+    output_list_type, meta_ver, update_time, schema_change_flag
+    from t_project_topo_table
+  </select>
+
+  <select id="getProjectNames" resultType="java.util.Map">
+    SELECT DISTINCT
+      topotable.project_id projectId,
+      project.project_name projectName,
+      project.project_display_name projectDisplayName
+    FROM
+     t_project_topo_table topotable,
+     t_project project
+    WHERE
+     topotable.project_id = project.id
+  </select>
+  <select id="getTopologyNames" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT DISTINCT
+    topology.id topoId,
+    topology.topo_name topoName
+    FROM
+    t_project_topo topology
+    <where>
+      <if test="projectId != null">topology.project_id= #{projectId,jdbcType=INTEGER}</if>
+    </where>
+  </select>
+  <select id="getDSNames" resultType="java.util.Map">
+    SELECT DISTINCT
+    dsource.id dsId,
+    dsource.ds_name dsName
+  FROM
+    t_project_topo_table topotable,
+    t_data_tables dtable,
+    t_dbus_datasource dsource
+  WHERE
+     topotable.table_id=dtable.id AND
+     dsource.id = dtable.ds_id
+    <if test="projectId != null">AND topotable.project_id= #{projectId,jdbcType=INTEGER}</if>
+  </select>
+  <select id="searchTable" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+    topotable.id tableId,
+    project.id projectId,
+    project.project_name projectName,
+    project.project_display_name projectDisplayName,
+    topotable.topo_id topoId,
+    dtable.id sourcetableId,
+    dsource.ds_type dsType,
+    dsource.ds_name dsName,
+    dschema.schema_name schemaName,
+    dtable.table_name tableName,
+    topology.topo_name topoName,
+    topology.status topoStatus,
+    dtable.output_topic inputTopic,
+    topotable.output_topic outputTopic,
+    topotable.status,
+    topotable.output_type outputType,
+    topotable.schema_change_flag schemaChangeFlag,
+    dtable.description,
+    resource.fullpull_enable_flag ifFullpull
+    FROM
+    t_dbus_datasource dsource,
+    t_data_schema dschema,
+    t_data_tables dtable,
+    t_project project,
+    t_project_topo_table topotable,
+    t_project_topo topology,
+    t_project_resource resource
+    <where>
+      resource.project_id=topotable.project_id AND
+      resource.table_id=topotable.table_id AND
+      dtable.id=topotable.table_id AND
+      topotable.project_id=project.id AND
+      dtable.ds_id = dsource.id AND
+      dtable.schema_id = dschema.id AND
+      topology.id = topotable.topo_id
+      <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
+      <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
+      <if test="projectId != null">AND topotable.project_id=#{projectId}</if>
+      <if test="topoId != null">AND topotable.topo_id=#{topoId}</if>
+    </where>
+  </select>
+  <select id="selectByTableId" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT
+      topotable.id tableId,
+      topotable.topo_id topoId,
+      dsource.ds_type dsType,
+      dsource.ds_name dsName,
+      dschema.schema_name schemaName,
+      dtable.table_name tableName,
+      dtable.description,
+      dtable.id sourceTableId,
+      resource.fullpull_enable_flag ifFullpull,
+      topotable.sink_id sinkId,
+      topotable.output_type outputType,
+      topotable.output_topic outputTopic,
+      topotable.output_list_type outputListType,
+      topotable.project_id projectId,
+      topotable.meta_ver version
+
+    FROM
+      t_dbus_datasource dsource,
+      t_data_schema dschema,
+      t_data_tables dtable,
+      t_project_topo_table topotable,
+      t_project_resource resource
+    WHERE
+      dtable.id=topotable.table_id AND
+      dtable.ds_id = dsource.id AND
+      dtable.schema_id = dschema.id AND
+      topotable.id = #{projectTableId} AND
+      resource.table_id = topotable.table_id AND
+      resource.project_id = topotable.project_id
+  </select>
+  <select id="selectNameByTopic" parameterType="java.util.Map" resultType="java.lang.String">
+    SELECT DISTINCT
+      dt.table_name tableName
+    FROM
+      t_data_tables dt,
+      t_project_topo_table topotable
+    <where>
+      dt.id = topotable.table_id AND
+      dt.output_topic = #{topic, jdbcType=VARCHAR}
+      <if test="tableId != null "> AND topotable.id != #{tableId}</if>
+    </where>
+  </select>
+  <select id="getProjectTopologies" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT DISTINCT
+      id topoId,topo_name topoName
+    FROM
+      t_project_topo
+    WHERE
+      project_id = #{projectId,jdbcType = INTEGER}
+
+  </select>
+  <select id="getExistedTopicsByProjectId" parameterType="java.lang.Long" resultType="java.util.Map">
+    SELECT DISTINCT
+    sink_id,output_topic
+    FROM
+    t_project_topo_table
+    WHERE
+    project_id = #{projectId,jdbcType = BIGINT}
+  </select>
+  <select id="selectByPIdTopoIdTableId" resultMap="BaseResultMap">
+    SELECT * FROM t_project_topo_table
+    WHERE
+      project_id = #{projectId,jdbcType = INTEGER}
+      AND topo_id = #{topoId,jdbcType = INTEGER}
+      AND table_id = #{tableId,jdbcType = INTEGER}
+  </select>
+  <select id="countByDsId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(1) from t_project_topo_table tt,t_data_tables t
+    where tt.table_id = t.id and t.ds_id = #{dsId}
+  </select>
+  <select id="countBySchemaId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(1) from t_project_topo_table tt,t_data_tables t
+    where tt.table_id = t.id and t.schema_id = #{schemaId}
+  </select>
+  <select id="countByTableId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(1) from t_project_topo_table where table_id = #{tableId}
+  </select>
+  <delete id="deleteByProjectId" parameterType="java.lang.Integer">
+    delete from t_project_topo_table t where t.topo_id = #{projectId}
+  </delete>
+  <select id="selectBySourceTableId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    SELECT *
+    FROM
+    t_project_topo_table
+    WHERE
+    table_id = #{tableId}
+  </select>
+</mapper>

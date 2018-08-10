@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,18 @@ package com.creditease.dbus.encoders;
 public interface ExtEncodeStrategy {
     /**
      * 预处理/脱敏实现方法
-     * @param conf 脱敏配置，dbus处理数据时会将数据库中的脱敏配置信息转换为EncoderConf对象传递给具体脱敏策略
+     *
+     * @param conf  脱敏配置，dbus处理数据时会将数据库中的脱敏配置信息以及ums相关信息
+     *              转换为EncoderConf对象传递给具体脱敏策略
      * @param value 预处理/脱敏前的原始字段值
      * @return 预处理/脱敏后的内容
      */
-    public Object encode(EncoderConf conf, Object value);
+    Object encode(EncoderConf conf, Object value);
+
+    default void addResource(String resourceName, byte[] data) {
+    }
+
+    default byte[] getResource(String resourceName) {
+        return null;
+    }
 }

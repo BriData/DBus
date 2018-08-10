@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.TableVersionMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.TableVersion">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="ds_id" jdbcType="INTEGER" property="dsId" />
+    <result column="db_name" jdbcType="VARCHAR" property="dbName" />
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName" />
+    <result column="table_name" jdbcType="VARCHAR" property="tableName" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="inner_version" jdbcType="INTEGER" property="innerVersion" />
+    <result column="event_offset" jdbcType="BIGINT" property="eventOffset" />
+    <result column="event_pos" jdbcType="BIGINT" property="eventPos" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="comments" jdbcType="VARCHAR" property="comments" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_meta_version
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.TableVersion">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_meta_version (table_id, ds_id, db_name, 
+      schema_name, table_name, version, 
+      inner_version, event_offset, event_pos, 
+      update_time, comments)
+    values (#{tableId,jdbcType=INTEGER}, #{dsId,jdbcType=INTEGER}, #{dbName,jdbcType=VARCHAR}, 
+      #{schemaName,jdbcType=VARCHAR}, #{tableName,jdbcType=VARCHAR}, #{version,jdbcType=INTEGER}, 
+      #{innerVersion,jdbcType=INTEGER}, #{eventOffset,jdbcType=BIGINT}, #{eventPos,jdbcType=BIGINT},
+      current_timestamp(), #{comments,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.TableVersion">
+    update t_meta_version
+    set table_id = #{tableId,jdbcType=INTEGER},
+      ds_id = #{dsId,jdbcType=INTEGER},
+      db_name = #{dbName,jdbcType=VARCHAR},
+      schema_name = #{schemaName,jdbcType=VARCHAR},
+      table_name = #{tableName,jdbcType=VARCHAR},
+      version = #{version,jdbcType=INTEGER},
+      inner_version = #{innerVersion,jdbcType=INTEGER},
+      event_offset = #{eventOffset,jdbcType=BIGINT},
+      event_pos = #{eventPos,jdbcType=BIGINT},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      comments = #{comments,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, table_id, ds_id, db_name, schema_name, table_name, version, inner_version, 
+    event_offset, event_pos, update_time, comments
+    from t_meta_version
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, table_id, ds_id, db_name, schema_name, table_name, version, inner_version, 
+    event_offset, event_pos, update_time, comments
+    from t_meta_version
+  </select>
+  <select id="getVersionListByTableId" resultMap="BaseResultMap">
+    select id, version, inner_version, update_time, comments from t_meta_version where table_id = #{tableId} ORDER BY update_time DESC
+  </select>
+  <select id="getVersionByTableId" resultMap="BaseResultMap">
+    select * from t_meta_version where table_id =  #{tableId} order by version desc limit 1;
+  </select>
+</mapper>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.Project">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_name" jdbcType="VARCHAR" property="projectName" />
+    <result column="project_owner" jdbcType="VARCHAR" property="projectOwner" />
+    <result column="project_icon" jdbcType="VARCHAR" property="projectIcon" />
+    <result column="project_desc" jdbcType="VARCHAR" property="projectDesc" />
+    <result column="project_expire" jdbcType="TIMESTAMP" property="projectExpire" />
+    <result column="topology_num" jdbcType="TINYINT" property="topologyNum" />
+    <result column="allow_admin_manage" jdbcType="TINYINT" property="allowAdminManage" />
+    <result column="schema_change_notify_flag" jdbcType="TINYINT" property="schemaChangeNotifyFlag" />
+    <result column="schema_change_notify_emails" jdbcType="VARCHAR" property="schemaChangeNotifyEmails" />
+    <result column="slave_sync_delay_notify_flag" jdbcType="TINYINT" property="slaveSyncDelayNotifyFlag" />
+    <result column="slave_sync_delay_notify_emails" jdbcType="VARCHAR" property="slaveSyncDelayNotifyEmails" />
+    <result column="fullpull_notify_flag" jdbcType="TINYINT" property="fullpullNotifyFlag" />
+    <result column="fullpull_notify_emails" jdbcType="VARCHAR" property="fullpullNotifyEmails" />
+    <result column="data_delay_notify_flag" jdbcType="TINYINT" property="dataDelayNotifyFlag" />
+    <result column="data_delay_notify_emails" jdbcType="VARCHAR" property="dataDelayNotifyEmails" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="storm_start_path" jdbcType="VARCHAR" property="stormStartPath" />
+    <result column="storm_ssh_user" jdbcType="VARCHAR" property="stormSshUser" />
+    <result column="storm_api_url" jdbcType="VARCHAR" property="stormApiUrl" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="keytab_path" jdbcType="VARCHAR" property="keytabPath" />
+    <result column="principal" jdbcType="VARCHAR" property="principal" />
+    <result column="project_display_name" jdbcType="VARCHAR" property="projectDisplayName" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.Project">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project (project_name, project_owner, project_icon,
+      project_desc, project_expire, topology_num, allow_admin_manage,
+      schema_change_notify_flag, schema_change_notify_emails,
+      slave_sync_delay_notify_flag, slave_sync_delay_notify_emails,
+      fullpull_notify_flag, fullpull_notify_emails,
+      data_delay_notify_flag, data_delay_notify_emails,
+      status, storm_start_path, storm_ssh_user,
+      storm_api_url, update_time, keytab_path,
+      principal, project_display_name)
+    values (#{projectName,jdbcType=VARCHAR}, #{projectOwner,jdbcType=VARCHAR}, #{projectIcon,jdbcType=VARCHAR},
+      #{projectDesc,jdbcType=VARCHAR}, #{projectExpire,jdbcType=TIMESTAMP}, #{topologyNum,jdbcType=TINYINT}, #{allowAdminManage,jdbcType=TINYINT},
+      #{schemaChangeNotifyFlag,jdbcType=TINYINT}, #{schemaChangeNotifyEmails,jdbcType=VARCHAR},
+      #{slaveSyncDelayNotifyFlag,jdbcType=TINYINT}, #{slaveSyncDelayNotifyEmails,jdbcType=VARCHAR},
+      #{fullpullNotifyFlag,jdbcType=TINYINT}, #{fullpullNotifyEmails,jdbcType=VARCHAR},
+      #{dataDelayNotifyFlag,jdbcType=TINYINT}, #{dataDelayNotifyEmails,jdbcType=VARCHAR},
+      #{status,jdbcType=VARCHAR}, #{stormStartPath,jdbcType=VARCHAR}, #{stormSshUser,jdbcType=VARCHAR},
+      #{stormApiUrl,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{keytabPath,jdbcType=VARCHAR},
+      #{principal,jdbcType=VARCHAR}, #{projectDisplayName,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.Project">
+    update t_project
+    set
+    <!--<if test="projectName != null">project_name = #{projectName,jdbcType=VARCHAR},</if>-->
+    <if test="projectOwner != null">project_owner = #{projectOwner,jdbcType=VARCHAR},</if>
+    <if test="projectIcon != null">project_icon = #{projectIcon,jdbcType=VARCHAR},</if>
+    <if test="projectDesc != null">project_desc = #{projectDesc,jdbcType=VARCHAR},</if>
+    <if test="projectExpire != null">project_expire = #{projectExpire,jdbcType=TIMESTAMP},</if>
+    <if test="topologyNum != null">topology_num = #{topologyNum,jdbcType=TINYINT},</if>
+    <if test="allowAdminManage != null">allow_admin_manage = #{allowAdminManage,jdbcType=TINYINT},</if>
+    <if test="schemaChangeNotifyFlag != null">schema_change_notify_flag = #{schemaChangeNotifyFlag,jdbcType=TINYINT},</if>
+    <if test="schemaChangeNotifyEmails != null">schema_change_notify_emails = #{schemaChangeNotifyEmails,jdbcType=VARCHAR},</if>
+    <if test="slaveSyncDelayNotifyFlag != null">slave_sync_delay_notify_flag = #{slaveSyncDelayNotifyFlag,jdbcType=TINYINT},</if>
+    <if test="slaveSyncDelayNotifyEmails != null">slave_sync_delay_notify_emails = #{slaveSyncDelayNotifyEmails,jdbcType=VARCHAR},</if>
+    <if test="fullpullNotifyFlag != null">fullpull_notify_flag = #{fullpullNotifyFlag,jdbcType=TINYINT},</if>
+    <if test="fullpullNotifyEmails != null">fullpull_notify_emails = #{fullpullNotifyEmails,jdbcType=VARCHAR},</if>
+    <if test="dataDelayNotifyFlag != null">data_delay_notify_flag = #{dataDelayNotifyFlag,jdbcType=TINYINT},</if>
+    <if test="dataDelayNotifyEmails != null">data_delay_notify_emails = #{dataDelayNotifyEmails,jdbcType=VARCHAR},</if>
+    <if test="status != null">status = #{status,jdbcType=VARCHAR},</if>
+    <if test="stormStartPath != null">storm_start_path = #{stormStartPath,jdbcType=VARCHAR},</if>
+    <if test="stormSshUser != null">storm_ssh_user = #{stormSshUser,jdbcType=VARCHAR},</if>
+    <if test="stormApiUrl != null">storm_api_url = #{stormApiUrl,jdbcType=VARCHAR},</if>
+    <if test="keytabPath != null">keytab_path = #{keytabPath,jdbcType=VARCHAR},</if>
+    <if test="principal != null">principal = #{principal,jdbcType=VARCHAR},</if>
+    <!--<if test="projectDisplayName !=null ">project_display_name = #{projectDisplayName,jdbcType=VARCHAR}</if> 不能更改-->
+    update_time = current_timestamp()
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, project_name, project_owner, project_icon, project_desc, project_expire, topology_num,
+    allow_admin_manage, schema_change_notify_flag, schema_change_notify_emails, slave_sync_delay_notify_flag,
+    slave_sync_delay_notify_emails, fullpull_notify_flag, fullpull_notify_emails, data_delay_notify_flag,
+    data_delay_notify_emails, status, storm_start_path, storm_ssh_user, storm_api_url,
+    update_time, keytab_path, principal, project_display_name
+    from t_project
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select * /*id, project_name, project_owner, project_icon, project_desc, topology_num,
+    allow_admin_manage, schema_change_notify_flag, schema_change_notify_emails, slave_sync_delay_notify_flag,
+    slave_sync_delay_notify_emails, fullpull_notify_flag, fullpull_notify_emails, data_delay_notify_flag,
+    data_delay_notify_emails, status, storm_start_path, storm_ssh_user, storm_api_url,
+    update_time, keytab_path, principal, project_display_name*/
+    from t_project
+  </select>
+  <select id="selectResources" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+    dds.ds_type,
+    dds.ds_name,
+    dt.id,
+    ds.schema_name,
+    dt.status,
+    dt.table_name,
+    mv.version,
+    dt.description,
+    DATE_FORMAT(dt.create_time,'%Y-%m-%d %H:%i:%s') create_time
+    FROM
+    t_dbus_datasource dds,
+    t_data_schema ds,
+    t_data_tables dt,
+    t_meta_version mv
+    <where>
+      dt.ds_id = dds.id AND
+      dt.schema_id = ds.id AND
+      dt.ver_id = mv.id
+      <if test="dsName != null">AND dds.ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null">AND ds.schema_name like "%"#{schemaName}"%"</if>
+      <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
+    </where>
+    <if test="sortby != null">
+      order by ${sortby} <if test="order != null">${order}</if>
+    </if>
+  </select>
+
+  <select id="selectColumns" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT
+      t_wk.tid,
+      t_wk.cid,
+      t_wk.column_name columnName,
+      t_wk.data_type dataType,
+      t_wk.data_length dataLength,
+      t_wk.dataPrecision,
+      t_wk.dataScale,
+      ec.encode_type encodeType,
+      ec.encode_param encodeParam,
+      ec.plugin_id encodePluginId
+    FROM
+      (SELECT
+         tm.column_name,
+         tm.data_type,
+         tm.data_length,
+         dt.id tid,
+         tm.id cid,
+         tm.data_precision dataPrecision,
+         tm.data_scale dataScale
+       FROM
+         t_data_tables dt,
+         t_table_meta tm
+       WHERE
+         dt.ver_id = tm.ver_id AND
+         dt.id = #{id, jdbcType=INTEGER}) t_wk
+      LEFT JOIN t_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
+  </select>
+
+  <select id="selectProjects" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+      DISTINCT
+      tp.id,
+      tp.status,
+      tp.project_name,
+      tp.project_display_name,
+      tp.project_icon,
+      tp.project_desc,
+      tp.project_expire
+    FROM
+    t_project tp
+    <if test="userId != null">,t_project_user tpu</if>
+    <where>
+      <if test="userId != null">tp.id = tpu.project_id AND tpu.user_id = #{userId}</if>
+    </where>
+  </select>
+
+  <select id="selectUserRelationProjects" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+      DISTINCT
+      tp.id,
+      tp.status,
+      tp.project_name projectName,
+      tp.project_display_name projectDisplayName,
+      tp.schema_change_notify_flag schemaChangeNotifyFlag,
+      tp.slave_sync_delay_notify_flag slaveSyncDelayNotifyFlag,
+      tp.fullpull_notify_flag fullpullNotifyFlag,
+      tp.data_delay_notify_flag dataDelayNotifyFlag,
+      tpu.user_level userLevel
+    FROM
+      t_project tp,
+      t_project_user tpu
+    WHERE
+      tp.id = tpu.project_id AND
+      tpu.user_id = #{userId}
+  </select>
+
+  <select id="getProjectBySinkId" parameterType="java.lang.Integer" resultType="com.creditease.dbus.domain.model.Project">
+    select tp.id, tp.project_name,tp.project_display_name
+    from t_project tp,t_project_topo_table tt
+    where tt.sink_id = #{id,jdbcType=INTEGER}
+    and tt.project_id = tp.id
+  </select>
+  <select id="getPrincipal" parameterType="java.lang.Integer" resultType="java.lang.String">
+    select principal from t_project where id = #{id}
+  </select>
+  <select id="getMountedProjrct" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select DISTINCT p.*
+    from t_project p,t_project_topo_table tt,t_data_tables t
+    where p.id = tt.project_id and tt.table_id = t.id
+    <if test="dsId != null">and t.ds_id = #{dsId}</if>
+    <if test="tableId != null">and tt.table_id = #{tableId}</if>
+    <if test="sinkId != null">and tt.sink_id = #{sinkId}</if>
+  </select>
+  <select id="search" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select * from t_project
+    <if test="sortby != null">
+      order by ${sortby} <if test="order != null">${order}</if>
+    </if>
+  </select>
+</mapper>

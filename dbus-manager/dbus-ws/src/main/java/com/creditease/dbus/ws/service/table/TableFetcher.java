@@ -228,9 +228,9 @@ public abstract class TableFetcher {
                 sql += " order by ID desc";
             }
 
-            if (params.get("dsType").toString().equals("oracle")) {
+            if (StringUtils.equalsIgnoreCase(params.get("dsType").toString(), "oracle")) {
                 sql = "select * from ("+ sql +") where rownum <= 100";
-            } else if (params.get("dsType").toString().equals("oracle")) {
+            } else if (StringUtils.equalsIgnoreCase(params.get("dsType").toString(), "mysql")) {
                 sql = sql + " limit 100";
             }
 

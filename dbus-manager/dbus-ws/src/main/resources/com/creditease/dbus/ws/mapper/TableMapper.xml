@@ -13,6 +13,7 @@
         <result property="schemaID" column="schema_id"/>
         <result property="schemaName" column="schema_name"/>
         <result property="tableName" column="table_name"/>
+        <result property="tableNameAlias" column="table_name_alias"/>
         <result property="physicalTableRegex" column="physical_table_regex"/>
         <result property="outputTopic" column="output_topic"/>
         <result property="verID" column="ver_id"/>
@@ -87,7 +88,7 @@
         select t1.*, t2.ds_name, t2.ds_type,t2.ctrl_topic, t3.version, t3.inner_version from t_data_tables t1, t_dbus_datasource t2, t_meta_version t3 where t1.ds_id = t2.id and t1.ver_id = t3.id
         <if test ="dsID != null"> and t1.ds_id = #{dsID}</if>
         <if test ="schemaName != null"> and t1.schema_name = #{schemaName}</if>
-        <if test = "tableName != null"> and t1.table_name like  "%"#{tableName}"%"</if>
+        <if test = "tableName != null"> and t1.table_name = #{tableName}</if>
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
@@ -96,6 +97,7 @@
         schema_id,
         schema_name,
         table_name,
+        table_name_alias,
         physical_table_regex,
         output_topic,
         ver_id,
@@ -105,6 +107,7 @@
         (#{dsID},
         #{schemaID},
         #{schemaName},
+        #{tableName},
         #{tableName},
         #{physicalTableRegex},
         #{outputTopic},
@@ -119,6 +122,7 @@
         <if test="schemaID != null">schema_id = #{schemaID},</if>
         <if test="schemaName != null">schema_name = #{schemaName},</if>
         <if test="tableName  != null">table_name = #{tableName},</if>
+        <if test="tableNameAlias  != null">table_name_alias = #{tableNameAlias},</if>
         <if test="physicalTableRegex != null">physical_table_regex = #{physicalTableRegex},</if>
         <if test="outputBeforeUpdateFlg != null">output_before_update_flg = #{outputBeforeUpdateFlg},</if>
         <if test="verID != null">ver_id = #{verID},</if>

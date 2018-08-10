@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,16 @@
  */
 
 package com.creditease.dbus.extractor;
+import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.extractor.bolt.KafkaProducerBolt;
-import org.apache.commons.cli.*;
+import com.creditease.dbus.extractor.spout.CanalClientSpout;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
@@ -28,10 +36,7 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.creditease.dbus.commons.Constants;
 //import com.creditease.dbus.extractor.common.utils.Constants;
-
-import com.creditease.dbus.extractor.spout.CanalClientSpout;
 
 /**
  * Created by ximeiwang on 2017/8/16.
@@ -39,7 +44,7 @@ import com.creditease.dbus.extractor.spout.CanalClientSpout;
 public class MysqlExtractorTopology {
     //TODO
     private static Logger logger = LoggerFactory.getLogger(MysqlExtractorTopology.class);
-    private static String CURRENT_JAR_INFO = "dbus-mysql-extractor-0.3.0.jar";
+    private static String CURRENT_JAR_INFO = "dbus-mysql-extractor-0.4.0.jar";
     private static String zkServers;
     private static String topologyId;
     private static String extractorTopologyId;
@@ -57,7 +62,7 @@ public class MysqlExtractorTopology {
             CommandLine line = parser.parse(options, args);
             if (line.hasOption("help")) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("dbus-ora-dispatcher-0.6.jar", options);
+                formatter.printHelp(CURRENT_JAR_INFO, options);
                 return -1;
             } else {
                 runAsLocal = line.hasOption("local");
@@ -93,7 +98,8 @@ public class MysqlExtractorTopology {
         logger.info(Constants.ZOOKEEPER_SERVERS + "=" + zkServers);
         logger.info(Constants.EXTRACTOR_TOPOLOGY_ID + "=" + extractorTopologyId);
         conf.setNumWorkers(1);
-        conf.setMessageTimeoutSecs(60);
+        conf.setMaxSpoutPending(50);
+        conf.setMessageTimeoutSecs(120);
         if (!runAsLocal) {
             conf.setDebug(false);
             try {

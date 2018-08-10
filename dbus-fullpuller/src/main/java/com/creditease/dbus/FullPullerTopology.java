@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,8 @@ import com.creditease.dbus.bolt.DataShardsSplittingBolt;
 import com.creditease.dbus.bolt.PagedBatchDataFetchingBolt;
 import com.creditease.dbus.bolt.ProgressBolt;
 import com.creditease.dbus.common.DataPullConstants;
-import com.creditease.dbus.common.FullPullHelper;
 import com.creditease.dbus.common.FullPullPropertiesHolder;
 import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.spout.DataPullingSpout;
 import com.creditease.dbus.spout.DataShardsSplittingSpout;
 import org.apache.commons.cli.*;
@@ -36,8 +34,6 @@ import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class FullPullerTopology {
@@ -85,7 +81,7 @@ public class FullPullerTopology {
         topology.start(topo, runAsLocal);
     }
 
-    private static int parseCommandArgs(String[] args) {
+	private static int parseCommandArgs(String[] args) {
         Options options = new Options();
 
         options.addOption("zk", "zookeeper", true, "the zookeeper address for properties files.");

@@ -6,7 +6,7 @@
 
     <groupId>com.creditease.dbus</groupId>
     <artifactId>dbus-main</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <packaging>pom</packaging>
 
 
@@ -22,14 +22,16 @@
         <module>dbus-commons</module>
         <module>dbus-stream</module>
         <module>dbus-fullpuller</module>
-        <module>dbus-tools</module>
+        <!--<module>dbus-tools</module>-->
         <module>dbus-components</module>
         <module>dbus-heartbeat</module>
         <module>dbus-mysql-extractor</module>
         <module>dbus-log-processor</module>
-
-        <module>dbus-manager</module>
-        <module>dbus-manager-distribution</module>
+        <!--<module>dbus-manager</module>-->
+        <!--<module>dbus-manager-distribution</module>-->
+        <module>dbus-keeper</module>
+        <module>encoder-plugins</module>
+        <module>dbus-router</module>
     </modules>
 
 
@@ -40,13 +42,13 @@
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>encoder-base</artifactId>
-                <version>0.4.0</version>
+                <version>0.5.0</version>
             </dependency>
 
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>dbus-commons</artifactId>
-                <version>0.4.0</version>
+                <version>0.5.0</version>
             </dependency>
 
             <dependency>

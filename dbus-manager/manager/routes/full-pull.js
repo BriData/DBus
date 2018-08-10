@@ -36,6 +36,7 @@ router.get('/', function (req, res) {
     var version = req.query.version;
     var batch = req.query.batch;
     var messageType = req.query.messageType;
+    var physicalTables = req.query.physicalTables;
     var payload = {
         "SCHEMA_NAME": schemaName, //【变动部分】用户指定的schema的名称
         "TABLE_NAME": tableName,//【变动部分】用户指定的表的名称
@@ -46,9 +47,9 @@ router.get('/', function (req, res) {
         "OP_TS":null,//【必须提供】从kafka获取。当前appender增量数据最后一条的ts
         "POS":null, //【必须提供】从kafka获取。当前appender增量数据最后一条的POS
         "SEQNO":"1", //【不变部分】【必须提供】字符串内容可指定为任意整数，不可为非整数
+        "PHYSICAL_TABLES": physicalTables, //【必须提供】
 
 //---------------以下为【可不提供】非关键字段------
-        "PHYSICAL_TABLES": "", //【可不提供】
         "PULL_REMARK": "",//【可不提供】
         "SPLIT_BOUNDING_QUERY": "",//【可不提供】
         "PULL_TARGET_COLS": "", //【可不提供】

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.SinkMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.Sink">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="sink_name" jdbcType="VARCHAR" property="sinkName" />
+    <result column="sink_desc" jdbcType="VARCHAR" property="sinkDesc" />
+    <result column="sink_type" jdbcType="VARCHAR" property="sinkType" />
+    <result column="url" jdbcType="VARCHAR" property="url" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="is_global" jdbcType="TINYINT" property="isGlobal" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_sink
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.Sink">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_sink (sink_name, sink_desc, sink_type,
+      url, update_time, is_global
+      )
+    values (#{sinkName,jdbcType=VARCHAR}, #{sinkDesc,jdbcType=VARCHAR}, #{sinkType,jdbcType=VARCHAR},
+      #{url,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{isGlobal,jdbcType=TINYINT}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.Sink">
+    update t_sink
+    <set>
+      <if test="sinkName != null">sink_name = #{sinkName,jdbcType=VARCHAR},</if>
+      <if test="sinkDesc != null">sink_desc = #{sinkDesc,jdbcType=VARCHAR},</if>
+      <if test="sinkType != null">sink_type = #{sinkType,jdbcType=VARCHAR},</if>
+      <if test="url != null">url = #{url,jdbcType=VARCHAR},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+      <if test="isGlobal != null">is_global = #{isGlobal,jdbcType=TINYINT},</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, sink_name, sink_desc, sink_type, url, update_time, is_global
+    from t_sink
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, sink_name, sink_desc, sink_type, url, update_time, is_global
+    from t_sink
+  </select>
+  <select id="search" resultMap="BaseResultMap" parameterType="com.creditease.dbus.domain.model.Sink">
+    select * from t_sink
+    <where>
+      <if test="sinkName != null">and sink_name like "%"#{sinkName}"%"</if>
+      <if test="url != null">and url like #{url}"%"</if>
+    </where>
+    <if test="sortby != null">
+      order by ${sortby} <if test="order != null">${order}</if>
+    </if>
+  </select>
+  <select id="searchBySinkName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select id, sink_name, sink_desc, sink_type, url, update_time, is_global
+    from t_sink
+    where sink_name = #{sinkName,jdbcType=VARCHAR}
+    <if test="id != null">
+      and id != #{id,jdbcType=INTEGER}
+    </if>
+  </select>
+  <select id="searchByUserProject" resultMap="BaseResultMap" >
+    SELECT s.*
+    FROM  t_sink s,t_project_sink ps,t_project_user u
+    where
+    s.id = ps.sink_id
+    AND ps.project_id = u.project_id
+    AND u.user_id = #{userId,jdbcType=INTEGER}
+    AND u.project_id = #{projectId,jdbcType=INTEGER}
+  </select>
+</mapper>

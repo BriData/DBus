@@ -10,16 +10,9 @@ typora-root-url: ./
 
 ## 1 关系型数据库类型数据源添加Schema和表
 
-​	一般来说，添加schema，目的是为了接入某张/某些表的数据，所以，DBus没有单独提供专门添加schema的功能，而是将其和添加表融合在一起。因此添加schema和添加表，打开的页面是一样的。在这个页面做完相关操作，点击Next按钮（相当于提交按钮），尚不存在的schema会自动添加到系统。
+​	一般来说，添加schema，目的定是为了接入某张/某些表的数据，所以，DBus没有单独提供专门添加schema的功能，而是将其和添加表融合在一起。因此添加schema和添加表，打开的页面是一样的。在这个页面做完相关操作，点击Next按钮（相当于提交按钮），尚不存在的schema会自动添加到系统。
 
-> 前置条件：在添加schema或table之前，需要给源端数据库dbus用户授予相关表的 `select` 权限。
->
-> 对于mysql数据库：授权操作如下：
->
-> ```
-> -- db.table 是需要同步的表名
-> grant select on db1.table to dbus;
-> ```
+> 前置条件：在添加schema或table之前，需要给源端数据库dbus用户授予相关表的 `select` 权限。请参考FAQ：[Q6:如何授权dbus用户读取源端表](https://github.com/BriData/DBus/wiki/FAQ#faq_auth_tab2dbus)
 >
 > 正确授权后，有权限接入数据的schema/table会自动出现在配置操作页面。
 
@@ -43,16 +36,13 @@ typora-root-url: ./
 
 ​	除了schema选择及表选择，其他信息一般不用动，采用默认值即可。
 
-#### <span id="make-table-ok">1.1.3 使新增表生效</span> 
+#### 1.1.3 生效 
 
-​	在表管理页面，会看到新添加的表的状态为“abort”，点击“more/IncrementPuller”按钮后刷新页面可以看到状态变成“ok”，至此，操作完成，**过两分钟后**可打开grafana确认系统各组件是否重新加载并开始处理新添加表的数据，如何确认请参考：[确认schema或者table添加成功](#confirm-schema-table-added-ok)
+<span id="make-table-ok">使新增表生效</span>
+
+​	在表管理页面，会看到新添加的表的状态为“abort”，点击“more/IncrementPuller”按钮后刷新页面可以看到状态变成“ok”，至此，操作完成，**过两分钟后**可打开grafana确认系统各组件是否重新加载并开始处理新添加表的数据，如何确认请参考：[确认schema或者table添加成功](https://github.com/BriData/DBus/wiki/Usage(5)-add-schema-and-table#confirm)
 
 ![](img/config-schema/config-schema-enable_table.png)
-
-#### 1.1.4 使DBus心跳生效
-点击Send Control Message按钮，发送reload消息，使心跳生效。
-![](img/add-schema-table/add-schema-table-reload.png)
-
 
 ###   1.2 添加表
 
@@ -75,12 +65,10 @@ typora-root-url: ./
 #### 1.2.3  使新增表生效 
 
 同 [1.1.3 使新增表生效](#make-table-ok)
-#### 1.2.4 使DBus心跳生效
-点击Send Control Message按钮，发送reload消息，使心跳生效。
-![](img/add-schema-table/add-schema-table-reload.png)
 
 
-### <span id="confirm-schema-table-added-ok">1.3 确认schema或者table添加成功</span>
+
+### 1.3 确认schema或者table添加成功
 
 ​	添加schema或table完成后，可以打开grafana查看新添加表的数据是否已正常流入dbus stream抽取系统，如下图。一共两组线图，上面一组是计数，下面一组是延时。
 
@@ -92,7 +80,7 @@ typora-root-url: ./
 
 ​	为方便管理，DBus提供了源端主备同步状态检查功能，请参考：[源端主备同步状态检查](config-inspect-data.html)
 
-​	如果出现问题请参考FAQ：[Q1:grafana中无法显示统计数据的常见解决方案](more-faq.html#faq_grafana_err)  
+​	如果出现问题请参考FAQ：[Q1:grafana中无法显示统计数据的常见解决方案](https://github.com/BriData/DBus/wiki/FAQ#faq_grafana_err)  
 
 
 

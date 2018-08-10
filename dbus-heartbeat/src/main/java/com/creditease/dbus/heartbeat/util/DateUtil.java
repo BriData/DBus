@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
+
 import org.apache.commons.lang.StringUtils;
 
 public class DateUtil {
@@ -37,6 +38,18 @@ public class DateUtil {
         try {
             // 此处HH应该大写，如果小写则输出的是12小时制的时间
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            time = sdf.parse(date).getTime();
+        } catch (ParseException e) {
+            time = -1l;
+            LoggerFactory.getLogger().error("[date-convert-error]", e);
+        }
+        return time;
+    }
+
+    public static long convertStrToLong4Date(String date, String pattern) {
+        long time = 0l;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(pattern);
             time = sdf.parse(date).getTime();
         } catch (ParseException e) {
             time = -1l;
@@ -76,5 +89,46 @@ public class DateUtil {
         int b_HH = Integer.parseInt(b[0]);
         int b_mm = Integer.parseInt(b[1]);
         return (a_HH * 60 + a_mm) - (b_HH * 60 + b_mm);
+    }
+
+    public static String diffDate(long diff) {
+        long nd = 1000 * 24 * 60 * 60;
+        long nh = 1000 * 60 * 60;
+        long nm = 1000 * 60;
+        long ns = 1000;
+        // 计算差多少天
+        long day = diff / nd;
+        // 计算差多少小时
+        long hour = diff % nd / nh;
+        // 计算差多少分钟
+        long min = diff % nd % nh / nm;
+        // 计算差多少秒//输出结果
+        long sec = diff % nd % nh % nm / ns;
+
+        StringBuilder ret = new StringBuilder();
+        if (day != 0) {
+            ret.append(day + "天");
+        }
+        if (hour != 0) {
+            ret.append(hour + "小时");
+        }
+        if (min != 0) {
+            ret.append(min + "分钟");
+        }
+        if (sec != 0) {
+            ret.append(sec + "秒");
+        }
+        return ret.toString();
+    }
+
+    public static String diffDate(long endDate, long startDate) {
+        return diffDate(endDate - startDate);
+    }
+
+    public static void main(String[] args) {
+        long s = DateUtil.convertStrToLong4Date("20180314 14:46:25.231", "yyyyMMdd HH:mm:ss.SSS");
+        long e = DateUtil.convertStrToLong4Date("20180310 04:50:25.231", "yyyyMMdd HH:mm:ss.SSS");
+        System.out.println(diffDate(s, e));
+        System.out.println(diffDate(712400l));
     }
 }

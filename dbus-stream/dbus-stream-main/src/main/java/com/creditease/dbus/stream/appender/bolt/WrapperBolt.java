@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@
 package com.creditease.dbus.stream.appender.bolt;
 
 import com.creditease.dbus.commons.*;
-import com.creditease.dbus.commons.msgencoder.ExternalEncoders;
+//import com.creditease.dbus.msgencoder.ExternalEncoders;
 import com.creditease.dbus.enums.DbusDatasourceType;
+import com.creditease.dbus.msgencoder.PluginManagerProvider;
 import com.creditease.dbus.stream.appender.exception.InitializationException;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.Constants.EmitFields;
 import com.creditease.dbus.stream.common.Constants.StormConfigKey;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.bolt.processor.AppenderPluginLoader;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerProvider;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltHandlerManager;
@@ -54,9 +56,6 @@ import java.util.Map;
 import java.util.Properties;
 
 
-/**
- * Created by Shrimp on 16/6/2.
- */
 public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -92,11 +91,13 @@ public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener 
                 PropertiesHolder.initialize(this.zkconnect, zkRoot);
                 GlobalCache.initialize(this.datasource);
 
+                PluginManagerProvider.initialize(new AppenderPluginLoader());
+
                 //获取脱敏类型
                 //分布式锁，初始化时，保证了集群中多个bolt只有一个去扫描classpath，
                 //没有获取到锁的bolt线程不去扫描classpath
-                ExternalEncoders externalEncoders = new ExternalEncoders();
-                externalEncoders.initExternalEncoders(zkconnect, zkService);
+                //ExternalEncoders externalEncoders = new ExternalEncoders();
+                //externalEncoders.initExternalEncoders(zkconnect, zkService);
 
                 if (producer != null) {
                     producer.close();
@@ -132,8 +133,6 @@ public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener 
         }
 
     }
-
-
 
 
     @Override
@@ -193,6 +192,7 @@ public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener 
         try {
             PropertiesHolder.reload();
             ThreadLocalCache.reload();
+            PluginManagerProvider.reloadManager();
             if (producer != null) {
                 producer.close();
             }
@@ -205,8 +205,8 @@ public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener 
 
             zkService = new ZkService(zkconnect);
 
-            ExternalEncoders externalEncoders = new ExternalEncoders();
-            externalEncoders.initExternalEncoders(zkconnect, zkService);
+            //ExternalEncoders externalEncoders = new ExternalEncoders();
+            //externalEncoders.initExternalEncoders(zkconnect, zkService);
 
             msg = "Wrapper write bolt reload successful!";
             logger.info("Wrapper bolt was reloaded at:{}", System.currentTimeMillis());

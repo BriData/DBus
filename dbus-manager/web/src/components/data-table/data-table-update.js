@@ -25,6 +25,7 @@ var UpdateTable = React.createClass({
         store.actions.initialLoad();
         ReactDOM.findDOMNode(this.refs.description).value = this.props.location.state.passParam.description;
         ReactDOM.findDOMNode(this.refs.physicalTableRegex).value = this.props.location.state.passParam.physicalTableRegex;
+        ReactDOM.findDOMNode(this.refs.tableNameAlias).value = this.props.location.state.passParam.tableNameAlias;
         ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value = this.props.location.state.passParam.outputBeforeUpdateFlg;
         ReactDOM.findDOMNode(this.refs.fullpullCol).value = this.props.location.state.passParam.fullpullCol;
         ReactDOM.findDOMNode(this.refs.fullpullSplitShardSize).value = this.props.location.state.passParam.fullpullSplitShardSize;
@@ -39,6 +40,7 @@ var UpdateTable = React.createClass({
             id: 0,
             description: ReactDOM.findDOMNode(this.refs.description).value,
             physicalTableRegex: ReactDOM.findDOMNode(this.refs.physicalTableRegex).value,
+            tableNameAlias: ReactDOM.findDOMNode(this.refs.tableNameAlias).value,
             outputBeforeUpdateFlg: ReactDOM.findDOMNode(this.refs.outputBeforeUpdateFlg).value,
             fullpullCol: ReactDOM.findDOMNode(this.refs.fullpullCol).value,
             fullpullSplitShardSize: ReactDOM.findDOMNode(this.refs.fullpullSplitShardSize).value,
@@ -69,6 +71,13 @@ var UpdateTable = React.createClass({
                                 <label for="physicalTableRegex" className="col-sm-2 control-label">PTRegex</label>
                                 <div className="col-sm-10">
                                     <input className="form-control" ref="physicalTableRegex"/>
+                                </div>
+                            </div> 
+
+                            <div className="form-group">
+                                <label htmlFor="tableNameAlias" className="col-sm-2 control-label">alias</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" ref="tableNameAlias"/>
                                 </div>
                             </div>
 

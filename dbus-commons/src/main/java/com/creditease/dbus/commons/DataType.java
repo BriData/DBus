@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Base64;
  * Created by Shrimp on 16/5/26.
  */
 public enum DataType {
-    STRING, INT, LONG, FLOAT, DOUBLE, BOOLEAN, DATE, DATETIME, DECIMAL, BINARY;
+    STRING, INT, LONG, FLOAT, DOUBLE, BOOLEAN, DATE, DATETIME, DECIMAL, BINARY ,RAW;
 
     private String value;
 
@@ -227,6 +227,10 @@ public enum DataType {
                 } catch (UnsupportedEncodingException e) {
                     throw new EncodeException("UnsupportedEncoding");
                 }
+            case STRING:
+                // 此项主要应对RAW类型转成String的情况，取值的时候，直接返回toString()
+                // 否则RAW类型的数值，走到default的时候，不符合CharSequence.class.isInstance条件，会报错。
+                return value.toString();
             default:
                 if (CharSequence.class.isInstance(value)) {
                     return value.toString();

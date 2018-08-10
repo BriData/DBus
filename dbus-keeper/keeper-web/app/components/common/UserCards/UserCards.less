@@ -1,0 +1,64 @@
+@import "../../../assets/less/variable";
+.userOut{
+    margin: 0 -16px;
+    position: relative;
+}
+.user{
+    padding: 0 23px;
+    height: 50px;
+    line-height: 50px;
+    span{ 
+      vertical-align:middle;
+    }
+    .userName{
+        margin-right:10px;
+    }
+  }
+  .dropdownMemu{
+    position: absolute;
+    top: 50px;
+    right: 0px;
+    z-index: 999;
+    width: 260px;
+}
+.cardLayout{
+    background-color: #fff;
+    background-clip: padding-box;
+    z-index: 9999;
+    font-size: 12px;
+    min-width: 100%;
+    -webkit-box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    -webkit-transition: opacity .15s,visibility 0s .15s;
+    transition: opacity .15s,visibility 0s .15s;
+    color:@text-color;
+    white-space: nowrap;
+    .body{
+        padding:15px 0;
+        font-size: 13px;
+        color:#666;
+        .line{
+            padding: 0 15px;
+            margin-bottom: 8px;
+            &:last-child{
+                margin-bottom:0;
+            }
+        }
+    }
+    .footer{
+        text-align: center;
+        padding: 10px 0px;
+        background: #F7F9FA;
+        border-top: 1px solid #e9e9e9;
+        font-size:14px;
+        color:#333;
+        .col{
+            height:28px;
+            line-height:28px;
+            border-right:1px solid rgba(0, 0, 0, 0.16);
+            &:last-child{
+                border-right:0;
+            }
+        }
+    }
+}

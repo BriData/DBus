@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,6 @@
  */
 
 package com.creditease.dbus.enums;
-
-import com.creditease.dbus.commons.msgencoder.ExternalEncoders;
-import com.creditease.dbus.encoders.ExtEncodeStrategy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,9 +32,9 @@ public enum MessageEncodeType {
     HASH_MD5,
     HASH_MURMUR,
     HASH_MD5_FIELD_SALT, // 以message中某字段值为salt的md5算法
-    HASH_MD5_FIXED_SALT; // 固定salt值的md5算法
+    HASH_MD5_FIXED_SALT, // 固定salt值的md5算法
     //ADDRESS_NORMALIZE, // 结果事例：广东省广州市花都区建设路旧食街７号耐克专卖店广州美鞋子体 => 广东省广州市花都区建设路旧食街７号
-    //REGEX_NORMALIZE,//预处理的逻辑为：如果cust_name全为汉字且字符长度小于4则返回原值; 如果为NULL，则返回NULL; 其他情况都返回空字符串。
+    REGEX_NORMALIZE;
     //YISOU_DATA_CLEAN;//姨搜数据预处理(导包)
     private static Map<String, String> map;
 

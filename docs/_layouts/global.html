@@ -32,7 +32,20 @@
 
         <link rel="stylesheet" href="css/pygments-default.css">
 
+        {% production %}
+        <!-- Google analytics script -->
+        <script type="text/javascript">
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-32518208-2']);
+          _gaq.push(['_trackPageview']);
 
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+        </script>
+        {% endproduction %}
 
     </head>
     <body>
@@ -65,13 +78,12 @@
 						<li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-								<li><a href="config-dbus-web.html">Web基础配置</a></li>
 								<li><a href="config-datasource.html">数据源介绍</a></li>
                                 <li><a href="config-schema.html">Schema配置</a></li>
                                 <li><a href="config-table.html">Table配置</a></li>
                                 <li><a href="config-zk-node.html">Zk节点介绍</a></li>
+								<li><a href="config-dbus-web.html">Web基础配置</a></li>
 								<li><a href="config-inspect-data.html">源端数据查看</a></li>
-								<li><a href="config-add-schema-and-table.html">加schema和加表操作</a></li>
                             </ul>
                         </li>
 						<li class="dropdown">
@@ -81,7 +93,7 @@
 								<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
 								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
 								
                             </ul>
                         </li>

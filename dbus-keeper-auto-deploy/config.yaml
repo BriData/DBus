@@ -1,0 +1,11 @@
+# eureka地址，可以不改
+eureka.client.serviceUrl.defaultZone=http://localhost:9090/eureka/
+# eureka预警邮箱
+eureka.instance.metadataMap.alarmEmail=admin@163.com
+# ZK地址
+zk.str=zk_server_ip:2181
+# mysql管理库相关配置，其中mysql驱动可以不改
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbus?characterEncoding=utf-8
+spring.datasource.username=dbus
+spring.datasource.password=dbus

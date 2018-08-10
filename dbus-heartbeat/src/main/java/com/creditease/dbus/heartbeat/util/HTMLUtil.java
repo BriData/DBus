@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,9 @@ package com.creditease.dbus.heartbeat.util;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.heartbeat.vo.GlobalControlEmailVo;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.List;
 
 public class HTMLUtil {
 
@@ -38,27 +34,24 @@ public class HTMLUtil {
         JSONObject afterMap = payload.getJSONObject("after");
 
         final String HTML_LINE_SEPARATOR = "<br/>";
-//        final String HTML_INDENT = "&nbsp;&nbsp;";
         StringBuilder output = new StringBuilder();
-        output.append("您好，数据库表结构发生变更！！！"+HTML_LINE_SEPARATOR);
-        output.append("时间：" + json.getString("timestamp") + HTML_LINE_SEPARATOR);
-        output.append("表名：" + StringUtils.join(new Object[] {payload.get("datasource"),payload.get("schema"),payload.get("table")}, ".") + HTML_LINE_SEPARATOR);
-        output.append("新版本号：" + payload.getString("version") + HTML_LINE_SEPARATOR);
-        output.append("变更前后对比:" + HTML_LINE_SEPARATOR);
-        output.append(compareListHTML(beforeMap.getJSONArray("columns"),afterMap.getJSONArray("columns")));
+        output.append("变更前后详情对比:" + HTML_LINE_SEPARATOR);
+        output.append(compareListHTML(beforeMap.getJSONArray("columns"),afterMap.getJSONArray("columns"), payload));
         return output.toString();
     }
 
-    private static String transformToHtml(String[][] table, boolean[] needHighlight, String[] header) {
+    private static String transformToHtml(String[][] table, boolean[] needHighlight, String[] header, JSONObject payload) {
         StringBuffer result = new StringBuffer();
         result.append("<table bgcolor=\"#c1c1c1\">");
 
         result.append("<tr bgcolor=\"#ffffff\">");
         result.append("<th colspan=\"" + header.length + "\">");
-        result.append("变更前");
+        int version = payload.getInteger("version");
+        int oldVersion = isVersionChangeCompatible(payload).equals("") ? version - 1 : version;
+        result.append("变更前(版本号:"+oldVersion+")");
         result.append("</th>");
         result.append("<th colspan=\"" + header.length + "\">");
-        result.append("变更后");
+        result.append("变更后(版本号:"+version+")");
         result.append("</th>");
         result.append("</tr>");
 
@@ -91,7 +84,7 @@ public class HTMLUtil {
         return result.toString();
     }
 
-    private static String compareListHTML(JSONArray ori, JSONArray now) {
+    private static String compareListHTML(JSONArray ori, JSONArray now, JSONObject payload) {
         if (ori == null) ori = new JSONArray();
         if (now == null) now = new JSONArray();
         Collections.sort(ori, (o1, o2) -> {
@@ -149,7 +142,20 @@ public class HTMLUtil {
                 posNow--;
             }
         }
-        return transformToHtml(result, needHighlight, header);
+
+        String[] temp = new String[header.length * 2];
+        for (int i = resultLength - 1; i >= 0; i--) {
+            if (needHighlight[i]) {
+                System.arraycopy(result[i], 0, temp, 0, header.length * 2);
+                for (int j = i - 1; j >= 0; j--) {
+                    System.arraycopy(result[j], 0, result[j + 1], 0, header.length * 2);
+                    needHighlight[j + 1] = needHighlight[j];
+                }
+                System.arraycopy(temp, 0, result[0], 0, header.length * 2);
+                needHighlight[0] = true;
+            }
+        }
+        return transformToHtml(result, needHighlight, header, payload);
     }
 
     private static void setResult(String[] resultRow, int start, String[] header, JSONObject json) {
@@ -165,5 +171,12 @@ public class HTMLUtil {
             if (!jsonObject1.get(s).equals(jsonObject2.get(s))) return false;
         }
         return true;
+    }
+
+    public static String isVersionChangeCompatible(JSONObject payload) {
+        JSONObject compareResult = payload.getJSONObject("compare-result");
+        boolean isCompatible = compareResult.getBoolean("compatible");
+        if (isCompatible) return "兼容性";
+        else return "";
     }
 }

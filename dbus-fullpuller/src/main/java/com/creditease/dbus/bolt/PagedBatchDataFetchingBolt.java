@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,18 @@
 
 package com.creditease.dbus.bolt;
 
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.creditease.dbus.common.ProgressInfo;
+import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.common.*;
+import com.creditease.dbus.common.utils.DBConfiguration;
+import com.creditease.dbus.common.utils.DBRecordReader;
+import com.creditease.dbus.common.utils.DataDrivenDBInputFormat;
 import com.creditease.dbus.commons.*;
-import com.creditease.dbus.commons.msgencoder.ExternalEncoders;
+import com.creditease.dbus.enums.DbusDatasourceType;
+import com.creditease.dbus.manager.GenericJdbcManager;
+import com.creditease.dbus.msgencoder.EncodeColumn;
+import com.creditease.dbus.msgencoder.PluggableMessageEncoder;
+import com.creditease.dbus.msgencoder.PluginManagerProvider;
+import com.creditease.dbus.msgencoder.UmsEncoder;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
@@ -50,17 +47,12 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.common.DBHelper;
-import com.creditease.dbus.common.DataPullConstants;
-import com.creditease.dbus.common.FullPullHelper;
-import com.creditease.dbus.common.utils.DBConfiguration;
-import com.creditease.dbus.common.utils.DBRecordReader;
-import com.creditease.dbus.common.utils.DataDrivenDBInputFormat;
-import com.creditease.dbus.commons.msgencoder.EncodeColumn;
-import com.creditease.dbus.commons.msgencoder.MessageEncoder;
-import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.manager.GenericJdbcManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class PagedBatchDataFetchingBolt extends BaseRichBolt {
@@ -111,7 +103,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             JSONObject payloadObject = dsObject.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
             int batchNo = payloadObject.getIntValue(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY);
             String cmdType = dsObject.getString("type");
-            if(null == cmdType) {
+            if (null == cmdType) {
                 LOG.error("the type of request is null on PagedBatchDataFetchingBolt!");
                 collector.fail(input);
                 return;
@@ -138,7 +130,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
              */
 
             ZkService localZkService = reloadZkServiceRunningConf();
-            if(localZkService == null) {
+            if (localZkService == null) {
                 LOG.error("generate new zkservice failed for ums_uid, stop pulling");
                 return;
             }
@@ -165,24 +157,26 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             DataDrivenDBInputFormat.DataDrivenDBInputSplit inputSplit = inputSplitJsonObject
                     .toJavaObject(DataDrivenDBInputFormat.DataDrivenDBInputSplit.class);
             String tablePartition = inputSplit.getTablePartitionInfo();
-            tablePartition = StringUtils.isNotBlank(tablePartition) ? tablePartition : "NONE";
+            tablePartition = StringUtils.isNotBlank(tablePartition) ? tablePartition : "0";
 
             DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
             String logicalTableName = dbConf.getInputTableName();
             String datasourceType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
-            String targetTableName = inputSplit.getTargetTableName();
-
             resultTopic = (String) dbConf.get(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC);
-            //Oracle的情况，patition默认设为0.Mysql,有分表的，为分表名。无分表的，为0。
-            String splittedTableInfo = "0";
-            if(!targetTableName.equalsIgnoreCase(logicalTableName)) { //目标表名和逻辑表名不一致，表示是分表。
-                splittedTableInfo = targetTableName.indexOf(".") == -1
-                        ? targetTableName
-                        : targetTableName.split("\\.")[1];//目标表名可能带schema。partion内容是不带schema的分表名
-            }
 
-            String resultKey = dbConf.getKafkaKey(dataSourceInfo, splittedTableInfo);
-            dsKey = FullPullHelper.getDataSourceKey(dsObject) + "." + splittedTableInfo;
+//            String targetTableName = inputSplit.getTargetTableName();
+//
+//            //Oracle的情况，patition 默认设为0 .Mysql,有分表的，为分表名。无分表的，为0。
+//            String splittedTableInfo = "0";
+//            //targetTableName = "sub.trade"
+//            if(!targetTableName.equalsIgnoreCase(logicalTableName)) { //目标表名和逻辑表名不一致，表示是分表。
+//                splittedTableInfo = targetTableName.indexOf(".") == -1
+//                        ? targetTableName
+//                        : targetTableName.split("\\.")[1];//目标表名可能带schema。partion内容是不带schema的分表名
+//            }
+
+            String resultKey = dbConf.getKafkaKey(dataSourceInfo, tablePartition);
+            dsKey = FullPullHelper.getDataSourceKey(dsObject);
             dbManager = FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY));
             String opTs = dbConf.getString(DBConfiguration.DATA_IMPORT_OP_TS);
 
@@ -211,7 +205,6 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             }
 
             long lastUpdatedMonitorTime = System.currentTimeMillis();
-            int counter = 0;
 
             //oracle不加这一行, 可能会产生结果集已耗尽的问题
             //rs.beforeFirst();
@@ -219,7 +212,6 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
 
             String outputVersion = FullPullHelper.getOutputVersion();
             while (rs.next()) {
-                counter++;
                 List<Object> rowDataValues = new ArrayList<>();
                 String pos = payloadObject.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_POS);
                 rowDataValues.add(pos);
@@ -239,45 +231,45 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                     // TODO: timezone
                     switch (columnTypeName) {
                         case "DATE":
-                            if(rs.getObject(i) != null){
+                            if (rs.getObject(i) != null) {
                                 rowDataValues.add(rs.getDate(i) + " " + rs.getTime(i));
-                            }else{
+                            } else {
                                 rowDataValues.add(rs.getObject(i));
                             }
                             break;
                         case "YEAR":
-                            if(rs.getObject(i) != null){
-                                Date date = (Date)(rs.getObject(i));
+                            if (rs.getObject(i) != null) {
+                                Date date = (Date) (rs.getObject(i));
                                 Calendar cal = Calendar.getInstance();
                                 cal.setTime(date);
                                 rowDataValues.add(cal.get(Calendar.YEAR));
-                            }else{
+                            } else {
                                 rowDataValues.add(rs.getObject(i));
                             }
                             break;
                         case "TIME":
-                            if(rs.getTime(i) != null){
+                            if (rs.getTime(i) != null) {
                                 rowDataValues.add(rs.getTime(i).toString());
-                            }else{
+                            } else {
                                 rowDataValues.add(rs.getObject(i));
                             }
                             break;
                         case "DATETIME":
                         case "TIMESTAMP":
-                            if(rs.getTimestamp(i) != null){
+                            if (rs.getTimestamp(i) != null) {
 //                                  rowDataValues.add(rs.getTimestamp(i).toString());
                                 String timeStamp = "";
-                                if(datasourceType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())){
+                                if (datasourceType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())) {
                                     timeStamp = toMysqlTimestampString(rs.getTimestamp(i), rsmd.getPrecision(i));
-                                }else if(datasourceType.toUpperCase().equals(DbusDatasourceType.ORACLE.name())){
+                                } else if (datasourceType.toUpperCase().equals(DbusDatasourceType.ORACLE.name())) {
                                     timeStamp = toOracleTimestampString(rs.getTimestamp(i), rsmd.getScale(i));
-                                }else {
+                                } else {
                                     throw new RuntimeException("Wrong Database type.");
                                 }
                                 rowDataValues.add(timeStamp);
-                            }else{
+                            } else {
                                 Object val = rs.getObject(i);
-                                if(datasourceType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())&&rsmd.isNullable(i)!=1&&val==null){
+                                if (datasourceType.toUpperCase().equals(DbusDatasourceType.MYSQL.name()) && rsmd.isNullable(i) != 1 && val == null) {
                                     // JAVA连接MySQL数据库，在操作值为0的timestamp类型时不能正确的处理，而是默认抛出一个异常，就是所见的：java.sql.SQLException: Cannot convert value '0000-00-00 00:00:00' from column 7 to TIMESTAMP。
                                     // DBUS处理策略：在JDBC连接串配置属性：zeroDateTimeBehavior=convertToNull，来避免异常。
                                     // 但当对应列约束为非空时，转换成null，后续逻辑校验通不过。所以对于mysql非空timestamp列，当得到值为null时，一定是发生了从 '0000-00-00 00:00:00'到null的转换。为了符合后续逻辑校验，此处强制将null置为'0000-00-00 00:00:00'。
@@ -290,7 +282,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                         case "VARBINARY":
                         case "TINYBLOB":
                         case "BLOB":
-                            if(rs.getObject(i) != null) {
+                            if (rs.getObject(i) != null) {
                                 // 对于上述四种类型，根据canal文档https://github.com/alibaba/canal/issues/18描述，针对blob、binary类型的数据，使用"ISO-8859-1"编码转换为string
                                 // 为了和增量保持一致，对于这四种类型，全量也需做特殊处理：读取bytes并用ISO-8859-1编码转换成string。
                                 // 后续DbusMessageBuilder  void validateAndConvert(Object[] tuple)方法会统一按ISO-8859-1编码处理全量/增量数据。
@@ -301,22 +293,22 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                                 // 全量：test_binary中文测试转换,，dbus将此类型转换为base64编码
                                 // 在hash_md5加密的情况下，增量全量的数据对不上。数据如下：
                                 // 增量：g6w
-                                // 全量：ߖսsvom_u
+                                // 全量：??svom_u
                                 // 原因：filed_binay 列类型为binary(200)，插入字符串长度没达到200，数据库将内容自动补齐至200。
                                 // 增量通过canal读取原始数据时，读到的数据忽略了补齐部分。
                                 // 全量通过JDBC读取原始数据时，读到的是包含补齐部分的数据，长度200。
                                 // 对于这种补齐的情况，不加密处理的话，肉眼观察，内容编码/解码没区别。
                                 // 用hd5加密的话，hd5加密结果会不同。
                                 // 对于这个情况，暂时忽略搁置。
-                                rowDataValues.add(new String(rs.getBytes(i),"ISO-8859-1"));
-                            }else{
+                                rowDataValues.add(new String(rs.getBytes(i), "ISO-8859-1"));
+                            } else {
                                 rowDataValues.add(rs.getObject(i));
                             }
                             break;
                         //暂时只支持BIT(0)~BIT(8)，对于其它的(n>8) BIT(n)，需要增加具体的处理
-                        case "BIT" :
+                        case "BIT":
                             byte[] value = rs.getBytes(i);
-                            if(value != null && value.length > 0)
+                            if (value != null && value.length > 0)
                                 rowDataValues.add(value[0] & 0xFF);
                             else
                                 rowDataValues.add(rs.getObject(i));
@@ -332,21 +324,23 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 if (isKafkaSend(dealRowMemSize, sendRowsCnt)) {
                     dealRowMemSize = 0;
                     sendRowsCnt = 0;
-                    DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, splittedTableInfo, batchNo);
+                    DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, inputSplit.getTargetTableName(), tablePartition, batchNo);
                     //将数据写入kafka
                     sendMessageToKafka(resultKey, dbusMessage, sendCnt, recvCnt, isError);
                     tuples.clear();
                     tuples = new ArrayList<>();
                 }
 
-                if(isError.get()) {
+                if (isError.get()) {
                     throw new Exception("kafka send exception!");
                 }
 
                 long updatedMonitorInterval = (System.currentTimeMillis() - lastUpdatedMonitorTime) / 1000;
-                if(updatedMonitorInterval > monitorTimeInterval) {
+                if (updatedMonitorInterval > monitorTimeInterval) {
                     //1. 隔一段时间刷新monitor zk状态
-                    emitMonitorState(input, dataSourceInfo, progressInfoNodePath, dealRowCnt, startSecs, totalRows, totalPartitions, 0); //最后一个参数：一片尚未完成，计数0
+                    emitMonitorState(input, dataSourceInfo, progressInfoNodePath, startSecs, totalRows, totalPartitions, dealRowCnt, 0); //最后一个参数：一片尚未完成，计数0
+                    long endTime = (System.currentTimeMillis() - startTime) / 1000;
+                    LOG.info("dsKey: {}, pull_index{}: finished {} rows. consume time {}s", dsKey, splitIndex, dealRowCnt, endTime);
                     lastUpdatedMonitorTime = System.currentTimeMillis();
                     dealRowCnt = 0;
 
@@ -366,9 +360,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             localZkService.close();
 
 
-            LOG.info("Shard of split_index{} has {} records. Partition Info: {}", splitIndex, counter, tablePartition);
-            if(tuples.size() > 0) {
-                DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, splittedTableInfo, batchNo);
+            if (tuples.size() > 0) {
+                DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, inputSplit.getTargetTableName(), tablePartition, batchNo);
                 tuples.clear();
                 tuples = null;
 
@@ -377,20 +370,23 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             }
 
             boolean isFinished = isSendFinished(sendCnt, recvCnt);
-            if(isFinished) {
-                emitMonitorState(input, dataSourceInfo, progressInfoNodePath, dealRowCnt, startSecs, totalRows, totalPartitions, 1);//最后一个参数：完成一片，计数1
+            if (isFinished) {
+                emitMonitorState(input, dataSourceInfo, progressInfoNodePath, startSecs, totalRows, totalPartitions, dealRowCnt, 1);//最后一个参数：完成一片，计数1
                 long endTime = (System.currentTimeMillis() - startTime) / 1000;
-                LOG.info("{}:the batchDataFetchBolt deal split {}, finished {} rows,consume time {}s.  Partition Info:{}", dsKey, splitIndex, dealRowCnt, endTime, tablePartition);
+                LOG.info("dsKey: {}, pull_index{}: finished {} rows. consume time {}s", dsKey, splitIndex, dealRowCnt, endTime);
+
                 collector.ack(input);
-            }else {
+            } else {
                 throw new Exception("Waiting kafka ack timeout!");
             }
+
+            LOG.info("dsKey: {}, pull_index{} pull finished.  total {} rows", dsKey, splitIndex, dealRowCnt);
         } catch (Exception e) {
             String errorMsg = dsKey + ":Exception happened when fetching data of split: " + jsonObject.toJSONString() + "."
                     + e.getMessage() + "  [split index is " + splitIndex + "]";
             LOG.error(errorMsg, e);
-            FullPullHelper.finishPullReport(zkService,dataSourceInfo, FullPullHelper.getCurrentTimeStampString(),
-                        Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
+            FullPullHelper.finishPullReport(zkService, dataSourceInfo, FullPullHelper.getCurrentTimeStampString(),
+                    Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
             collector.fail(input);
         } finally {
             try {
@@ -411,8 +407,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     }
 
     @SuppressWarnings("unchecked")
-    private void sendMessageToKafka(String key, DbusMessage dbusMessage, AtomicLong sendCnt, AtomicLong recvCnt, AtomicBoolean isError) throws Exception{
-        if(stringProducer == null) {
+    private void sendMessageToKafka(String key, DbusMessage dbusMessage, AtomicLong sendCnt, AtomicLong recvCnt, AtomicBoolean isError) throws Exception {
+        if (stringProducer == null) {
             throw new Exception("producer is null, can't send to kafka!");
         }
 
@@ -423,7 +419,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 if (e != null) {
                     e.printStackTrace();
                     isError.set(true);
-                }else{
+                } else {
                     recvCnt.getAndIncrement();
                 }
             }
@@ -432,14 +428,14 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
 
     private boolean isSendFinished(AtomicLong send, AtomicLong recv) {
         long startTime = System.currentTimeMillis();
-        while((send.get() > recv.get())) {
+        while ((send.get() > recv.get())) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
 
             //等待1分钟仍然没有收到recv就认为写入失败
-            if(System.currentTimeMillis() - startTime > 60000) {
+            if (System.currentTimeMillis() - startTime > 60000) {
                 LOG.error("System.currentTimeMillis()-startTime  is {}", (System.currentTimeMillis() - startTime));
                 return false;
             }
@@ -448,11 +444,11 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     }
 
     private DbusMessage buildResultMessage(String outputVersion, List<List<Object>> tuples, String dataSourceInfo,
-                                           DBConfiguration dbConf, ResultSetMetaData rsmd, String tablePartition, int batchNo) throws SQLException {
+                                           DBConfiguration dbConf, ResultSetMetaData rsmd, String seriesTableName, String tablePartition, int batchNo) throws SQLException {
 
 
         DbusMessageBuilder builder = new DbusMessageBuilder(outputVersion);
-        builder.build(DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbConf.getDbTypeAndNameSpace(dataSourceInfo, tablePartition), batchNo);
+        builder.build(DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbConf.getDbTypeAndNameSpace(dataSourceInfo, seriesTableName, tablePartition), batchNo);
         String dsType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
         int columnCount = rsmd.getColumnCount();
         for (int i = 1; i <= columnCount; i++) {
@@ -467,17 +463,32 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         DbusMessage message = builder.getMessage();
 
         // 脱敏
-        MessageEncoder encoder = new MessageEncoder();
-        encoder.encode(message, (List<EncodeColumn>)dbConf.get(DBConfiguration.TABEL_ENCODE_COLUMNS));
+        //UmsEncoder encoder = new MessageEncoder();
+        UmsEncoder encoder = new PluggableMessageEncoder(PluginManagerProvider.getManager(), (e, column, m) -> {
+            // TODO: 2018/5/25
+        });
+        //去除因为表结构表更,删除列,rename列,可能导致的脱敏报错
+        List<String> outputFields = Arrays.asList(dbConf.getInputFieldNames());
+        List<EncodeColumn> encodeColumns = (List<EncodeColumn>) dbConf.get(DBConfiguration.TABEL_ENCODE_COLUMNS);
+        Iterator<EncodeColumn> iterator = encodeColumns.iterator();
+        while (iterator.hasNext()){
+            EncodeColumn next = iterator.next();
+            if (!outputFields.contains(next.getFieldName())) {
+                iterator.remove();
+            }
+        }
+        encoder.encode(message, (List<EncodeColumn>) dbConf.get(DBConfiguration.TABEL_ENCODE_COLUMNS));
         return message;
     }
 
-    private void emitMonitorState(Tuple input, String dataSourceInfo, String progressInfoNodePath, long dealRows, String startSecs, String totalRows, String totalPartitions, int finishedShardCount) {
+    private void emitMonitorState(Tuple input, String dataSourceInfo, String progressInfoNodePath,
+                                  String startSecs, String totalRows, String totalPartitions,
+                                  long finishedRow, int finishedShardCount) {
         JSONObject jsonInfo = new JSONObject();
         jsonInfo.put(DataPullConstants.DATA_SOURCE_INFO, dataSourceInfo);
         jsonInfo.put(DataPullConstants.DATA_MONITOR_ZK_PATH, progressInfoNodePath);
         jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_COUNT, finishedShardCount);
-        jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_ROWS, dealRows);
+        jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_ROWS, finishedRow);
         jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_START_SECS, startSecs);
         jsonInfo.put(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_TOTAL_ROWS, totalRows);
         jsonInfo.put(DataPullConstants.DATA_CHUNK_COUNT, totalPartitions);
@@ -485,15 +496,15 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     }
 
     private boolean isKafkaSend(long totalMemSize, long totalRows) {
-        if(totalMemSize >= kafkaSendBatchSize.get() || totalRows >= kafkaSendRows.get()) {
+        if (totalMemSize >= kafkaSendBatchSize.get() || totalRows >= kafkaSendRows.get()) {
             return true;
         }
         return false;
     }
 
     /* The default java.sql.Timestamp.toString() does not equal to mysql timestamp.
-* Below code lines are copied from java.sql.Timestamp.toString(), just changed the nanos part.
-*/
+     * Below code lines are copied from java.sql.Timestamp.toString(), just changed the nanos part.
+     */
     public String toMysqlTimestampString(java.sql.Timestamp ts, int precision) {
         // Mysql's metaData.getScale() always return 0. We use getPrecision() to estimate scale.
         // By testing, the precision of datetime is 19, which means the length "2010-01-02 10:12:23" is 19.
@@ -526,7 +537,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         if (year < 1000) {
             // Add leading zeros
             yearString = "" + year;
-            yearString = yearZeros.substring(0, (4-yearString.length())) +
+            yearString = yearZeros.substring(0, (4 - yearString.length())) +
                     yearString;
         } else {
             yearString = "" + year;
@@ -565,7 +576,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         }
 
         // Add leading zeros
-        nanosString = zeros.substring(0, (9-nanosString.length())) +
+        nanosString = zeros.substring(0, (9 - nanosString.length())) +
                 nanosString;
 
         if (meta <= 0) {
@@ -576,7 +587,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         }
 
         // do a string buffer here instead.
-        timestampBuf = new StringBuffer(20+nanosString.length());
+        timestampBuf = new StringBuffer(20 + nanosString.length());
         timestampBuf.append(yearString);
         timestampBuf.append("-");
         timestampBuf.append(monthString);
@@ -602,7 +613,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         String timeStamp = ts.toString();
         String timeStampLastPart = timeStamp.substring(timeStamp.lastIndexOf(".") + 1, timeStamp.length());
         int needAdd = scale - timeStampLastPart.length();
-        while(needAdd > 0) {
+        while (needAdd > 0) {
             timeStamp += "0";
             needAdd--;
         }
@@ -631,9 +642,9 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             loadResultMsg = "Running Config is " + notifyEvtName + " successfully for PagedBatchDataFetchingBolt!";
             LOG.info(loadResultMsg);
 
-            //获取脱敏类型
-            ExternalEncoders externalEncoders = new ExternalEncoders();
-            externalEncoders.initExternalEncoders(zkconnect, zkService);
+            //初始化脱敏插件配置信息
+            PluginManagerProvider.initialize(new FullPullPluginLoader());
+            LOG.info("FullPullEncodePlugin init success ");
         } catch (Exception e) {
             loadResultMsg = e.getMessage();
             LOG.error(notifyEvtName + "ing running configuration encountered Exception!", loadResultMsg);
@@ -642,8 +653,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             if (reloadMsgJson != null) {
                 FullPullHelper.saveReloadStatus(reloadMsgJson, "pulling-dataFetching-bolt", false, zkconnect);
                 //reload脱敏类型
-                ExternalEncoders externalEncoders = new ExternalEncoders();
-                externalEncoders.initExternalEncoders(zkconnect,zkService);
+                PluginManagerProvider.reloadManager();
+                LOG.info("FullPullEncodePlugin reload success ");
             }
         }
     }
@@ -658,4 +669,5 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         }
         return null;
     }
+
 }

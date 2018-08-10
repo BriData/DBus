@@ -63,7 +63,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 ### 1.2. logstash配置文件说明
 
 
-以logstash抽取DBus的监控和报警日志为例，说明该如何去写logstash的配置文件。我们在logstash的目录下面新建了一个etc文件夹，用于存放logstash的抽取配置文件，然后在etc目录下新建了一个heartbeat.conf的文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-logstash-config)，下面解析下该文件的各项配置。
+以logstash抽取DBus的监控和报警日志为例，说明该如何去写logstash的配置文件。我们在logstash的目录下面新建了一个etc文件夹，用于存放logstash的抽取配置文件，然后在etc目录下新建了一个heartbeat.conf的文件[下载heartbeat.conf](dbus-main/init-scripts/init-logstash-config/heartbeat.conf)，下面解析下该文件的各项配置。
 
     input {
         file {
@@ -217,7 +217,7 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 
 ### 2.2 数据源配置修改
 
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
+因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用。
 
 * **修改数据源信息：**点击modify按钮进行修改。
    ![img/install-logstash-source/install-logstash-source-modify-ds-1.png](img/install-logstash-source/install-logstash-source-modify-ds-1.png)
@@ -228,7 +228,7 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 
 
 ### 2.3. 配置规则（详细配置方式请参考todo）
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考详：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
+* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则**
 
    ![img/install-logstash-source/install-logstash-source-add-table-1.png](img/install-logstash-source/install-logstash-source-add-table-1.png)
 
@@ -240,7 +240,7 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 
    ![img/install-logstash-source/install-logstash-source-add-table-3.png](img/install-logstash-source/install-logstash-source-add-table-3.png)
 
-* **配置规则:** topic是在logstash配置文件中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。
+* **配置规则:** topic是在logstash配置文件中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则（详细规则配置请参考todo），对数据进行处理。
 
    ![img/install-logstash-source/install-logstash-source-add-table-4.png](img/install-logstash-source/install-logstash-source-add-table-4.png)
 
@@ -264,7 +264,7 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 
 我们可以在grafana配置以下，看看实际流量情况。
 
-* **上传grafana配置文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/)： **点击Import，上传grafana json配置文件。
+* **上传grafana配置文件[点击下载](dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_logstash.json)： **点击Import，上传grafana json配置文件。
    ![img/install-logstash-source/install-logstash-source-monitor-config-import-1.png](img/install-logstash-source/install-logstash-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-logstash-source/install-logstash-source-monitor-config-import-2.png](img/install-logstash-source/install-logstash-source-monitor-config-import-2.png)

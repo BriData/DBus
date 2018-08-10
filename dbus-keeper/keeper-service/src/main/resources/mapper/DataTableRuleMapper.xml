@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.creditease.dbus.domain.mapper.DataTableRuleMapper">
+    <resultMap id="dataTableRule" type="com.creditease.dbus.domain.model.DataTableRule">
+        <id property="id" column="id"/>
+        <result property="groupId" column="group_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="ruleTypeName" column="rule_type_name"/>
+        <result property="ruleGrammar" column="rule_grammar"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap id="dataTableRuleGroup" type="com.creditease.dbus.domain.model.DataTableRuleGroup">
+        <id property="id" column="id"/>
+        <result property="tableId" column="table_id"/>
+        <result property="groupName" column="group_name"/>
+        <result property="status" column="status"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 规则组开始 -->
+    <select id="getAllRuleGroup" resultMap="dataTableRuleGroup">
+        select * from t_plain_log_rule_group where table_id = #{tableId}
+    </select>
+
+    <select id="getActiveRuleGroupByTableId" resultMap="dataTableRuleGroup">
+        select * from t_plain_log_rule_group where table_id = #{tableId} and status = 'active'
+    </select>
+
+    <update id="updateRuleGroup">
+        update t_plain_log_rule_group
+        <set>
+            <if test="groupName != null">group_name = #{groupName},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = CURRENT_TIMESTAMP
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteRuleGroup">
+        DELETE FROM t_plain_log_rule_group WHERE id = #{groupId}
+    </delete>
+
+    <insert id="addGroup" useGeneratedKeys="true" keyProperty="id">
+        insert into t_plain_log_rule_group(table_id, group_name, status)
+        values(#{tableId}, #{groupName}, #{status})
+    </insert>
+
+    <!-- 规则组结束 -->
+
+    <!-- 规则开始 -->
+
+    <select id="getAllRules" resultMap="dataTableRule">
+        select * from t_plain_log_rules where group_id = #{groupId} order by order_id
+    </select>
+
+    <delete id="deleteRules">
+        DELETE FROM t_plain_log_rules WHERE group_id = #{groupId}
+    </delete>
+
+    <insert id="saveAllRules" parameterType="java.util.List">
+        insert into t_plain_log_rules (group_id, order_id, rule_type_name, rule_grammar)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.groupId},#{item.orderId},#{item.ruleTypeName},#{item.ruleGrammar})
+        </foreach>
+    </insert>
+
+    <!-- 规则结束 -->
+    <select id="getAsRuleInfo" resultType="com.creditease.dbus.domain.model.RuleInfo">
+         select tg.id, tg.group_name, tg.`status`, tr.rule_grammar
+         from (select id,group_name,status from t_plain_log_rule_group where table_id= #{tableId} ) tg
+            left join (select group_id,rule_grammar from t_plain_log_rules where rule_type_name = #{ruleTypeName} ) tr
+            on tg.id = tr.group_id
+    </select>
+
+    <insert id="insertRuleGroupVersion" parameterType="java.util.Map">
+        INSERT INTO t_plain_log_rule_group_version (table_id, group_name, status, ver_id, update_time)
+        VALUES (#{table_id},#{group_name},#{status},#{ver_id},#{update_time})
+    </insert>
+    <insert id="insertRulesVersion" parameterType="java.util.Map">
+        INSERT INTO t_plain_log_rules_version (group_id, order_id, rule_type_name, rule_grammar, update_time)
+        VALUES (#{group_id},#{order_id},#{rule_type_name},#{rule_grammar},#{update_time})
+    </insert>
+</mapper>

@@ -60,7 +60,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 ### 1.2 配置文件说明
 
-   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/)。
+   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考[[下载filebeat.yml]](dbus-main/init-scripts/init-filebeat-config/filebeat.yml)。
 
 ```yaml
   filebeat.prospectors:			  # filebeat的探测器，可以对多个路径下的文件进行抽取
@@ -135,7 +135,7 @@ filebeat-6.1.0-linux-x86_64]$ 2018/01/25 09:12:48.287446 beat.go:436: INFO Home 
 
 ### 1.4. 心跳脚本和crontab说明
 
-   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
+   DBus提供了心跳shell脚本[点击下载](dbus-main/init-scripts/dbus-agent-heartbeat/dbus-agent-heartbeat.tar.gz)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
 
 * **心跳脚本目录** 
 
@@ -284,7 +284,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 ### 2.2 数据源配置修改
 
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
+因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用。
 
 
 * **修改数据源信息：**点击modify按钮进行修改。
@@ -293,7 +293,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
    ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 ### 2.3. 配置规则
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
+* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考[日志规则配置说明](dbus-main/docs/config-table.md)）**
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
@@ -309,7 +309,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 
-* **拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
+* **拉取增量 : ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
@@ -318,7 +318,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 我们可以在grafana配置以下，看看实际流量情况。
 
-* **上传grafana配置文件，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config) ： **点击Import，上传grafana json配置文件。
+* **上传grafana配置文件[点击下载](dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_filebeat.json)： **点击Import，上传grafana json配置文件。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png)

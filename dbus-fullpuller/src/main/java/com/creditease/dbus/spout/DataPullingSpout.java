@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@
 
 package com.creditease.dbus.spout;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.consumer.Consumer;
@@ -92,13 +89,15 @@ public class DataPullingSpout extends BaseRichSpout {
     private int emittedCount = 0;     //只记录拉取消息的emit出去的条数，reload等控制信息不记录数
     //经过研究processedCount == emittedCount时，就是 flowedMsgCount = 0的时候，也就说 processedCount和emittedCount 没有存在的意义
 
-    private int suppressLoggingCount = 0;
+    final private int EMPTY_RUN_COUNT = 60000;
+    private int suppressLoggingCount = EMPTY_RUN_COUNT / 2;
 
     /**
      * 初始化collectors
      */
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+        LOG.info("Pulling Spout {} is starting!", topologyId);
         this.collector = collector;
         this.zkConnect = (String) conf.get(Constants.StormConfigKey.ZKCONNECT);
         this.topologyId = (String) conf.get(Constants.StormConfigKey.FULL_PULLER_TOPOLOGY_ID);
@@ -119,6 +118,9 @@ public class DataPullingSpout extends BaseRichSpout {
             // 检查是否有遗留未决的拉取任务。如果有，resolve（发resume消息通知给appender，并在zk上记录，且将监测到的pending任务写日志，方便排查问题）。
             // 对于已经resolve的pending任务，将其移出pending队列，以免造成无限重复处理。
             FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, null, DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY);
+            FullPullHelper.updatePendingTasksToHistoryTable(null,dsName ,
+                    DataPullConstants.FULLPULL_PENDING_TASKS_OP_PULL_TOPOLOGY_RESTART, consumer,
+                    commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_MEDIANT_TOPIC),null);
         } catch (Exception e) {
             e.printStackTrace();
             throw new InitializationException();
@@ -132,7 +134,7 @@ public class DataPullingSpout extends BaseRichSpout {
      */
     private boolean canPrintNow () {
         suppressLoggingCount++;
-        if (suppressLoggingCount % 60000 == 0) {
+        if (suppressLoggingCount % EMPTY_RUN_COUNT == 0) {
             suppressLoggingCount = 0;
             return true;
         }
@@ -231,9 +233,8 @@ public class DataPullingSpout extends BaseRichSpout {
                     } else if ((key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ))
                             || (key.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ))) {
                         // 对于每次拉取，只在第一次将当前任务添加到pending tasks list.以避免拉取轮数多时，频繁访问zk。
-                        if(pendingTasksSet.add(dataSourceInfo)) {
-                            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName,
-                                    dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
+                        if (pendingTasksSet.add(dataSourceInfo)) {
+                            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName,dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
                         }
 
                         if(!failAndBreakTuplesSet.contains(dataSourceInfo)) {
@@ -259,8 +260,7 @@ public class DataPullingSpout extends BaseRichSpout {
                             || key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
                         FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
                         FullPullHelper.finishPullReport(zkService, dataSourceInfo,
-                                FullPullHelper.getCurrentTimeStampString(), Constants.DataTableStatus.DATA_STATUS_ABORT,
-                                errorMsg);
+                                FullPullHelper.getCurrentTimeStampString(), Constants.DataTableStatus.DATA_STATUS_ABORT,errorMsg);
                     }
                 }
             }
@@ -314,7 +314,7 @@ public class DataPullingSpout extends BaseRichSpout {
                 String dataSourceInfo = jsonObject.getString(DataPullConstants.DATA_SOURCE_INFO);
                 String dsKey = FullPullHelper.getDataSourceKey(JSONObject.parseObject(dataSourceInfo));
                 String splitIndex = jsonObject.getString(DataPullConstants.DATA_CHUNK_SPLIT_INDEX);
-                LOG.error("Failed Record offset--------is:{}, {}:split index is {}", record.offset(), dsKey, splitIndex);
+                LOG.error("Spout got fail!, record offset is:{}, {}: split index is {}", record.offset(), dsKey, splitIndex);
 
                 //写monitor，并且发送错误返回等， 只报错一次
                 if (!failAndBreakTuplesSet.contains(dataSourceInfo)) {
@@ -355,9 +355,12 @@ public class DataPullingSpout extends BaseRichSpout {
             ObjectMapper mapper = JsonUtil.getObjectMapper();
             FullPullHelper.updateZkNodeInfo(zkService, progressInfoNodePath, mapper.writeValueAsString(progressObj));
 
-            // 写拉取状态
-            FullPullHelper.writeStartPullStatusToDbMgr(dataSourceInfo, currentTimeStampString, "pulling", "");
-
+            //开始拉取写拉取状态
+            JSONObject fullpullUpdateParams = new JSONObject();
+            fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+            fullpullUpdateParams.put("status","pulling");
+            fullpullUpdateParams.put("start_pull_time",currentTimeStampString);
+            FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
         } catch (Exception e) {
             String errorMsg = "Encountered exception when writing msg to zk monitor.";
             LOG.error(errorMsg,e);

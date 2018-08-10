@@ -1,0 +1,112 @@
+/*File tree*/
+
+.ant-tree-checkbox-inner {
+  z-index: 10;
+}
+.ant-tree-checkbox-checked .ant-tree-checkbox-inner:after {
+  border: 0.1em solid #fff;
+  border-top: 0;
+  border-left: 0;
+}
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher::after {
+  height: 12px;
+  line-height: 12px;
+  background: #fff;
+}
+
+.fileTree li {
+  padding: 2px 0;
+}
+
+.fileTree li .ant-tree-node-content-wrapper {
+  padding: 0px;
+}
+
+.fileTree li span.ant-tree-switcher,
+.fileTree li span.ant-tree-iconEle {
+  width: 21px;
+  height: 21px;
+  line-height: 21px;
+  z-index: 9;
+  border-top: 0;
+  border-left: 0;
+  position: relative;
+}
+
+.fileTree.ant-tree-show-line
+li
+span.ant-tree-switcher.ant-tree-switcher-noop::after {
+  content: "";
+  position: absolute;
+  width: 13px;
+  height: 0;
+  border-bottom: 1px solid #ddd;
+  left: -8px;
+  top: 11px;
+}
+.fileTree li span.ant-tree-iconEle::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 0;
+  border-bottom: 1px solid #ddd;
+  left: -5px;
+  top: 10px;
+}
+
+.fileTree.ant-tree-show-line li:not(:last-child):before {
+  left: 10px;
+  top: -4px;
+}
+
+.fileTree.ant-tree-show-line .ant-tree-child-tree li:first-child:after {
+  content: " ";
+  width: 1px;
+  border-left: 1px solid #d9d9d9;
+  height: 19px;
+  position: absolute;
+  margin: 0;
+  left: 10px;
+  top: -5px;
+}
+
+.fileTree.ant-tree-show-line li span.ant-tree-switcher {
+  background-color: transparent;
+  z-index: 2;
+}
+.fileTree .ant-tree-icon__open,
+.fileTree .ant-tree-icon__close {
+  background-image: url("../images/folder_open.png");
+  background-position: 2px center;
+  background-repeat: no-repeat;
+  /* background-size: 20px 15px; */
+  background-size: 16px 12px;
+  position: relative;
+  z-index: 9;
+}
+.fileTree .ant-tree-icon__close {
+  background-image: url("../images/folder_close.png");
+}
+.fileTree.ant-tree-show-line li span.ant-tree-switcher.ant-tree-switcher-noop {
+  width: 3px;
+  z-index: 9;
+  position: relative;
+  margin-left: 18px;
+}
+.fileTree.ant-tree-show-line
+li
+span.ant-tree-switcher.ant-tree-switcher-noop:after {
+  content: "";
+}
+.fileTree li span.ant-tree-icon__docu {
+  background-image: url("../images/file.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  /* background-size: 13px 18px; */
+  background-size: 12px 16px;
+  z-index: 9;
+  position: relative;
+}
+.fileTree li span.ant-tree-icon__docu::after {
+  content: none;
+}

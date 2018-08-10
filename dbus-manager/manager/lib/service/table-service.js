@@ -58,6 +58,10 @@ module.exports = {
         var url = $.url(restUrl, "/tables/fetchTableColumns");
         request({url: url, json: param, forever: true}, $.resWrapper(cb));
     },
+    fetchEncodePlugin: function(cb) {
+        var url = $.url(restUrl, "/tables/fetchEncodePlugin");
+        request({url: url, json:{}, forever: true}, $.resWrapper(cb));
+    },
     // fetchEncodeAlgorithms: function(cb) {
     //     var url = $.url(restUrl, "/tables/fetchEncodeAlgorithms");
     //     request({url: url, forever: true}, $.resWrapper(cb));

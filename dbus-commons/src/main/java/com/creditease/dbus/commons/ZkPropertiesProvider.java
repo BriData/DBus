@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ public class ZkPropertiesProvider implements PropertiesProvider {
     private IZkService zookeeper;
     private String path;
     private String url;
-
     public ZkPropertiesProvider(String url, String path) throws Exception {
         this.url = url;
         this.path = path;
@@ -57,6 +56,7 @@ public class ZkPropertiesProvider implements PropertiesProvider {
             return new Properties();
         }
     }
+
 
     private String buildPath(String node) {
         String nodePath;

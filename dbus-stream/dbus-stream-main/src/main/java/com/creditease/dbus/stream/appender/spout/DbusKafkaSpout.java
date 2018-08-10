@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
+import com.creditease.dbus.stream.common.appender.metrics.CountMetricReporter;
 import com.creditease.dbus.stream.common.appender.spout.processor.AbstractMessageHandler;
 import com.creditease.dbus.stream.common.appender.spout.processor.CtrlMessagePostOperation;
 import com.creditease.dbus.stream.common.appender.spout.processor.RecordProcessListener;
@@ -53,22 +54,22 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-    import java.io.IOException;
-    import java.io.UnsupportedEncodingException;
-    import java.util.List;
-    import java.util.Map;
-    import java.util.Properties;
-    import java.util.concurrent.Future;
-    import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-    import static com.creditease.dbus.stream.common.Constants.*;
+import static com.creditease.dbus.stream.common.Constants.*;
 
-    /**
-     * 读取kafka数据的Spout实现
-     * dbus-dispatcher 会将表的数据拆分到所有其他schema所对应的kafka topic中
-     * Created by Shrimp on 16/6/2.
-     */
-    public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListener {
+/**
+ * 读取kafka数据的Spout实现
+ * dbus-dispatcher 会将表的数据拆分到所有其他schema所对应的kafka topic中
+ * Created by Shrimp on 16/6/2.
+ */
+public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListener {
 
     private Logger logger = LoggerFactory.getLogger(DbusKafkaSpout.class);
 
@@ -91,6 +92,8 @@ import org.slf4j.LoggerFactory;
     private ReloadStatus status;
 
     private MessageStatusQueueManager msgQueueMgr;
+
+    private CountMetricReporter countMetricReporter;
 //    private String initialLoadTableNs;
 //    private String metaEventTableNs;
 
@@ -104,6 +107,7 @@ import org.slf4j.LoggerFactory;
         this.zkconnect = (String) conf.get(StormConfigKey.ZKCONNECT);
         this.zkRoot = Utils.buildZKTopologyPath(topologyId);
 
+        countMetricReporter = CountMetricReporter.create("appender-spout");
         // consumer 订阅的topic列表
         if (!initialized) {
             try {
@@ -126,7 +130,7 @@ import org.slf4j.LoggerFactory;
     @Override
     public void nextTuple() {
         if (!reloadSpout()) return;  // 判断是否重新加载了缓存,如果重新加载则直接返回
-        //if (flowLimitation()) return; // 如果读取的流量过大则要sleep一下
+        if (flowLimitation()) return; // 如果读取的流量过大则要sleep一下
         // 读取kafka消息
         ConsumerRecords<String, byte[]> records = consumer.getMessages();
 
@@ -240,15 +244,23 @@ import org.slf4j.LoggerFactory;
 
     @Override
     public void emitData(EmitData data, Command cmd, Object msgId) {
+        countMetricReporter.mark();
         List<Object> values = new Values(data, cmd);
         if (msgId != null && msgId instanceof DBusConsumerRecord) {
             DBusConsumerRecord<String, byte[]> record = getMessageId(msgId);
             msgQueueMgr.addMessage(record);
-            this.collector.emit(values, record);
-            logger.debug("sport emit:" + record.toString());
+            this.collector.emit(values, cloneWithoutValue(record));
+            logger.info("[dbus-spout-emit] topic: {}, offset: {}, key: {}, size: {}", record.topic(), record.offset(), record.key(), record.value().length);
         } else {
             this.collector.emit(values, msgId);
         }
+    }
+
+
+    private DBusConsumerRecord<String, byte[]> cloneWithoutValue(DBusConsumerRecord<String, byte[]> record) {
+        DBusConsumerRecord<String, byte[]> r = new DBusConsumerRecord<>(record.topic(), record.partition(), record.offset(), record.timestamp(), record.timestampType(),
+                record.checksum(), record.serializedKeySize(), record.value().length, record.key(), null);
+        return r;
     }
 
     @Override
@@ -285,6 +297,7 @@ import org.slf4j.LoggerFactory;
 
     @Override
     public void ack(Object msgId) {
+        countMetricReporter.mark(-1);
         if (msgId != null && DBusConsumerRecord.class.isInstance(msgId)) {
             DBusConsumerRecord<String, byte[]> record = getMessageId(msgId);
             reduceFlowSize(record.serializedValueSize());
@@ -295,16 +308,20 @@ import org.slf4j.LoggerFactory;
                 consumer.syncOffset(commitPoint);
                 msgQueueMgr.committed(commitPoint);
             }
+            logger.info("[dbus-spout-ack] topic: {}, offset: {}, key: {}, size:{}, sync-kafka-offset:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize(), commitPoint != null? commitPoint.offset(): -1);
+        } else {
+            logger.info("[dbus-spout-ack] receive ack message[{}]", msgId.getClass().getName());
         }
         super.ack(msgId);
-        logger.debug("[dbus-spout-ack] receive ack message {}", msgId.toString());
     }
 
     @Override
     public void fail(Object msgId) {
-        logger.error("[dbus-spout-fail] receive fail message {}", msgId != null ? msgId.toString() : null);
+        countMetricReporter.mark(-1);
         if (msgId != null && DBusConsumerRecord.class.isInstance(msgId)) {
             DBusConsumerRecord<String, byte[]> record = getMessageId(msgId);
+            logger.error("[dbus-spout-fail] topic: {}, offset: {}, key: {}, size: {}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
+            this.reduceFlowSize(record.serializedValueSize());
             // 如果是拉全量处理出错,则需要将暂停的topic唤醒
             if (Utils.parseCommand(record.key()) == Command.FULL_DATA_PULL_REQ) {
                 ControlMessage message;
@@ -326,6 +343,8 @@ import org.slf4j.LoggerFactory;
             if (seekPoint != null) {
                 consumer.seek(seekPoint);
             }
+        } else {
+            logger.info("[dbus-spout-fail] receive ack message[{}]", msgId.getClass().getName());
         }
         super.fail(msgId);
     }
@@ -357,7 +376,7 @@ import org.slf4j.LoggerFactory;
         if (flowBytes >= MAX_FLOW_THRESHOLD) {
             logger.info("Flow control: Spout gets {} bytes data.", flowBytes);
             try {
-                TimeUnit.MILLISECONDS.sleep(100);
+                TimeUnit.MILLISECONDS.sleep(1000);
             } catch (InterruptedException e) {
                 logger.error(e.getMessage(), e);
             }

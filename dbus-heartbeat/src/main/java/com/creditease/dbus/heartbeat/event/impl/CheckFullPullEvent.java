@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,7 @@
 package com.creditease.dbus.heartbeat.event.impl;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -38,6 +35,8 @@ import com.creditease.dbus.components.sms.SmsType;
 import com.creditease.dbus.heartbeat.container.AlarmResultContainer;
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
+import com.creditease.dbus.heartbeat.dao.ILoadDbusConfigDao;
+import com.creditease.dbus.heartbeat.dao.impl.LoadDbusConfigDaoImpl;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.event.AlarmType;
 import com.creditease.dbus.heartbeat.util.Constants;
@@ -47,6 +46,7 @@ import com.creditease.dbus.heartbeat.util.MsgUtil;
 import com.creditease.dbus.heartbeat.vo.CheckVo;
 import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
+import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
@@ -277,15 +277,24 @@ public class CheckFullPullEvent extends AbstractEvent {
                                     email = map.get("Email");
                                 }
                             }
+                            String projectRelatedEmail = getProjectRelatedFullpullEmail(db_schema[2], db_schema[3], db_schema[4]);
+                            if (StringUtils.isNotBlank(projectRelatedEmail)) {
+                                email += "," + projectRelatedEmail;
+                            }
                             if (StringUtils.isNotBlank(email)) {
                                 LOG.info("[check-fullpull-event] 接收拉取全量邮件报警收件人EMail地址:{}.", email);
-                                String subject = "DBus全量监控报警";
-                                String contents = MsgUtil.format(Constants.MAIL_FULL_PULLER, path, check.getAlarmCnt(), check.getTimeoutCnt());
+                                IMail mail = DBusMailFactory.build();
+                                String subject = "DBus全量监控报警 ";
+                                // String contents = MsgUtil.format(Constants.MAIL_FULL_PULLER, path, check.getAlarmCnt(), check.getTimeoutCnt());
+                                String contents = MsgUtil.format(Constants.MAIL_FULL_PULLER_NEW,
+                                        "DBus全量监控报警", db_schema[2], db_schema[3], db_schema[4], db_schema[5],
+                                        DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
+                                        IMail.ENV,
+                                        fpNodeDetail.toHtml());
                                 Message msg = new Message();
                                 msg.setAddress(email);
                                 msg.setContents(contents);
                                 msg.setSubject(subject);
-                                IMail mail = DBusMailFactory.build();
                                 mail.send(msg);
                             }
 
@@ -321,6 +330,18 @@ public class CheckFullPullEvent extends AbstractEvent {
             }
             sleep(interval, TimeUnit.SECONDS);
         }
+    }
+
+    private String getProjectRelatedFullpullEmail(String datasource, String schema, String table) {
+        ILoadDbusConfigDao dao = new LoadDbusConfigDaoImpl();
+        List<ProjectNotifyEmailsVO> emailsVOs = dao.queryRelatedNotifyEmails(Constants.CONFIG_DB_KEY, datasource, schema, table);
+        Set<String> emails = new HashSet<>();
+        for (ProjectNotifyEmailsVO emailsVO : emailsVOs) {
+            if (emailsVO.getFullPullerEmails() != null) {
+                Collections.addAll(emails, emailsVO.getFullPullerEmails());
+            }
+        }
+        return StringUtils.join(emails, ",");
     }
 
 }

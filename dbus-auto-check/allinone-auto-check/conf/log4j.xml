@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <!-- 控制台Appender -->
+    <appender name="console_out" class="org.apache.log4j.ConsoleAppender">
+        <param name="Target" value="System.out" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%t] %-5p: %d{yyy/MM/dd HH:mm:ss.SSS} %C{1} %L - %m%n" />
+        </layout>
+    </appender>
+
+    <!-- 每天生成一个日志文件Appender -->
+    <appender name="file_out_heartbeat" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="File" value="${logs.home}/auto-check.log"/>
+        <param name="DatePattern" value="yyyyMMdd"/>
+        <param name="Append" value="false"/>
+        <param name="BufferedIO" value="false"/>
+        <param name="ImmediateFlush" value="true"/>
+        <param name="Encoding" value="UTF-8"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%t] %-5p: %d{yyy/MM/dd HH:mm:ss.SSS} %C{1} %L - %m%n" />
+        </layout>
+    </appender>
+
+    <!-- Application Loggers -->
+    <logger name="com.creditease.dbus" additivity="true">
+        <level value="info"/>
+        <appender-ref ref="file_out_heartbeat"/>
+    </logger>
+
+    <!-- Application Loggers -->
+    <logger name="heart_beat" additivity="true">
+        <level value="info"/>
+        <appender-ref ref="file_out_heartbeat"/>
+    </logger>
+
+    <!-- Root Logger -->
+    <root>
+        <priority value="warn"/>
+        <appender-ref ref="console_out" />
+    </root>
+
+</log4j:configuration>

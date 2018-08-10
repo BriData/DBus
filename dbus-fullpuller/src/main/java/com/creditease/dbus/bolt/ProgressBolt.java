@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.creditease.dbus.commons.PropertiesHolder;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -38,13 +37,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.common.DataPullConstants;
 import com.creditease.dbus.common.FullPullHelper;
 import com.creditease.dbus.common.ProgressInfo;
-import com.creditease.dbus.common.utils.JsonUtil;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.Constants.ZkTopoConfForFullPull;
 import com.creditease.dbus.commons.ZkService;
-import com.creditease.dbus.commons.exception.InitializationException;
-import com.creditease.dbus.spout.DataPullingSpout;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 /**
@@ -119,9 +114,7 @@ public class ProgressBolt extends BaseRichBolt {
 
             dsKey = FullPullHelper.getDataSourceKey(JSONObject.parseObject(dataSourceInfo));
             ProgressInfo objProgInfo = getProgressInfo(dsKey, progressInfoNodePath, totalRows, startSecs, totalPartitions);
-            setProgressInfo(objProgInfo, dealRows, finishedCount);
-
-            FullPullHelper.writeFullPullingStatusToDbMgr(dataSourceInfo, "", finishedCount, dealRows, "pulling");
+            setProgressInfo(dataSourceInfo, objProgInfo, dealRows, finishedCount);
 
             if (isFinished(objProgInfo)) {
                 //如果取不到progress信息或者已经出现错误，跳过后来的tuple数据
@@ -132,7 +125,12 @@ public class ProgressBolt extends BaseRichBolt {
                     // 2 不发结束报告
                     objProgInfo.setEndTime(FullPullHelper.getCurrentTimeStampString());
                     FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
-                    FullPullHelper.writeFullErrorStatusToDbMgr(dataSourceInfo, objProgInfo.getEndTime(), "abort", progressInfo.getErrorMsg());
+                    JSONObject fullpullUpdateParams = new JSONObject();
+                    fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+                    fullpullUpdateParams.put("status","abort");
+                    fullpullUpdateParams.put("end_time",FullPullHelper.getCurrentTimeStampString());
+                    fullpullUpdateParams.put("error_msg",progressInfo.getErrorMsg());
+                    FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
                 } else {
                     //如果没有错误，就完成后续工作
                     objProgInfo.setEndTime(FullPullHelper.getCurrentTimeStampString());
@@ -141,7 +139,13 @@ public class ProgressBolt extends BaseRichBolt {
                     FullPullHelper.finishPullReport(zkService, dataSourceInfo, objProgInfo.getEndTime(),
                             Constants.DataTableStatus.DATA_STATUS_OK, null);
                     FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
-                    FullPullHelper.writeFullFinishedStatusToDbMgr(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), "ok", "", finishedCount, dealRows);
+
+                    // JSONObject fullpullUpdateParams = new JSONObject();
+                    // fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+                    // fullpullUpdateParams.put("status","ok");
+                    // fullpullUpdateParams.put("end_time",FullPullHelper.getCurrentTimeStampString());
+                    // fullpullUpdateParams.put("error_msg","");
+                    // FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
                     LOG.info("{}:此次全量拉取处理完成！", dsKey);
                 }
                 deleteProgressInfo(progressInfoNodePath);
@@ -196,17 +200,24 @@ public class ProgressBolt extends BaseRichBolt {
         }
      }
 
-    private void setProgressInfo(ProgressInfo objProgInfo, long dealRows, long finishedCount) {
+    private void setProgressInfo(String dataSourceInfo, ProgressInfo objProgInfo, long dealRows, long finishedCount) {
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
         long curSecs = System.currentTimeMillis() / 1000;
-        long startSecs = objProgInfo.getStartSecs() == null?curSecs:Long.parseLong(objProgInfo.getStartSecs());
+        long startSecs = objProgInfo.getStartSecs() == null ? curSecs : Long.parseLong(objProgInfo.getStartSecs());
         long consumeSecs = curSecs - startSecs;
-        long curDealRows = objProgInfo.getFinishedRows() == null?dealRows:(dealRows + Long.parseLong(objProgInfo.getFinishedRows()));
-        long curFinishedCount = objProgInfo.getFinishedCount() == null?finishedCount:(Long.parseLong(objProgInfo.getFinishedCount()) + finishedCount);
+        long curDealRows = objProgInfo.getFinishedRows() == null ? dealRows : (dealRows + Long.parseLong(objProgInfo.getFinishedRows()));
+        long curFinishedCount = objProgInfo.getFinishedCount() == null ? finishedCount : (Long.parseLong(objProgInfo.getFinishedCount()) + finishedCount);
         objProgInfo.setUpdateTime(currentTimeStampString);
         objProgInfo.setFinishedRows(String.valueOf(curDealRows));
         objProgInfo.setFinishedCount(String.valueOf(curFinishedCount));
         objProgInfo.setConsumeSecs(String.valueOf(consumeSecs) + "s");
+
+        //更新分片完成百分比
+        JSONObject fullpullUpdateParams = new JSONObject();
+        fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+        fullpullUpdateParams.put("finished_partition_count",curFinishedCount);
+        fullpullUpdateParams.put("finished_row_count",curDealRows);
+        FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
      }
 
      private boolean isFinished(ProgressInfo objProgInfo) {

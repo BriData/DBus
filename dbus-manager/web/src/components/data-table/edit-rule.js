@@ -124,6 +124,12 @@ RuleTypeTips[RuleConst.type.regexExtract] = (
     </div>
 );
 
+RuleTypeTips[RuleConst.type.jsonPath] = (
+    <div>
+        <p>从JSON中按key提取value</p>
+    </div>
+);
+
 var editor = null;
 var EditRule = React.createClass({
 
@@ -170,6 +176,7 @@ var EditRule = React.createClass({
                                 <antd.Select.Option value={RuleConst.type.saveAs}>{RuleConst.type.saveAs}</antd.Select.Option>
                                 <antd.Select.Option value={RuleConst.type.prefixOrAppend}>{RuleConst.type.prefixOrAppend}</antd.Select.Option>
                                 <antd.Select.Option value={RuleConst.type.regexExtract}>{RuleConst.type.regexExtract}</antd.Select.Option>
+                                <antd.Select.Option value={RuleConst.type.jsonPath}>{RuleConst.type.jsonPath}</antd.Select.Option>
                                 </antd.Select>
                             </span>
                       </span>

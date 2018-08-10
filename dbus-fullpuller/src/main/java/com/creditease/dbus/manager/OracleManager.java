@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,29 +123,43 @@ public class OracleManager
      + "ALL_CONSTRAINTS.CONSTRAINT_TYPE = 'P' AND "
      + "ALL_CONS_COLUMNS.TABLE_NAME = ? AND "
      + "ALL_CONS_COLUMNS.OWNER = ?";
-  
+
   /**
    * Query to find the UNIQUE key column name for a given table. This query
    * is restricted to the current schema.
    */
+//  public static final String QUERY_UNIQUE_KEY_FOR_TABLE =
+//          "SELECT ALL_IND_COLUMNS.COLUMN_NAME FROM ALL_IND_COLUMNS, "
+//                  + "ALL_INDEXES WHERE ALL_IND_COLUMNS.TABLE_NAME = "
+//                  + "ALL_INDEXES.TABLE_NAME AND "
+//                  + "ALL_IND_COLUMNS.TABLE_NAME = ? AND "
+//                  + "ALL_INDEXES.TABLE_OWNER = ? AND UNIQUENESS = 'UNIQUE'";
+
+
   public static final String QUERY_UNIQUE_KEY_FOR_TABLE =
-          "SELECT ALL_IND_COLUMNS.COLUMN_NAME FROM ALL_IND_COLUMNS, "
-                  + "ALL_INDEXES WHERE ALL_IND_COLUMNS.TABLE_NAME = "
-                  + "ALL_INDEXES.TABLE_NAME AND "
-                  + "ALL_IND_COLUMNS.TABLE_NAME = ? AND "
-                  + "ALL_INDEXES.TABLE_OWNER = ? AND UNIQUENESS = 'UNIQUE'";
+          "SELECT c.COLUMN_NAME FROM ALL_IND_COLUMNS c, ALL_INDEXES i, ALL_TAB_COLUMNS t WHERE "
+          + "c.TABLE_NAME = ? and c.TABLE_OWNER = ? "
+          + "AND c.INDEX_NAME = i.INDEX_NAME AND c.TABLE_OWNER = i.TABLE_OWNER AND c.TABLE_NAME = i.TABLE_NAME "
+          + "AND i.UNIQUENESS = 'UNIQUE'"
+          + "AND c.TABLE_OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME and c.COLUMN_NAME = t.COLUMN_NAME";
   
   /**
    * Query to find the INDEXED column name for a given table. This query
    * is restricted to the current schema.
    */
+//  public static final String QUERY_INDEXED_COL_FOR_TABLE =
+//          "SELECT ALL_IND_COLUMNS.COLUMN_NAME FROM ALL_IND_COLUMNS, "
+//           + "ALL_INDEXES WHERE ALL_IND_COLUMNS.TABLE_NAME = "
+//           + "ALL_INDEXES.TABLE_NAME AND "
+//           + "ALL_IND_COLUMNS.TABLE_NAME = ? AND "
+//           + "ALL_INDEXES.TABLE_OWNER = ? AND UNIQUENESS = 'NONUNIQUE'";
+
   public static final String QUERY_INDEXED_COL_FOR_TABLE =
-          "SELECT ALL_IND_COLUMNS.COLUMN_NAME FROM ALL_IND_COLUMNS, "
-           + "ALL_INDEXES WHERE ALL_IND_COLUMNS.TABLE_NAME = "
-           + "ALL_INDEXES.TABLE_NAME AND "
-           + "ALL_IND_COLUMNS.TABLE_NAME = ? AND "
-           + "ALL_INDEXES.TABLE_OWNER = ? AND UNIQUENESS = 'NONUNIQUE'";  
-  
+          "SELECT c.COLUMN_NAME FROM ALL_IND_COLUMNS c, ALL_INDEXES i, ALL_TAB_COLUMNS t WHERE "
+                  + "c.TABLE_NAME = ? and c.TABLE_OWNER = ? "
+                  + "AND c.INDEX_NAME = i.INDEX_NAME AND c.TABLE_OWNER = i.TABLE_OWNER AND c.TABLE_NAME = i.TABLE_NAME "
+                  + "AND i.UNIQUENESS = 'NONUNIQUE'"
+                  + "AND c.TABLE_OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME and c.COLUMN_NAME = t.COLUMN_NAME";
   /**
    * Query to get the current user for the DB session.   Used in case of
    * wallet logins.

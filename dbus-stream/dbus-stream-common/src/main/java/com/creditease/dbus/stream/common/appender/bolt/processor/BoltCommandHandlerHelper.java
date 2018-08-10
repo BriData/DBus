@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,13 @@ package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import avro.shaded.com.google.common.collect.Maps;
 import com.creditease.dbus.commons.*;
+import com.creditease.dbus.msgencoder.EncodeColumn;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
+import com.creditease.dbus.stream.common.appender.kafka.DataOutputTopicProvider;
+import com.creditease.dbus.stream.common.appender.kafka.TopicProvider;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Pair;
 import com.creditease.dbus.stream.common.appender.utils.PairWrapper;
@@ -284,9 +287,88 @@ public class BoltCommandHandlerHelper {
 
     private static Producer<String, String> createProducer() throws Exception {
         Properties props = PropertiesHolder.getProperties(Constants.Properties.PRODUCER_CONFIG);
-        props.setProperty("client.id", BoltCommandHandlerHelper.class.getName());
+        props.setProperty("client.id", BoltCommandHandlerHelper.class.getName() + "." + System.nanoTime());
 
         Producer<String, String> producer = new KafkaProducer<>(props);
         return producer;
+    }
+
+
+    public static void writeEmailMessage(String subject, String contents, String dataSchema) {
+        try {
+            writeEmailMessage(subject, contents, dataSchema, createProducer());
+        } catch (Exception e) {
+            logger.error("send email error. schema:{}, subject:{}, content:{}", dataSchema, subject, contents, e);
+        }
+    }
+
+    public static void writeEmailMessage(String subject, String contents, String dataSchema, Producer<String, String> producer) {
+        try {
+            // 发邮件
+            ControlMessage gm = new ControlMessage(System.currentTimeMillis(), ControlType.COMMON_EMAIL_MESSAGE.toString(), BoltCommandHandlerHelper.class.getName());
+
+            gm.addPayload("subject", subject);
+            gm.addPayload("contents", contents);
+            gm.addPayload("datasource_schema", Utils.getDatasource().getDsName() + "/" + dataSchema);
+
+            String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.GLOBAL_EVENT_TOPIC);
+            ProducerRecord<String, String> record = new ProducerRecord<>(topic, gm.getType(), gm.toJSONString());
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    logger.error("Send global event error.{}", exception.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            logger.error("send email error. schema:{}, subject:{}, content:{}", dataSchema, subject, contents, e);
+        } finally {
+            if (producer != null) producer.close();
+        }
+    }
+
+    public static void onEncodeError(final DbusMessage dbusMessage, final MetaVersion version, EncodeColumn column, Exception e) {
+        Producer<String, String> producer = null;
+        try {
+            logger.error("");
+            producer = createProducer();
+            TopicProvider provider = new DataOutputTopicProvider();
+            List<String> topics = provider.provideTopics(version.getSchema(), version.getTable());
+            String errorTopic = topics.get(0) + ".error";
+
+            // 将脱敏失败的数据写入到kafka
+            ProducerRecord<String, String> record = new ProducerRecord<>(errorTopic, buildKey(dbusMessage), dbusMessage.toString());
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    logger.error("Send message to 'error topic' error.{}", dbusMessage.toString(), exception);
+                }
+            });
+
+            // 发邮件给管理员
+            String content =
+                    "您好:\n" +
+                    "  报警类型: 数据脱敏异常\n" +
+                    "  数据源:" + Utils.getDatasource().getDsName() + "\n" +
+                    "  数据库:" + version.getSchema() + "\n" +
+                    "  表名: " + version.getTable() + "\n" +
+                    "  脱敏列：" + column.getFieldName() +"\n" +
+                    "  异常信息：" + e.getMessage() + "\n" +
+                    "请及时处理.\n";
+            writeEmailMessage("Dbus数据脱敏异常", content, version.getSchema(), producer);
+        } catch (Exception e1) {
+            logger.error("exception data process error.", e1);
+        } finally {
+            if (producer != null) producer.close();
+        }
+    }
+
+    public static String buildKey(DbusMessage dbusMessage) {
+        long opts;
+        try {
+            opts = Utils.getTimeMills(dbusMessage.messageValue(DbusMessage.Field._UMS_TS_, 0).toString());
+        } catch (Exception e) {
+            opts = System.currentTimeMillis();
+        }
+        String type = dbusMessage.getProtocol().getType();
+        String ns = dbusMessage.getSchema().getNamespace();
+        return Utils.join(".", type, ns, opts + "", "wh_placeholder");
     }
 }

@@ -12,7 +12,8 @@ const RuleConst = {
         select: 'select',
         saveAs: 'saveAs',
         prefixOrAppend: 'prefixOrAppend',
-        regexExtract: 'regexExtract'
+        regexExtract: 'regexExtract',
+        jsonPath: 'jsonPath'
     },
     rule: {
         groupId: 'groupId',

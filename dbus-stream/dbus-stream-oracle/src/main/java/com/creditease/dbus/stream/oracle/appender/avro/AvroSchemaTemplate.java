@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.creditease.dbus.stream.oracle.appender.avro;
 
 import com.creditease.dbus.commons.MetaWrapper;
+import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.commons.exception.InitializationException;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
@@ -64,12 +65,14 @@ public class AvroSchemaTemplate {
         StringBuilder buf = new StringBuilder();
         List<MetaWrapper.MetaCell> columns = ver.getMeta().getColumns();
 
-        // 新生成一个列表
-        List<Column> columnList = columns.stream().map(column -> new Column(column.getColumnName(), column.getInternalColumnId())).collect(Collectors.toList());
+        final boolean includeVirtualColumns = includeVirtualFields();
+        // 新生成一个列表，增加一个filter来处理配置忽略虚拟列的问题
+        List<Column> columnList = columns.stream()
+                .filter(column -> includeVirtualColumns || (!column.isVirtual() && !column.isHidden()))
+                .map(column -> new Column(column.getColumnName(), column.getInternalColumnId())).collect(Collectors.toList());
 
         // 重新按照meta中的internal_column_id升序排列
         columnList.sort((c1, c2) -> c1.columnId - c2.columnId);
-
         for (Column column : columnList) {
             buf.append(String.format(CELL, column.name, column.name)).append(", ");
         }
@@ -78,7 +81,17 @@ public class AvroSchemaTemplate {
         return String.format(TEMPLATE, table, dbSchema, buf.toString());
     }
 
-    /** 生成datasource.schema.table格式的key值 */
+    /**
+     * 新版的oracle forbigdata解决了函数索引的问题，这里判断是否配置了需要忽略虚拟列和隐藏列
+     * @return
+     */
+    private static boolean includeVirtualFields() {
+        Integer configValue = PropertiesHolder.getIntegerValue(Constants.Properties.CONFIGURE, Constants.ConfigureKey.IGNORE_VIRTUAL_FIELDS);
+        return configValue == null || configValue == 0;
+    }
+    /**
+     * 生成datasource.schema.table格式的key值
+     */
     public static String genKey(String schema, String tableName) {
         return Utils.buildDataTableCacheKey(schema, tableName);
     }

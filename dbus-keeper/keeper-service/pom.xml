@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>dbus-keeper</artifactId>
+        <groupId>com.creditease.dbus</groupId>
+        <version>0.5.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>keeper-service</artifactId>
+    <properties>
+        <start-class>com.creditease.dbus.KeeperServiceAPP</start-class>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.creditease.dbus</groupId>
+            <artifactId>keeperboot-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-ribbon</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-eureka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+        <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
+
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.creditease.dbus</groupId>
+            <artifactId>dbus-commons</artifactId>
+        </dependency>
+        <!-- usage for document generation -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+        </dependency>
+    </dependencies>
+    <profiles>
+        <!--<profile>
+            &lt;!&ndash; 测试环境 &ndash;&gt;
+            <id>test</id>
+            <properties>
+                <spring.cloud.config.profile>test</spring.cloud.config.profile>
+                <spring.cloud.config.label>master</spring.cloud.config.label>
+                <spring.cloud.config.uri>http://localhost:19001</spring.cloud.config.uri>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+        </profile>-->
+        <profile>
+            <!-- 生产环境 -->
+            <id>pro</id>
+            <properties>
+                <spring.cloud.config.profile>pro</spring.cloud.config.profile>
+                <spring.cloud.config.label>master</spring.cloud.config.label>
+                <spring.cloud.config.uri>http://gantry.config.creditease.corp</spring.cloud.config.uri>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/application-gen.properties</exclude>
+                    <exclude>**/generatorConfig.xml</exclude>
+                </excludes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.mybatis.generator</groupId>
+                <artifactId>mybatis-generator-maven-plugin</artifactId>
+                <version>1.3.5</version>
+                <configuration>
+                    <configurationFile>${basedir}/src/main/resources/generator/generatorConfig.xml</configurationFile>
+                    <overwrite>true</overwrite>
+                    <verbose>true</verbose>
+                </configuration>
+                <dependencies>
+                    <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
+                </dependencies>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

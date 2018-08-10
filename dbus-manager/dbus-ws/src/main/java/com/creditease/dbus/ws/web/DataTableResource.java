@@ -293,6 +293,23 @@ public class DataTableResource {
     }
 
     @GET
+    @Path("/fetchEncodePlugin")
+    public Response fetchEncodePlugin() {
+        try {
+            MybatisTemplate template = MybatisTemplate.template();
+            List<EncodePlugin> result = template.query((session, args) -> {
+                DesensitizationMapper mapper = session.getMapper(DesensitizationMapper.class);
+                List<EncodePlugin> list = mapper.getEncodePlugin();
+                return list;
+            });
+            return Response.ok().entity(result).build();
+        } catch (Exception e) {
+            logger.error("Error encountered while search encode plugin", e);
+            return Response.status(204).entity(new Result(-1, e.getMessage())).build();
+        }
+    }
+
+    @GET
     @Path("/fetchEncodeAlgorithms")
     public Response fetchEncodeAlgorithms() {
         List<Object> result = new ArrayList<>();
@@ -313,6 +330,8 @@ public class DataTableResource {
                 DesensitizationInformation di = new DesensitizationInformation();
                 if(map.get("sql_type").equals("update")) {
                     di.setId(Integer.valueOf(map.get("id").toString()));
+                    if (map.get("plugin_id") != null && map.get("plugin_id") != "")
+                        di.setPluginId(Integer.valueOf(map.get("plugin_id").toString()));
                     di.setEncodeType(map.get("encode_type").toString());
                     di.setEncodeParam(map.get("encode_param").toString());
                     di.setTruncate(Long.valueOf(map.get("truncate").toString()));
@@ -332,6 +351,8 @@ public class DataTableResource {
                 else if(map.get("sql_type").equals("insert")) {
                     di.setTableId(Long.valueOf(map.get("table_id").toString()));
                     di.setFieldName(map.get("field_name").toString());
+                    if (map.get("plugin_id") != null && map.get("plugin_id") != "")
+                        di.setPluginId(Integer.valueOf(map.get("plugin_id").toString()));
                     di.setEncodeType(map.get("encode_type").toString());
                     di.setEncodeParam(map.get("encode_param").toString());
                     di.setTruncate(Long.valueOf(map.get("truncate").toString()));

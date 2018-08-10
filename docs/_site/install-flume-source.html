@@ -29,7 +29,7 @@
 
         <link rel="stylesheet" href="css/pygments-default.css">
 
-
+        
 
     </head>
     <body>
@@ -77,7 +77,7 @@
 								<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
 								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
 								
                             </ul>
                         </li>
@@ -198,7 +198,7 @@
 
 <h3 id="12-配置文件说明">1.2 配置文件说明</h3>
 
-<p>  在conf目录下，有flume的配置文件：flume-conf.properties，下面说下其配置要点。详细配置请参考flume配置文件：<a href="https://github.com/BriData/DBus/tree/master/init-scripts/init-flume-config">参考链接</a>。</p>
+<p>在conf目录下，有flume的配置文件：flume-conf.properties，下面说下其配置要点。详细配置请参考：<a href="dbus-main/init-scripts/init-flume-config/flume-conf.properties">[下载flume-conf.properties]</a>。</p>
 
 <pre><code>   # 有两个源一个是数据源， 一个是心跳源
    agent.sources=r_hb_0 r_dahb
@@ -329,7 +329,7 @@ Info: Including Hive libraries found via () for Hive access
 
 <h3 id="14-心跳脚本和crontab说明">1.4. 心跳脚本和crontab说明</h3>
 
-<p>DBus提供了心跳shell脚本<a href="https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat">点击下载</a>，用于每60s产生一次json格式的心跳数据，flume可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。</p>
+<p>DBus提供了心跳shell脚本（需要crontab定时运行，下载todo），用于每60s产生一次json格式的心跳数据，flume可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。</p>
 
 <ul>
   <li><strong>心跳脚本目录</strong></li>
@@ -466,7 +466,7 @@ fi</p>
 
 <h3 id="22-数据源配置修改">2.2 数据源配置修改</h3>
 
-<p>因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机的hostname是ip，请将&#8221;.&#8221;转换为&#8221;_&#8220;，例如：127.0.0.1应该要转换为127_0_0_1。</p>
+<p>因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用。</p>
 
 <ul>
   <li>
@@ -482,7 +482,7 @@ fi</p>
 <h3 id="23-配置规则">2.3 配置规则</h3>
 <ul>
   <li>
-    <p><strong>进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考详：(<a href="https://github.com/BriData/DBus/tree/master/docs/config-table.md">config-table.md</a>。</strong></p>
+    <p><strong>进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考todo）。</strong></p>
 
     <p><img src="img/install-flume-source/install-flume-source-add-table-1.png" alt="img/install-flume-source/install-flume-source-add-table-1.png" /></p>
   </li>
@@ -516,7 +516,7 @@ fi</p>
 <h2 id="3-grafana配置与流量监控">3 grafana配置与流量监控</h2>
 
 <ul>
-  <li>**上传grafana配置文件<a href="https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/">参考链接</a> ： **点击Import，上传grafana json配置文件。
+  <li>**上传grafana配置文件<a href="dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_flume.json">点击下载</a>： **点击Import，上传grafana json配置文件。
  <img src="img/install-flume-source/install-flume-source-monitor-config-import-1.png" alt="img/install-flume-source/install-flume-source-monitor-config-import-1.png" /></li>
   <li>
     <p><strong>选择InDB数据库：</strong>ds的名字必须与新建数据线中的数据源名字一致。

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.TableMetaMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.TableMeta">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="ver_id" jdbcType="INTEGER" property="verId" />
+    <result column="column_name" jdbcType="VARCHAR" property="columnName" />
+    <result column="original_column_name" jdbcType="VARCHAR" property="originalColumnName" />
+    <result column="column_id" jdbcType="INTEGER" property="columnId" />
+    <result column="internal_column_id" jdbcType="INTEGER" property="internalColumnId" />
+    <result column="hidden_column" jdbcType="VARCHAR" property="hiddenColumn" />
+    <result column="virtual_column" jdbcType="VARCHAR" property="virtualColumn" />
+    <result column="original_ser" jdbcType="INTEGER" property="originalSer" />
+    <result column="data_type" jdbcType="VARCHAR" property="dataType" />
+    <result column="data_length" jdbcType="BIGINT" property="dataLength" />
+    <result column="data_precision" jdbcType="INTEGER" property="dataPrecision" />
+    <result column="data_scale" jdbcType="INTEGER" property="dataScale" />
+    <result column="char_length" jdbcType="INTEGER" property="charLength" />
+    <result column="char_used" jdbcType="VARCHAR" property="charUsed" />
+    <result column="nullable" jdbcType="VARCHAR" property="nullable" />
+    <result column="is_pk" jdbcType="VARCHAR" property="isPk" />
+    <result column="pk_position" jdbcType="INTEGER" property="pkPosition" />
+    <result column="alter_time" jdbcType="TIMESTAMP" property="alterTime" />
+    <result column="comments" jdbcType="VARCHAR" property="comments" />
+    <result column="default_value" jdbcType="VARCHAR" property="defaultValue" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_table_meta
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.TableMeta">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_table_meta (ver_id, column_name, original_column_name,
+      column_id, internal_column_id, hidden_column,
+      virtual_column, original_ser, data_type,
+      data_length, data_precision, data_scale,
+      char_length, char_used, nullable,
+      is_pk, pk_position,
+      comments, default_value)
+    values (#{verId,jdbcType=INTEGER}, #{columnName,jdbcType=VARCHAR}, #{originalColumnName,jdbcType=VARCHAR},
+      #{columnId,jdbcType=INTEGER}, #{internalColumnId,jdbcType=INTEGER}, #{hiddenColumn,jdbcType=VARCHAR},
+      #{virtualColumn,jdbcType=VARCHAR}, #{originalSer,jdbcType=INTEGER}, #{dataType,jdbcType=VARCHAR},
+      #{dataLength,jdbcType=BIGINT}, #{dataPrecision,jdbcType=INTEGER}, #{dataScale,jdbcType=INTEGER},
+      #{charLength,jdbcType=INTEGER}, #{charUsed,jdbcType=VARCHAR}, #{nullable,jdbcType=VARCHAR},
+      #{isPk,jdbcType=VARCHAR}, #{pkPosition,jdbcType=INTEGER},
+      #{comments,jdbcType=VARCHAR}, #{defaultValue,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.TableMeta">
+    update t_table_meta
+    set ver_id = #{verId,jdbcType=INTEGER},
+      column_name = #{columnName,jdbcType=VARCHAR},
+      original_column_name = #{originalColumnName,jdbcType=VARCHAR},
+      column_id = #{columnId,jdbcType=INTEGER},
+      internal_column_id = #{internalColumnId,jdbcType=INTEGER},
+      hidden_column = #{hiddenColumn,jdbcType=VARCHAR},
+      virtual_column = #{virtualColumn,jdbcType=VARCHAR},
+      original_ser = #{originalSer,jdbcType=INTEGER},
+      data_type = #{dataType,jdbcType=VARCHAR},
+      data_length = #{dataLength,jdbcType=BIGINT},
+      data_precision = #{dataPrecision,jdbcType=INTEGER},
+      data_scale = #{dataScale,jdbcType=INTEGER},
+      char_length = #{charLength,jdbcType=INTEGER},
+      char_used = #{charUsed,jdbcType=VARCHAR},
+      nullable = #{nullable,jdbcType=VARCHAR},
+      is_pk = #{isPk,jdbcType=VARCHAR},
+      pk_position = #{pkPosition,jdbcType=INTEGER},
+      comments = #{comments,jdbcType=VARCHAR},
+      default_value = #{defaultValue,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select id, ver_id, column_name, original_column_name, column_id, internal_column_id, 
+    hidden_column, virtual_column, original_ser, data_type, data_length, data_precision, 
+    data_scale, char_length, char_used, nullable, is_pk, pk_position, alter_time, comments, 
+    default_value
+    from t_table_meta
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, ver_id, column_name, original_column_name, column_id, internal_column_id, 
+    hidden_column, virtual_column, original_ser, data_type, data_length, data_precision, 
+    data_scale, char_length, char_used, nullable, is_pk, pk_position, alter_time, comments, 
+    default_value
+    from t_table_meta
+  </select>
+  <select id="getVersionColumnDetail" resultType="java.util.Map">
+    SELECT id, column_name, data_type, data_length, data_scale, comments
+    FROM t_table_meta
+    where ver_id=#{verId}
+     order by column_name;
+  </select>
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.EncodePluginsMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.EncodePlugins">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="path" jdbcType="VARCHAR" property="path" />
+    <result column="encoders" jdbcType="VARCHAR" property="encoders" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="project_name" jdbcType="VARCHAR" property="projectName" />
+    <result column="project_display_name" jdbcType="VARCHAR" property="projectDisplayName" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_encode_plugins
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.EncodePlugins">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_encode_plugins (name, project_id, path,
+      encoders, status, update_time
+      )
+    values (#{name,jdbcType=VARCHAR}, #{projectId,jdbcType=INTEGER}, #{path,jdbcType=VARCHAR},
+      #{encoders,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, current_timestamp()
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.EncodePlugins">
+    update t_encode_plugins
+    set name = #{name,jdbcType=VARCHAR},
+      project_id = #{projectId,jdbcType=INTEGER},
+      path = #{path,jdbcType=VARCHAR},
+      encoders = #{encoders,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, name, project_id, path, encoders, status, update_time
+    from t_encode_plugins
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select e.*,p.project_name, p.project_display_name
+    from t_encode_plugins e left join t_project p
+    on e.project_id = p.id where e.status='active'
+  </select>
+  <select id="numberOfPluginUse" resultType="java.lang.Integer">
+    select a.num + b.num + c.num from
+    (SELECT COUNT(1) num FROM t_encode_columns where plugin_id = #{id}) a,
+    (SELECT COUNT(1) num FROM t_project_encode_hint where encode_plugin_id = #{id}) b,
+    (SELECT COUNT(1) num FROM t_project_topo_table_encode_output_columns where encode_plugin_id = #{id})c
+  </select>
+  <select id="selectByProject" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    SELECT * FROM t_encode_plugins
+    WHERE project_id = #{projectId,jdbcType=INTEGER} AND status="active" or project_id = 0
+  </select>
+</mapper>

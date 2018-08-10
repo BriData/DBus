@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
 
 package com.creditease.dbus.heartbeat.container;
 
-import com.creditease.dbus.heartbeat.vo.CheckVo;
-
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.creditease.dbus.heartbeat.vo.CheckVo;
 
 public class AlarmResultContainer {
 
@@ -31,6 +31,20 @@ public class AlarmResultContainer {
     private ConcurrentHashMap<String, CheckVo> chbmp = new ConcurrentHashMap<String, CheckVo>();
 
     // private ConcurrentHashMap<String, CheckFullPullVo> cfpmp = new ConcurrentHashMap<String, CheckFullPullVo>();
+
+    private static StringBuilder html = new StringBuilder();
+
+    static {
+        html.append("<table bgcolor=\"#c1c1c1\">");
+        html.append("    <tr bgcolor=\"#ffffff\">");
+        html.append("        <th>Zk Path</th>");
+        html.append("        <th>Alarm Count</th>");
+        html.append("        <th>Time Out</th>");
+        html.append("        <th>Time Out Count</th>");
+        html.append("    </tr>");
+        html.append("{0}");
+        html.append("</table>");
+    }
 
     private AlarmResultContainer() {
     }
@@ -51,6 +65,10 @@ public class AlarmResultContainer {
 
     public CheckVo get(String key) {
         return chbmp.get(key);
+    }
+
+    public String html() {
+        return html.toString();
     }
 
     public void clear() {

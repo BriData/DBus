@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@
 
 package com.creditease.dbus.mail.impl;
 
-import com.creditease.dbus.mail.IMail;
-import com.creditease.dbus.mail.Message;
 import java.io.InputStream;
 import java.util.Properties;
+
+import com.creditease.dbus.mail.IMail;
+import com.creditease.dbus.mail.Message;
+
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +33,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by Administrator on 2017/8/15.
  */
-public class Mail4Customize implements IMail {
+public class Mail4Customize extends IMail {
 
     private static Logger LOG = LoggerFactory.getLogger(Mail4Customize.class);
-
-    private static String ENV;
 
     static {
         InputStream is = null;

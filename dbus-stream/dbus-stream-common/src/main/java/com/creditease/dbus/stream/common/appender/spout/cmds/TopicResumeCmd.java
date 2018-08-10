@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public class TopicResumeCmd extends CtrlCommand {
     private int version;
     private String topic;
     private int batchId;
+    private String commandSender;
 
     @Override
     public Object execCmd(CommandHandler handler, Object... args) {
@@ -92,5 +93,13 @@ public class TopicResumeCmd extends CtrlCommand {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public String getCommandSender() {
+        return commandSender;
+    }
+
+    public void setCommandSender(String commandSender) {
+        this.commandSender = commandSender;
     }
 }

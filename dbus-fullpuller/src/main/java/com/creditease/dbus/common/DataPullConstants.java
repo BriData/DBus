@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,13 @@ public class DataPullConstants {
     public static final String QUERY_COND_IS_NULL = " IS NULL";
     
     public static final String PULL_COLLATE_KEY = "pull.collate";
-    public static final String SPLITTER_STRING_STYLEGROUPS = "splitter.string.styleGroups";
     public static final String SPLITTER_STRING_STYLE_DEFAULT = "all";
-    
+
+    public static final String FULL_DATA_PULL_REQ_PROJECT_ID = "id";
+    public static final String FULL_DATA_PULL_REQ_PROJECT_NAME = "name";
+    public static final String FULL_DATA_PULL_REQ_PROJECT_SINK_ID = "sink_id";
+    public static final String FULL_DATA_PULL_REQ_PROJECT_TOPO_TABLE_ID = "topo_table_id";
+
     public static final String FULL_DATA_PULL_REQ_RESULT_TOPIC= "resultTopic";
     public static final String FULL_DATA_PULL_REQ_INCREASE_VERSION= "INCREASE_VERSION";
     public static final String FULL_DATA_PULL_REQ_INCREASE_BATCH_NO= "INCREASE_BATCH_NO";
@@ -52,6 +56,9 @@ public class DataPullConstants {
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_SCN_NO ="SCN_NO";
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_SEQNO ="SEQNO";
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_COL ="SPLIT_COL";
+    public static final String FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_SHARD_SIZE = "SPLIT_SHARD_SIZE";
+    public static final String FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_STYLE = "SPLIT_SHARD_STYLE";
+
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_BOUNDING_QUERY ="SPLIT_BOUNDING_QUERY";
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_INPUT_CONDITIONS ="INPUT_CONDITIONS";
     public static final String FULL_DATA_PULL_REQ_PAYLOAD_PULL_TARGET_COLS ="PULL_TARGET_COLS";    
@@ -71,7 +78,14 @@ public class DataPullConstants {
      * 数据源存储的key值
      */
     public static final String DATA_SOURCE = "__datasource_key__";
-    
+
+
+    public static class FullPullHistory {
+        public static final String FULL_PULL_REQ_MSG_OFFSET = "full_pull_req_msg_offset";
+        public static final String FIRST_SHARD_MSG_OFFSET = "first_shard_msg_offset";
+        public static final String LAST_SHARD_MSG_OFFSET = "last_shard_msg_offset";
+
+    }
     /**
      * 定义内部类用于将常量分组
      */
@@ -149,8 +163,14 @@ public class DataPullConstants {
     public static final String FULLPULL_PENDING_TASKS_OP_ADD_WATCHING = "add_to_watching_list";
     public static final String FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING = "remove_from_watching_list";
     public static final String FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY = "crashed_notify";
-    
-    public static final int DEFAULT_SPLIT_SHARD_SIZE = 50000;
+
+    public static final String FULLPULL_PENDING_TASKS_OP_PULL_CHECK = "pull_check";
+    public static final String FULLPULL_PENDING_TASKS_OP_SPLIT_CHECK = "split_check";
+    public static final String FULLPULL_PENDING_TASKS_OP_PULL_OR_SPLIT_EXCEPTION = "pull_or_split_Exception";
+    public static final String FULLPULL_PENDING_TASKS_OP_PULL_TOPOLOGY_RESTART = "pull_topology_restart";
+    public static final String FULLPULL_PENDING_TASKS_OP_SPLIT_TOPOLOGY_RESTART = "split_topology_restart";
+
+    public static final int DEFAULT_SPLIT_SHARD_SIZE = 100000;
     public static final int DEFAULT_PREPARE_STATEMENT_FETCH_RECORDS = 2500; // 默认每次fetch 2500行
     private DataPullConstants () {}
 }

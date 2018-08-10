@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
-import com.creditease.dbus.stream.common.appender.utils.PairWrapper;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.creditease.dbus.stream.oracle.appender.avro.GenericData;
 import com.creditease.dbus.stream.oracle.appender.avro.GenericSchemaDecoder;
@@ -90,7 +89,17 @@ public class AppendBoltDefaultHandler implements BoltCommandHandler {
             }
 
             String schemaName = Utils.buildAvroSchemaName(data.getSchemaHash(), data.getTableName());
-            Schema avroSchema = SchemaProvider.getInstance().getSchema(schemaName);
+            Schema avroSchema = null;
+            try {
+                avroSchema = SchemaProvider.getInstance().getSchema(schemaName);
+            } catch (IllegalStateException e) {
+                MetaVersion v = MetaVerController.getVersionFromCache(dbSchema, tableName);
+                MetaWrapper latestMeta = MetaFetcherManager.getOraMetaFetcher().fetch(dbSchema, tableName, -999);
+                syncMeta(v, latestMeta, offset);
+                avroSchema = SchemaProvider.getInstance().getSchema(schemaName);
+                logger.info("Meta of {}.{} was reloaded.", dbSchema, tableName);
+            }
+
 
             List<GenericRecord> results = new ArrayList<>(dataList.size());
 
@@ -141,30 +150,19 @@ public class AppendBoltDefaultHandler implements BoltCommandHandler {
             //***********************************************************************
 
             //TODO 3.将前两步获取到的avro schema 和 meta数据 emit 到下一个bolt处理
-            //Schema as = avroSchema;
+            Schema as = avroSchema;
             DataTable table = ThreadLocalCache.get(Constants.CacheNames.DATA_TABLES, Utils.buildDataTableCacheKey(version.getSchema(), version.getTable()));
 
-            List<OraWrapperData> wpList = new ArrayList<>();
-            for (GenericRecord record : results) {
-                OraWrapperData d = new OraWrapperData();
-                PairWrapper<String, Object> wrapper = BoltCommandHandlerHelper.convertAvroRecord(record, Constants.MessageBodyKey.noorderKeys);
-                d.setDataWrapper(wrapper);
-                if (wrapper.getProperties(Constants.MessageBodyKey.OP_TYPE).toString().toLowerCase().equals("u") && table.getOutputBeforeUpdateFlg() != 0) {
-                    d.setBeforeDataWrapper(BoltCommandHandlerHelper.convertAvroRecordUseBeforeMap(record, Constants.MessageBodyKey.noorderKeys));
-                }
-                wpList.add(d);
-            }
-
             EmitData ed = new EmitData();
-            //emitData.add(EmitData.AVRO_SCHEMA, as);
+            ed.add(EmitData.AVRO_SCHEMA, as);
             ed.add(EmitData.VERSION, version);
             ed.add(EmitData.OFFSET, offset);
-            ed.add(EmitData.MESSAGE, JSON.toJSONString(wpList));
+            ed.add(EmitData.MESSAGE, results);
             ed.add(EmitData.DATA_TABLE, table);
 
             // 测试列顺序使用
             //d.add("fields-order", buf.toString());
-            logger.debug("[appender-appender] emit data offset: {}, table: {}", offset, table.getTableName());
+
             this.emit(listener.getOutputCollector(), input, groupField(dbSchema, tableName), ed, emitCmd);
         } catch (Exception e) {
             logger.error("Error when processing command: {}, data: {}, input: {}", emitCmd.name(), JSON.toJSONString(emitData), input, e);

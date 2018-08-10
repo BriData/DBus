@@ -1,3 +1,23 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -150,21 +170,21 @@ public class DBRecordReader<T extends DBWritable> {
                statement.setObject(2, upperBound, this.split.getSqlType());
             }
 
-            LOG.info("split_index{}: Query Begin: {}, with cond lower: {} and upper: {}.", splitIndex, query, lowBound, upperBound);
+            LOG.info("pull_index{}: Query Begin: {}, with cond lower: {} and upper: {}.", splitIndex, query, lowBound, upperBound);
             
             int fetchSize = dbConf.getPrepareStatementFetchSize();
             statement.setFetchSize(fetchSize);
-            LOG.info("split_index{}: Using fetchSize for next query: {}", splitIndex, fetchSize);
+            LOG.info("pull_index{}: Using fetchSize for next query: {}", splitIndex, fetchSize);
 
             statement.setQueryTimeout(3600);
-            LOG.info("split_index{}: Using queryTimeout 3600 seconds", splitIndex);
+            LOG.info("pull_index{}: Using queryTimeout 3600 seconds", splitIndex);
 
             rset = statement.executeQuery();
-            LOG.info("split_index{}: Query end! ", splitIndex);
+            LOG.info("pull_index{}: executeQuery end! ", splitIndex);
             return rset;
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
-            LoggingUtils.logAll(LOG, "Failed to list columns", e);
+            LoggingUtils.logAll(LOG, "pull_index" + splitIndex +  " Failed to list columns", e);
             return null;
         }
 //        finally {

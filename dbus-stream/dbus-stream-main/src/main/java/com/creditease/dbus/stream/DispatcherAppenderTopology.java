@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,18 +163,27 @@ public class DispatcherAppenderTopology {
             /**
              * appender部分
              */
+            // 初始化配置文件
+            this.initialize(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + appenderTopologyId);
             builder.setSpout("appender-spout", new DbusKafkaSpout(), 1);
             builder.setBolt("appender-dispatcher", new DispatcherBolt(), 1).shuffleGrouping("appender-spout");
-            builder.setBolt("appender-meta-fetcher", new DbusAppenderBolt(), 1).customGrouping("appender-dispatcher", new DbusGrouping());
-            builder.setBolt("appender-wrapper", new WrapperBolt(), 1).customGrouping("appender-meta-fetcher", new DbusGrouping());
-            builder.setBolt("appender-kafka-writer", new DbusKafkaWriterBolt(), 1).customGrouping("appender-wrapper", new DbusGrouping());
-            builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
+            builder.setBolt("appender-meta-fetcher", new DbusAppenderBolt(), getBoltParallelism(Constants.ConfigureKey.META_FETCHER_BOLT_PARALLELISM, 3))
+                    .customGrouping("appender-dispatcher", new DbusGrouping());
+            builder.setBolt("appender-wrapper", new WrapperBolt(), getBoltParallelism(Constants.ConfigureKey.WRAPPER_BOLT_PARALLELISM, 3))
+                    .customGrouping("appender-meta-fetcher", new DbusGrouping());
+            builder.setBolt("appender-kafka-writer", new DbusKafkaWriterBolt(), getBoltParallelism(Constants.ConfigureKey.KAFKA_WRITTER_BOLT_PARALLELISM, 3))
+                    .customGrouping("appender-wrapper", new DbusGrouping());
+            //builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
         }
 
 
         return builder.createTopology();
     }
 
+    private int getBoltParallelism(String key, int defaultValue) {
+        Integer num = PropertiesHolder.getIntegerValue(Constants.Properties.CONFIGURE, key);
+        return num == null ? defaultValue: num.intValue();
+    }
     private void start(StormTopology topology, boolean runAsLocal) throws Exception {
 
         Config conf = new Config();
@@ -197,17 +206,14 @@ public class DispatcherAppenderTopology {
             /**
              * appender配置
              */
-            // 初始化配置文件
-            this.initialize(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + appenderTopologyId);
-
             conf.put(Constants.StormConfigKey.TOPOLOGY_ID, appenderTopologyId);
             conf.put(Constants.StormConfigKey.ZKCONNECT, zookeeper);
             conf.put(Constants.StormConfigKey.DATASOURCE, datasource);
         }
 
-        conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE, 4096);
-        conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 4096);
-        conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE, 4096);
+//        conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE, 4096);
+//        conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 4096);
+//        conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE, 4096);
 
         conf.setDebug(true);
 
@@ -215,28 +221,28 @@ public class DispatcherAppenderTopology {
         //设置worker数
         conf.setNumWorkers(1);
         //设置任务在发出后，但还没处理完成的中间状态任务的最大数量
-        conf.setMaxSpoutPending(150);
+        conf.setMaxSpoutPending(50);
         //设置任务在多久之内没处理完成，就任务这个任务处理失败
         conf.setMessageTimeoutSecs(120);
 
-        conf.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, true);
-        conf.registerSerialization(org.apache.avro.util.Utf8.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DBusConsumerRecord.class);
-        conf.registerSerialization(org.apache.kafka.common.record.TimestampType.class);
-        conf.registerSerialization(com.creditease.dbus.stream.common.appender.bean.EmitData.class);
-        conf.registerSerialization(com.creditease.dbus.stream.common.appender.enums.Command.class);
-        conf.registerSerialization(org.apache.avro.generic.GenericData.class);
-        conf.registerSerialization(com.creditease.dbus.stream.oracle.appender.avro.GenericData.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage12.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage12.Schema12.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage13.Schema13.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage13.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Field.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Payload.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Protocol.class);
-        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.ProtocolType.class);
-        conf.registerSerialization(com.creditease.dbus.stream.oracle.appender.bolt.processor.appender.OraWrapperData.class);
-        conf.registerSerialization(com.creditease.dbus.stream.common.appender.spout.cmds.TopicResumeCmd.class);
+//        conf.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, true);
+//        conf.registerSerialization(org.apache.avro.util.Utf8.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DBusConsumerRecord.class);
+//        conf.registerSerialization(org.apache.kafka.common.record.TimestampType.class);
+//        conf.registerSerialization(com.creditease.dbus.stream.common.appender.bean.EmitData.class);
+//        conf.registerSerialization(com.creditease.dbus.stream.common.appender.enums.Command.class);
+//        conf.registerSerialization(org.apache.avro.generic.GenericData.class);
+//        conf.registerSerialization(com.creditease.dbus.stream.oracle.appender.avro.GenericData.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage12.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage12.Schema12.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage13.Schema13.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage13.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Field.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Payload.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.Protocol.class);
+//        conf.registerSerialization(com.creditease.dbus.commons.DbusMessage.ProtocolType.class);
+//        conf.registerSerialization(com.creditease.dbus.stream.oracle.appender.bolt.processor.appender.OraWrapperData.class);
+//        conf.registerSerialization(com.creditease.dbus.stream.common.appender.spout.cmds.TopicResumeCmd.class);
 
         if (runAsLocal) {
             LocalCluster cluster = new LocalCluster();

@@ -1,3 +1,23 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2018 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -30,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import com.creditease.dbus.common.DataPullConstants;
 import com.creditease.dbus.common.FullPullHelper;
-import com.creditease.dbus.common.ProgressInfo;
 import com.creditease.dbus.common.splitters.BigDecimalSplitter;
 import com.creditease.dbus.common.splitters.BooleanSplitter;
 import com.creditease.dbus.common.splitters.DBSplitter;
@@ -43,8 +62,6 @@ import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ZkService;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.manager.GenericJdbcManager;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A InputFormat that reads input data from an SQL table.
@@ -137,7 +154,7 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
   }
   
 
-    public Map<String, Object> getSplits(String splitCol, GenericJdbcManager dbManager, String dataSourceInfo, ZkService zkService) throws IOException {
+    public Map<String, Object> getSplits(String splitCol, GenericJdbcManager dbManager, String dataSourceInfo, ZkService zkService) throws Exception {
         Map<String, Object> allInfoMap = new HashMap<>();
         List<InputSplit> inputSplitList = new ArrayList<InputSplit>();
         DBConfiguration dbConfiguration = getDBConf();
@@ -155,20 +172,20 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
         LOG.info("Physical Tables count:{}; ", tablePartitionsMap.size());
 
         boolean hasNotProperSplitCol = StringUtils.isBlank(splitCol);
-        int totalRows = 0;
+        long totalRows = 0;
         int totalShardsCount = 0;
         if (hasNotProperSplitCol) {
             //如果不分片的情况
             for (String table : physicalTables) {
                 List<String> tablePartitions = (List<String>) tablePartitionsMap.get(table);
-                LOG.info("{} Partitions count:{}.", table, tablePartitions.size());
+                LOG.info("{} Partitions count: {}.", table, tablePartitions.size());
                 for (String tablePartition : tablePartitions) {
-                    int totalRowsOfCurShard = dbManager.queryTotalRows(table, splitCol, tablePartition);
+                    long totalRowsOfCurShard = dbManager.queryTotalRows(table, splitCol, tablePartition);
                     totalRows = totalRows + totalRowsOfCurShard;
                     totalShardsCount++;
                     //每算出一个分表情况 就更新一次
                     FullPullHelper.updateMonitorSplitPartitionInfo(zkService, progressInfoNodePath, totalShardsCount, totalRows);
-                    LOG.info("Physical Table:{} - Partition:{} - Total Count:{}.", table, tablePartition, totalRowsOfCurShard);
+                    LOG.info("Physical Table:{}.{} - curRows: {}, totalRows: {}", table, tablePartition, totalRowsOfCurShard, totalRows);
 
                     InputSplit inputSplit = new DataDrivenDBInputFormat.DataDrivenDBInputSplit(-1, "1", " = ", "1",
                             " = ", "1");
@@ -189,34 +206,15 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
             // 仅mysql需要考虑设置collate
             if (dsType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())) {
                 pullCollate = FullPullHelper.getConfFromZk(Constants.ZkTopoConfForFullPull.COMMON_CONFIG,
-                        DataPullConstants.PULL_COLLATE_KEY);
+                        DataPullConstants.PULL_COLLATE_KEY, false);
                 pullCollate = (pullCollate != null) ? pullCollate : "";
             }
 
             String logicalTableName = dbConfiguration.getInputTableName();
-            String splitterStyleGroups = FullPullHelper.getConfFromZk(Constants.ZkTopoConfForFullPull.COMMON_CONFIG,
-                    DataPullConstants.SPLITTER_STRING_STYLEGROUPS);
-            LOG.info("splitterStyleGroup=" + splitterStyleGroups);
             LOG.info("logicalTableName=" + logicalTableName);
-            String splitterStyle = DataPullConstants.SPLITTER_STRING_STYLE_DEFAULT;
-            if (splitterStyleGroups != null) {
-                String[] styleGroups = splitterStyleGroups.split("\\|");
-                for (String styleGroup : styleGroups) {
-                    String[] pair = styleGroup.split(":");
-                    if (pair.length == 2) {
-                        String table = pair[0];
-                        String style = pair[1];
-                        if (logicalTableName.equalsIgnoreCase(table)) {
-                            splitterStyle = style.toLowerCase();
-                            break;
-                        }
-                        if (table.equals("*")) {
-                            splitterStyle = style;
-                            break;
-                        }
-                    }
-                }
-            }
+            String splitterStyle = (String) dbConfiguration.get(DBConfiguration.SPLIT_STYLE);
+            splitterStyle = StringUtils.isNotBlank(splitterStyle) ? splitterStyle : DataPullConstants.SPLITTER_STRING_STYLE_DEFAULT;
+
             LOG.info("splitterStyle=" + splitterStyle);
             if (splitterStyle.equals("md5") || splitterStyle.equals("number")) {
                 pullCollate = "";
@@ -225,12 +223,17 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
 
             for (String table : physicalTables) {
                 List<String> tablePartitions = (List<String>) tablePartitionsMap.get(table);
-                LOG.info("{} Partitions count:{}.", table, tablePartitions.size());
+                LOG.info("{} Partitions count: {}.", table, tablePartitions.size());
                 for (String tablePartition : tablePartitions) {
-                    int totalRowsOfCurShard = dbManager.queryTotalRows(table, splitCol, tablePartition);
-                    // 为减少和客户的约定，不要求客户提交分片数目。此处分片数目利用fetchsize计算得来
-                    int numSplitsOfCurShard = totalRowsOfCurShard % splitShardSize == 0
-                            ? totalRowsOfCurShard / splitShardSize : totalRowsOfCurShard / splitShardSize + 1;
+                    long totalRowsOfCurShard = dbManager.queryTotalRows(table, splitCol, tablePartition);
+                    // 如果splitShardSize = -1，则指定分片数为1片
+                    int numSplitsOfCurShard = 1;
+                    // 如果splitShardSize 不为 -1，计算分片数
+                    if(splitShardSize != -1){
+                        // 为减少和客户的约定，不要求客户提交分片数目。此处分片数目利用fetchsize计算得来
+                        numSplitsOfCurShard = totalRowsOfCurShard % splitShardSize == 0
+                                ? (int)(totalRowsOfCurShard / splitShardSize) : (int)(totalRowsOfCurShard / splitShardSize + 1);
+                    }
 
                     totalRows = totalRows + totalRowsOfCurShard;
                     totalShardsCount = totalShardsCount + numSplitsOfCurShard;
@@ -239,7 +242,8 @@ public class DataDrivenDBInputFormat<T extends DBWritable>//, InputSplit
                             numSplitsOfCurShard, this));
 
                     FullPullHelper.updateMonitorSplitPartitionInfo(zkService, progressInfoNodePath, totalShardsCount, totalRows);
-                    LOG.info("Physical Table:{} - Partition:{} - Total Count:{}, Shards count:{}.",table, tablePartition, totalRowsOfCurShard, numSplitsOfCurShard);
+                    LOG.info("Physical Table:{}.{} - curRows: {}, totalRows: {}, Shards count: {}, Split Shard Size:{}.",table, tablePartition,
+                             totalRowsOfCurShard, totalRows, numSplitsOfCurShard, splitShardSize);
                 }
             }
 

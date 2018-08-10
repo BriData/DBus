@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,27 +20,36 @@
 
 package com.creditease.dbus.encoders;
 
+import java.util.Map;
+
 /**
  * Created by zhangyf on 17/6/1.
  */
 public class EncoderConf {
     private String fieldName;
+    private String fieldType;
     private int length;
     private String encodeType;
     private String encodeParam;
     private boolean truncate;
     private String desc;
+    /** dbus message 中原始数据 */
+    private Map<String, Object> raw;
 
     public EncoderConf() {
     }
 
-    public EncoderConf(String fieldName, int length, String encodeType, String encodeParam, boolean truncate, String desc) {
+    public EncoderConf(String fieldName, String fieldType, int length,
+                       String encodeType, String encodeParam, boolean truncate,
+                       Map<String, Object> raw, String desc) {
         this.fieldName = fieldName;
         this.length = length;
         this.encodeType = encodeType;
         this.encodeParam = encodeParam;
         this.truncate = truncate;
         this.desc = desc;
+        this.fieldType = fieldType;
+        this.raw = raw;
     }
 
     public String getFieldName() {
@@ -89,5 +98,21 @@ public class EncoderConf {
 
     public void setDesc(String desc) {
         this.desc = desc;
+    }
+
+    public String getFieldType() {
+        return fieldType;
+    }
+
+    public Map<String, Object> getRaw() {
+        return raw;
+    }
+
+    public void setRaw(Map<String, Object> raw) {
+        this.raw = raw;
+    }
+
+    public void setFieldType(String fieldType) {
+        this.fieldType = fieldType;
     }
 }

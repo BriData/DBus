@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,7 @@ public class SchemaProvider {
                 TimeUnit.MILLISECONDS.sleep(200);
             } catch (Exception e) {
                 logger.error("Get avro schema string error", e);
+                throw new IllegalStateException(e);
             }
         }
         return schemaStr;

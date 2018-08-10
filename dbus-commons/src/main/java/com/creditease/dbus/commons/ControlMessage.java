@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class ControlMessage implements Serializable {
     private String timestamp;
     private String from;
     private Map<String, Object> payload;
+    private Map<String, Object> project;
 
     public static ControlMessage parse(String jsonString) {
         return JSON.parseObject(jsonString, ControlMessage.class);
@@ -55,10 +56,10 @@ public class ControlMessage implements Serializable {
     }
 
     public ControlMessage(long id, String type, String from) {
-        this(id, type, from, new HashMap<>());
+        this(id, type, from, new HashMap<>(), new HashMap<>());
     }
 
-    public ControlMessage(long id, String type, String from, Map<String, Object> payload) {
+    public ControlMessage(long id, String type, String from, Map<String, Object> payload, Map<String, Object> project) {
 
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -69,6 +70,7 @@ public class ControlMessage implements Serializable {
 //        this.timestamp = timestamp;
         this.from = from;
         this.payload = payload;
+        this.project = project;
 
     }
 
@@ -122,6 +124,14 @@ public class ControlMessage implements Serializable {
             return (T)val;
         }
         return null;
+    }
+
+    public Map<String, Object> getProject() {
+        return project;
+    }
+
+    public void setProject(Map<String, Object> project) {
+        this.project = project;
     }
     public String toJSONString () {
        return JSON.toJSONString(this);

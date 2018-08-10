@@ -69,7 +69,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 ### 1.2 配置文件说明
 
-   在conf目录下，有flume的配置文件：flume-conf.properties，下面说下其配置要点。详细配置请参考flume配置文件：[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-flume-config)。
+   在conf目录下，有flume的配置文件：flume-conf.properties，下面说下其配置要点。详细配置请参考：[[下载flume-conf.properties]](dbus-main/init-scripts/init-flume-config/flume-conf.properties)。
 
    ```
    # 有两个源一个是数据源， 一个是心跳源
@@ -197,7 +197,7 @@ Info: Including Hive libraries found via () for Hive access
 
 ### 1.4. 心跳脚本和crontab说明
 
-   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat)，用于每60s产生一次json格式的心跳数据，flume可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。
+   DBus提供了心跳shell脚本（需要crontab定时运行，下载todo），用于每60s产生一次json格式的心跳数据，flume可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。
 
 * **心跳脚本目录** 
 
@@ -321,7 +321,7 @@ flume将数据抽取到Kafka topic后，dbus log_processor程序就可以对该t
 
 ### 2.2 数据源配置修改
 
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
+因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用。
 
 * **修改数据源信息：**点击modify按钮进行修改。
    ![img/install-flume-source/install-flume-source-modify-ds-1.png](img/install-flume-source/install-flume-source-modify-ds-1.png)
@@ -331,7 +331,7 @@ flume将数据抽取到Kafka topic后，dbus log_processor程序就可以对该t
    ![img/install-flume-source/install-flume-source-modify-ds-2.png](img/install-flume-source/install-flume-source-modify-ds-2.png)
 
 ### 2.3 配置规则
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考详：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)。**
+* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考todo）。**
 
    ![img/install-flume-source/install-flume-source-add-table-1.png](img/install-flume-source/install-flume-source-add-table-1.png)
 
@@ -357,7 +357,7 @@ flume将数据抽取到Kafka topic后，dbus log_processor程序就可以对该t
 
 ## 3 grafana配置与流量监控
 
-* **上传grafana配置文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/) ： **点击Import，上传grafana json配置文件。
+* **上传grafana配置文件[点击下载](dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_flume.json)： **点击Import，上传grafana json配置文件。
    ![img/install-flume-source/install-flume-source-monitor-config-import-1.png](img/install-flume-source/install-flume-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-flume-source/install-flume-source-monitor-config-import-2.png](img/install-flume-source/install-flume-source-monitor-config-import-2.png)

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.InstanceAlreadyExistsException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
@@ -101,9 +102,16 @@ public class MetaEventWarningSender {
 
     private static Producer<String, String> createProducer() throws Exception {
         Properties props = PropertiesHolder.getProperties(Constants.Properties.PRODUCER_CONFIG);
-        props.setProperty("client.id", "meta-event-warning");
+        //props.setProperty("client.id", "meta-event-warning");
 
-        Producer<String, String> producer = new KafkaProducer<>(props);
+        Producer<String, String> producer = null;
+        try {
+            producer = new KafkaProducer<>(props);
+        } catch (Exception e) {
+            if(!(e instanceof InstanceAlreadyExistsException)) {
+                throw e;
+            }
+        }
         return producer;
     }
 }

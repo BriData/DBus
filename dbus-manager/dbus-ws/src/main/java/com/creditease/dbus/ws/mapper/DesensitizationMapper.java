@@ -22,10 +22,12 @@ package com.creditease.dbus.ws.mapper;
 
 import com.creditease.dbus.ws.domain.DbusDataSource;
 import com.creditease.dbus.ws.domain.DesensitizationInformation;
+import com.creditease.dbus.ws.domain.EncodePlugin;
 
 import java.util.List;
 
 public interface DesensitizationMapper {
+    List<EncodePlugin> getEncodePlugin();
     List<DesensitizationInformation> getDesensitizationInformation(Object tableId);
     int updateDesensitizationInformation(DesensitizationInformation di);
     int deleteDesensitizationInformation(DesensitizationInformation di);

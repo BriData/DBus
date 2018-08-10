@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectTopologyMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectTopology">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="topo_name" jdbcType="VARCHAR" property="topoName" />
+    <result column="topo_config" jdbcType="VARCHAR" property="topoConfig" />
+    <result column="jar_version" jdbcType="VARCHAR" property="jarVersion" />
+    <result column="jar_file_path" jdbcType="VARCHAR" property="jarFilePath" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="topo_comment" jdbcType="VARCHAR" property="topoComment" />
+    <result column="project_id" jdbcType="INTEGER" property="projectId" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_topo
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTopology">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_topo (topo_name, topo_config, jar_version,
+      jar_file_path, status, topo_comment, project_id,
+      update_time)
+    values (#{topoName,jdbcType=VARCHAR}, #{topoConfig,jdbcType=VARCHAR}, #{jarVersion,jdbcType=VARCHAR},
+      #{jarFilePath,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{topoComment,jdbcType=VARCHAR}, #{projectId,jdbcType=INTEGER},
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectTopology">
+    update t_project_topo
+    <set>
+      <if test="topoName != null">topo_name = #{topoName,jdbcType=VARCHAR},</if>
+      <if test="topoConfig != null">topo_config = #{topoConfig,jdbcType=VARCHAR},</if>
+      <if test="jarVersion != null">jar_version = #{jarVersion,jdbcType=VARCHAR},</if>
+      <if test="jarFilePath != null">jar_file_path = #{jarFilePath,jdbcType=VARCHAR},</if>
+      <if test="status != null">status = #{status,jdbcType=VARCHAR},</if>
+      <if test="topoComment != null">topo_comment = #{topoComment,jdbcType=VARCHAR},</if>
+      <if test="projectId != null">project_id = #{projectId,jdbcType=INTEGER},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP}</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, topo_name, topo_config, jar_version, jar_file_path, status, topo_comment, project_id,
+    update_time
+    from t_project_topo
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, topo_name, topo_config, jar_version, jar_file_path, status, topo_comment, project_id,
+    update_time
+    from t_project_topo
+  </select>
+  <select id="search" resultType="java.util.Map" parameterType="java.util.Map">
+    select
+      tpt.id,
+      tpt.topo_name topoName,
+      tpt.topo_config topoConfig,
+      tpt.jar_version jarVersion,
+      tpt.jar_file_path jarFilePath,
+      tpt.status status,
+      tpt.topo_comment topoComment,
+      tpt.project_id projectId,
+      tpt.update_time updateTime,
+      tp.project_name projectName,
+      tp.project_display_name projectDisplayName
+    from
+      t_project_topo tpt,
+      t_project tp
+    <where>
+      tpt.project_id = tp.id
+      <if test="projectId != null">and project_id = #{projectId}</if>
+      <if test="topoName != null">and topo_name like "%"#{topoName}"%"</if>
+    </where>
+    <if test="sortby != null">
+      order by ${sortby} <if test="order != null">${order}</if>
+    </if>
+  </select>
+  <select id="selectCountByTopoName" resultType="java.lang.Integer" parameterType="java.lang.String">
+    select count(id) from t_project_topo where topo_name = #{email}
+  </select>
+  <select id="selectOutPutTopics" resultType="java.util.Map" parameterType="java.util.Map">
+    SELECT
+      GROUP_CONCAT(wk.output_topic) topics,
+      wk.sink_name sinkName,
+      wk.url url
+    FROM
+      (SELECT
+         DISTINCT
+         tptt.output_topic,
+         ts.sink_name,
+         ts.url
+       FROM
+         t_project_topo_table tptt,
+         t_sink ts
+       WHERE
+         tptt.sink_id = ts.id AND
+         tptt.project_id =  #{projectId, jdbcType=INTEGER} AND
+         tptt.topo_id =  #{topoId, jdbcType=INTEGER}
+      ) wk
+    GROUP BY
+      sink_name, url
+  </select>
+  <select id="selectInPutTopics" resultType="java.util.Map" parameterType="java.util.Map">
+    SELECT
+      tdt.output_topic outputTopic,
+      GROUP_CONCAT(tptt.status) status,
+	  GROUP_CONCAT(tdt.table_name) tableName
+    FROM
+      t_project_topo_table tptt,
+      t_data_tables tdt
+    WHERE
+      tptt.table_id = tdt.id AND
+      tptt.project_id = #{projectId, jdbcType=INTEGER} AND
+      tptt.topo_id = #{topoId, jdbcType=INTEGER}
+    GROUP BY
+      tdt.output_topic
+  </select>
+</mapper>

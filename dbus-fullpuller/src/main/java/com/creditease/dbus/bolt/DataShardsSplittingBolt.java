@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 
-import com.creditease.dbus.commons.PropertiesHolder;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -59,7 +58,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
     private Logger LOG = LoggerFactory.getLogger(getClass());
     private static final long serialVersionUID = 1L;
     private boolean initialized = false;
-    
+
     private String topologyId;
     //是否是独立拉全量
     private boolean isGlobal;
@@ -68,12 +67,12 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
     private String dsName;
     private String zkTopoRoot;
     ZkService zkService = null;
-    
+
     private OutputCollector collector;
-    private Properties commonProps; 
+    private Properties commonProps;
     private Producer byteProducer;
     private Map confMap;
-    
+
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
         this.topologyId = (String) conf.get(Constants.StormConfigKey.FULL_SPLITTER_TOPOLOGY_ID);
@@ -144,13 +143,13 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
      */
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        
+
     }
-    
+
     public void doSplitting(Tuple input, String dataType) {
         String dataSourceInfo = (String) input.getValue(0);
         String errorMsg = "";
-        
+
         boolean metaCompatible = FullPullHelper.validateMetaCompatible(dataSourceInfo);
         if(!metaCompatible) {
             errorMsg = "Detected that META is not compatible now!";
@@ -161,23 +160,30 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             collector.fail(input);
             return;
         }
-        
+
         String dsKey = FullPullHelper.getDataSourceKey(JSONObject.parseObject(dataSourceInfo));
         DBConfiguration dbConf = FullPullHelper.getDbConfiguration(dataSourceInfo);
         DataDrivenDBInputFormat inputFormat = new DataDrivenDBInputFormat();
         inputFormat.setConf(dbConf);
         GenericJdbcManager dbManager = null;
-       
+
         try {
+            //更新状态为splitting
+            JSONObject fullpullUpdateParams = new JSONObject();
+            fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+            fullpullUpdateParams.put("status","splitting");
+            fullpullUpdateParams.put("start_split_time",FullPullHelper.getCurrentTimeStampString());
+            FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
+
             dbManager = FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY));
             //获取分片列
             String splitByCol = DBHelper.getSplitColumn(dbManager, dbConf);
-            LOG.info("Will use col [{}] to split data.", splitByCol);
+            LOG.info("doSplitting() Will use col [{}] to split data.", splitByCol);
             // oracleManager.checkTableImportOptions();
             //根据分片列获取分片信息
             Map<String,Object> splitInfoMap = inputFormat.getSplits(splitByCol, dbManager, dataSourceInfo, zkService);
             //从分片信息中获取总行数
-            int totalRows = (int)splitInfoMap.get(Constants.TABLE_SPLITTED_TOTAL_ROWS_KEY);
+            long totalRows = (long)splitInfoMap.get(Constants.TABLE_SPLITTED_TOTAL_ROWS_KEY);
             //int splitsCount= (int)splitInfoMap.get(Constants.TABLE_SPLITTED_SHARDS_COUNT_KEY);
 
             JSONObject wrapperObj = JSONObject.parseObject(dataSourceInfo);
@@ -194,6 +200,8 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
 
             //包装每一片信息，写kafka，供数据拉取进程使用
             int splitIndex = 0;
+            Long firstShardMsgOffset = null;
+            Long lastShardMsgOffset = null;
             RecordMetadata producedRecord = null;
             for (InputSplit inputSplit : inputSplitList) {
                 JSONObject wrapperObject = new JSONObject();
@@ -204,22 +212,38 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
                 JSONObject inputSplitJsonObject = (JSONObject) JSONObject.toJSON(inputSplit);
                 wrapperObject.put(DataPullConstants.DATA_CHUNK_SPLIT, inputSplitJsonObject);
                 wrapperObject.put(DataPullConstants.DATA_CHUNK_SPLIT_INDEX, ++splitIndex);
-                
+
                 String fullPullMediantTopic = commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_MEDIANT_TOPIC);
                 ProducerRecord record = new ProducerRecord<>(fullPullMediantTopic, dataType, wrapperObject.toString().getBytes());
                 Future<RecordMetadata> future = byteProducer.send(record);
                 producedRecord = future.get();
                 if(splitIndex == 1) {
-                    FullPullHelper.writeSplitStatusToDbManager(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), version, batchNo, splitsCount, totalRows, "splitting");
+                    firstShardMsgOffset = producedRecord.offset();
                 }
-                LOG.info("{}:完成分片，完成第{}片分片, 所属分区：{}", dsKey + "." + inputSplit.getTargetTableName(), splitIndex, inputSplit.getTablePartitionInfo());
+                if(splitIndex == inputSplitList.size()){
+                    lastShardMsgOffset = producedRecord.offset();
+                }
+                LOG.info("dskey: {}, 生成第{}片分片, 所属分区：{}.{}, lower:{}, upper:{}", dsKey, splitIndex,
+                         inputSplit.getTargetTableName(), inputSplit.getTablePartitionInfo(),
+                        ((DataDrivenDBInputFormat.DataDrivenDBInputSplit)inputSplit).getLowerValue(),
+                        ((DataDrivenDBInputFormat.DataDrivenDBInputSplit)inputSplit).getUpperValue());
             }
+            fullpullUpdateParams.clear();
+            fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+            fullpullUpdateParams.put("version",version);
+            fullpullUpdateParams.put("batch_id",batchNo);
+            fullpullUpdateParams.put("total_partition_count",splitsCount);
+            fullpullUpdateParams.put("total_row_count",totalRows);
+            fullpullUpdateParams.put("status","splitting");
+            fullpullUpdateParams.put("first_shard_msg_offset",firstShardMsgOffset);
+            fullpullUpdateParams.put("last_shard_msg_offset",lastShardMsgOffset);
+            FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
             collector.ack(input);
-            LOG.info("{}:完成分片，总共分为{}片", dsKey, splitsCount);
+            LOG.info("{}:生成分片完毕，总共分为{}片", dsKey, splitsCount);
             try {
-                LOG.info("..............FullPullHelper 完成分片 start..........");
+                // LOG.info("..............FullPullHelper 生成分片完毕 start..........");
                 FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
-                LOG.info("..............FullPullHelper 完成分片 end............");
+                // LOG.info("..............FullPullHelper 生成分片完毕 end............");
             }catch (Exception e) {
                 e.printStackTrace();
             }
@@ -242,7 +266,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             }
         }
     }
-    
+
     public void stopTopo(Tuple input) {
         String data = (String) input.getValue(0);
         try {
@@ -252,13 +276,13 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             Future<RecordMetadata> future = byteProducer.send(record);
             RecordMetadata producedRecord = null;
             producedRecord = future.get();
-            LOG.info("收到停服命令:{},转发给拉取Topology", data); 
-            
+            LOG.info("收到停服命令:{},转发给拉取Topology", data);
+
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
             //Call storm api to kill topo
-            int topoKillWaitTime = Constants.ZkTopoConfForFullPull.TOPOS_KILL_STORM_API_WAITTIME_PARAM_DEFAULT_VAL; 
+            int topoKillWaitTime = Constants.ZkTopoConfForFullPull.TOPOS_KILL_STORM_API_WAITTIME_PARAM_DEFAULT_VAL;
             String topoKillWaitTimeParam = commonProps.getProperty(Constants.ZkTopoConfForFullPull.TOPOS_KILL_STORM_API_WAITTIME_PARAM);
             try {
                 topoKillWaitTime=Integer.valueOf(topoKillWaitTimeParam);
@@ -266,19 +290,18 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             catch (Exception e) {
                 // Just ignore, use the default value
             }
-            
+
             String killResult = CommandCtrl.killTopology(zkService, topologyId, topoKillWaitTime);
             // TODO Topo都kill了，后面这几行代码还能执行？
             LOG.info("Id为 {}的Topology Kill已結束.", topologyId);
             // collector.ack(input);  //不跟踪消息
-        }
-        catch (Exception e) {
+        }catch (Exception e) {
             LOG.error("收到停服命令:{},处理时发生异常！", data);
             collector.fail(input);
         }
     }
-    
-    private void writeTotalCountToZk(ZkService zkService, String dataSourceInfo, int totalCount, int totalRows){
+
+    private void writeTotalCountToZk(ZkService zkService, String dataSourceInfo, int totalCount, long totalRows){
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
 
         String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,13 @@
 
 package com.creditease.dbus.heartbeat.dao;
 
+import com.creditease.dbus.heartbeat.vo.HeartBeatMonitorVo;
+
 public interface IHeartBeatDao {
 
     int sendPacket(String key, String dsName, String schemaName, String tableName, String packet, boolean isMysql);
 
     int deleteOldHeartBeat(String key, boolean isMysql);
+
+    HeartBeatMonitorVo queryLatestHeartbeat(String key, String dsName, String schemaName, boolean isMysql);
 }

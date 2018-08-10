@@ -92,6 +92,7 @@ var DataTable = React.createClass({
         var updateParam = {
             id:data.id,
             tableName:data.tableName,
+            tableNameAlias:data.tableNameAlias,
             description:data.description,
             physicalTableRegex:data.physicalTableRegex,
             outputBeforeUpdateFlg:data.outputBeforeUpdateFlg,
@@ -128,7 +129,9 @@ var DataTable = React.createClass({
             tableName: data.tableName,
             ctrlTopic: data.ctrlTopic,
             tableOutputTopic: data.outputTopic,
+            physicalTables: data.physicalTableRegex,
             outputTopic: newResultTopic,
+            resultTopic: newResultTopic,
             version: false,
             batch: false,
             messageType: '单表独立全量拉取'
@@ -223,6 +226,11 @@ var DataTable = React.createClass({
             return "danger"
         }
     },
+
+    handleEncodePackageChange : function(value, rowIndex) {
+        store.actions.encodePackageChange(value, rowIndex)
+    },
+
     render: function() {
         var rows = this.state.data.list || [];
 
@@ -362,6 +370,10 @@ var DataTable = React.createClass({
                         <Column
                             header={ <Cell>tableName</Cell> }
                             cell={ <TextCell data={rows} col="tableName" onDoubleClick={this.openDialogByKey.bind(this,"tableName")}/>}
+                            width={210} />
+                        <Column
+                            header={ <Cell>tableNameAlias</Cell> }
+                            cell={ <TextCell data={rows} col="tableNameAlias" onDoubleClick={this.openDialogByKey.bind(this,"tableNameAlias")}/>}
                             width={210} />
                         <Column
                             header={ <Cell>status</Cell> }

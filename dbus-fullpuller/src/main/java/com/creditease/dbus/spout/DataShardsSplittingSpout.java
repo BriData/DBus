@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,16 @@
 
 package com.creditease.dbus.spout;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
+import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.common.DBHelper;
+import com.creditease.dbus.common.DataPullConstants;
+import com.creditease.dbus.common.FullPullHelper;
+import com.creditease.dbus.common.TopoKillingStatus;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.Constants.ZkTopoConfForFullPull;
+import com.creditease.dbus.commons.ZkService;
+import com.creditease.dbus.commons.exception.InitializationException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -39,15 +41,14 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.common.DBHelper;
-import com.creditease.dbus.common.DataPullConstants;
-import com.creditease.dbus.common.FullPullHelper;
-import com.creditease.dbus.common.TopoKillingStatus;
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.Constants.ZkTopoConfForFullPull;
-import com.creditease.dbus.commons.ZkService;
-import com.creditease.dbus.commons.exception.InitializationException;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 读取kafka数据的Spout实现 Created by Shrimp on 16/6/2.
@@ -57,7 +58,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
     private static final long serialVersionUID = 1L;
 
     private long overflowCount = 0;
-    
+
     // 用来发射数据的工具类
     private SpoutOutputCollector collector;
 
@@ -88,13 +89,15 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
     private int MAX_FLOW_THRESHOLD;
     Properties commonProps;
 
-    private int suppressLoggingCount = 0;
+    final private int EMPTY_RUN_COUNT = 60000;
+    private int suppressLoggingCount = EMPTY_RUN_COUNT / 2;
 
     /**
      * 初始化collector
      */
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+        LOG.info("Splitting Spout {} is starting!", topologyId);
         this.collector = collector;
         this.zkConnect = (String) conf.get(Constants.StormConfigKey.ZKCONNECT);
         this.topologyId = (String) conf.get(Constants.StormConfigKey.FULL_SPLITTER_TOPOLOGY_ID);
@@ -113,8 +116,12 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
 
             // 检查是否有遗留未决的拉取任务。如果有，resolve（发resume消息通知给appender，并在zk上记录，且将监测到的pending任务写日志，方便排查问题）。
             // 对于已经resolve的pending任务，将其移出pending队列，以免造成无限重复处理。
-            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, null,
-                    DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY);
+            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, null,DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY);
+
+            FullPullHelper.updatePendingTasksToHistoryTable(null, dsName,
+                    DataPullConstants.FULLPULL_PENDING_TASKS_OP_SPLIT_TOPOLOGY_RESTART,
+                    consumer, commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC),null);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new InitializationException();
@@ -124,11 +131,12 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
 
     /**
      * delay Print message
+     *
      * @return
      */
-    private boolean canPrintNow () {
+    private boolean canPrintNow() {
         suppressLoggingCount++;
-        if (suppressLoggingCount % 60000 == 0) {
+        if (suppressLoggingCount % EMPTY_RUN_COUNT == 0) {
             suppressLoggingCount = 0;
             return true;
         }
@@ -144,7 +152,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         if (flowedMsgCount >= MAX_FLOW_THRESHOLD) {
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
-                if (overflowCount  %  100 == 0){
+                if (overflowCount % 100 == 0) {
                     LOG.warn("splitSPout overflow, flowedMsgCount: {}, MAX_FLOW_THRESHOLD: {}.", flowedMsgCount, MAX_FLOW_THRESHOLD);
                 }
                 overflowCount++;
@@ -204,7 +212,6 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                 if (null == key) {
                     continue;
                 }
-
                 String dataSourceInfo = new String(record.value());
                 try {
                     if (key.equals(DataPullConstants.COMMAND_FULL_PULL_RELOAD_CONF)) {
@@ -220,15 +227,19 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                         collector.emit(new Values(dataSourceInfo));
                     } else if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
                             || key.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
+                        //判断任务是否安全
+                        if (!confirmTaskIsSecurity(dataSourceInfo)) {
+                            return;
+                        }
+                        //判断能否继续分片(上一个任务状态必须是Ending/abort状态才可以开始新的分片)
+                        waitForLastTaskEnd(dataSourceInfo);
                         //处理消息
                         LOG.info("Received full pull request: {}", dataSourceInfo);
                         flowedMsgCount++;
 
                         // 每次拉取都要进行批次号加1处理。这条语句的位置不要变动。
                         dataSourceInfo = increseBatchNo(dataSourceInfo);
-
-                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,
-                                DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
                         //创建zk节点并在zk节点上输出拉取信息
                         FullPullHelper.startSplitReport(zkService, dataSourceInfo);
                         collector.emit(new Values(dataSourceInfo), record);
@@ -243,12 +254,10 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                     LOG.error(errorMsg, e);
 
                     if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
-                        || key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
-                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,
-                                DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
-                        FullPullHelper.finishPullReport(zkService, dataSourceInfo,
-                                FullPullHelper.getCurrentTimeStampString(), Constants.DataTableStatus.DATA_STATUS_ABORT,
-                                errorMsg);
+                            || key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
+                        FullPullHelper.finishPullReport(zkService, dataSourceInfo,FullPullHelper.getCurrentTimeStampString(),
+                                Constants.DataTableStatus.DATA_STATUS_ABORT,errorMsg);
                     }
                     throw e;
                 }
@@ -257,6 +266,132 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             LOG.error("Splitting encountered exception.", e);
             throw e;
         }
+    }
+
+    /**
+     * 检查收到的任务是否是安全的任务
+     *
+     * @param dataSourceInfo
+     */
+    private boolean confirmTaskIsSecurity(String dataSourceInfo) {
+        JSONObject jsonObject = JSONObject.parseObject(dataSourceInfo);
+        JSONObject project = jsonObject.getJSONObject("project");
+        //非多租户暂时无法控制安全问题
+        if (project == null || project.isEmpty()) {
+            return true;
+        }
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet ret = null;
+        StringBuilder sql = null;
+        try {
+            int projectId = project.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_ID);
+            int topoTableId = project.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_TOPO_TABLE_ID);
+            conn = DBHelper.getDBusMgrConnection();
+            sql = new StringBuilder();
+            sql.append("select r.* from t_project_resource r ,t_project_topo_table t  ");
+            sql.append("where r.table_id = t.table_id and r.project_id = ? and t.id = ? ");
+
+            pst = conn.prepareStatement(sql.toString());
+            pst.setInt(1, projectId);
+            pst.setInt(2, topoTableId);
+            ret = pst.executeQuery();
+            if (ret.next()) {
+                String fullpullEnableFlag = ret.getString("fullpull_enable_flag");
+                if (fullpullEnableFlag != null && "1".equalsIgnoreCase(fullpullEnableFlag)) {
+                    return true;
+                }
+            }
+
+            //任务不安全,不能拉全量
+            Long id = jsonObject.getJSONObject("payload").getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+            sql = new StringBuilder();
+            sql.append("update t_fullpull_history h set h.state = 'abort',h.error_msg ='该任务对应的表不能拉全量,请联系管理员修改权限!'  where h.id = ?");
+            pst = conn.prepareStatement(sql.toString());
+            pst.setLong(1, id);
+            pst.executeUpdate();
+            LOG.info("任务对应的表不能拉全量. update state to abort id:{} \n. dataSourceInfo:{}", id, dataSourceInfo);
+            return false;
+        } catch (Exception e) {
+            //出于安全考考虑,查询出错不能拉全量
+            LOG.error("Exception Info:{}", e);
+            return false;
+        } finally {
+            try {
+                if (ret != null) {
+                    ret.close();
+                }
+                if (pst != null) {
+                    pst.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOG.error("Exception Info:{}", e);
+            }
+
+        }
+    }
+
+    /**
+     * 只能有一个任务处于splitting,puliing的状态
+     * 阻断增量的拉全量暂时没有好的处理办法,可能会有normal和indepent的任务同时处于splitting和pulling
+     * @param dataSourceInfo
+     */
+    private void waitForLastTaskEnd(String dataSourceInfo) {
+        JSONObject jsonObject = JSONObject.parseObject(dataSourceInfo);
+        Long id = jsonObject.getJSONObject("payload").getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet ret = null;
+        boolean flag = true;
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT  h.id ,h.state FROM t_fullpull_history h ");
+            if(isGlobal){
+                sql.append(" WHERE h.type = 'global'");
+            }else{
+                sql.append(" WHERE h.type = 'indepent' and h.dsName = '").append(dsName).append("'");
+            }
+            sql.append(" and h.id < ").append(id);
+            sql.append(" ORDER BY h.id DESC LIMIT 1 ");
+
+            while (flag) {
+                pst = conn.prepareStatement(sql.toString());
+                ret = pst.executeQuery();
+                if (ret.next()) {
+                    String state = ret.getString("state");
+                    long LId = ret.getLong("id");
+                    if (StringUtils.isNotBlank(state) && ("ending".equals(state) || "abort".equals(state))) {
+                        break;
+                    }
+                    LOG.info("waitting for last task to end . id:{} ", LId);
+                    TimeUnit.MILLISECONDS.sleep(60000);
+                } else {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Exception Info:{}", e);
+        } finally {
+            try {
+                if (ret != null) {
+                    ret.close();
+                }
+                if (pst != null) {
+                    pst.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOG.error("Exception Info:{}", e);
+            }
+        }
+
+
     }
 
     /**
@@ -448,4 +583,4 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             FullPullHelper.saveReloadStatus(reloadMsgJson, "splitting-spout", true, zkConnect);
         }
     }
-    }
+}

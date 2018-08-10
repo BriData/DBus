@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2018 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,6 +53,8 @@ public class HeartBeatVo implements Serializable {
 
     private String monitorPath;
 
+    private String projectMonitorPath;
+
     private String monitorFullPullPath;
 
     private Long lifeInterval;
@@ -86,6 +88,10 @@ public class HeartBeatVo implements Serializable {
     private Integer queryTimeout;
 
     private Map<String, Map<String, String>> additionalNotify;
+
+    private Long checkMasterSlaveDelayInterval;
+
+    private Long masterSlaveDelayTimeout;
 
     public Long getHeartbeatInterval() {
         return heartbeatInterval;
@@ -137,6 +143,14 @@ public class HeartBeatVo implements Serializable {
 
     public String getMonitorPath() {
         return monitorPath;
+    }
+
+    public String getProjectMonitorPath() {
+        return projectMonitorPath;
+    }
+
+    public void setProjectMonitorPath(String projectMonitorPath) {
+        this.projectMonitorPath = projectMonitorPath;
     }
 
     public void setMonitorPath(String monitorPath) {
@@ -311,5 +325,21 @@ public class HeartBeatVo implements Serializable {
 
     public void setQueryTimeout(Integer queryTimeout) {
         this.queryTimeout = queryTimeout;
+    }
+
+    public Long getCheckMasterSlaveDelayInterval() {
+        return checkMasterSlaveDelayInterval;
+    }
+
+    public void setCheckMasterSlaveDelayInterval(Long checkMasterSlaveDelayInterval) {
+        this.checkMasterSlaveDelayInterval = checkMasterSlaveDelayInterval;
+    }
+
+    public Long getMasterSlaveDelayTimeout() {
+        return masterSlaveDelayTimeout;
+    }
+
+    public void setMasterSlaveDelayTimeout(Long masterSlaveDelayTimeout) {
+        this.masterSlaveDelayTimeout = masterSlaveDelayTimeout;
     }
 }
