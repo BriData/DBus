@@ -151,59 +151,66 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 
 
-2). 修改canal 配置文件
+2). 使用脚本，自动部署canal 配置文件
 
-canal.properties文件配置：canal.properties文件在目录/app/canal-testdb/conf下
+解压提供的zip包（名称应该是：dbus-canal-auto-0.5.0.zip），然后将conf目录下的canal-auto.properties文件中内容，修改成自己的信息。例如：
 
   ```properties
-    # 需要配置的项有：
-    #canal编号 标识canal server，需要不和其他canal server的id重复
-  	canal.id = 1        
-  	#canal端口号 同一台机器上的不同canal server需要定义成port不同
-  	canal.port = 11111  
-  	
-  	#值为zk的IP和端口，canal server在zk上的路径(为保持与Extractor配置中zk path一致，要在/DBus/Canal/目录下)
-  	canal.zkServers=dbus-zk:2181/DBus/Canal/canal-testdb 
-  	
-  	# 关闭 dcl
-  	canal.instance.filter.query.dcl = true
-  	canal.instance.filter.query.dml = true
-  	canal.instance.filter.query.ddl = false
-  	canal.instance.filter.table.error = false
-  	canal.instance.filter.rows = false
-  	
-  	canal.instance.binlog.format = ROW
-  	canal.instance.binlog.image = FULL
-  	
-  	#canal.instance.global.spring.xml = classpath:spring/file-instance.xml
-  	canal.instance.global.spring.xml = classpath:spring/default-instance.xml
+#要添加的数据源名称
+dsname=testdb
+#zk地址,如果是集群环境，使用逗号隔开
+zk.path=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
+#源端库备库地址
+slave.path=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+#改成设置的canal用户名
+canal.user=canal
+#改成设置的canal用户密码
+canal.pwd=canal
+#canal安装目录
+canal.path=/app/canal
   ```
+替换完毕后，执行sh start.sh，然后会生成“canal _check _report”打头的日志文件，查看日志文件可看到执行的信息和结果。成功如下：
 
- instance.properties文件配置：
   ```properties
-  需要配置的项有：
-  	canal.instance.mysql.slaveId = slaveId
-  	#canal.instance.master.address = ip:port
-  	canal.instance.master.address = dbmysql-slave:3306
-  	
-  	# username/password，需要改成自己的数据库信息   
-  	canal.instance.dbUsername = xxxxx  #此处为canal
-  	canal.instance.dbPassword = xxxxx  #此处为canal
+************ CANAL DEPLOY BEGIN! ************
+数据源名称: testdb
+zk地址: 127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
+备库地址: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+canal 用户名: canal
+canal 密码: canal
+canal 安装目录: /app/canal
+------------ update canal.properties begin ------------ 
+props: canal.port=10000
+props: canal.zkServers=localhost:2181/DBus/Canal/testdb
+------------ update canal.properties end ------------ 
+------------ update instance.properties begin ------------ 
+instance file path /app/canal/conf/testdb/instance.properties
+props: canal.instance.master.address=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+props: canal.instance.dbUsername=canal
+props: canal.instance.dbPassword =canal
+props: canal.instance.connectionCharset = UTF-8
+------------ update canal.properties end ------------ 
+------------ check canal zk node begin ------------ 
+zk str:  127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
+zk path :  127.0.0.1:2181
+-----check canal zk path  begin 
+node path: /DBus/Canal/testdb
+path /DBus/Canal/testdb exist
+-----check canal zk path  end 
+------------ check canal zk node end ------------ 
+************ CANAL DEPLOY SCCESS! ************
   ```
+如果某一环节出错，请根据日志检查输入属性的正确性。
+
 
  
 
-3). 在zk中创建canal的结点
-
-在dbus-web中ZK Manager中新建结点/DBus/Canal/canal-testdb：
-
-注意此路径需要与canal.properties的canal.zkServers值匹配。
 
 
 
-4). 启动canal server
+3). 启动canal server
 
-到目录/app/canal-testdb/bin下，运行 sh  startup.sh 
+到目录/app/canal/bin下，运行 sh  startup.sh 
 
 
 
@@ -213,6 +220,20 @@ canal.properties文件配置：canal.properties文件在目录/app/canal-testdb/
 
 
 
+###### ##错误排查 startup.sh 的check功能
+自动部署的脚本同样提供了自动拍错的功能，如果canal启动失败，可以使用命令sh start.sh check 来检查，根据生产的“canal_ check_report”文件可以为您提供帮助。如：canal账户检查失败，则需要检查这几项的正确性。
+
+  ```properties
+************ CANAL CHECK BEGIN! ************
+-----check database canal account  begin 
+canal user: canal
+canal pwd: canal
+slave url: jdbc:mysql://localhost:3311/test?characterEncoding=utf-8
+[jdbc ]get connection error
+-----check database canal account fail ------------
+************ CANAL CHECK FAIL! ************
+  ```
+  如果自动部署的脚本无法满足您的需求，请参考手动部署文档部分。
 ###### ##为什么不支持呢
 
 Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，而此文件打包在canal.parse-1.0.22.jar包中，因此在canal server包解压之后，需要按照替换解压后的canal目录中lib下的canal.parse-1.0.22.jar文件。
