@@ -21,12 +21,22 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 配置中用到的基础环境的情况请参考[基础组件安装](install-base-components.html) 
 
 
+**相关依赖部件说明：**
+
+-  Canal  ：版本 v1.0.22   DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7 
+-  Mysql ：版本 v5.6，v5.7  存储DBus管理相关信息                             
+
+**限制：**
+
+- 被同步的Mysql blog需要是row模式
+- 考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql     MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob,     即如果表中有这样类型的数据会直接被替换为空。
+
 
 **配置总共分为3个步骤：**
 
 1. **数据库源端配置**
-2. **dbus一键加线**
-3. **检验和查看结果**
+2. **canal部署**
+3. **加线和查看结果**
 
    ​
 
@@ -39,21 +49,8 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 在数据源端新建的dbus库，可以实现无侵入方式接入多种数据源，业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。
 
-**相关依赖部件说明：**
 
-| 名称    | **版本号**   | **说明**                                   |
-| ----- | --------- | ---------------------------------------- |
-| Canal | v1.0.22   | DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7 |
-| Mysql | v5.6，v5.7 | 存储DBus管理相关信息                             |
-
-**限制：**
-
-- 被同步的Mysql blog需要是row模式
-- 考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql     MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob,     即如果表中有这样类型的数据会直接被替换为空。
-
-
-
-### 1.1 dbus库和dbus账户配置
+### dbus库和dbus账户配置
 
 在mysql_instance实例上，创建dbus 库以及数据表db_full_pull_requests和db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。
 
@@ -129,9 +126,7 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 ```
 如上dbus库配置命令，详见https://github.com/BriData/DBus/tree/master/initScript下mysql insatall文件夹。
 
-### 1.2 canal 账户和canal server配置
-
-##### a) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：
+**d) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：**
 
 ```mysql
   --- 创建Canal用户，密码由dba指定, 此处为canal
@@ -141,14 +136,15 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
   FLUSH PRIVILEGES; 
 ```
+
+## 2 canal配置
+
+
 ##### b) Canal Server配置：
 
-1). 下载Canal
+1). 下载canal包：dbus-canal-auto-0.5.0.tar.gz，此包
 
-从https://github.com/alibaba/canal/releases下载Canal，到目录/app/canal-testdb，并解压。详细情况参照https://github.com/alibaba/canal/wiki/QuickStart。注意canal要下载版本为canal-1.0.22。
-
-详细情况请参考https://github.com/BriData/DBus/tree/master/third-party-packages/canal
-
+dbus-canal-auto-0.5.0.tar.gz
 
 
 2). 使用脚本，自动部署canal 配置文件
