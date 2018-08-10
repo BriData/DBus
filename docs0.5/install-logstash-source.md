@@ -59,95 +59,14 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
    **stop.sh :**   停止脚本，一键停止logstash程序
 
-  **log-auto-check-0.5.0 :** 内部含有检测kafka连通性及自动更换logstash配置的功能
+   **log-auto-check-0.5.0 :** 内部含有检测kafka连通性及自动更换logstash配置的功能
 
-  **readme :** 使用文档说明
+   **readme :** 使用文档说明
 
-  **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
-
-
-### 1.2 log-auto-check包说明
-
-![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info2.png)
-
-**conf :** 包含log-conf.properties文件，该文件中可以对logstash进行一些通用配置
-
-**checkDeploy.sh :** 1）检测kafka连通性：./checkDeploy.sh
-
-​				 2)   自动替换logstash配置：./checkDeploy.sh  deploy
-
-**reports :** 里面含有检测报告及对logstash进行的哪些配置修改。
-
-### 1.2. logstash配置文件说明
+   **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志     
 
 
-以logstash抽取DBus的监控和报警日志为例，说明该如何去写logstash的配置文件。我们在logstash的目录下面新建了一个etc文件夹，用于存放logstash的抽取配置文件，然后在etc目录下新建了一个heartbeat.conf的文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-logstash-config)，下面解析下该文件的各项配置。
-
-    input {
-        file {
-            path => ["/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/*.*"]	# 所要读取的日志文件路径
-            sincedb_path => "/app/dbus/logstash-5.6.1-heartbeat/etc/sincedb_heartbeat" # 保存了抽取文件的inode、文件偏移量等信息，自动生成
-            codec => multiline {
-                 pattern => "^\["  # 根据所要合并的多行进行设置（此处为正则表达式，表示以[为开头的行才作为一条记录，其余的向前合并）
-                 negate => "true"
-                 what => "previous" # 表示不符合上述pattern的行，向前合并
-            }
-            type => "heartbeat_log_logstash"         # 改成相应的数据源名，这里我们是要通过logstash对dbus心跳日志进行抽取，所以数据源名定义为heartbeat_log_logstash
-            start_position => "end"         # 表示从什么位置开始读取文件数据，默认是结束位置；
-            #close_older => 3600            # fd 无数据关闭文件时间间隔默认 1小时 3600
-            #max_open_files => 4095         # 运行打开最大文件上线，默认 4095
-            #add_field => {"test"=>"test"}  # 添加自定义的字段   未使用
-            #tags => "tag1"                 # 增加标签           未使用
-            #discover_interval => 15        # 设置多长时间扫描目录，发现新文件  使用默认即可
-            #stat_interval => 1             # 设置多长时间检测文件是否修改      使用默认即可
-            #sincedb_write_interval => 15   # sincedb 写文件时间频率 默认 15秒
-        }
-        #logstash本身的心跳信息
-        heartbeat {
-            message => "epoch"
-            interval => 60				   # 每60s产生一次心跳
-            type => "dbus-heartbeat"	    # 心跳类型定义为dbus-heartbeat
-        }
-    }
-    
-    filter {
-         if [type] == "heartbeat_log_logstash" { # 与上面input file中的type名对应，意为对上述input file中取得的数据进行进一步过滤抽取
-                     grok {
-                            patterns_dir => "../patterns" # 此处为自定义的pattern，如果要添加或修改自定义的pattern,可以放在此目录下。下面HEARTBEATTIMESTAMP即是定义在此目录下的
-                             match => {
-                            # logstash本身配置了约120种pattern，其中DATA、LOGLEVEL和GREEDYDATA都在其中，详细参考https://github.com/logstash-plugins/logstash-patterns-core/tree/master/patterns
-                             "message" => "\[%{DATA:thread}\] %{LOGLEVEL:level} ?\: %{HEARTBEATTIMESTAMP:timestamp}%{GREEDYDATA:log}"
-                             }
-                     }
-           }
-    }
-    
-    output {
-    	# stdout{codec=>rubydebug}  # 将抽取日志输出到控制台
-    	# 代表输出到kafka，以下要配置kafka的服务器IP，端口，topic id
-        kafka {
-                bootstrap_servers => "dbus-n1:9092,dbus-n2:9092,dbus-n3:9092"  # kafka 服务器IP:端口
-                topic_id => "heartbeat_log_logstash"  # 要输出到kafka的topic
-                acks => "all"
-                compression_type => "lz4"
-                retries => 3
-                codec => json {
-                    charset => "UTF-8"
-                }
-                batch_size => 1048576         # batch max than 1MB size, larger than it, send batch
-                linger_ms => 1000             # batch wait 1 seconds
-                max_request_size => 10485760  # set as 10MB, max_request_size => Default value is 1048576
-                buffer_memory => 67108864     # default size 33554432=32M. 67108864=64M
-    
-                #message_key => "heartbeat-logstash"
-                # max_request_size => Default value is 1048576
-                # send_buffer_bytes => Default value is 131072
-                # key_serializer => Default value is "org.apache.kafka.common.serialization.StringSerializer"
-                # value_serializer => Default value is "org.apache.kafka.common.serialization.StringSerializer"
-             }
-      }
-
-### 1.4. dbus-logstash启动
+### 1.2. dbus-logstash启动
 
 1. 修改通用配置：
    修改log-auto-check-0.5.0/conf目录下的log-conf.properties文件，对于logstash，只需要修改kafka地址、日志类型及logstash相关配置即可。
@@ -162,25 +81,23 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
    logstash.dst.topic:			logstash的目的topic
 
-   ![filebeat目录](img/install-logstash-source/install-logstash-auto-config.png)
+   ![filebeat目录](img/install-logstash-source/install-logstash-source-auto-config.png)
 
-2. 自动检测：
+2. 自动检测部署：
 
    ```
    执行命令：./checkDeploy.sh
    ```
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，然后查看reports目录下的检测报告，可以查看kafka连通是否正常。
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到logstash配置文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
 
-3. 自动部署：
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy.png)
 
-   ```
-   执行命令：./checkDeploy.sh deploy
-   ```
+   检测报告如下，如果没有检测未通过，则会显示报错信息。
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动将conf目录下的修改项替换到logstash配置文件中。
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy2.png)
 
-4. 启动方式：
+3. 启动方式：
 
    ```
    执行命令：./start.sh
@@ -188,15 +105,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
    启动脚本，该脚本会启动logstash程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
 
-5. 验证logstash：
-
-   ```
-   执行命令：ps -aux | grep logstash
-   ```
-
-   查看logstash进程是否存在。
-
-6. 停止方式：
+4. 停止方式：
 
    ```
    执行命令：./stop.sh

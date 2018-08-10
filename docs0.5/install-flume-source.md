@@ -71,96 +71,6 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
    **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
 
-### 1.2 log-auto-check包说明
-
-
-![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info2.png)
-
-​	**conf :** 包含log-conf.properties文件，该文件中可以对flume进行一些通用配置
-
-​	**checkDeploy.sh :** 1）检测kafka连通性：./checkDeploy.sh
-
-​					 2)   自动替换flume配置：./checkDeploy.sh  deploy
-
-​	**reports :** 里面含有检测报告及对flume进行的哪些配置修改。
-
-### 1.3 配置文件说明
-
-   在conf目录下，有flume的配置文件：flume-conf.properties，下面说下其配置要点。详细配置请参考flume配置文件：[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-flume-config)。
-
-   ```
-   # 有两个源一个是数据源， 一个是心跳源
-   agent.sources=r_hb_0 r_dahb
-   agent.channels=c
-   agent.sinks=k
-
-   #1 以下为数据配置
-   agent.sources.r_hb_0.type=TAILDIR
-   agent.sources.r_hb_0.channels=c
-
-   # kafka key 为时间戳
-   agent.sources.r_hb_0.interceptors=i_ts i_sr_0 i_sr_1 i_sr_2
-   agent.sources.r_hb_0.interceptors.i_ts.type=timestamp
-   agent.sources.r_hb_0.interceptors.i_ts.preserveExisting=false
-   agent.sources.r_hb_0.interceptors.i_ts.headerName=key
-
-   # 将数据内容\,替换\\
-   agent.sources.r_hb_0.interceptors.i_sr_0.type=search_replace
-   agent.sources.r_hb_0.interceptors.i_sr_0.searchPattern=(\\\\)
-   agent.sources.r_hb_0.interceptors.i_sr_0.replaceString=\\\\\\\\
-
-   # 将数据内容转义,替换双引号
-   agent.sources.r_hb_0.interceptors.i_sr_1.type=search_replace
-   agent.sources.r_hb_0.interceptors.i_sr_1.searchPattern=(\")
-   agent.sources.r_hb_0.interceptors.i_sr_1.replaceString=\\\\\"
-
-   # 构造为json, 注意修改host部分， agent.sources.r_hb_0.interceptors.i_sr_2.replaceString中的host需要保持和心跳产生的host一致！！
-   agent.sources.r_hb_0.interceptors.i_sr_2.type=search_replace
-   #agent.sources.r_hb_0.interceptors.i_sr_2.searchPattern=^([^\{].*)
-   agent.sources.r_hb_0.interceptors.i_sr_2.searchPattern=(^.*$)
-   agent.sources.r_hb_0.interceptors.i_sr_2.replaceString={\"message\":\"$1\", \"type\":\"dbus_log\", \"host\":\"dbus-n2\"}
-
-   #sincedb 保存了读取数据源的文件的路径、inode信息及文件offset等信息。
-   agent.sources.r_hb_0.positionFile=/app/dbus/apache-flume-1.8.0-bin/data/flume_data/taildir/hb_0_taildir_position.json
-
-   # 被读取文件位置，如果想读取所有以.log结尾的文件，需要以.*log配置，以.log配置不生效
-   agent.sources.r_hb_0.filegroups=hblf
-   agent.sources.r_hb_0.filegroups.hblf=/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/.*log
-
-   #2 以下为心跳源配置
-   agent.sources.r_dahb.type=TAILDIR
-   agent.sources.r_dahb.channels=c
-
-   agent.sources.r_dahb.interceptors=i_ts
-   agent.sources.r_dahb.interceptors.i_ts.type=timestamp
-   agent.sources.r_dahb.interceptors.i_ts.preserveExisting=false
-   agent.sources.r_dahb.interceptors.i_ts.headerName=key
-
-   agent.sources.r_dahb.positionFile=/app/dbus/apache-flume-1.8.0-bin/data/flume_data/taildir/dahb_taildir_position.json
-   agent.sources.r_dahb.filegroups=dahblf
-   #flume读取的产生心跳包的路径
-   agent.sources.r_dahb.filegroups.dahblf=/app/dbus/dbus-agent-heartbeat/logs/agent-heartbeat.log
-
-   agent.channels.c.type=memory
-   agent.channels.c.capacity=20000
-   agent.channels.c.transactionCapacity=20000
-   agent.channels.c.keep-alive=30
-
-   agent.sinks.k.channel=c 
-   agent.sinks.k.type=org.apache.flume.sink.kafka.KafkaSink
-   #输出到kafka的topic
-   agent.sinks.k.kafka.topic=heartbeat_log_flume
-   agent.sinks.k.kafka.key=key
-   agent.sinks.k.kafka.bootstrap.servers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
-   agent.sinks.k.kafka.flumeBatchSize=20
-   agent.sinks.k.kafka.producer.acks=1
-   agent.sinks.k.kafka.producer.retries=3
-   agent.sinks.k.kafka.producer.linger.ms=1000
-   agent.sinks.k.kafka.producer.batch.size=1048576
-   agent.sinks.k.kafka.producer.max.request.size=10485760
-   agent.sinks.k.kafka.producer.buffer.memory=67108864
-   ```
-
 ### 1.4. dbus-flume启动
 
 1. 修改通用配置：
@@ -181,55 +91,41 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    flume.extract.file.path：flume抽取文件路径(由于flume抽取文件配置较复杂，自动配置目前仅支持单文件，对于多文件，可手动修改flume配置文件)
    flume.dst.topic：flume抽取日志到目的topic
 
-   ![filebeat目录](img/install-flume-source/install-flume-suto-config.png)
+   ![filebeat目录](img/install-flume-source/install-flume-source-auto-config.png)
 
-2. 自动检测：
+2. 自动检测部署：
 
    ```
    执行命令：./checkDeploy.sh
    ```
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，然后查看reports目录下的检测报告，可以查看kafka连通是否正常。
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到flume配置文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
 
-3. 自动部署：
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy.png)
 
-   ```
-   执行命令：./checkDeploy.sh deploy
-   ```
+      检测报告如下，如果没有检测未通过，则会显示报错信息。
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动将conf目录下的修改项替换到flume-conf.properties文件中，可以查看reports目录下的部署报告。
+      ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy2.png)
 
-4. 启动方式：
+   ​
+
+3. 启动方式：
 
    ```
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
+   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件start_log，请根据错误信息进行修改。
 
-5. 验证flume：
 
-   ```
-   执行命令：ps -aux | grep flume
-   ```
-
-   查看filebeat进程是否存在。
-
-6. 验证心跳数据：
-
-   ```
-   执行命令：ps -aux | grep timer_heartbeat
-   ```
-
-   查看心跳程序是否存在。
-
-7. 停止方式：
+   ![filebeat目录](img/install-flume-source/install-flume-source-auto.config.png)
+4. 停止方式：
 
    ```
    执行命令：./stop.sh
    ```
 
-   停止脚本，停止filebeat及定时心跳程序。
+   停止脚本，停止flume程序及定时心跳程序。
 
 ### 1.3. flume启动和验证
 

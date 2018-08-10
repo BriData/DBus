@@ -37,7 +37,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 监控和报警日志在dbus-n2和dbus-n3上，因此 filebeat的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
 
-### 1.1 filebeat安装
+### 1.1 dbus-filebeat下载
 
 * **filebeat版本**
 
@@ -45,7 +45,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 * **下载地址**
 
-  [https://www.elastic.co/downloads/beats](https://www.elastic.co/downloads/beats)
+  网盘地址
 
 * **dbus-filebeat目录说明**
 
@@ -55,7 +55,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
     ![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info.png)
 
-     **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即dbus-log-check-0.5.0文件夹）
+     **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即dbus-log-check-0.5.0文件夹中的脚本）
 
      **start.sh :**  启动脚本，一键启动filebeat程序、心跳程序等
 
@@ -70,68 +70,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
      **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
 
 
-### 1.2 dbus-log-check包说明
-
-![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info2.png)
-
-**conf :** 包含log-check-conf.properties文件，该文件中可以对filebeat进行一些通用配置
-
-**checkDeploy.sh :** 1）检测kafka连通性：./checkDeploy.sh
-
-​				 2)   自动替换filebeat配置：./checkDeploy.sh  deploy
-
-**reports :** 里面含有检测报告及对filebeat进行的哪些配置修改。
-
-### 1.3 filebeat配置文件说明
-
-   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，[参考链接]		 (https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/)。
-
-```yaml
-  filebeat.prospectors:			  # filebeat的探测器，可以对多个路径下的文件进行抽取
-- type: log
-  enabled: true
-  paths:
-    - /app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.*  # DBus自身产生的监控和报警日志
-  fields_under_root: true		  # fields_under_root设置为true，使下面的fields生效
-  fields:
-    type: heartbeat_log_filebeat   # 改为数据源的log比如：heartbeat_log_filebeat
-  encoding: utf-8                  # 指定被监控的文件的编码类型使用plain和utf-8都是可以处理中文日志的
-
-  # 适用于日志中每一条日志占据多行的情况，比如各种语言的报错信息调用栈
-  multiline.pattern: '^\['   # 多行日志开始的那一行匹配的pattern
-  multiline.negate: true     # 是否需要对pattern条件转置使用，不翻转设为true，反转设置为false。
-  multiline.match: after     # 匹配pattern后，与前面（before）还是后面（after）的内容合并为一条日志
- 
-- type: log
-  enabled: true
-  paths:
-    - /app/dbus/dbus-agent-heartbeat/logs/*.*	# shell脚本产生的心跳数据
-  fields_under_root: true					# fields_under_root设置为true，使下面的fields生效
-  fields:
-    type: dbus-heartbeat 					# DBus将心跳类型定义为：dbus-heartbeat，建议一致
-  encoding: utf-8             # 指定被监控的文件的编码类型使用plain和utf-8都是可以处理中文日志的
-
-filebeat.config.modules:
-  path: ${path.config}/modules.d/*.yml		# filebeat配置文件
-  reload.enabled: true					   # 使filebeat自动reload配置文件,每10s扫描一次
-  encoding: utf-8
-  reload.period: 10s
-
-#----------------------------- kafka output --------------------------------
-# 输出到kafka
-output.kafka:
-  # initial brokers for reading cluster metadata
-  hosts: ["dbus-n1:9092","dbus-n2:9092","dbus-n3:9092"]
-  # message topic selection + partitioning
-  topic: 'heartbeat_log_filebeat'
-  partition.round_robin:
-  reachable_only: false
-  required_acks: 1
-  compression: snappy
-  max_message_bytes: 1000000
-```
-
-### 1.4. dbus-filebeat启动
+### 1.2 dbus-filebeat启动
 
 
 1. 修改通用配置：
@@ -145,53 +84,38 @@ output.kafka:
 
    ![filebeat目录](img/install-filebeat-source/install-filebeat-source-auto-conf.png)
 
-2. 自动检测：
+2. 自动检测部署：
 
    ```
-   执行命令：./checkDeploy.sh
+   执行命令：./checkDeploy.sh 
    ```
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，然后查看reports目录下的检测报告，可以查看kafka连通是否正常。
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到filebeat.yml文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
 
-3. 自动部署：
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy.png)
 
-   ```
-   执行命令：./checkDeploy.sh deploy
-   ```
+   检测报告如下，如果没有检测未通过，则会显示报错信息。
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动将conf目录下的修改项替换到filebeat.yml文件中。
+   ​![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy2.png)
 
-4. 启动方式：
+3. 启动方式：
 
    ```
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
+   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息及包含详细错误信息的start_log文件，请根据错误信息进行修改。
 
-5. 验证filebeat：
 
-   ```
-   执行命令：ps -aux | grep filebeat
-   ```
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-start-log.png)
 
-   查看filebeat进程是否存在。
-6. 验证心跳数据：
-
-   ```
-   执行命令：ps -aux | grep timer_heartbeat
-   ```
-
-   查看心跳程序是否存在。
-
-7. 停止方式：
+4. 停止方式：
 
    ```
    执行命令：./stop.sh
    ```
 
    停止脚本，停止filebeat及定时心跳程序。
-
 
 ### 1.5 验证filebeat配置成功
 
