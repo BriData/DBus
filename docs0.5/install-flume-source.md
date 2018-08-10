@@ -4,7 +4,7 @@ title: flume作为数据源接入DBus
 description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 ---
 
-{:toc}
+
 
 **系统架构：**
 
@@ -47,27 +47,44 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 * **下载**
 
-   [http://flume.apache.org/download.html](http://flume.apache.org/download.html)
+   [http://flume.apache.org/download.html](http://flume.apache.org/download.html)](https://www.elastic.co/downloads/beats)
 
-* **flume目录说明**
+- **dbus-flume目录说明**
 
-   - **flume目录**
+  **目录结构：**
 
-     ![logstah目录](img/install-flume-source/install-flume-source-dir-info.png)
+  dbus-flume包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 
-     **conf目录：**用于放置flume的配置文件，例如被抽取文件路径及输出端kafka等配置信息。
+  ![filebeat目录](img/install-flume-source/install-flume-source-dir-info.png)
 
-     ​
+   **flume目录 :**flume程序文件夹，用户可手动更改flume-conf.properties，也可以使用dbus的检测和部署脚本（即dbus-log-check-0.5.0文件夹）
 
-     **data目录 :** DBus自己新建的目录，需要手动创建data/flume_data/taildir等目录，在taildir目录下存放了flume读取文件的路径、inode信息及文件offset等信息。
+   **start.sh :**  启动脚本，一键启动flume程序、心跳程序等
 
-     ​
+   **stop.sh :**   停止脚本，一键停止flume程序、心跳程序等
 
-     **logs目录：**放置flume产生的日志，建议将日志放置在一个磁盘较大的目录，这里为其建立一个软连接，指向/data/dbus/flume-logs目录。
+   **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，flume会从中抽取心跳日志
 
-     ​
+   **log-auto-check :**内部含有检测kafka连通性及自动更换flume配置的功能
 
-### 1.2 配置文件说明
+   **readme :** 使用文档说明
+
+   **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
+
+### 1.2 log-auto-check包说明
+
+
+![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info2.png)
+
+​	**conf :** 包含log-conf.properties文件，该文件中可以对flume进行一些通用配置
+
+​	**checkDeploy.sh :** 1）检测kafka连通性：./checkDeploy.sh
+
+​					 2)   自动替换flume配置：./checkDeploy.sh  deploy
+
+​	**reports :** 里面含有检测报告及对flume进行的哪些配置修改。
+
+### 1.3 配置文件说明
 
    在conf目录下，有flume的配置文件：flume-conf.properties，下面说下其配置要点。详细配置请参考flume配置文件：[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-flume-config)。
 
@@ -142,28 +159,79 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    agent.sinks.k.kafka.producer.batch.size=1048576
    agent.sinks.k.kafka.producer.max.request.size=10485760
    agent.sinks.k.kafka.producer.buffer.memory=67108864
-
    ```
 
+### 1.4. dbus-flume启动
+
+1. 修改通用配置：
+   修改log-auto-check-0.5.0/conf目录下的log-conf.properties文件，对于flume，只需要修改kafka地址、日志类型及flume相关配置即可。
+
+   flume相关配置项说明：
+
+   flume.base.path：		flume-conf.properties文件路径
+
+   flume.host: 				运行flume的hostname
+
+   flume.data.sincedb:		存放flume记录抽取文件位置的文件路径（比如被抽取文件的inode及offset等信息）
+
+   flume.heartbeat.sincedb:	存放flume记录抽取心跳文件位置的文件路径（心跳文件的inode及offset等信息）
+
+   flume.heartbeat.file.path:	存放flume心跳文件的路径
+
+   flume.extract.file.path：flume抽取文件路径(由于flume抽取文件配置较复杂，自动配置目前仅支持单文件，对于多文件，可手动修改flume配置文件)
+   flume.dst.topic：flume抽取日志到目的topic
+
+   ![filebeat目录](img/install-flume-source/install-flume-suto-config.png)
+
+2. 自动检测：
+
+   ```
+   执行命令：./checkDeploy.sh
+   ```
+
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，然后查看reports目录下的检测报告，可以查看kafka连通是否正常。
+
+3. 自动部署：
+
+   ```
+   执行命令：./checkDeploy.sh deploy
+   ```
+
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动将conf目录下的修改项替换到flume-conf.properties文件中，可以查看reports目录下的部署报告。
+
+4. 启动方式：
+
+   ```
+   执行命令：./start.sh
+   ```
+
+   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
+
+5. 验证flume：
+
+   ```
+   执行命令：ps -aux | grep flume
+   ```
+
+   查看filebeat进程是否存在。
+
+6. 验证心跳数据：
+
+   ```
+   执行命令：ps -aux | grep timer_heartbeat
+   ```
+
+   查看心跳程序是否存在。
+
+7. 停止方式：
+
+   ```
+   执行命令：./stop.sh
+   ```
+
+   停止脚本，停止filebeat及定时心跳程序。
 
 ### 1.3. flume启动和验证
-
-* **在flume解压目录下，进入bin目录（必须进入bin目录执行以下命令!），执行命令：**
-
-```
-1. 前台启动方式：./flume-ng agent --conf ../conf --conf-file ../conf/flume-conf.properties --name agent -Dflume.log.dir=/app/dbus/apache-flume-1.8.0-bin/logs -Dflume.log.file=flume.log -Dflume.root.logger=INFO,LOGFILE 
-2. 后台启动方式：./flume-ng agent --conf ../conf --conf-file ../conf/flume-conf.properties --name agent -Dflume.log.dir=/app/dbus/apache-flume-1.8.0-bin/logs -Dflume.log.file=flume.log -Dflume.root.logger=INFO,LOGFILE &
-```
-
-* 当采用**前台启动方式**时，出现类似以下信息，则说明启动成功（**注意控制台是否出现报错信息**）：
-
-```
-Info: Sourcing environment configuration script /app/dbus/apache-flume-1.8.0-bin/conf/flume-env.sh
-Info: Including Hive libraries found via () for Hive access
-+ exec /usr/java/latest/bin/java -Xms1024m -Xmx1024m -Dflume.log.dir=/app/dbus/apache-flume-1.8.0-bin/logs -Dflume.log.file=flume.log -Dflume.root.logger=INFO,LOGFILE -cp '/app/dbus/apache-flume-1.8.0-bin/conf:/app/dbus/apache-flume-1.8.0-bin/lib/*:/lib/*' -Djava.library.path= org.apache.flume.node.Application --conf-file ../conf/flume-conf.properties --name agent
-```
-
-**读取kafka的topic：heartbeat_log_flume，确认是否有数据：**
 
 * **进入kafka安装目录。**
 
@@ -195,160 +263,61 @@ Info: Including Hive libraries found via () for Hive access
    ```
 
 
-### 1.4. 心跳脚本和crontab说明
+* ## 2 DBus 一键加线和配置
 
-   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat)，用于每60s产生一次json格式的心跳数据，flume可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。
+   ### 2.1 DBus一键加线
 
-* **心跳脚本目录** 
+   flume的新建线过程和filebeat的新建线过程是一样的，这里的图片引用了filebeat的建线过程，请知悉。
 
-![img/install-flume-source/install-flume-agent-dir-info.png](img/install-flume-source/install-flume-agent-dir-info.png)
+   flume将数据抽取到Kafka topic后，DBus程序就可以对该topic数据进行处理了，在DBus web进行数据源和table的配置工作。
 
-**agent-heartbeat.sh:**  产生心跳的脚本，通过crontab定时运行该脚本，可以实现每60s产生一个心跳数据。
+   - **新建数据源：**首先新建数据源，进入New DataLine页面，由于我们是用flume对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_flume，topic必须和flume配置文件中的topic一致。
 
-**logs:**  该目录下存在心跳脚本产生的心跳数据，当用crontab启动agent-heartbeat.sh后，就可以在该目录下发现一个agent-heartbeat.log的文件，flume通过抽取该文件，就可以产生定时心跳数据的功能。
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-1.png](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
 
-**read.me:**  说明了crontab启动该脚本的命令，将read.me内容直接复制到crontab中即可。
+   - **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击下一步。
 
-* **心跳脚本说明（有注意项！！）**
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
 
-   ```shell
-   # !/bin/sh
-   # 注意！！！ 这里的HOST应该与flume配置文件中的host需一致，即如果flume中配置的是ip，则此处也应该配置ip（即下面一行不需要注释），如果flume中配置的是域名，则此处也需要用域名（即下面一行不需要注释），此处样例用的是域名。
-   # HOST=`ifconfig | sed '6,$d' | sed -n '/inet addr/s/^[^:]*:\([0-9.]\{7,15\}\) .*/\1/p'`
-   ```
+   - **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
 
-if test -z ${HOST}
-then
-  HOST=`hostname`
-fi
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
 
-CLOCK=`date "+%s"`
+       **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
-NS=`date "+%N"`
+   ### 2.2 数据源配置修改
 
-MS=`expr $NS / 1000000`
-while test ${#MS} -lt 3
-do
-  MS="0$MS"
-done
+   因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
-TIMESTAMP=`date "+%Y-%m-%d %H:%M:%S"`".$MS"
+   - **修改数据源信息：**点击modify按钮进行修改。
+     ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
+   - **填写host信息：**该数据源的数据可能来自于多个主机上的flume程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
+     ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
-PACKET="{\"host\": \"$HOST\", \"@version\": \"1\", \"clock\": $CLOCK, \"@timestamp\": \"$TIMESTAMP\", \"type\": \"dbus-heartbeat\"}"
+   ### 2.3. 配置规则
 
-BASE_DIR=$(cd `dirname $0`; pwd)/logs
+   - **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考：**
 
-DAY=`date "+%d"`
-PRE_YMD=`tail -n 1 "$BASE_DIR"/agent-heartbeat.log | awk -F , '{print $4}' | awk -F ": " '{print $2}' | awk '{print $1}'`
-PRE_YMD=${PRE_YMD//\"/}
-PRE_DAY=`echo $PRE_YMD | awk -F "-" '{print $3}'`
+     ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
-if test -n ${PRE_DAY}
-then
-  if test ${DAY} -ne ${PRE_DAY}
-  then
-    mv agent-heartbeat.log agent-heartbeat.log"$PRE_YMD"
-  fi
-fi
+   - **新增规则组：**点击Add group按钮，新增一个规则组，点击规则组名字，进入规则配置页面。
 
-echo $PACKET >> "$BASE_DIR"/agent-heartbeat.log
+     ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
-if test $? -ne 0
-then
-  echo "add packet failed" >> "$BASE_DIR"/agent-error.log
-fi
+   - **配置规则:** topic是在flume中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。
 
-   ```
+     ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
-### 1.5 验证flume配置成功
+   - **升级版本：**首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。
 
-**读取kafka的heartbeat_log_flume，确认是否有数据：**
+     ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 
-- **进入kafka安装目录。**
+   - **拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
 
-- **执行以下命令，查看数据，如果有数据，则说明flume可以成功抽取文件：**
+     ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
-  `bin/kafka-console-consumer.sh --zookeeper dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka  --topic heartbeat_log_flume`  
-
-- **flume的心跳数据样例：**
-
-  ```json
-  {
-      "host": "dbus-n2",
-      "@version": "1",
-      "clock": 1516862401,
-      "@timestamp": "2018-01-25 14:40:02.998",
-      "type": "dbus-heartbeat"
-  }
-   ```
-
-
-- **flume抽取之后产生的数据样例：**
-
-  ```json
-  {
-      "message": "[main-EventThread] INFO : 2018/01/25 16:39:32.856 WatcherType 127 - [command-control] 开始重新加载配置信息.",
-      "type": "dbus_log",
-      "host": "dbus-n2"
-  }
-  ```
-
-## 2 DBus 一键加线和配置
-
-### 2.1 DBus一键加线
-
-flume将数据抽取到Kafka topic后，dbus log_processor程序就可以对该topic数据进行处理了，在dbus-web进行数据源和table的配置工作。
-
-* **新建数据源 : ** 首先新建数据源，进入New DataLine页面，由于我们是用flume对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_flume，topic必须和flume配置文件中的topic一致。
-
-   ![install-filebeat-source-new-ds-1](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
-
-* **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击下一步。
-
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
-
-* **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
-
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
-   **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过查看Topology start log定位失败原因。
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
-
-### 2.2 数据源配置修改
-
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
-
-* **修改数据源信息：**点击modify按钮进行修改。
-
-   ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
-
-* **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
-
-   ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
-
-
-### 2.3. 配置规则
-
-* 进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考详：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)。**
-
-   ![img/install-flume-source/install-flume-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
-
-* **编辑规则组：**点击Add group按钮，新增一个规则组。点击规则组名字，进入规则配置页面。
-
-   ![img/install-flume-source/install-flume-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
-
-* **配置规则:** topic是在flume中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，保存规则，并返回到规则组页面。
-
-   ![img/install-flume-source/install-flume-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
-
-* **升级版本：**首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。!![img/install-flume-source/install-flume-source-add-table-4.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
-
-* **拉取增量 : ** 使该表的状态变为ok。
-
-   ![img/install-flume-source/install-flume-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
-
-* **使表生效：** 点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
-
-   ![img/install-flume-source/install-flume-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
+   ​
 
 ## 3 grafana配置与流量监控
 

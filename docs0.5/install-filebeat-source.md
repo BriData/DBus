@@ -4,9 +4,8 @@ title: filebeat作为数据源接入DBus
 description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 ---
 
-{:toc}
 
-系统架构：**
+**系统架构：**
 
 ![系统架构](img/install-filebeat-source/install-filebeat-source-system-architecture.png)
 
@@ -48,20 +47,44 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
   [https://www.elastic.co/downloads/beats](https://www.elastic.co/downloads/beats)
 
-* **filebeat目录说明**
+* **dbus-filebeat目录说明**
 
-    **filebeat目录结构：**
+    **目录结构：**
+
+    dbus-filebeat包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
+
     ![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info.png)
 
-     **data目录 :** 不需要用户创建，filebeat会自动创建，记录了filebeat读取文件的路径、inode信息及文件offset等信息。
+     **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即dbus-log-check-0.5.0文件夹）
 
-     **filebeat.yml :** filebeat的配置文件，例如被抽取文件的路径及输出端kafka等配置信息。
+     **start.sh :**  启动脚本，一键启动filebeat程序、心跳程序等
 
-     **logs目录：**放置filebeat产生的日志，建议将日志放置在一个磁盘空间比较大的目录，这里为其建立一个软连接，指向/data/dbus/filebeat-logs目录。 
+     **stop.sh :**   停止脚本，一键停止filebeat程序、心跳程序等
 
-### 1.2 配置文件说明
+     **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，filebeat会从中抽取心跳日志
 
-   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/)。
+     **log-auto-check-0.5.0 :** 内部含有检测kafka连通性及自动更换filebeat配置的功能
+
+     **readme :** 使用文档说明
+
+     **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
+
+
+### 1.2 dbus-log-check包说明
+
+![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info2.png)
+
+**conf :** 包含log-check-conf.properties文件，该文件中可以对filebeat进行一些通用配置
+
+**checkDeploy.sh :** 1）检测kafka连通性：./checkDeploy.sh
+
+​				 2)   自动替换filebeat配置：./checkDeploy.sh  deploy
+
+**reports :** 里面含有检测报告及对filebeat进行的哪些配置修改。
+
+### 1.3 filebeat配置文件说明
+
+   在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，[参考链接]		 (https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/)。
 
 ```yaml
   filebeat.prospectors:			  # filebeat的探测器，可以对多个路径下的文件进行抽取
@@ -108,94 +131,67 @@ output.kafka:
   max_message_bytes: 1000000
 ```
 
-### 1.3. filebeat启动和验证
-
- **在filebeat解压目录下，执行命令：**
-
-```
-1. 前台启动方式：./filebeat
-2. 后台启动方式：./filebeat &
-```
+### 1.4. dbus-filebeat启动
 
 
-当采用**前台启动**方式时，如果出现以下信息，则说明启动成功（**注意控制台是否出现报错信息**）：
+1. 修改通用配置：
+   修改log-auto-check-0.5.0/conf目录下的log-conf.properties文件，对于filebeat，只需要修改kafka地址、日志类型及filebeat相关配置即可。
 
-```
-filebeat-6.1.0-linux-x86_64]$ 2018/01/25 09:12:48.287446 beat.go:436: INFO Home path: [/app/dbus/filebeat-6.1.0-linux-x86_64] Config path: [/app/dbus/filebeat-6.1.0-linux-x86_64] Data path: [/app/dbus/filebeat-6.1.0-linux-x86_64/data] Logs path: [/app/dbus/filebeat-6.1.0-linux-x86_64/logs]
-2018/01/25 09:12:48.287944 metrics.go:23: INFO Metrics logging every 30s
-2018/01/25 09:12:48.308776 beat.go:443: INFO Beat UUID: 7b900775-36e1-4b26-9ac2-abd98e76518d
-2018/01/25 09:12:48.308828 beat.go:203: INFO Setup Beat: filebeat; Version: 6.1.0
-2018/01/25 09:12:48.310757 module.go:76: INFO Beat name: dbus-n2
-2018/01/25 09:12:48.523740 beat.go:276: INFO filebeat start running.
-2018/01/25 09:12:48.523895 registrar.go:88: INFO Registry file set to: /app/dbus/filebeat-6.1.0-linux-x86_64/data/registry
-2018/01/25 09:12:48.523972 registrar.go:108: INFO Loading registrar data from /app/dbus/filebeat-6.1.0-linux-x86_64/data/registry
-2018/01/25 09:12:48.525069 registrar.go:119: INFO States Loaded from registrar: 8
-2018/01/25 09:12:48.525132 filebeat.go:261: WARN Filebeat is unable to load the Ingest Node pipelines for the configured modules because the Elasticsearch output is not configured/enabled. If you have already loaded the Ingest Node pipelines or are using Logstash pipelines, you can ignore this warning.
+   filebeat相关配置项说明：
 
-```
+   filebeat.base.path：filebeat.yml文件路径
+   filebeat.extract.file.path：filebeat抽取文件路径，如果是多个文件，用逗号分隔即可
+   filebeat.dst.topic：filebeat抽取日志到目的topic
 
-### 1.4. 心跳脚本和crontab说明
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-auto-conf.png)
 
-   DBus提供了心跳shell脚本[点击下载](https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat)（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。
+2. 自动检测：
 
-* **心跳脚本目录** 
+   ```
+   执行命令：./checkDeploy.sh
+   ```
 
-   ![img/install-flume-source/install-flume-agent-dir-info.png](img/install-flume-source/install-flume-agent-dir-info.png)
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，然后查看reports目录下的检测报告，可以查看kafka连通是否正常。
 
-   **agent-heartbeat.sh:**  产生心跳的脚本，通过crontab定时运行该脚本，可以实现每60s产生一个心跳数据。
+3. 自动部署：
 
-   **logs:**  该目录下存在心跳脚本产生的心跳数据，当用crontab启动agent-heartbeat.sh后，就可以在该目录下发现一个agent-heartbeat.log的文件，filebeat通过抽取该文件，就可以产生定时心跳数据的功能。
+   ```
+   执行命令：./checkDeploy.sh deploy
+   ```
 
-   **read.me:**  说明了crontab启动该脚本的命令，将read.me内容直接复制到crontab中即可。
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动将conf目录下的修改项替换到filebeat.yml文件中。
 
- * **心跳脚本说明**
+4. 启动方式：
 
-```shell
-  # !/bin/sh
-  # 注意！！！ 这里的HOST应该与filebeat配置文件中的host需一致，即如果filebeat中配置的是ip，则此处也应该配置ip（即下面一行不需要注释），如果filebeat中配置的是域名，则此处也需要用域名（即下面一行不需要注释），此处样例用的是域名。
-  # HOST=`ifconfig | sed '6,$d' | sed -n '/inet addr/s/^[^:]*:\([0-9.]\{7,15\}\) .*/\1/p'`
+   ```
+   执行命令：./start.sh
+   ```
 
-  if test -z ${HOST}
-then
-  HOST=`hostname`
-fi
+   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
 
-CLOCK=`date "+%s"`
+5. 验证filebeat：
 
-NS=`date "+%N"`
+   ```
+   执行命令：ps -aux | grep filebeat
+   ```
 
-MS=`expr $NS / 1000000`
-while test ${#MS} -lt 3
-do
-  MS="0$MS"
-done
+   查看filebeat进程是否存在。
+6. 验证心跳数据：
 
-TIMESTAMP=`date "+%Y-%m-%d %H:%M:%S"`".$MS"
+   ```
+   执行命令：ps -aux | grep timer_heartbeat
+   ```
 
-PACKET="{\"host\": \"$HOST\", \"@version\": \"1\", \"clock\": $CLOCK, \"@timestamp\": \"$TIMESTAMP\", \"type\": \"dbus-heartbeat\"}"
+   查看心跳程序是否存在。
 
-BASE_DIR=$(cd `dirname $0`; pwd)/logs
+7. 停止方式：
 
-DAY=`date "+%d"`
-PRE_YMD=`tail -n 1 "$BASE_DIR"/agent-heartbeat.log | awk -F , '{print $4}' | awk -F ": " '{print $2}' | awk '{print $1}'`
-PRE_YMD=${PRE_YMD//\"/}
-PRE_DAY=`echo $PRE_YMD | awk -F "-" '{print $3}'`
+   ```
+   执行命令：./stop.sh
+   ```
 
-if test -n ${PRE_DAY}
-then
-  if test ${DAY} -ne ${PRE_DAY}
-  then
-    mv agent-heartbeat.log agent-heartbeat.log"$PRE_YMD"
-  fi
-fi
+   停止脚本，停止filebeat及定时心跳程序。
 
-echo $PACKET >> "$BASE_DIR"/agent-heartbeat.log
-
-if test $? -ne 0
-then
-  echo "add packet failed" >> "$BASE_DIR"/agent-error.log
-fi
-```
 
 ### 1.5 验证filebeat配置成功
 
@@ -266,17 +262,19 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 * **新建数据源：**首先新建数据源，进入New DataLine页面，由于我们是用filebeat对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_filebeat，topic必须和filebeat配置文件中的topic一致。
 
-   ![install-filebeat-source-new-ds-1](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
+   ![img/install-filebeat-source/install-filebeat-source-new-ds-1.png](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
 
 * **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击下一步。
 
    ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
 
-* **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
+* **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
 
-   启动完毕，Status变为running：
+   ![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
 
+     **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
    ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
+
 
 
 ### 2.2 数据源配置修改
@@ -290,7 +288,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
    ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 ### 2.3. 配置规则
-* **进入Data Table页面，查看新增加的表，点击[规则配置]按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
+* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
@@ -313,7 +311,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 ## 3  验证数据
 
-我们可以在grafana配置以下，看看实际流量情况。
+我们可以在grafana配置一下，看看实际流量情况。
 
 * **上传grafana配置文件，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config) ： **点击Import，上传grafana json配置文件。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png)
