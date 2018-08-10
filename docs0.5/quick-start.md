@@ -6,24 +6,22 @@ description: Dbus快速开始手册 DBUS_VERSION_SHORT
 
 # 1. 环境说明
 
+说明all in one是一个单机版本dbus环境，是给用户快速体验dbus的功能，只是一个简单体验版，不能用于其它环境或者用途，具体包括如下：
 
-
-<u>*TBD补充：说明快速体验跟 集群部署不一样，配置不等同不能混用。。。*</u>
-
-说明 all in one是一个单机版本dbus环境，具体包括：
-
-- 集群环境：
-  - zookeeper  3.6.8
-  - kafka 0.10.0
-  - storm 1.0.0
-  - granfana 
+- 基础组建：
+  - zookeeper  3.4.6
+  - kafka 0.10.0.0
+  - storm 1.0.1
+  - granfana  4.2.0
   - influxdb （需要单独安装， 参考如下步骤3）
   - mysql （需要单独安装，参考如下步骤2）
 - dbus相关包：
+  - dbus-keeper 0.5.0
+  - dbus-stream-main 0.5.0
+  - dbus-router 0.5.0
+  - dbus-heartbeat 0.5.0
 - mysql数据源所需：
   - canal 
-- logstash的日志数据源所需：
-  - logstash
 
 ### 1.1 环境依赖
 
@@ -61,7 +59,9 @@ hostname dbus-n1
 | ---- | ---------------------------------------- | ------- |
 | 1    | 192.168.0.1（该ip是您的具体ip，这里用192.168.0.1为例子） | dbus-n1 |
 
+### 1.3 创建app用户及配置免密登录
 
+由于dbus启动拓扑采用的ssh调用storm命令，all in one包中默认的调用ssh使用app用户和22端口，因此要正常体验all in one需要创建app账户和配置ssh免密登录
 
 # 2. 安装Mysql
 
@@ -139,7 +139,6 @@ influx
 create database dbus_stat_db
 use dbus_stat_db
 CREATE USER "dbus" WITH PASSWORD 'dbus!@#123'
-ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
 ```
 
 
@@ -166,11 +165,7 @@ tar -zxvf dbus-allinone.tar.gz
 以root身份登录mysql客户端，执行以下命令进行数据库初始化，会创建dbmgr库以及用户、canal用户、dbus库以及用户、testschema库以及用户：
 
 ```
-source /app/dbus-allinone/sql/1_init_database_user.sql
-source /app/dbus-allinone/sql/2_dbusmgr_tables.sql
-source /app/dbus-allinone/sql/3_dbus.sql
-source /app/dbus-allinone/sql/4_test.sql
-source /app/dbus-allinone/sql/5_canal.sql
+source /app/dbus-allinone/sql/init.sql
 ```
 
 ### 4.4 启动
@@ -182,40 +177,195 @@ cd /app/dbus-allinone
 ./start.sh
 ```
 
-请耐心等待，正确的启动日志如下：
+请耐心等待(大概需要5分钟左右时间)，正确的启动日志如下：
 ```
-check。。。。
+Start grafana...
+Grafana started. pid: 8557
+=============================================================================================
+Start zookeeper...
+zookeeper pid 8639
+Zookeeper started.
+=============================================================================================
+Start kafka...
+No kafka server to stop
+kafka pid 8879
+kafka started.
+=============================================================================================
+Start Canal ... 
+canal started.
+=============================================================================================
+Start storm nimbus...
+No storm nimbus to stop
+Storm nimbus pid 8953
+Storm nimbus started.
+=============================================================================================
+Start storm supervisor...
+No storm supervisor to stop
+Storm supervisor pid 9388
+Storm supervisor started.
+=============================================================================================
+Start storm ui...
+No storm ui to stop
+Storm ui pid 9655
+Storm ui started. ui port: 6672
+=============================================================================================
+Stop storm topology.
+Storm topology stoped.
+=============================================================================================
+Start storm topology...
+Storm topology started.
+=============================================================================================
+Start Dbus Heartbeat...
+No Dbus Heartbeat to stop
+Dbus Heartbeat pid 11036
+Dbus Heartbeat started.
+=============================================================================================
+Start Dbus keeper...
+=========================stop===========================
+keeper-proxy process not exist
+gateway process not exist
+keeper-mgr process not exist
+keeper-service process not exist
+register-server process not exist
 
-check。。。。
-
-check。。。。
-
-check。。。。
+=========================start===========================
+register-server started. pid: 11221
+keeper-proxy  started. pid: 11315
+gateway started. pid: 11401
+keeper-mgr started. pid: 11576
+keeper-service started. pid: 11762
+Dbus keeper prot: 6090
+Dbus keeper started.
+=============================================================================================
 ```
 
 
 
-### 4.5 生成检查报告
+### 4.5 生成检查报告看是否启动正常
 
-如果出错，请执行 xxx sh 生成检查报告。
+进入目录/app/dbus-allinone/allinone-auto-check-0.5.0，执行自动检测脚本auto-check.sh，稍等待一会儿
 
-检查报告输出路径信息、ip信息、复制相关日志文件、
+```
+cd /app/dbus-allinone/allinone-auto-check-0.5.0
+./auto-check.sh
+```
 
-检查 ：
-域名
-mysql库（dbusmgr，canal，dbus，testschema几个账号）
-mysql心跳表中数据？
-show slave status，
-zk启动
-storm启动
-kafka启动
-topoglogy检查
-topic中offset数据检查。。
-heartbeat启动检查
-canal 启动，canal zk中目录
-influxDB启动
-infuxdb中数据？
-grafana启动
+会在目录/app/dbus-allinone/allinone-auto-check-0.5.0/reports下生产对应时间的检查报告，如下所示
+
+```
+[app@dbus-n1 reports]$ tree
+.
+└── 20180810174317
+    └── check_report.txt
+```
+
+打开check_report.txt文件查看相应的检查报告，如下所示
+
+（注意以#开头为解释说明信息，报告中不会生成 ）
+
+```
+check LoadAutoCheckFileConfigHandler start
+check LoadAutoCheckFileConfigHandler end
+
+check CheckDbHandler start
+# 出现以下信息说明dbusmgr库正常
+check dbusmgr start:
+table t_avro_schema data count: 0
+table t_data_schema data count: 2
+table t_data_tables data count: 3
+table t_dbus_datasource data count: 1
+table t_ddl_event data count: 0
+table t_encode_columns data count: 0
+table t_fullpull_history data count: 0
+table t_meta_version data count: 3
+table t_plain_log_rule_group data count: 0
+table t_plain_log_rule_group_version data count: 0
+table t_plain_log_rule_type data count: 0
+table t_plain_log_rules data count: 0
+table t_plain_log_rules_version data count: 0
+table t_query_rule_group data count: 0
+table t_storm_topology data count: 0
+table t_table_action data count: 0
+table t_table_meta data count: 3
+
+# 出现以下信息说明dbus库正常
+check dbus start:
+table db_heartbeat_monitor data count: 168
+table test_table data count: 18
+table db_full_pull_requests data count: 0
+
+# 出现以下信息说明canal用户正常
+check canal start:
+table db_heartbeat_monitor data count: 168
+table test_table data count: 18
+table db_full_pull_requests data count: 0
+
+# 出现以下信息说明testschema库正常
+check testschema start:
+table test_table data count: 18
+
+check CheckDbHandler end
+
+check CheckBaseComponentsHandler start
+# 出现以下信息说明zk启动正常
+check base component zookeeper start:
+8639 org.apache.zookeeper.server.quorum.QuorumPeerMain
+# 出现以下信息说明kafka启动正常
+check base component kafka start:
+8879 kafka.Kafka
+# 出现以下信息说明storm nimbus、supervisor、ui 启动正常
+check base component storm start:
+10848 org.apache.storm.daemon.worker
+9388 org.apache.storm.daemon.supervisor
+10511 org.apache.storm.LogWriter
+11249 org.apache.storm.LogWriter
+10834 org.apache.storm.LogWriter
+9655 org.apache.storm.ui.core
+8953 org.apache.storm.daemon.nimbus
+10525 org.apache.storm.daemon.worker
+11263 org.apache.storm.daemon.worker
+
+# 出现以下信息说明influxdb 启动正常
+check base component influxdb start:
+influxdb 10265     1  0 Aug08 ?        00:15:27 /usr/bin/influxd -pidfile /var/run/influxdb/influxd.pid -config /etc/influxdb/influxdb.conf
+app      13511 13426  0 17:43 pts/1    00:00:00 /bin/sh -c ps -ef | grep influxdb
+app      13515 13511  0 17:43 pts/1    00:00:00 grep influxdb
+
+# 出现以下信息说明grafana 启动正常
+check base component grafana start:
+app       8557     1  0 17:31 pts/0    00:00:00 ./grafana-server
+app      13516 13426  0 17:43 pts/1    00:00:00 /bin/sh -c ps -ef | grep grafana
+app      13520 13516  0 17:43 pts/1    00:00:00 grep grafana
+
+# 出现以下信息说明心跳heartbeat 启动正常
+check base component heartbeat start:
+11036 com.creditease.dbus.heartbeat.start.Start
+check CheckBaseComponentsHandler end
+
+check CheckCanalHandler start
+
+# 出现以下信息说明canal 启动正常
+zk path [/DBus/Canal/otter-testdb] exists.
+8925 com.alibaba.otter.canal.deployer.CanalLauncher
+check CheckCanalHandler end
+
+check CheckTopologyHandler start
+# 出现以下信息说明dispatcher-appender、mysql-extractor、router 启动正常
+check topology start:
+api: http://dbus-n1:6672/api/v1/topology/summary
+topology testdb-dispatcher-appender status is ACTIVE
+topology tr-router status is ACTIVE
+topology testdb-mysql-extractor status is ACTIVE
+check CheckTopologyHandler end
+
+# 出现以下信息说明从数据库->extractor-dispatcher->appender线路正常
+check CheckFlowLineHandler start
+first step insert heart beat success.
+data arrive at topic: testdb
+data arrive at topic: testdb.testschema
+data arrive at topic: testdb.testschema.result
+check CheckFlowLineHandler end
+```
 
 
 
@@ -239,19 +389,17 @@ grafana启动
 
 ### 6.1 插入数据验证
 
-
-<u>TBD:这里需要直接给出密码</u>
-
 ```
 #登录测试用户
-mysql -utestschema -p     #testschema账户密码参考/app/dbus-allinone/sql/4_test.sql
+mysql -utestschema -p     #testschema账户密码：j0<C6cqcqr:TestSchema
 #执行测试脚本
 use testschema;
-INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('ASFASFASF', '2018-01-25 16:11:20');
-INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('QWEQWEQWE', '2018-01-25 16:11:20');
-INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('QWEQWEQWE', '2018-01-25 16:11:20');
-INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('QWEQWEQWE', '2018-01-25 16:11:20');
-INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('QWEQWEQWE', '2018-01-25 16:11:20');
+INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:00:00');
+INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:00:00');
+INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:00:00');
+INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:00:00');
+INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:00:00');
+
 ```
 
 ![](img/quick-start-6-1.png)
@@ -265,48 +413,3 @@ INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('QWEQWEQWE', '2018-01-25 16:11:2
 ![](img/quick-start-6-4.png)
 
 
-
-# 7. 验证logstash是否安装成功
-
-
-
-总体说明
-
-all in one的logstash是抓取 dbus heartbeat产生的心跳日志。
-
-dbus-heartbeat心跳模块儿产生日志位置在：/app/dbus-allinone/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log，利用logstash抽取该日志文件，把非结构化的数据，提取成结构化的数据。
-
-
-
-### 7.1 日志中原始非结构化数据如下：
-
-通过如下命令，查看要提取的非结构化数据，如下图所示，每一分钟产生3条包含"插入心跳包成功"的日志
-
-```
-cd /app/dbus-allinone/dbus-heartbeat-0.4.0/logs/heartbeat/
-tail -f heartbeat.log | grep "插入心跳包成功"
-```
-
-![](img/quick-start-7-1.png)
-
-### 7.2 在Dbus-web上配置相应的结构化规则
-
-提取规则
-
-![](img/quick-start-7-2.png)
-
-通过执行规则后的结果
-
-![](img/quick-start-7-3.png)
-
-### 7.3 在grafana查看实时提取流量
-
-选择log table deatil board
-
-![](img/quick-start-7-4.png)
-
-选择table：testlog.testlog_schema.t_dbus_heartbeat
-
-![](img/quick-start-7-5.png)
-
-可以很清楚的看到实时抽取的数量都是3
