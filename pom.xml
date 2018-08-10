@@ -27,8 +27,6 @@
         <module>dbus-heartbeat</module>
         <module>dbus-mysql-extractor</module>
         <module>dbus-log-processor</module>
-        <!--<module>dbus-manager</module>-->
-        <!--<module>dbus-manager-distribution</module>-->
         <module>dbus-keeper</module>
         <module>encoder-plugins</module>
         <module>dbus-router</module>
