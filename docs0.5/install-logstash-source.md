@@ -4,9 +4,7 @@ title: logstash作为数据源接入DBus
 description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 ---
 
-{:toc}
-
-系统架构：**
+**系统架构：**
 
 ![系统架构](img/install-logstash-source/install-logstash-source-system-architecture.png)
 
@@ -45,22 +43,40 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 * **下载**
 
-  [https://www.elastic.co/downloads/past-releases/logstash-5-6-1](https://www.elastic.co/downloads/past-releases/logstash-5-6-1)
+  [https://www.elastic.co/downloads/past-releases/logstash-5-6-1](https://www.elastic.co/downloads/past-releases/logstash-5-6-1)](https://www.elastic.co/downloads/beats)
 
-* **logstah目录说明**
-  - **logstash目录**
+  **dbus-logstash目录说明**
 
-    ![logstah目录](img/install-logstash-source/install-logstash-source-dir-info.png)
+  **目录结构：**
 
-    ​
+  dbus-logstash包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 
-    **etc目录：**该目录是DBus新建的，用于放置logstash的配置文件，例如被抽取文件路径、心跳及kafka配置等。
+  ![filebeat目录](img/install-logstash-source/install-logstash-source-dir-info.png)
 
-    **logs目录：**放置logstash产生的日志，建议将日志放置在一个磁盘较大的目录，这里为其建立一个软连接，指向/data/dbus/logstash-logs目录。
+   **logstash目录 :**logstash程序文件夹，用户可手动更改logstash配置文件，也可以使用dbus的检测和部署脚本（即log-auto-check-0.5.0文件夹）
 
-    **patterns目录：** 放置logstah产生心跳的时间戳格式，DBus在该目录下新建了一个名为heartbeat的文件，该文件中定义了logstash产生的心跳格式。heartbeat文件中定义的心跳格式如下：
-    `HEARTBEATTIMESTAMP %{YEAR}[./-]%{MONTHNUM}[./-]%{MONTHDAY}[T ]%{HOUR}:?%{MINUTE}(?::?%{SECOND})?`
+   **start.sh :**  启动脚本，一键启动logstash程序
 
+   **stop.sh :**   停止脚本，一键停止logstash程序
+
+  **log-auto-check-0.5.0 :** 内部含有检测kafka连通性及自动更换logstash配置的功能
+
+  **readme :** 使用文档说明
+
+  **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
+
+
+### 1.2 log-auto-check包说明
+
+![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info2.png)
+
+**conf :** 包含log-conf.properties文件，该文件中可以对logstash进行一些通用配置
+
+**checkDeploy.sh :** 1）检测kafka连通性：./checkDeploy.sh
+
+​				 2)   自动替换logstash配置：./checkDeploy.sh  deploy
+
+**reports :** 里面含有检测报告及对logstash进行的哪些配置修改。
 
 ### 1.2. logstash配置文件说明
 
@@ -131,21 +147,64 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
              }
       }
 
-### 1.3. logstash启动
+### 1.4. dbus-logstash启动
 
- **在logstash解压目录下执行以下命令：**
+1. 修改通用配置：
+   修改log-auto-check-0.5.0/conf目录下的log-conf.properties文件，对于logstash，只需要修改kafka地址、日志类型及logstash相关配置即可。
 
-*  **前台启动命令：** bin/logstash -f ./etc/heartbeat.conf
+   filebeat相关配置项说明：
 
-*  **后台启动命令：** bin/logstash -f ./etc/heartbeat.conf &
+   logstash.base.path：			logstash配置文件路径
+   logstash.extract.file.path：	logstash抽取文件路径，如果是多个文件，用逗号分隔即可
+   logstash.sincedb.path：		存放logstash 文件记录位置的文件路径
 
-    当用**前台启动命令时**出现以下信息，则说明启动成功（**注意控制台是否出现报错信息**）：
+   logstash.file.start.position: 	logstash是从beginning，还是end位置开始读数据
 
-    ```
-    [2018-01-23T16:08:51,288][INFO ][logstash.pipeline        ] Starting pipeline {"id"=>"main", "pipeline.workers"=>1, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>5, "pipeline.max_inflight"=>125}
-    [2018-01-23T16:08:53,032][INFO ][logstash.pipeline        ] Pipeline main started
-    [2018-01-23T16:08:53,700][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600}
-    ```
+   logstash.dst.topic:			logstash的目的topic
+
+   ![filebeat目录](img/install-logstash-source/install-logstash-auto-config.png)
+
+2. 自动检测：
+
+   ```
+   执行命令：./checkDeploy.sh
+   ```
+
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，然后查看reports目录下的检测报告，可以查看kafka连通是否正常。
+
+3. 自动部署：
+
+   ```
+   执行命令：./checkDeploy.sh deploy
+   ```
+
+   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动将conf目录下的修改项替换到logstash配置文件中。
+
+4. 启动方式：
+
+   ```
+   执行命令：./start.sh
+   ```
+
+   启动脚本，该脚本会启动logstash程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
+
+5. 验证logstash：
+
+   ```
+   执行命令：ps -aux | grep logstash
+   ```
+
+   查看logstash进程是否存在。
+
+6. 停止方式：
+
+   ```
+   执行命令：./stop.sh
+   ```
+
+   停止脚本，停止logstash序。
+
+
 
 ### 1.4. logstash验证
 
@@ -187,64 +246,61 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
   ```
 
 
-## 2 DBus 一键加线和配置
+* ## 2 DBus 一键加线和配置
 
-### 2.1 DBus一键加线
+   ### 2.1 DBus一键加线
 
-logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对该topic数据进行处理了，在DBus web进行数据源和table的配置工作。
+   logstash的新建线过程和filebeat的新建线过程是一样的，这里的图片引用了filebeat的建线过程，请知悉。
 
-* **新建数据源：**首先新建数据源，进入New DataLine页面，由于我们是用logstash对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_logstash，topic必须和logstash配置文件中的topic一致。
+   logstash将数据抽取到Kafka topic后，DBus程序就可以对该topic数据进行处理了，在DBus web进行数据源和table的配置工作。
 
-  ![install-filebeat-source-new-ds-1](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
+   - **新建数据源：**首先新建数据源，进入New DataLine页面，由于我们是用logstash对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_logstash，topic必须和logstash配置文件中的topic一致。
 
-* **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击Next。
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-1.png](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
 
-  ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
+   - **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击下一步。
 
-  **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
 
+   - **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
 
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
 
-* ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
-  **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过查看Topology start log定位失败原因。
-  ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
+       **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
+     ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
+   ### 2.2 数据源配置修改
 
-### 2.2 数据源配置修改
+   因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
-因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
+   - **修改数据源信息：**点击modify按钮进行修改。
+     ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
+   - **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
+     ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
-* **修改数据源信息：**点击modify按钮进行修改。
+   ### 2.3. 配置规则
 
-   ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
+   - **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则
 
-* **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
+     ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
-   ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
+   - **新增规则组：**点击Add group按钮，新增一个规则组，点击规则组名字，进入规则配置页面。
 
+     ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
-### 2.3. 配置规则
-- **进入Data Table页面，查看新增加的表，点击[规则配置]按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
+   - **配置规则:** topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。
 
-  ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
+     ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
-- **新增规则组：**点击Add group按钮，新增一个规则组，点击规则组名字，进入规则配置页面。
+   - **升级版本：**首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。
 
-  ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
+     ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 
-- **配置规则:** topic是在filebeat中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。
+   - **拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
 
-  ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
+     ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
-- **升级版本：**首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。
-
-  ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
-
-- **拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
-
-  ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
-
-​
+   ​
 
 ##  3  验证数据
 
