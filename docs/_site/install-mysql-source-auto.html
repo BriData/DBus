@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Mysql数据源接入DBus - DBus 0.5.0 Documentation</title>
+        
+          <meta name="description" content="Dbus 安装Mysql源 0.5.0">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:40px; margin-top:4px;"/></a><span class="version">0.5.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
+                            </ul>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">Mysql数据源接入DBus</h1>
+                
+
+                <blockquote>
+  <p>原理：</p>
+
+  <p>同步mysql数据源是通过 canal 抽取程序读取binlog的方式获得增量数据， 通过从mysql 备库以分片的方式scan数据来获得全量数据，最后转换为UMS 输出到kafka 提供给下游数据使用方使用。</p>
+
+  <p>环境说明：</p>
+
+  <ul>
+    <li>环境中有dbus-n1，dbus-n2，dbus-n3三个节点，canal安装在了dbus-n1，dbus-n2中</li>
+    <li>mysql数据源的主备分别是dbmysql-master和dbmysql-slave两个节点</li>
+    <li>mysql_instance实例安装在上述两个节点dbmysql-master和dbmysql-slave上</li>
+  </ul>
+</blockquote>
+
+<p>下面从 mysql_instance实例中的test 库的 actor和actor2 表为例，介绍如何配置mysql数据源。</p>
+
+<p>配置中用到的基础环境的情况请参考<a href="install-base-components.html">基础组件安装</a></p>
+
+<p><strong>配置总共分为3个步骤：</strong></p>
+
+<ol>
+  <li><strong>数据库源端配置</strong></li>
+  <li><strong>dbus一键加线</strong></li>
+  <li>
+    <p><strong>检验和查看结果</strong></p>
+
+    <p>​</p>
+  </li>
+</ol>
+
+<h2 id="1-数据库源端配置">1 数据库源端配置</h2>
+
+<blockquote>
+  <p>数据库源端配置只在第一次配置环境时需要，在以后的加表流程中不需要再配置。</p>
+
+</blockquote>
+
+<p>此步骤中需要在mysql数据源的mysql_instance实例上创建一个名字为dbus的库，并在此库下创建表db_heartbeat_monitor和db_full_pull_requests两张表，用于心跳检测和全量拉取。</p>
+
+<p>在数据源端新建的dbus库，可以实现无侵入方式接入多种数据源，业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。</p>
+
+<p><strong>相关依赖部件说明：</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>名称</th>
+      <th><strong>版本号</strong></th>
+      <th><strong>说明</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Canal</td>
+      <td>v1.0.22</td>
+      <td>DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7</td>
+    </tr>
+    <tr>
+      <td>Mysql</td>
+      <td>v5.6，v5.7</td>
+      <td>存储DBus管理相关信息</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>限制：</strong></p>
+
+<ul>
+  <li>被同步的Mysql blog需要是row模式</li>
+  <li>考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql     MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob,     即如果表中有这样类型的数据会直接被替换为空。</li>
+</ul>
+
+<h3 id="11-dbus库和dbus账户配置">1.1 dbus库和dbus账户配置</h3>
+
+<p>在mysql_instance实例上，创建dbus 库以及数据表db_full_pull_requests和db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。</p>
+
+<p><strong>a) 创建dbus库和dbus用户及相应权限</strong></p>
+
+<pre><code class="language-mysql">	--- 1 创建库，库大小由dba制定(可以很小，就2张表）
+	create database dbus;
+
+	--- 2  创建用户，密码由dba制定
+	CREATE USER dbus IDENTIFIED BY 'your_password';
+
+	--- 3 授权dbus用户访问dbus自己的库
+	GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'your_password';
+
+	flush privileges; 
+</code></pre>
+
+<p><strong>b) 创建dbus库中需要包含的2张表，创建细节如下：</strong></p>
+
+<pre><code class="language-mysql">	-- ----------------------------
+	-- Table structure for db_full_pull_requests
+	-- ----------------------------
+	DROP TABLE IF EXISTS `db_full_pull_requests`;
+	CREATE TABLE `db_full_pull_requests` (
+	  `seqno` bigint(19) NOT NULL AUTO_INCREMENT,
+	  `schema_name` varchar(64) DEFAULT NULL,
+	  `table_name` varchar(64) NOT NULL,
+	  `physical_tables` varchar(10240) DEFAULT NULL,
+	  `scn_no` int(11) DEFAULT NULL,
+	  `split_col` varchar(50) DEFAULT NULL,
+	  `split_bounding_query` varchar(512) DEFAULT NULL,
+	  `pull_target_cols` varchar(512) DEFAULT NULL,
+	  `pull_req_create_time` timestamp(6) NOT NULL,
+	  `pull_start_time` timestamp(6) NULL DEFAULT NULL,
+	  `pull_end_time` timestamp(6) NULL DEFAULT NULL,
+	  `pull_status` varchar(16) DEFAULT NULL,
+	  `pull_remark` varchar(1024) DEFAULT NULL,
+	  PRIMARY KEY (`seqno`)
+	) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+	SET FOREIGN_KEY_CHECKS=0;
+	
+	-- ----------------------------
+	-- Table structure for db_heartbeat_monitor
+	-- ----------------------------
+	DROP TABLE IF EXISTS `db_heartbeat_monitor`;
+	CREATE TABLE `db_heartbeat_monitor` (
+	  `ID` bigint(19) NOT NULL AUTO_INCREMENT COMMENT '心跳表主键',
+	  `DS_NAME` varchar(64) NOT NULL COMMENT '数据源名称',
+	  `SCHEMA_NAME` varchar(64) NOT NULL COMMENT '用户名',
+	  `TABLE_NAME` varchar(64) NOT NULL COMMENT '表名',
+	  `PACKET` varchar(256) NOT NULL COMMENT '数据包',
+	  `CREATE_TIME` datetime NOT NULL COMMENT '创建时间',
+	  `UPDATE_TIME` datetime NOT NULL COMMENT '修改时间',
+	  PRIMARY KEY (`ID`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	
+	SET FOREIGN_KEY_CHECKS=0;
+</code></pre>
+
+<p><strong>c)  dbus用户拉备库权限</strong></p>
+
+<p>获取拟拉取的目标表备库的读权限，用于初始化加载，schemaName1.tableName1是需要同步的表名：</p>
+
+<pre><code class="language-mysql">  -- GRANT select on schemaName1.tableName1 TO dbus;
+  GRANT select on test.t1 TO dbus;
+  GRANT select on test.t2 TO dbus;
+  
+  flush privileges; 
+</code></pre>
+<p>如上dbus库配置命令，详见https://github.com/BriData/DBus/tree/master/initScript下mysql insatall文件夹。</p>
+
+<h3 id="12-canal-账户和canal-server配置">1.2 canal 账户和canal server配置</h3>
+
+<h5 id="a-在mysql数据源的mysql_instance实例中创建canal用户并授予相应权限">a) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：</h5>
+
+<pre><code class="language-mysql">  --- 创建Canal用户，密码由dba指定, 此处为canal
+  CREATE USER canal IDENTIFIED BY 'canal';    
+  --- 授权给Canal用户
+  GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
+
+  FLUSH PRIVILEGES; 
+</code></pre>
+<h5 id="b-canal-server配置">b) Canal Server配置：</h5>
+
+<p>1). 下载Canal</p>
+
+<p>从https://github.com/alibaba/canal/releases下载Canal，到目录/app/canal-testdb，并解压。详细情况参照https://github.com/alibaba/canal/wiki/QuickStart。注意canal要下载版本为canal-1.0.22。</p>
+
+<p>详细情况请参考https://github.com/BriData/DBus/tree/master/third-party-packages/canal</p>
+
+<p>2). 使用脚本，自动部署canal 配置文件</p>
+
+<p>解压提供的zip包（名称应该是：dbus-canal-auto-0.5.0.zip），然后将conf目录下的canal-auto.properties文件中内容，修改成自己的信息。例如：</p>
+
+<pre><code class="language-properties">#要添加的数据源名称
+dsname=testdb
+#zk地址,如果是集群环境，使用逗号隔开
+zk.path=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
+#源端库备库地址
+slave.path=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+#改成设置的canal用户名
+canal.user=canal
+#改成设置的canal用户密码
+canal.pwd=canal
+#canal安装目录
+canal.path=/app/canal
+</code></pre>
+<p>替换完毕后，执行sh start.sh，然后会生成“canal _check _report”打头的日志文件，查看日志文件可看到执行的信息和结果。成功如下：</p>
+
+<pre><code class="language-properties">************ CANAL DEPLOY BEGIN! ************
+数据源名称: testdb
+zk地址: 127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
+备库地址: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+canal 用户名: canal
+canal 密码: canal
+canal 安装目录: /app/canal
+------------ update canal.properties begin ------------ 
+props: canal.port=10000
+props: canal.zkServers=localhost:2181/DBus/Canal/testdb
+------------ update canal.properties end ------------ 
+------------ update instance.properties begin ------------ 
+instance file path /app/canal/conf/testdb/instance.properties
+props: canal.instance.master.address=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+props: canal.instance.dbUsername=canal
+props: canal.instance.dbPassword =canal
+props: canal.instance.connectionCharset = UTF-8
+------------ update canal.properties end ------------ 
+------------ check canal zk node begin ------------ 
+zk str:  127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
+zk path :  127.0.0.1:2181
+-----check canal zk path  begin 
+node path: /DBus/Canal/testdb
+path /DBus/Canal/testdb exist
+-----check canal zk path  end 
+------------ check canal zk node end ------------ 
+************ CANAL DEPLOY SCCESS! ************
+</code></pre>
+<p>如果某一环节出错，请根据日志检查输入属性的正确性。</p>
+
+<p>3). 启动canal server</p>
+
+<p>到目录/app/canal/bin下，运行 sh  startup.sh</p>
+
+<p>5). 查看canal进程:</p>
+
+<p>jps -l   后应当存在com.alibaba.otter.canal.deployer.CanalLauncher进程。并且启动成功后，会在dbus-web中ZK Manager中结点/DBus/Canal/canal-testdb（同上）生成一系列结点。</p>
+
+<h6 id="错误排查-startupsh-的check功能">##错误排查 startup.sh 的check功能</h6>
+<p>自动部署的脚本同样提供了自动拍错的功能，如果canal启动失败，可以使用命令sh start.sh check 来检查，根据生产的“canal_ check_report”文件可以为您提供帮助。如：canal账户检查失败，则需要检查这几项的正确性。</p>
+
+<pre><code class="language-properties">************ CANAL CHECK BEGIN! ************
+-----check database canal account  begin 
+canal user: canal
+canal pwd: canal
+slave url: jdbc:mysql://localhost:3311/test?characterEncoding=utf-8
+[jdbc ]get connection error
+-----check database canal account fail ------------
+************ CANAL CHECK FAIL! ************
+</code></pre>
+<p>如果自动部署的脚本无法满足您的需求，请参考手动部署文档部分。</p>
+<h6 id="为什么不支持呢">##为什么不支持呢</h6>
+
+<p>Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，而此文件打包在canal.parse-1.0.22.jar包中，因此在canal server包解压之后，需要按照替换解压后的canal目录中lib下的canal.parse-1.0.22.jar文件。</p>
+
+<p>可用https://github.com/BriData/DBus/blob/master/third-party-packages/canal/canal.parse-1.0.22.jar替换上述原始jar包。</p>
+
+<h2 id="2-dbus一键加线">2 Dbus一键加线</h2>
+
+<p>Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus keeper页面添加新数据线的步骤进行介绍</p>
+
+<h5 id="21-管理员身份进入dbus-keeper页面数据源管理-新建数据线">2.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线</h5>
+
+<p><img src="img/install-mysql/new-data-line.png" alt="install-mysql-1-new-dataline" /></p>
+
+<h5 id="22-填写数据源基本信息-master和slave-jdbc连接串信息">2.2 填写数据源基本信息 （master和slave jdbc连接串信息）</h5>
+
+<p>其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。</p>
+
+<p><img src="img/install-mysql/mysql-add-ds.png" alt="数据基本信息填写标注" /></p>
+
+<h5 id="23-下拉选择要添加的schema勾选要添加的表keeper支持一次添加多个schema下的多个table">2.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；</h5>
+
+<p><img src="img/install-mysql/mysql-add-schema-table.png" alt="选择schema标注" /></p>
+
+<h5 id="24-启动topology">2.4 启动Topology</h5>
+
+<p>在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。</p>
+
+<p>然后分别点击dispatcher-appender、splitter-puller、extractor的启动按钮，系统则根据path路径自动执行相应 topology的shell脚本，启动成功后Status状态变为running。</p>
+
+<p><img src="img/install-mysql/myl-start-full-pull-appender.png" alt="install-mysql-7-Topology-have-started" /></p>
+
+<p>新线部署完成</p>
+
+<p><strong>2.6 拉取增量和全量数据</strong></p>
+
+<p>新添加的数据线，其schema中的table处于stopped状态。需要到dbus keeper中对相应的表，先拉取增量数据，才能让其变成OK状态。处于OK状态的表才会正常的从mysql数据源同步数据到相应的kafka中。拉取完成增量之后，可以根据业务需要确定是否需要拉取全量数据。</p>
+
+<p><img src="img/install-mysql/myl-start-full-pull-appender.png" alt="install-mysql-11-appender-fullpuller-data" /></p>
+
+<h5 id="27-如果新加线过程中出现问题">2.7 如果新加线过程中出现问题</h5>
+
+<p>如果新加线过程中出现问题时，可以先删除已经添加到一半的新线Datasource，然后再重新添加新线。</p>
+
+<p>​	<img src="img/install-mysql/mysql-add-data-line-delete.png" alt="删除database标注" /></p>
+
+<h2 id="3-检验和查看结果">3 检验和查看结果</h2>
+
+<h3 id="31-验证增量数据">3.1 验证增量数据</h3>
+
+<h4 id="a-插入数据">a) 插入数据</h4>
+
+<p>​	向数据源的数据表中添加数据，检验效果。此处以testdb数据源的test数据库的表actor中添加数据为例，向此表插入几条数据之后，会看到kafka UI中相应的topic:  testdb, testdb.test, testdb.test.result的offset均有所增加。也可以在grafana中查看数据流的情况。</p>
+
+<p>​	如果数据源中添加的schema和数据表已经存在数据，点击dbus web中的拉增量和拉全量，将现有数据同步到kafka中。</p>
+
+<h4 id="b-grafana看增量流量">b) grafana看增量流量</h4>
+
+<p>​	上述向数据表中添加完数据后，过大约几分钟，会在grafana中显示数据的处理情况。如下图中，两组则线图分别表示：计数和延时，正常情况下计数图中&#8221;分发计数器&#8221;和&#8221;增量计数器&#8221;两条线是重合的。在图左上角，选择要查看的数据表，此处为testdb.test.actor。上部的分发器计数图展示了此表的分发和增量程序接收到7条数据；下部的分发器延时展示分发延时、增量延时和末端延时情况。</p>
+
+<p><img src="img/install-mysql/install-mysql-9-grafana-actor.PNG" alt="install-mysql-9-grafana-actor" /></p>
+
+<h3 id="32-验证全量拉取">3.2 验证全量拉取</h3>
+
+<p>验证全量拉取是否成功，可到Dbus web的zk manager下查看全量拉取状态。如下图中，选取zookeeper Manager中的/DBus/FullPuller下相应数据源、数据库与数据表中相应拉全量版本，查看结点信息。看结点信息中Status状态，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。<img src="img\install-mysql\install-mysql-10-fullpuller_status.PNG" alt="install-mysql-10-fullpuller_status" /></p>
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

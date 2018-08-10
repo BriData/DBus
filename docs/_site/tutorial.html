@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>用户手册 - DBus 0.5.0 Documentation</title>
+        
+          <meta name="description" content="Dbus用户手册">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:40px; margin-top:4px;"/></a><span class="version">0.5.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
+                            </ul>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">用户手册</h1>
+                
+
+                
+<h1 id="1-总体说明">1. 总体说明</h1>
+
+<h2 id="11-总体模块概览">1.1 总体模块概览</h2>
+
+<p>DBUS主要由两大部分组成：贴源数据采集和多租户数据分发。两个部分之间以Kafka为媒介进行衔接。</p>
+
+<p><img src="img/manual/general-origin-router.png" alt="general-origin-router" /></p>
+
+<p>贴源数据采集通过简单灵活的配置，以无侵入的方式对源端数据进行采集，实时获取增量数据，提供丰富、完备的数据采集、脱敏、转换、汇聚功能，并支持全量数据拉取，经过转换处理后成为统一JSON的数据格式（UMS）。每张表只接入一次，只有一个数据流及一份输出数据与之对应。</p>
+
+<p>多租户数据分发，是为限制不同租户，只能访问分配给他的数据资源；以及，如果两个租户有不同的数据处理逻辑（例如：不同的脱敏需求），也能区别对待处理，从而灵活满足多条业务线租户的不同需求。</p>
+
+<p>由图我们可以清楚的看到，贴源数据采集与多租户模块是解耦的。也就是说，如果没有多租户需求（数据隔离、资源隔离、不同脱敏策略等），可以忽略多租户这一级，加完贴源数据线，直接消费源端数据采集这一级输出到kafka的数据即可。</p>
+
+<p>一张表如果被分给N个租户，就至少会被拷贝分发N次。这个拷贝过程中，可加入一些个性化的处理，例如脱敏策略。此外，如果一个租户需要对同一张表进行不同的处理，再输出，也是可以的。方法是，再建一个处理逻辑不同的Topology来接入、“拷贝分发”该表的数据，例如下图中的Router1_2。这种情况下，表被“拷贝分发”的次数就更多了。但同一张表在一个Topology上只能接入一份。</p>
+
+<h2 id="12-数据接入操作流程概览">1.2 数据接入操作流程概览</h2>
+
+<p>引入多租户后，接入条数据线的工作分为“管理员”和“租户”操作两个部分。为了让用户有一个清晰的了解，在此先把加入一条线的流程简明扼要地介绍一下。后续的章节再详述具体步骤。</p>
+
+<h3 id="121-管理员">1.2.1 管理员</h3>
+
+<p>（1）找源端Owner方开放相关数据访问权限。</p>
+
+<p>（2）接入源端数据。根据不同的数据线，安装配置不同的组件来接入源端数据，例如Canal、Oracle、Filebeat、LogStash、Flume等。</p>
+
+<p>（4）管理员在DBUS Keeper中新增一条数据线，并将目标Schema/Table添加进来。</p>
+
+<p>（5）如果有脱敏需求，在表列表页面对表进行脱敏配置。</p>
+
+<p>（6）管理员启动对应数据线Topology，并启动新加入表的“数据流”。</p>
+
+<p>如果没有多租户需求，到这一步，直接消费贴源端采集输出的数据即可。</p>
+
+<p>如果有多租户需求，继续下面步骤。</p>
+
+<p>（7）创建用户、Sink等资源，如果现有资源不能满足需求。</p>
+
+<p>（8）在项目管理模块，创建项目、分配资源、配置脱敏等。</p>
+
+<h3 id="122-租户">1.2.2 租户</h3>
+
+<p>租户拿到管理员分配的账号，登入系统，能看到自己有权限看到的项目。</p>
+
+<p>（1）点击“拓扑管理”菜单，新增Topology。</p>
+
+<p>（2）点击“项目表管理”菜单，“新增”表，选择表数据在哪个流（Topology）上流转、指定输出Sink端、选择输出列、配置脱敏规则等。</p>
+
+<p>（3）点击“启动”按钮，启动流。</p>
+
+<p>添加表的工作就完成了。</p>
+
+<p>需要的话，租户可以通过“拉全量”操作进行数据初始化。</p>
+
+<h1 id="2-管理员手册">2. 管理员手册</h1>
+
+<p>说明：DBUS提供了灵活的脱敏策略支持。但若无脱敏需求，本章节有关脱敏的部分可一律忽略，不影响使用。另，即便有脱敏需求，亦可数据线搭建起来跑通后，再行根据指南补充配置脱敏事宜。脱敏详细介绍参见：<a href="#encode-intro">脱敏配置介绍</a></p>
+
+<h2 id="21-贴源数据采集">2.1 贴源数据采集</h2>
+
+<p>下面分别介绍不同类型数据源的接入步骤。每一部分都包含了完整的，新增该类型数据源的步骤。您只用关注您想要接入的数据源即可。</p>
+
+<h3 id="211-oracle数据线接入">2.1.1 Oracle数据线接入</h3>
+
+<p>点击<a href="install-oracle-source.html">Oracle数据线接入</a>，了解Oralce类型数据源加线、加表步骤。</p>
+
+<h3 id="212-mysql数据线接入">2.1.2 MySql数据线接入</h3>
+
+<p>点击<a href="install-mysql-source-auto.html">MySql数据线接入</a>，了解MySql类型数据源加线、加表步骤。</p>
+
+<h3 id="213-logstash数据线接入">2.1.3 LogStash数据线接入</h3>
+
+<p>点击<a href="install-logstash-source.html">LogStash数据线接入</a>，了解LogStash类型数据源加线、加表、规则配置及应用步骤。</p>
+
+<h3 id="214-filebeat数据线接入">2.1.4 FileBeat数据线接入</h3>
+
+<p>点击<a href="install-filebeat-source.html">FileBeat数据线接入</a>，了解FileBeat类型数据源加线、加表、规则配置及应用步骤。</p>
+
+<h3 id="215-flume数据线接入">2.1.5 Flume数据线接入</h3>
+
+<p>点击<a href="install-flume-source.html">Flume数据线接入</a>，了解Flume类型数据源加线、加表、规则配置及应用步骤。</p>
+
+<h2 id="22-租户管理">2.2 租户管理</h2>
+
+<p>注：如果没有多租户需求，可跳过此章节。</p>
+
+<p>项目是DBus Keeper进行租户隔离、资源分配的基本单元。创建项目时，会涉及到项目<strong>用户分配</strong>及<strong>Sink分配</strong>。管理员可通过顶部的“<strong>用户管理</strong>”和“<strong>Sink管理</strong>”两个菜单入口创建、管理用户及Sink，准备好项目所需的用户及Sink资源。</p>
+
+<p>Sink即数据输出目标端，现阶段一般为Kafka集群。Sink既可借用DBUS贴源数据采集输出使用的Kafka集群，也可使用完全独立的一套Kafka集群。</p>
+
+<p><img src="img/manual/user_sink_mgr.png" alt="general-origin-router" /></p>
+
+<h3 id="221-新建项目">2.2.1 新建项目</h3>
+
+<p>管理员新建项目时，可对项目进行资源分配、报警策略设置等。</p>
+
+<p><img src="img/manual/new_proj.png" alt="general-origin-router" /></p>
+
+<p>特别注意下，“Resource管理”界面，管理员可控制租户是否有对目标表拉全量的权限。只有这里放开了全量权限，租户在其项目表界面才能看到“拉全量”按钮。</p>
+
+<p>管理员也可在此配置该项目需强制遵守的列脱敏规则。关于脱敏细节，请参考：………………</p>
+
+<p><img src="img/manual/resource-base.png" alt="resource" /></p>
+
+<h3 id="221-重要易混淆概念介绍">2.2.1 重要易混淆概念介绍</h3>
+
+<p><strong>2.2.1.1 源端表 vs 资源</strong></p>
+
+<p><img src="img/manual/resource.png" alt="resource" /></p>
+
+<p>一张源端表可通过“Resource管理”，被分发给多个项目。</p>
+
+<p><strong>2.2.1.2 资源 vs 项目表</strong></p>
+
+<p>如上所述，“资源”是管理员分配给租户，租户有权限看到的表，是一个偏静态的概念。</p>
+
+<p>“项目表”是租户从管理员分配给他的资源中选出来，通过下图的“新增”按钮添加、配置，并通过下图的“启动”操作，使其数据在“流”上流转起来的表，是用户已经从“资源”中纳入使用的、跟项目走的“表”。</p>
+
+<p><img src="img/manual/proj_table.png" alt="resource" /></p>
+
+<p>同一份“资源”可被同一个租户引用多次，但必须跑在不同的流（topology）上。同一张表在同一个流（topology）上只能出现一次。</p>
+
+<h1 id="3-租户手册">3. 租户手册</h1>
+
+<blockquote>
+  <p>说明：</p>
+
+  <p>针对有多租户需求的用户，没有的话可略过。</p>
+
+  <p>租户的界面没有了管理员导航上的功能，只对自己的项目有可读和操作权限</p>
+</blockquote>
+
+<p><strong>租户界面总览如下：</strong></p>
+
+<p><img src="img/user/user-1-global.png" alt="user-global" /></p>
+
+<p>下面重点介绍拓扑管理和项目表管理</p>
+
+<p>​</p>
+
+<h2 id="31-topology-管理">3.1. Topology 管理</h2>
+
+<blockquote>
+  <p>topology属于项目，用户可以添加、删除和操作自己的拓扑，用以承载表的信息。表的信息需要依赖于topology，topology在start成功，变为running状态后，表的”启动”才能生效</p>
+</blockquote>
+
+<p><strong>Topology状态简介：</strong></p>
+
+<ul>
+  <li>new :刚新建</li>
+  <li>stopped : running状态停止操作后</li>
+  <li>running : new/stopped启动后</li>
+  <li>changed : running状态修改后</li>
+</ul>
+
+<p><strong>Topology操作简介：</strong></p>
+
+<p><img src="img/user/user-topology-global.png" alt="user-global" /></p>
+
+<p><strong>操作说明：</strong></p>
+
+<ul>
+  <li>新增 ： jar包和jar包版本的选择，依赖admin通过“jar包管理“操作添加的内容。</li>
+  <li>拖回重跑 ： 如果租户觉得自己的数据有问题，想重新消费kafka的数据，该功能可以提供该能力。该功能只有running状态的topology能使用。</li>
+</ul>
+
+<h6 id="如果拖回重跑有什么影响">##如果拖回重跑，有什么影响？</h6>
+
+<pre><code>（1）能从指定offset重新消费数据，这是我们想要的;    
+（2）该topo上跑的表都会受影响  
+</code></pre>
+
+<h2 id="32-项目表管理">3.2. 项目表管理</h2>
+
+<blockquote>
+  <p>表是项目级下的定义，同时需要依赖topology，即：某个项目的某个topology下的某个表，才是唯一的</p>
+
+</blockquote>
+
+<p><strong>表操作简介：</strong>
+<img src="img/user/user-table-global.png" alt="user-global" /></p>
+
+<h3 id="321-新增表">3.2.1 新增表</h3>
+
+<p><img src="img/user/user-table-add.png" alt="user-table-add" /></p>
+
+<p>表添加的时候分为两个步骤</p>
+
+<p><strong>3.2.1.1 资源选择：分配拓扑和资源，然后配置表的脱敏信息。</strong>
+<img src="img/user/user-table-add-output.png" alt="table-add-output" /></p>
+
+<blockquote>
+  <p>配置脱敏信息是两个操作的集合：</p>
+
+  <p>1）	选择输出列，分为：</p>
+
+  <p>&#8212;a)	固定列，自定义选择输出并配置脱敏信息</p>
+
+  <p>&#8212;b)	输出所有列，表示输出的结果列将与源端的输出列始终保持一致，如果源端发生了表结构变更（包括输出列的数量以及列的类型和脱敏等）信息，输出列也会随之改变。</p>
+
+  <p>2）	脱敏配置：在选择的输出列上添加脱敏信息。带有源端脱敏和项目级脱敏信息的列，租户只能增加和删除；其他列，用户选择可添加自定义的脱敏或不脱敏。</p>
+</blockquote>
+
+<p><strong>3.2.1.2 sink选择：</strong>
+<img src="img/user/user-table-add-encode.png" alt="user-table-add-encode" /></p>
+
+<h3 id="322-操作列功能介绍">3.2.2 操作列功能介绍</h3>
+
+<p><img src="img/user/user-table-opration.png" alt="user-table-opration" /></p>
+
+<blockquote>
+  <p>项目表的状态分为三种</p>
+
+  <p>&#8211;1.stopped 默认值</p>
+
+  <p>&#8211;2. running “启动“操作后，表的增量数据在topology上流动。</p>
+
+  <p>&#8211;3. changed 该状态是指表在running的时候，租户使用了“修改“操作。</p>
+</blockquote>
+
+<p><strong>操作简介：</strong></p>
+
+<ul>
+  <li>启动/停止：table增量数据的启停，状态切换为running/stopped</li>
+  <li>修改： 修改表的信息，修改后只是更新数据库的信息。running的表状&gt;态会变成changed。stopped表修改后就生效。</li>
+  <li>生效：changed状态的表，点生效，增量数据会使用修改后的表信息。</li>
+  <li>拉全量/查看拉全量历史：租户发起拉全量。注：只有管理员赋予了拉全量权限，才可以能看到拉全量及查看拉全量历史查看按钮。超链到管理员手册对应说明</li>
+</ul>
+
+<h1 id="附录-重要设计介绍">附录. 重要设计介绍</h1>
+
+<h2 id="1-拉全量总体说明">1 拉全量总体说明</h2>
+
+<p>有的用户只需要实时采集的增量数据即可。但更多用户需要的是全部的数据。所以一般在拉增量数据前，都会进行一次“初始化加载”，拉取当前目标表的全量数据，然后在此基础上，消费实时流入的增量数据，供业务使用。增量数据流出现问题，尤其是有数据丢失时，常常也需要拉一次全量数据，补齐数据后，再走增量，以确保后续的业务都是在完整的数据上进行。</p>
+
+<p>DBUS提供了高效的初始化加载全量数据加载，支持指定输出topic及是否升版本号等，灵活应对客户需求。</p>
+
+<h3 id="11-贴源全量数据拉取"><a name="faq_grafana_err" id="independent-fullpull">1.1 贴源全量数据拉取</a></h3>
+
+<p>前面我们提到，贴源数据采集独立于多租户数据分发。所以，“贴源数据采集”是一套功能完备的数据采集平台，亦提供了“全量数据拉取”功能。这一级拉取的数据，会吐到“贴源数据输出Kafka”，即：衔接贴源数据采集和租户数据分发的kafka。</p>
+
+<p>贴源数据采集拉全量入口（未引入多租户的，在此拉全量）</p>
+
+<p><img src="img/manual/independent-fullpull.png" alt="independent-fullpull" /></p>
+
+<h3 id="12-租户全量数据拉取">1.2 租户全量数据拉取</h3>
+
+<p>租户需要的数据，全量和增量得逻辑一致，不能直接用贴源级别的全量数据，所以租户这一级也提供了“全量数据拉取”功能。租户“全量数据拉取”和“增量数据采集”数据转换、处理逻辑一致，比如：两者会共享相同的”输出列“定义、相同的脱敏策略等。这一级拉取的数据，会吐到租户指定的kafka，可能和“贴源数据输出Kafka”相同，也可能是租户自建的一套kafka集群。</p>
+
+<p>租户拉全量入口（引入多租户的，每个租户可根据需求，对目标表拉全量）</p>
+
+<p><img src="img/manual/user-fullpull.png" alt="user-fullpull" /></p>
+
+<h3 id="13-dbus其他有关全量数据加载的介绍">1.3 DBUS其他有关全量数据加载的介绍</h3>
+
+<p>DBUS生态里关于全量，有贴源拉全量、租户拉全量、独立拉全量、阻塞式拉全量等等概念。从实用的角度来说，你知道上面两个入口就够用了，无需去研究这些概念，并可完全跳过本小节的介绍。但为了您对DBUS拉全量有一个更全面的了解，必要时参考，下面做些补充性介绍。不感兴趣的可以跳过。</p>
+
+<h4 id="131--阻塞式拉全量">1.3.1  阻塞式拉全量</h4>
+
+<p>是最早的设计。当时下游的幂等不够成熟，所以需要源端数据采集端确保顺序性。因此，拉全量动作会阻塞增量，全量拉完，通知增量，增量再继续处理实时进来的数据。另外，阻塞式拉全量默认输出的topic和增量数据输出的topic一致，不能随意调整、指定。入口在此：</p>
+
+<p><img src="img/manual/normal-fullpull.png" alt="normal-fullpull" /></p>
+
+<h4 id="132-独立拉全量">1.3.2 独立拉全量</h4>
+
+<p>即贴源全量数据拉取入口，当前贴源数据采集默认推荐的全量拉取模式。</p>
+
+<p>所以入口同<a href="#independent-fullpull">1.1 贴源全量数据拉取</a> ：</p>
+
+<p><img src="img/manual/independent-fullpull.png" alt="independent-fullpull" /></p>
+
+<p>独立拉全量和增量数据流相互独立，不会阻断增量，增量和全量的数据可同时并行往外吐，且独立拉全量可以随意指定输出topic。吐到不同topic的情况下，下游的消费者（如DBUS最佳伴侣Wormhole）需要同时监听两个topic才能拿到完整的数据。下游消费者可根据UMS里的uid来判断数据的新旧程度，幂等地处理是否覆盖数据，所以对增量和全量数据的顺序性没有了要求和约束。根据幂等覆盖策略，总会用新数据覆盖旧数据。</p>
+
+<p>由于下游幂等覆盖数据策略已经成熟稳定，总能保证用新的数据覆盖旧数据，即：能处理任意顺序来的数据，保证不错乱。阻塞式会阻断用户增量数据，影响体验，所以0.5.0以后，我们建议用户默认采用独立拉全量的方式来进行数据初始化加载。</p>
+
+<h4 id="133-global拉全量">1.3.3 Global拉全量</h4>
+
+<p>主要用于管理员排查问题。可以任意选择目标表，任意指定输出topic。Global拉全量跑在一个独立部署的topology上，所以完全不干扰业务。而阻塞式拉全量和独立拉全量都跑在对应业务线的full pull topology上。</p>
+
+<p><img src="img/manual/global-fullpull.png" alt="global-fullpull" /></p>
+
+<h2 id="42-脱敏配置介绍"><a id="encode-intro">4.2 脱敏配置介绍</a></h2>
+
+<p><strong>脱敏等级：</strong></p>
+
+<ul>
+  <li><strong>系统级强制脱敏 :</strong> 最高级别的脱敏，配置的强制脱敏或统一要求的脱敏，所有项目都需要遵循的默认脱敏规则。管理员设置设置入口：
+<img src="img/encode/encode-sys.png" alt="encode-sys" /></li>
+  <li><strong>项目级强制脱敏：</strong>项目级，应用于项目上。管理员用户添加项目时，配置的项目脱敏，表示该项目下所有项目表都需要遵循的脱敏。管理员设置入口：
+<img src="img/encode/encode-project-force.png" alt="encode-project-force" /></li>
+  <li><strong>项目级别自定义脱敏：</strong>topology级。同一张表可被分别放到不同topo上，但一个表在同一个topo只能出现一次。同一张表在不同的topo上可配置不同的脱敏等策略。租户在自己的项目中，添加项目表时，配置的信息，入口</li>
+</ul>
+
+<p><img src="img/encode/encode-project-user.png" alt="encode-project-user" /></p>
+
+<p><strong>三级脱敏联系：</strong></p>
+
+<ul>
+  <li>系统级强制脱敏、项目级强制脱敏、项目级自定义脱敏强度依次递减，后者不能与前者冲突，需要在遵循前者的基础上添加。</li>
+  <li>在添加项目级强制脱敏时，只能在没有系统级脱敏的信息的列上添加；</li>
+  <li>添加项目级自定义脱敏时，只能在没有系统级脱敏以及 项目级强制脱敏的列上添加</li>
+</ul>
+
+<p><strong>脱敏插件管理-管理员：</strong></p>
+
+<p><strong>脱敏插件</strong>：脱敏方式以插件的形式存在，每个脱敏插件包可有n个设置脱敏类型。管理员可以针对不同的项目上传不同的脱敏插件包，租户在设置项目级自定义脱敏信息时，根据项目下拥有的脱敏插件包，选择脱敏方式。</p>
+
+<p><img src="img/encode/encode-plugin-global.png" alt="encode-plugin-global" /></p>
+
+<p>上传脱敏插件时可以指定应用范围：
+ <img src="img/encode/encode-plugin-add.png" alt=" encode-plugin-add" /></p>
+
+<h6 id="内置脱敏">##内置脱敏</h6>
+
+<pre><code>---Dbus keeper自带一个内置脱敏插件，所有项目可用
+  
+</code></pre>
+
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

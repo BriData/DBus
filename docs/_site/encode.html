@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>脱敏管理说明 - DBus 0.5.0 Documentation</title>
+        
+          <meta name="description" content="Dbus keeper脱敏管理说明">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:40px; margin-top:4px;"/></a><span class="version">0.5.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
+                            </ul>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">脱敏管理说明</h1>
+                
+
+                <p><strong>脱敏等级：</strong></p>
+
+<ul>
+  <li>系统级强制脱敏 : 最高级别的脱敏，配置的强制脱敏或统一要求的脱敏，所有项目都需要遵循的默认脱敏规则。管理员设置设置入口：
+ <img src="img/encode/encode-sys.png" alt="encode-sys" /></li>
+  <li>项目级强制脱敏：项目级，应用于项目上。管理员用户添加项目时，配置的项目脱敏，表示该项目下所有项目表都需要遵循的脱敏。管理员设置入口：
+ <img src="img/encode/encode-project-force.png" alt="encode-project-force" /></li>
+  <li>项目级别自定义脱敏：topology级。同一张表可被分别放到不同topo上，但一个表在同一个topo只能出现一次。同一张表在不同的topo上可配置不同的脱敏等策略。租户在自己的项目中，添加项目表时，配置的信息，入口</li>
+</ul>
+
+<p><img src="img/encode/encode-project-user.png" alt="encode-project-user" /></p>
+
+<p><strong>三级脱敏联系：</strong></p>
+
+<ul>
+  <li>
+    <p>系统级强制脱敏、项目级强制脱敏、项目级自定义脱敏强度依次递减，后者不能与前者冲突，需要在遵循前者的基础上添加。</p>
+  </li>
+  <li>
+    <p>在添加项目级强制脱敏时，只能在没有系统级脱敏的信息的列上添加；</p>
+  </li>
+  <li>
+    <p>添加项目级自定义脱敏时，只能在没有系统级脱敏以及 项目级强制脱敏的列上添加</p>
+  </li>
+</ul>
+
+<p><strong>脱敏插件管理-管理员：</strong></p>
+
+<p><strong>脱敏插件</strong>：脱敏方式以插件的形式存在，每个脱敏插件包可有n个设置脱敏类型。管理员可以针对不同的项目上传不同的脱敏插件包，租户在设置项目级自定义脱敏信息时，根据项目下拥有的脱敏插件包，选择脱敏方式。</p>
+
+<p><img src="img/encode/encode-plugin-global.png" alt="encode-plugin-global" /></p>
+
+<p>上传脱敏插件时可以指定应用范围：
+ <img src="img/encode/encode-plugin-add.png" alt=" encode-plugin-add" /></p>
+
+<h6 id="内置脱敏">##内置脱敏</h6>
+<pre><code>---Dbus keeper自带一个内置脱敏插件，所有项目可用
+  
+</code></pre>
+
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>用户手册 - DBus 0.5.0 Documentation</title>
+        
+          <meta name="description" content="Dbus用户手册">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:40px; margin-top:4px;"/></a><span class="version">0.5.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
+                            </ul>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">用户手册</h1>
+                
+
+                <p>资源、sink、全量拉取记录、貼源监控，用户均只有只读权限。</p>
+
+<p>租户能操作的模块有Topology管理、项目用户增减、表管理等。</p>
+
+<h1 id="1topology管理">1.Topology管理</h1>
+
+<p>加Topology、起停topo</p>
+
+<p>重点说下拖回重跑机制。什么情况下不能拖回重跑？</p>
+
+<p>如果拖回重跑，会发生什么？</p>
+
+<p>（a）    正产品：能从指定offset重新消费数据…………</p>
+
+<p>（b）   副产品：该topo上跑的表都会受影响，……</p>
+
+<h1 id="2表管理">2.表管理</h1>
+
+<h2 id="21-添加表">2.1 添加表</h2>
+
+<p>重点介绍脱敏配置弹框里 输出固定列/输出所有列的含义和区别。</p>
+
+<h2 id="22-操作">2.2 操作</h2>
+
+<p>重点介绍生效的含义。</p>
+
+<p>拉全量  拉全量历史：注明下只有管理员赋予了拉全量权限，才可以能看到拉全量及查看拉全量历史查看按钮。超链到管理员手册对应说明。</p>
+
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

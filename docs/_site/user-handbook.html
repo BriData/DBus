@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>租户手册 - DBus 0.5.0 Documentation</title>
+        
+          <meta name="description" content="Dbus keeper租户手册">
+        
+
+        
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+
+        <link rel="stylesheet" href="css/pygments-default.css">
+
+
+
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- This code is taken from http://twitter.github.com/bootstrap/examples/hero.html -->
+
+        <div class="navbar navbar-fixed-top" id="topbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="brand"><a href="index.html">
+                      <img src="img/dbus-logo.png" style="width:40px; margin-top:4px;"/></a><span class="version">0.5.0</span>
+                    </div>
+                    <ul class="nav">
+                        <li><a href="index.html">Overview</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
+                            </ul>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="more-system-architecture.html">系统架构</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
+                                <li><a href="more-faq.html">FAQ</a></li>
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-wrapper">
+            <div class="content" id="content">
+                
+                    <h1 class="title">租户手册</h1>
+                
+
+                <blockquote>
+  <p>说明：</p>
+
+  <p>针对有多租户需求的用户，没有的话可略过。</p>
+
+  <p>租户的界面没有了管理员导航上的功能，只对自己的项目有可读和操作权限</p>
+
+</blockquote>
+
+<p><strong>租户界面总览如下：</strong></p>
+
+<p><img src="img/user/user-1-global.png" alt="user-global" /></p>
+
+<p>下面重点介绍拓扑管理和项目表管理</p>
+
+<p>​</p>
+
+<h2 id="1-topology-管理">1. Topology 管理</h2>
+
+<blockquote>
+  <p>topology属于项目，用户可以添加、删除和操作自己的拓扑，用以承载表的信息。表的信息需要依赖于topology，topology在start成功，变为running状态后，表的”启动”才能生效</p>
+
+</blockquote>
+
+<p><strong>Topology状态简介：</strong></p>
+
+<ul>
+  <li>new :刚新建</li>
+  <li>stopped : running状态停止操作后</li>
+  <li>running : new/stopped启动后</li>
+  <li>changed : running状态修改后</li>
+</ul>
+
+<p><strong>Topology操作简介：</strong></p>
+
+<p><img src="img/user/user-topology-global.png" alt="user-global" /></p>
+
+<p><strong>操作说明：</strong></p>
+
+<ul>
+  <li>新增 ： jar包和jar包版本的选择，依赖admin通过“jar包管理“操作添加的内容。</li>
+  <li>拖回重跑 ： 如果租户觉得自己的数据有问题，想重新消费kafka的数据，该功能可以提供该能力。该功能只有running状态的topology能使用。</li>
+</ul>
+
+<h6 id="如果拖回重跑有什么影响">##如果拖回重跑，有什么影响？</h6>
+<pre><code>  --- 正产品：能从指定offset重新消费数据，这是我们想要的;    
+  --- 副产品： 该topo上跑的表都会受影响
+  
+</code></pre>
+
+<h2 id="2-项目表管理">2. 项目表管理</h2>
+
+<blockquote>
+  <p>表是项目级下的定义，同时需要依赖topology，即：某个项目的某个topology下的某个表，才是唯一的</p>
+
+</blockquote>
+
+<p><strong>表操作简介：</strong>
+<img src="img/user/user-table-global.png" alt="user-global" /></p>
+
+<p>###2.1 新增表
+<img src="img/user/user-table-add.png" alt="user-table-add" /></p>
+
+<p>表添加的时候分为两个步骤</p>
+
+<p><strong>2.1.1 资源选择：分配拓扑和资源，然后配置表的脱敏信息。</strong>
+<img src="img/user/user-table-add-output.png" alt="table-add-output" /></p>
+<blockquote>
+  <p>配置脱敏信息是两个操作的集合：</p>
+
+  <p>1）	选择输出列，分为：</p>
+
+  <p>&#8212;a)	固定列，自定义选择输出并配置脱敏信息</p>
+
+  <p>&#8212;b)	输出所有列，表示输出的结果列将与源端的输出列始终保持一致，如果源端发生了表结构变更（包括输出列的数量以及列的类型和脱敏等）信息，输出列也会随之改变。</p>
+
+  <p>2）	脱敏配置：在选择的输出列上添加脱敏信息。带有源端脱敏和项目级脱敏信息的列，租户只能增加和删除；其他列，用户选择可添加自定义的脱敏或不脱敏。</p>
+</blockquote>
+
+<p><strong>2.1.2 sink选择：</strong>
+<img src="img/user/user-table-add-encode.png" alt="user-table-add-encode" /></p>
+
+<p>###2.2 操作列功能介绍
+<img src="img/user/user-table-opration.png" alt="user-table-opration" /></p>
+
+<blockquote>
+  <p>项目表的状态分为三种</p>
+
+  <p>&#8211;1.stopped 默认值</p>
+
+  <p>&#8211;2. running “启动“操作后，表的增量数据在topology上流动。</p>
+
+  <p>&#8211;3. changed 该状态是指表在running的时候，租户使用了“修改“操作。</p>
+
+</blockquote>
+
+<p><strong>操作简介：</strong></p>
+
+<ul>
+  <li>启动/停止：table增量数据的启停，状态切换为running/stopped</li>
+  <li>修改： 修改表的信息，修改后只是更新数据库的信息。running的表状&gt;态会变成changed。stopped表修改后就生效。</li>
+  <li>生效：changed状态的表，点生效，增量数据会使用修改后的表信息。</li>
+  <li>拉全量/查看拉全量历史：租户发起拉全量。注：只有管理员赋予了拉全量权限，才可以能看到拉全量及查看拉全量历史查看按钮。超链到管理员手册对应说明</li>
+</ul>
+
+
+            </div>
+        </div>
+
+        <script src="js/vendor/jquery-1.8.0.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="js/vendor/anchor.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>
