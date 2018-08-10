@@ -7,9 +7,9 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>编译源代码 - DBus 0.4.0 Documentation</title>
+        <title>编译源代码 - DBus 0.5.0 Documentation</title>
         
-          <meta name="description" content="编译源代码 0.4.0">
+          <meta name="description" content="编译源代码 0.5.0">
         
 
         
@@ -43,42 +43,30 @@
             <div class="navbar-inner">
                 <div class="container">
                     <div class="brand"><a href="index.html">
-                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.5.0</span>
                     </div>
                     <ul class="nav">
                         <li><a href="index.html">Overview</a></li>
-                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="install-base-components.html">基础组件安装</a></li>
-                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
-                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
-								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
-								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
-								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
                             </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-								<li><a href="config-datasource.html">数据源介绍</a></li>
-                                <li><a href="config-schema.html">Schema配置</a></li>
-                                <li><a href="config-table.html">Table配置</a></li>
-                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
-								<li><a href="config-dbus-web.html">Web基础配置</a></li>
-								<li><a href="config-inspect-data.html">源端数据查看</a></li>
-                            </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 <li><a href="more-system-architecture.html">系统架构</a></li>
-								<li><a href="more-compile-code.html">编译代码</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
-								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
-								
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -92,9 +80,7 @@
                     <h1 class="title">编译源代码</h1>
                 
 
-                <h2 id="1-编译前准备">1 编译前准备</h2>
-
-<h3 id="11-添加依赖">1.1 添加依赖</h3>
+                <h2 id="1-添加依赖">1 添加依赖</h2>
 
 <p>在dbus-commons/pom.xml 中，需要在占位符 处引入 mysql和 oracle相关包， 占位符如下：</p>
 
@@ -122,51 +108,11 @@ mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=10.
 &lt;/dependency&gt;
 </code></pre>
 
-<h3 id="12-安装node-js">1.2 安装node js</h3>
-
-<p>如果需要编译 dbus-web模块，才需要安装node js，如果不需要编译dbus-web模块， 就不需要安装了。</p>
-
-<p>默认情况是编译 dbus-web的，这就需要node js。</p>
-
-<p>如果不需要编译dbus-web，可以在 根目录中 pom.xml , 将dbus-manager注释掉，如下：</p>
-
-<pre><code>&lt;!--          &lt;module&gt;dbus-manager&lt;/module&gt;  --&gt;
-&lt;!--          &lt;module&gt;dbus-manager-distribution&lt;/module&gt;  --&gt;
-</code></pre>
-
-<p>如果需要编译 dbus-web，则需要下载 node js。<strong>推荐下载 node-v6.9.2</strong></p>
-
-<p>推荐从淘宝npm站点安装</p>
-
-<p><a href="https://npm.taobao.org/mirrors/node/v6.9.2/node-v6.9.2-x64.msi">https://npm.taobao.org/mirrors/node/v6.9.2/node-v6.9.2-x64.msi</a></p>
-
-<p>下载后，推荐安装cnpm</p>
-
-<pre><code>npm install -g cnpm --registry=https://registry.npm.taobao.org
-</code></pre>
-
 <h2 id="2-编译">2 编译</h2>
 
-<p>由于encoder-base和 dbus-commons 两模块被其他模块引用。</p>
+<p>dbus-main是总体工程，其中encoder-base、 dbus-commons等一些模块是公共模块，会被其他引用。</p>
 
-<p>dbus-main是总体工程</p>
-
-<p><strong>推荐直接编译  mave install 它就可以</strong></p>
-
-<h3 id="21-编译过程中的常见错误">2.1 编译过程中的常见错误</h3>
-
-<h4 id="dbus-manger-相关node-js错误">dbus-manger 相关node js错误</h4>
-
-<p>这是因为node 下载库出错造成的，解决问题办法是直接进入两个相关的node的目录：</p>
-
-<p>可以删除node_modules中的内容， 直接调用cnpm install</p>
-
-<pre><code>cd  .\dbus-manger\web 
-cnpm install
-
-cd  .\dbus-manager\manager
-cnpm install
-</code></pre>
+<p>所以，<strong>推荐直接在dbus-main工程上使用mave install命令进行编译。</strong></p>
 
             </div>
         </div>

@@ -5,6 +5,8 @@ title: 概览
 description: Dbus文档首页 DBUS_VERSION_SHORT
 ---
 
+ {:toc}
+
 欢迎来到DBus帮助文档，您可以从以下信息中找到相关说明。或者从 [FAQ](more-faq.html)找到解决常见问题的方案。
 
 ### 1 背景
@@ -40,7 +42,11 @@ DBus的主要潜在客户包括：
 
 ### 4 系统架构和工作原理
 
-DBUS主要分为两个部分：源端数据采集和多租户数据分发。两个部分之间以Kafka为媒介进行衔接。无多租户资源、数据隔离需求的用户，可以直接消费源端数据采集这一级输出到kafka的数据，无需再配置多租户数据分发。
+DBUS主要分为两个部分：貼源数据采集和多租户数据分发。两个部分之间以Kafka为媒介进行衔接。无多租户资源、数据隔离需求的用户，可以直接消费源端数据采集这一级输出到kafka的数据，无需再配置多租户数据分发。
+
+![GlobalOverview](img/index/ds_and_projdispatch.png)
+
+
 
 #### 4.1 DBUS源端数据采集
 
@@ -67,42 +73,55 @@ DBUS源端数据采集大体来说分为两部分：
 
 ![route2Project](img/index/route2Project.png)
 
-具体参考：[system architecture](more-system-architecture.html)
-
-### 5 主要功能：
+### 5 主要功能
 
 - **无侵入方式接入多种数据源**： 业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。目前RDBMS支持mysql，oracle数据源（Oracle数据源请参考Oracle相关协议）， 日志方面支持基于logstash，flume和filebeat的多种数据日志抽取方案。
 - **海量数据实时传输**： 使用基于Storm的流式计算框架，秒级延时，整体无单点保证高可用性。
-- **感知源端schema变更**： 当源端发生schema变更时，能自动感知schema变化，调整UMS版本号，并通过Kafka消息和邮件通知下游![diff](img/index/2intr_diff.png)
-- **数据实时脱敏**： 可根据需求对指定列数据进行实时脱敏。脱敏策略包括：直接替换、MD5、murmur等脱敏算法，脱敏加盐，正则表达式替换等。支持用户开发jar包实现DBUS未覆盖的个性化脱敏策略。 ![encode](img/index/2intr_encode.png)
-- **初始加载和独立加载**： 支持高效的初始化加载和重新加载。支持指定输出topic及是否升版本号等，独立拉取全量数据，灵活应对客户需求。 ![fuller](img/index/2intr_full.png)
-- **统一标准化消息传输协议**： 使用统一的UMS(JSON格式)消息schema格式输出便于消费，提供数据线级ums_id保证数据顺序性,输出insert,Update(before/after),Delete event数据。 ![ums](img/index/2system-ums.png)
-- **可靠多路消息订阅分发**： 使用Kafka存储和传递消息保证可靠性和便捷的多用户订阅
-- **实时监控&预警**： 可视化监控系统能随时查看各数据线实时流量和延时状况；当数据线发生异常时，根据配置策略自动发邮件或短信通知相关负责人 ![grafana](img/index/2intr_grafana.png)
-- **可视化后台管理系统**： 提供一键部署上线，提供丰富的后台管理功能，用户可便捷地对数据线进行配置和管理。 ![grafana](img/index/2intr_tables.png)
-- **支持分表数据汇集**： 可根据用户需求将不同的分表的数据汇集到一个“逻辑表” ![grafana](img/index/2intr_mergetable.png)
+- **多租户支持：** 提供用户管理、资源分配、Topology管理、租户表管理等丰富的功能，可根据需求，为不同租户分配不同的源端表数据访问权限，应用不同的脱敏规则，从而实现多租户资源隔离、差异化数据安全。
 
-- **支持多租户隔离**： 可根据需求，为不同租户分配不同的源端表数据访问权限，应用不同的脱敏规则。
+![grafana](img/index/2intr_proj_mgr.png)
+
+![2intr_proj_table](img/index/2intr_proj_table.png)
+
+![2intr_router_topo](img/index/2intr_router_topo.png)
+
+- **感知源端schema变更**： 当源端发生schema变更时，能自动感知schema变化，调整UMS版本号，并通过Kafka消息和邮件通知下游![diff](img/index/2intr_diff.png)
+
+- **数据实时脱敏**： 可根据需求对指定列数据进行实时脱敏。脱敏策略包括：直接替换、MD5、murmur等脱敏算法，脱敏加盐，正则表达式替换等。支持用户开发jar包实现DBUS未覆盖的个性化脱敏策略。 ![encode](img/index/2intr_encode.png)
+
+- **初始化加载**： 支持高效的初始化加载和重新加载，支持任意指定输出topic，灵活应对客户需求。 ![fuller](img/index/2intr_full.png)
+
+- **统一标准化消息传输协议**： 使用统一的UMS(JSON格式)消息schema格式输出便于消费，提供数据线级ums_id保证数据顺序性,输出insert,Update(before/after),Delete event数据。 ![ums](img/index/2system-ums.png)
+
+- **可靠多路消息订阅分发**： 使用Kafka存储和传递消息保证可靠性和便捷的多用户订阅
+
+- **支持分区表/系列表数据汇集**： 可根据用户需求将不同分区表的数据汇集到一个“逻辑表” 。也可将用户自定义的系列表数据汇集到一个“逻辑表“。例：
+
+  ![grafana](img/index/2intr_mergetable.png) 
+
+- **实时监控&预警**： 可视化监控系统能随时查看各数据线实时流量和延时状况；当数据线发生异常时，根据配置策略自动发邮件或短信通知相关负责人 
+
+  ![grafana](img/index/2intr_grafana.png)
 
 ### 6 其他
 
-##### 编译代码
+#### 编译代码
 
 关于编译代码，参考 [compile](more-compile-code.html)
 
-##### 版本相关:
+#### 版本相关
 
-建议版本：0.4.0
+建议版本：0.5.0
 
 下载发布包：请参考：[downloads](https://github.com/BriData/DBus/releases)
 
-##### 版权声明
+#### 版权声明
 
 DBus 自身使用 Apache v2.0 协议
 
 关于DBus 自身协议，修改第三方包代码，以及三方包协议参考： [License](more-license.html)
 
-##### 其他相关资料:
+#### 其他相关资料
 
 与开源项目 [Wormhole](https://github.com/edp963/wormhole) 项目搭配使用将是最佳选择。 
 
@@ -110,7 +129,7 @@ DBus 自身使用 Apache v2.0 协议
 
 参考： [基于可视化配置的日志结构化转换实现](http://dbaplus.cn/news-134-1860-1.html)
 
-##### 交流和问题反馈:
+#### 交流和问题反馈
 
 邮件交流： [bridata@126.com](mailto:bridata@126.com)
 

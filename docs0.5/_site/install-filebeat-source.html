@@ -7,9 +7,9 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>filebeat作为数据源接入DBus - DBus 0.4.0 Documentation</title>
+        <title>filebeat作为数据源接入DBus - DBus 0.5.0 Documentation</title>
         
-          <meta name="description" content="Dbus 安装Filebeat源 0.4.0">
+          <meta name="description" content="Dbus 安装Filebeat源 0.5.0">
         
 
         
@@ -43,42 +43,30 @@
             <div class="navbar-inner">
                 <div class="container">
                     <div class="brand"><a href="index.html">
-                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.5.0</span>
                     </div>
                     <ul class="nav">
                         <li><a href="index.html">Overview</a></li>
-                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="install-base-components.html">基础组件安装</a></li>
-                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
-                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
-								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
-								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
-								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
                             </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-								<li><a href="config-datasource.html">数据源介绍</a></li>
-                                <li><a href="config-schema.html">Schema配置</a></li>
-                                <li><a href="config-table.html">Table配置</a></li>
-                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
-								<li><a href="config-dbus-web.html">Web基础配置</a></li>
-								<li><a href="config-inspect-data.html">源端数据查看</a></li>
-                            </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 <li><a href="more-system-architecture.html">系统架构</a></li>
-								<li><a href="more-compile-code.html">编译代码</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
-								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
-								
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -92,7 +80,8 @@
                     <h1 class="title">filebeat作为数据源接入DBus</h1>
                 
 
-                <p><strong>系统架构：</strong></p>
+                
+<p>系统架构：**</p>
 
 <p><img src="img/install-filebeat-source/install-filebeat-source-system-architecture.png" alt="系统架构" /></p>
 
@@ -188,7 +177,7 @@
 
 <h3 id="12-配置文件说明">1.2 配置文件说明</h3>
 
-<p>在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考<a href="dbus-main/init-scripts/init-filebeat-config/filebeat.yml">[下载filebeat.yml]</a>。</p>
+<p>  在filebeat的目录下，有filebeat的配置文件filebeat.yml，下面重点说下其配置要点。详细配置请参考filebeat的配置文件：filebeat.yml，<a href="https://github.com/BriData/DBus/tree/master/init-scripts/init-filebeat-config/">参考链接</a>。</p>
 
 <pre><code class="language-yaml">  filebeat.prospectors:			  # filebeat的探测器，可以对多个路径下的文件进行抽取
 - type: log
@@ -259,7 +248,7 @@ output.kafka:
 
 <h3 id="14-心跳脚本和crontab说明">1.4. 心跳脚本和crontab说明</h3>
 
-<p>DBus提供了心跳shell脚本<a href="dbus-main/init-scripts/dbus-agent-heartbeat/dbus-agent-heartbeat.tar.gz">点击下载</a>（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。</p>
+<p>  DBus提供了心跳shell脚本<a href="https://github.com/BriData/DBus/tree/master/init-scripts/init-dbus-agent-heartbeat">点击下载</a>（需要crontab定时运行），用于每60s产生一次json格式的心跳数据，filebeat可对心跳数据文件进行提取，进而实现了和logstash定时产生心跳数据一样的功能。心跳数据的作用是便于DBus对数据进行统计和输出。</p>
 
 <ul>
   <li>
@@ -399,30 +388,25 @@ fi
   <li>
     <p><strong>新建数据源：</strong>首先新建数据源，进入New DataLine页面，由于我们是用filebeat对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_filebeat，topic必须和filebeat配置文件中的topic一致。</p>
 
-    <p><img src="img/install-filebeat-source/install-filebeat-source-new-ds-1.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-1.png" /></p>
+    <p><img src="img/install-filebeat-source/install-filebeat-source-new-ds-1.png" alt="install-filebeat-source-new-ds-1" /></p>
   </li>
   <li>
-    <p><strong>新增表：</strong>点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击Next。</p>
+    <p><strong>新增表：</strong>点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击下一步。</p>
 
     <p><img src="img/install-filebeat-source/install-filebeat-source-new-ds-2.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-2.png" /></p>
   </li>
   <li>
-    <p><strong>clone模板，生成配置信息：</strong>每个数据源都会起一个storm程序，每个程序都会在zookeeper上存放一些配置信息，通过模板clone，为每个数据源生成一份自己的配置信息。</p>
+    <p><strong>启动log_processor程序：</strong>启动storm程序，对数据进行处理，后面会对新增表进行规则配置。<img src="img/install-filebeat-source/install-filebeat-source-new-ds-3.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-3.png" /></p>
 
-    <p><img src="img/install-filebeat-source/install-filebeat-source-new-ds-3.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-3.png" /></p>
-  </li>
-  <li>
-    <p><strong>启动log_processor程序：</strong>启动storm程序，对数据进行处理，后面会对新增表进行规则配置。</p>
+    <p>启动完毕，Status变为running：</p>
 
-    <p><img src="img/install-filebeat-source/install-filebeat-source-new-ds-4-1.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-4-1.png" />
-   <strong>启动结果：</strong>点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过查看Topology start log定位失败原因。
- <img src="img/install-filebeat-source/install-filebeat-source-new-ds-4-2.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-4-1.png" /></p>
+    <p><img src="img/install-filebeat-source/install-filebeat-source-new-ds-end.png" alt="img/install-filebeat-source/install-filebeat-source-new-ds-end.png" /></p>
   </li>
 </ul>
 
 <h3 id="22-数据源配置修改">2.2 数据源配置修改</h3>
 
-<p>因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用。</p>
+<p>因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将&#8221;.&#8221;转换为&#8221;_&#8220;，例如：127.0.0.1应该要转换为127_0_0_1。</p>
 
 <ul>
   <li><strong>修改数据源信息：</strong>点击modify按钮进行修改。
@@ -434,7 +418,7 @@ fi
 <h3 id="23-配置规则">2.3. 配置规则</h3>
 <ul>
   <li>
-    <p><strong>进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则（详细配置方式请参考<a href="dbus-main/docs/config-table.md">日志规则配置说明</a>）</strong></p>
+    <p><strong>进入Data Table页面，查看新增加的表，点击[规则配置]按钮，为该表配置规则，详细配置方式请参考：(<a href="https://github.com/BriData/DBus/tree/master/docs/config-table.md">config-table.md</a></strong></p>
 
     <p><img src="img/install-filebeat-source/install-filebeat-source-add-table-1.png" alt="img/install-filebeat-source/install-filebeat-source-add-table-1.png" /></p>
   </li>
@@ -454,7 +438,7 @@ fi
     <p><img src="img/install-filebeat-source/install-filebeat-source-add-table-5.png" alt="img/install-filebeat-source/install-filebeat-source-add-table-5.png" /></p>
   </li>
   <li>
-    <p>**拉取增量 : ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。</p>
+    <p>**拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。</p>
 
     <p><img src="img/install-filebeat-source/install-filebeat-source-add-table-6.png" alt="img/install-filebeat-source/install-filebeat-source-add-table-6.png" /></p>
   </li>
@@ -465,7 +449,7 @@ fi
 <p>我们可以在grafana配置以下，看看实际流量情况。</p>
 
 <ul>
-  <li>**上传grafana配置文件<a href="dbus-main/init-scripts/init-log-grafana-config/Heartbeat_log_filebeat.json">点击下载</a>： **点击Import，上传grafana json配置文件。
+  <li>**上传grafana配置文件，<a href="https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config">参考链接</a> ： **点击Import，上传grafana json配置文件。
  <img src="img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png" alt="img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png" /></li>
   <li>
     <p><strong>选择InDB数据库：</strong>ds的名字必须与新建数据线中的数据源名字一致。

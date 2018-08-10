@@ -4,7 +4,9 @@ title: logstash作为数据源接入DBus
 description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 ---
 
-**系统架构：**
+{:toc}
+
+系统架构：**
 
 ![系统架构](img/install-logstash-source/install-logstash-source-system-architecture.png)
 
@@ -193,26 +195,19 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 
 * **新建数据源：**首先新建数据源，进入New DataLine页面，由于我们是用logstash对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_logstash，topic必须和logstash配置文件中的topic一致。
 
-  ![img/install-logstash-source/install-logstash-source-new-ds-1.png](img/install-logstash-source/install-logstash-source-new-ds-1.png)
+  ![install-filebeat-source-new-ds-1](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
 
 * **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击Next。
 
-  ![img/install-logstash-source/install-logstash-source-new-ds-2-1.png](img/install-logstash-source/install-logstash-source-new-ds-2-1.png)
+  ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
 
-  ![img/install-logstash-source/install-logstash-source-new-ds-2-2.png](img/install-logstash-source/install-logstash-source-new-ds-2-2.png)
-
-  ![img/install-logstash-source/install-logstash-source-new-ds-2-3.png](img/install-logstash-source/install-logstash-source-new-ds-2-3.png)
+  **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
 
 
-* **clone模板，生成配置信息：**每个数据源都会起一个storm程序，每个程序都会在zookeeper上存放一些配置信息，通过模板clone，为每个数据源生成一份自己的配置信息。
 
-  ![img/install-logstash-source/install-logstash-source-new-ds-3.png](img/install-logstash-source/install-logstash-source-new-ds-3.png)
-
-* **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
-
-  ![img/install-logstash-source/install-logstash-source-new-ds-4-1.png](img/install-logstash-source/install-logstash-source-new-ds-4-1.png)
+* ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
   **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过查看Topology start log定位失败原因。
-  ![img/install-logstash-source/install-logstash-source-new-ds-4-2.png](img/install-logstash-source/install-logstash-source-new-ds-4-2.png)
+  ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
 
 ### 2.2 数据源配置修改
@@ -220,45 +215,36 @@ logstash将数据抽取到Kafka topic后，dbus log_processor程序就可以对�
 因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供DBus监控和报警模块使用，注意：如果主机ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
 * **修改数据源信息：**点击modify按钮进行修改。
-   ![img/install-logstash-source/install-logstash-source-modify-ds-1.png](img/install-logstash-source/install-logstash-source-modify-ds-1.png)
 
-   该数据源的数据可能来自于多个主机上的logstash程序，要在dsPartition中，配置上所有主机的host信息，为DBus心跳监控及报警程序使用。
+   ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
 
-   ![img/install-logstash-source/install-logstash-source-modify-ds-2.png](img/install-logstash-source/install-logstash-source-modify-ds-2.png)
+* **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
+
+   ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 
-### 2.3. 配置规则（详细配置方式请参考todo）
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考详：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
+### 2.3. 配置规则
+- **进入Data Table页面，查看新增加的表，点击[规则配置]按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
 
-   ![img/install-logstash-source/install-logstash-source-add-table-1.png](img/install-logstash-source/install-logstash-source-add-table-1.png)
+  ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
-* **点击Rules按钮，进行规则配置**
+- **新增规则组：**点击Add group按钮，新增一个规则组，点击规则组名字，进入规则配置页面。
 
-   ![img/install-logstash-source/install-logstash-source-add-table-2.png](img/install-logstash-source/install-logstash-source-add-table-2.png)
+  ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
-* **新增规则组：**点击Add group按钮，新增一个规则组，点击规则组名字，进入规则配置页面。
+- **配置规则:** topic是在filebeat中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。
 
-   ![img/install-logstash-source/install-logstash-source-add-table-3.png](img/install-logstash-source/install-logstash-source-add-table-3.png)
+  ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
-* **配置规则:** topic是在logstash配置文件中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。
+- **升级版本：**首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。
 
-   ![img/install-logstash-source/install-logstash-source-add-table-4.png](img/install-logstash-source/install-logstash-source-add-table-4.png)
+  ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 
-* **数据过滤完成：**配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。
+- **拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
 
-   ![img/install-logstash-source/install-logstash-source-add-table-5.png](img/install-logstash-source/install-logstash-source-add-table-5.png)
+  ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
-* **升级版本：**首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。
-
-   ![img/install-logstash-source/install-logstash-source-add-table-6.png](img/install-logstash-source/install-logstash-source-add-table-6.png)
-
-* **拉取增量 : ** 使该表的状态变为ok。
-
-   ![img/install-logstash-source/install-logstash-source-add-table-7.png](img/install-logstash-source/install-logstash-source-add-table-7.png)
-
-* **点击生效按钮，使该表生效 : **点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
-
-   ![img/install-logstash-source/install-logstash-source-add-table-8.png](img/install-logstash-source/install-logstash-source-add-table-8.png)
+​
 
 ##  3  验证数据
 

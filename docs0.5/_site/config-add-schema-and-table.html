@@ -7,9 +7,9 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>添加Schema和表 - DBus 0.4.0 Documentation</title>
+        <title>添加Schema和表 - DBus 0.5.0 Documentation</title>
         
-          <meta name="description" content="Dbus Web 数据源管理 - 添加Schema和表 0.4.0">
+          <meta name="description" content="Dbus Web 数据源管理 - 添加Schema和表 0.5.0">
         
 
         
@@ -43,42 +43,30 @@
             <div class="navbar-inner">
                 <div class="container">
                     <div class="brand"><a href="index.html">
-                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.5.0</span>
                     </div>
                     <ul class="nav">
                         <li><a href="index.html">Overview</a></li>
-                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="install-base-components.html">基础组件安装</a></li>
-                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
-                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
-								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
-								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
-								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
                             </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-								<li><a href="config-datasource.html">数据源介绍</a></li>
-                                <li><a href="config-schema.html">Schema配置</a></li>
-                                <li><a href="config-table.html">Table配置</a></li>
-                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
-								<li><a href="config-dbus-web.html">Web基础配置</a></li>
-								<li><a href="config-inspect-data.html">源端数据查看</a></li>
-                            </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 <li><a href="more-system-architecture.html">系统架构</a></li>
-								<li><a href="more-compile-code.html">编译代码</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
-								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
-								
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -96,10 +84,16 @@
 
 <h2 id="1-关系型数据库类型数据源添加schema和表">1 关系型数据库类型数据源添加Schema和表</h2>
 
-<p>​	一般来说，添加schema，目的定是为了接入某张/某些表的数据，所以，DBus没有单独提供专门添加schema的功能，而是将其和添加表融合在一起。因此添加schema和添加表，打开的页面是一样的。在这个页面做完相关操作，点击Next按钮（相当于提交按钮），尚不存在的schema会自动添加到系统。</p>
+<p>​	一般来说，添加schema，目的是为了接入某张/某些表的数据，所以，DBus没有单独提供专门添加schema的功能，而是将其和添加表融合在一起。因此添加schema和添加表，打开的页面是一样的。在这个页面做完相关操作，点击Next按钮（相当于提交按钮），尚不存在的schema会自动添加到系统。</p>
 
 <blockquote>
-  <p>前置条件：在添加schema或table之前，需要给源端数据库dbus用户授予相关表的 <code>select</code> 权限。请参考FAQ：<a href="https://github.com/BriData/DBus/wiki/FAQ#faq_auth_tab2dbus">Q6:如何授权dbus用户读取源端表</a></p>
+  <p>前置条件：在添加schema或table之前，需要给源端数据库dbus用户授予相关表的 <code>select</code> 权限。</p>
+
+  <p>对于mysql数据库：授权操作如下：</p>
+
+  <pre><code>-- db.table 是需要同步的表名
+grant select on db1.table to dbus;
+</code></pre>
 
   <p>正确授权后，有权限接入数据的schema/table会自动出现在配置操作页面。</p>
 </blockquote>
@@ -124,13 +118,15 @@
 
 <p>​	除了schema选择及表选择，其他信息一般不用动，采用默认值即可。</p>
 
-<h4 id="113-生效">1.1.3 生效</h4>
+<h4 id="113-使新增表生效"><span id="make-table-ok">1.1.3 使新增表生效</span></h4>
 
-<p><span id="make-table-ok">使新增表生效</span></p>
-
-<p>​	在表管理页面，会看到新添加的表的状态为“abort”，点击“more/IncrementPuller”按钮后刷新页面可以看到状态变成“ok”，至此，操作完成，<strong>过两分钟后</strong>可打开grafana确认系统各组件是否重新加载并开始处理新添加表的数据，如何确认请参考：<a href="https://github.com/BriData/DBus/wiki/Usage(5)-add-schema-and-table#confirm">确认schema或者table添加成功</a></p>
+<p>​	在表管理页面，会看到新添加的表的状态为“abort”，点击“more/IncrementPuller”按钮后刷新页面可以看到状态变成“ok”，至此，操作完成，<strong>过两分钟后</strong>可打开grafana确认系统各组件是否重新加载并开始处理新添加表的数据，如何确认请参考：<a href="#confirm-schema-table-added-ok">确认schema或者table添加成功</a></p>
 
 <p><img src="img/config-schema/config-schema-enable_table.png" alt="" /></p>
+
+<h4 id="114-使dbus心跳生效">1.1.4 使DBus心跳生效</h4>
+<p>点击Send Control Message按钮，发送reload消息，使心跳生效。
+<img src="img/add-schema-table/add-schema-table-reload.png" alt="" /></p>
 
 <h3 id="12-添加表">1.2 添加表</h3>
 
@@ -153,8 +149,11 @@
 <h4 id="123--使新增表生效">1.2.3  使新增表生效</h4>
 
 <p>同 <a href="#make-table-ok">1.1.3 使新增表生效</a></p>
+<h4 id="124-使dbus心跳生效">1.2.4 使DBus心跳生效</h4>
+<p>点击Send Control Message按钮，发送reload消息，使心跳生效。
+<img src="img/add-schema-table/add-schema-table-reload.png" alt="" /></p>
 
-<h3 id="13-确认schema或者table添加成功">1.3 确认schema或者table添加成功</h3>
+<h3 id="13-确认schema或者table添加成功"><span id="confirm-schema-table-added-ok">1.3 确认schema或者table添加成功</span></h3>
 
 <p>​	添加schema或table完成后，可以打开grafana查看新添加表的数据是否已正常流入dbus stream抽取系统，如下图。一共两组线图，上面一组是计数，下面一组是延时。</p>
 
@@ -166,7 +165,7 @@
 
 <p>​	为方便管理，DBus提供了源端主备同步状态检查功能，请参考：<a href="config-inspect-data.html">源端主备同步状态检查</a></p>
 
-<p>​	如果出现问题请参考FAQ：<a href="https://github.com/BriData/DBus/wiki/FAQ#faq_grafana_err">Q1:grafana中无法显示统计数据的常见解决方案</a></p>
+<p>​	如果出现问题请参考FAQ：<a href="more-faq.html#faq_grafana_err">Q1:grafana中无法显示统计数据的常见解决方案</a></p>
 
 <h2 id="2-log日志类型数据源添加表">2 Log(日志)类型数据源添加表</h2>
 

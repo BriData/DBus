@@ -4,8 +4,9 @@ title: filebeat作为数据源接入DBus
 description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 ---
 
+{:toc}
 
-**系统架构：**
+系统架构：**
 
 ![系统架构](img/install-filebeat-source/install-filebeat-source-system-architecture.png)
 
@@ -265,21 +266,17 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 * **新建数据源：**首先新建数据源，进入New DataLine页面，由于我们是用filebeat对心跳日志进行抽取，因此数据源的名字可以起的有意义一些，Type选择log_filebeat，topic必须和filebeat配置文件中的topic一致。
 
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-1.png](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
+   ![install-filebeat-source-new-ds-1](img/install-filebeat-source/install-filebeat-source-new-ds-1.png)
 
-* **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击Next。
+* **新增表：**点击Add Table按钮，新增一张表，稍后会对该表进行规则配置，新增完后，点击下一步。
 
    ![img/install-filebeat-source/install-filebeat-source-new-ds-2.png](img/install-filebeat-source/install-filebeat-source-new-ds-2.png)
 
-* **clone模板，生成配置信息：**每个数据源都会起一个storm程序，每个程序都会在zookeeper上存放一些配置信息，通过模板clone，为每个数据源生成一份自己的配置信息。
+* **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
 
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
+   启动完毕，Status变为running：
 
-* **启动log_processor程序：**启动storm程序，对数据进行处理，后面会对新增表进行规则配置。
-
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-4-1.png](img/install-filebeat-source/install-filebeat-source-new-ds-4-1.png)
-     **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过查看Topology start log定位失败原因。
-   ![img/install-filebeat-source/install-filebeat-source-new-ds-4-1.png](img/install-filebeat-source/install-filebeat-source-new-ds-4-2.png)
+   ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
 
 ### 2.2 数据源配置修改
@@ -293,7 +290,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
    ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 ### 2.3. 配置规则
-* **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
+* **进入Data Table页面，查看新增加的表，点击[规则配置]按钮，为该表配置规则，详细配置方式请参考：([config-table.md](https://github.com/BriData/DBus/tree/master/docs/config-table.md)**
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 

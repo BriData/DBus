@@ -4,19 +4,8 @@ title: FAQ
 description: FAQ DBUS_VERSION_SHORT
 ---
 
+ {:toc}
 
-
-[_Q1:为什么grafana不显示统计数据？_](#faq_grafana_err)
-
-[_Q2:为什么monitor页面无法显示？_](#faq_monitor_err)
-
-[_Q3:如何重新加载模块？_](#faq_control_message)
-
-[_Q4:一键上线为何失败？_](#faq_deployment_err)
-
-[_Q5:如何看监控和报警？_](#faq_view_monitor_alarm)
-
-[_Q6:如何授权dbus用户读取源端表_](#faq_auth_tab2dbus)
 ***
 
 ## <a name="faq_grafana_err" id="faq_grafana_err">Q1:为什么grafana不显示统计数据？</a>
@@ -49,7 +38,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 模块重新加载功能通过发送 `control message` 实现，请登录dbus web管理系统进入 `control message` 页面，如下图所示，其中 `message type` 定义了要加载的模块，`data source` 定义了要加载的数据源，`ctrl_topic` 表示消息写入的kafka topic，此项不需要修改，下方为消息预览和 `Send Control Message` 按钮，点击这个按钮即可完成控制消息的发送从而完成模块重新加载.
 
-![](img/faq-send-control-message.png)
+![](img/faq/tool_ctrl_msg.png)
 
 
 
@@ -69,7 +58,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 ## <a name="faq_view_monitor_alarm">Q5:如何看监控和报警？</a>
 
-### 邮件：
+**邮件**
 
 内容形式为：
 
@@ -77,7 +66,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
     Subject: DBus心跳监控报警
     Contents: 尊敬的先生/女士您好，Dbus心跳监控发现数据线路:/DBus/HeartBeat/Monitor/db/schema/table发生异常，报警次数:1,超时次数:1,请及时处理.
 
-### DBus-Web
+**DBus-Web**
 
 * 检查表状态是否ok
 
@@ -85,7 +74,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 * 查看Grafana
 
-### 心跳日志
+**心跳日志**
 
 在心跳log中，搜索关键字：`Address`或`Subject`或`Contents`，即可找到报警记录
 

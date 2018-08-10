@@ -7,9 +7,9 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>快速开始 - DBus 0.4.0 Documentation</title>
+        <title>快速体验 - DBus 0.5.0 Documentation</title>
         
-          <meta name="description" content="Dbus快速开始手册 0.4.0">
+          <meta name="description" content="Dbus快速开始手册 0.5.0">
         
 
         
@@ -43,42 +43,30 @@
             <div class="navbar-inner">
                 <div class="container">
                     <div class="brand"><a href="index.html">
-                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.4.0</span>
+                      <img src="img/dbus-logo.png" style="width:50px; margin-top:4px;"/></a><span class="version">0.5.0</span>
                     </div>
                     <ul class="nav">
                         <li><a href="index.html">Overview</a></li>
-                        <li><a href="quick-start.html">Quick Start</a></li>
+                        <!-- <li><a href="quick-start.html">Quick Start</a></li> -->
+                        <li><a href="deploy.html">Deployment</a></li>
+                        <li><a href="tutorial.html">Manual</a></li>
+                         <!-- 
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">安装<b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="install-base-components.html">基础组件安装</a></li>
-                                <li><a href="install-mysql-source.html">Mysql源配置和安装</a></li>
-                                <li><a href="install-oracle-source.html">Oracle源配置和安装</a></li>
-								<li><a href="install-logstash-source.html">LogStash配置和安装</a></li>
-								<li><a href="install-flume-source.html">Flume源配置和安装</a></li>
-								<li><a href="install-filebeat-source.html">Filebeat源配置和安装</a></li>
+                                <li><a href="manual-overview.html">Concept</a></li>
+                                <li><a href="manual-admin.html">Admin Guide</a></li>
+                                <li><a href="manual-user.html">User Guide</a></li>
                             </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dbus Web配置<b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-								<li><a href="config-datasource.html">数据源介绍</a></li>
-                                <li><a href="config-schema.html">Schema配置</a></li>
-                                <li><a href="config-table.html">Table配置</a></li>
-                                <li><a href="config-zk-node.html">Zk节点介绍</a></li>
-								<li><a href="config-dbus-web.html">Web基础配置</a></li>
-								<li><a href="config-inspect-data.html">源端数据查看</a></li>
-                            </ul>
-                        </li>
-						<li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多<b class="caret"></b></a>
+                        </li>					-->	 
+								<li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">More<b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 <li><a href="more-system-architecture.html">系统架构</a></li>
-								<li><a href="more-compile-code.html">编译代码</a></li>
+																<li><a href="more-compile-code.html">编译代码</a></li>
                                 <li><a href="more-faq.html">FAQ</a></li>
-								<li><a href="more-license.html">License</a></li>
-								<li><a href="https://github.com/BriData/DBus/releases">release</a></li>
-								
+																<li><a href="more-license.html">License</a></li>
+																<li><a href="https://github.com/BriData/DBus/releases">Release</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -89,14 +77,75 @@
         <div class="container-wrapper">
             <div class="content" id="content">
                 
-                    <h1 class="title">快速开始</h1>
+                    <h1 class="title">快速体验</h1>
                 
 
                 <h1 id="1-环境说明">1. 环境说明</h1>
 
-<h3 id="11-安装dbus-allinone包前提">1.1 安装dbus-allinone包前提</h3>
+<p><u>*TBD补充：说明快速体验跟 集群部署不一样，配置不等同不能混用。。。*</u></p>
 
-<p>安装dbus-allinone环境最少需要一台Linux服务器，例如服务器信息如下：</p>
+<p>说明 all in one是一个单机版本dbus环境，具体包括：</p>
+
+<ul>
+  <li>集群环境：
+    <ul>
+      <li>zookeeper  3.6.8</li>
+      <li>kafka 0.10.0</li>
+      <li>storm 1.0.0</li>
+      <li>granfana</li>
+      <li>influxdb （需要单独安装， 参考如下步骤3）</li>
+      <li>mysql （需要单独安装，参考如下步骤2）</li>
+    </ul>
+  </li>
+  <li>dbus相关包：</li>
+  <li>mysql数据源所需：
+    <ul>
+      <li>canal</li>
+    </ul>
+  </li>
+  <li>logstash的日志数据源所需：
+    <ul>
+      <li>logstash</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="11-环境依赖">1.1 环境依赖</h3>
+
+<p>安装dbus-allinone环境的建议配置如下</p>
+
+<ul>
+  <li>
+    <p>JDK 1.8.181 或 以上</p>
+  </li>
+  <li>
+    <p>CPU 2核 或以上</p>
+  </li>
+  <li>
+    <p>内存 16GB或以上</p>
+  </li>
+  <li>
+    <p>磁盘 20GB或以上</p>
+  </li>
+</ul>
+
+<p>注：一台Linux centos服务器， 该服务器最好是空机器，上面不要安装dbus所依赖的zk，kafka，storm等</p>
+
+<h3 id="12-修改域名">1.2 修改域名</h3>
+
+<p>注：ip是您的具体ip，这里用192.168.0.1为例子</p>
+
+<p>修改服务器/etc/hosts文件设置相应的域名信息如下：</p>
+
+<pre><code>192.168.0.1 dbus-n1
+</code></pre>
+
+<p>修改服务器hostname命令如下：</p>
+
+<pre><code>hostname dbus-n1
+</code></pre>
+
+<p>配置好后，服务器IP和域名信息如下：</p>
 
 <table>
   <thead>
@@ -109,28 +158,17 @@
   <tbody>
     <tr>
       <td>1</td>
-      <td>192.168.0.1</td>
+      <td>192.168.0.1（该ip是您的具体ip，这里用192.168.0.1为例子）</td>
       <td>dbus-n1</td>
     </tr>
   </tbody>
 </table>
 
-<p>修改服务器/etc/hosts文件设置相应的域名信息如下：</p>
-
-<pre><code>192.168.0.1 dbus-n1
-</code></pre>
-
-<p>修改服务器hostname命令如下：</p>
-
-<pre><code>hostname dbus-n1
-</code></pre>
-
 <h1 id="2-安装mysql">2. 安装Mysql</h1>
 
 <h3 id="21-下载">2.1 下载</h3>
 
-<p>推荐下载Mysql版本：5.7.19
-地址：<a href="https://dev.mysql.com/downloads/mysql/">https://dev.mysql.com/downloads/mysql/</a></p>
+<p>推荐下载Mysql版本：5.7.19 地址：<a href="https://dev.mysql.com/downloads/mysql/">https://dev.mysql.com/downloads/mysql/</a></p>
 
 <h3 id="22-安装">2.2 安装</h3>
 
@@ -145,41 +183,14 @@ rpm -ivh mysql-community-libs-compat-5.7.19-1.el6.x86_64.rpm --nodeps
 
 <h3 id="23-配置">2.3 配置</h3>
 
-<p>在/etc/my.cnf配置文件中，增加bin-log相关配置，关注以下汉字注释部分</p>
+<p>在/etc/my.cnf配置文件中，只是增加bin-log相关配置，其他不用修改，关注以下汉字注释部分</p>
 
-<pre><code># For advice on how to change settings please see
-# http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
-
-[mysqld]
-#
-# Remove leading # and set to the amount of RAM for the most important data
-# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
-# innodb_buffer_pool_size = 128M
-#
-# Remove leading # to turn on a very important data integrity option: logging
-# changes to the binary log between backups.
-# log_bin
-#
-# Remove leading # to set options mainly useful for reporting servers.
-# The server defaults are faster for transactions and fast SELECTs.
-# Adjust sizes as needed, experiment to find the optimal values.
-# join_buffer_size = 128M
-# sort_buffer_size = 2M
-# read_rnd_buffer_size = 2M
-datadir=/var/lib/mysql
-socket=/var/lib/mysql/mysql.sock
-
+<pre><code>[mysqld]
 # dbus相关配置开始
 log-bin=mysql-bin
 binlog-format=ROW
 server_id=1
 # dbus相关配置结束
-
-# Disabling symbolic-links is recommended to prevent assorted security risks
-symbolic-links=0
-
-log-error=/var/log/mysqld.log
-pid-file=/var/run/mysqld/mysqld.pid
 </code></pre>
 
 <h3 id="24-启动">2.4 启动</h3>
@@ -191,13 +202,44 @@ pid-file=/var/run/mysqld/mysqld.pid
 
 <h1 id="3-安装influxdb">3. 安装InfluxDB</h1>
 
-<p>参考基础组件文档中   <a href="install-base-components.html">6. 安装InfluxDB</a></p>
+<h3 id="31-下载">3.1 下载</h3>
 
-<h1 id="4-安装dbus-allinone">4. 安装Dbus-allinone</h1>
+<p>推荐下载InfluxDB版本：influxdb-1.1.0.x86_64
+地址：<a href="https://portal.influxdata.com/downloads">https://portal.influxdata.com/downloads</a></p>
+
+<h3 id="32-安装">3.2 安装</h3>
+
+<p>在dbus-n1上切换到root用户，在influxdb-1.1.0.x86_64.rpm的存放目录下执行如下命令：</p>
+
+<pre><code>rpm -ivh influxdb-1.1.0.x86_64.rpm
+</code></pre>
+
+<h3 id="33-启动">3.3 启动</h3>
+
+<p>在dbus-n1上执行如下命令：</p>
+
+<pre><code>service influxdb start
+</code></pre>
+
+<h3 id="34-初始化配置">3.4 初始化配置</h3>
+
+<p>在dbus-n1上执行如下命令：</p>
+
+<pre><code>#登录influx
+influx
+
+#执行初始化脚本
+create database dbus_stat_db
+use dbus_stat_db
+CREATE USER "dbus" WITH PASSWORD 'dbus!@#123'
+ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
+</code></pre>
+
+<h1 id="4-安装dbus-allinone包">4. 安装Dbus-allinone包</h1>
 
 <h3 id="41-下载">4.1 下载</h3>
 
-<p>在百度网盘提供dbus-allinone包，访问 <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
+<p>在百度网盘提供dbus-allinone.tar.gz  包，访问 <a href="https://github.com/BriData/DBus/releases">release 页面下载最新包</a></p>
 
 <h3 id="42-安装">4.2 安装</h3>
 
@@ -211,7 +253,7 @@ tar -zxvf dbus-allinone.tar.gz
 
 <h3 id="43-初始化数据库">4.3 初始化数据库</h3>
 
-<p>以root身份登录mysql客户端，执行以下命令进行数据库初始化：</p>
+<p>以root身份登录mysql客户端，执行以下命令进行数据库初始化，会创建dbmgr库以及用户、canal用户、dbus库以及用户、testschema库以及用户：</p>
 
 <pre><code>source /app/dbus-allinone/sql/1_init_database_user.sql
 source /app/dbus-allinone/sql/2_dbusmgr_tables.sql
@@ -222,11 +264,43 @@ source /app/dbus-allinone/sql/5_canal.sql
 
 <h3 id="44-启动">4.4 启动</h3>
 
-<p>执行start.sh一键启动dbus所有服务，启动项比较多，请耐心等待，如果失败请查看 <a href="more-faq.html">FAQ</a></p>
+<p>执行start.sh一键启动dbus所有服务，启动项比较多。</p>
 
 <pre><code>cd /app/dbus-allinone
 ./start.sh
 </code></pre>
+
+<p>请耐心等待，正确的启动日志如下：</p>
+<pre><code>check。。。。
+
+check。。。。
+
+check。。。。
+
+check。。。。
+</code></pre>
+
+<h3 id="45-生成检查报告">4.5 生成检查报告</h3>
+
+<p>如果出错，请执行 xxx sh 生成检查报告。</p>
+
+<p>检查报告输出路径信息、ip信息、复制相关日志文件、</p>
+
+<p>检查 ：
+域名
+mysql库（dbusmgr，canal，dbus，testschema几个账号）
+mysql心跳表中数据？
+show slave status，
+zk启动
+storm启动
+kafka启动
+topoglogy检查
+topic中offset数据检查。。
+heartbeat启动检查
+canal 启动，canal zk中目录
+influxDB启动
+infuxdb中数据？
+grafana启动</p>
 
 <h1 id="5-grafana配置">5. Grafana配置</h1>
 
@@ -245,6 +319,8 @@ source /app/dbus-allinone/sql/5_canal.sql
 <h1 id="6-验证mysql是否安装成功">6. 验证Mysql是否安装成功</h1>
 
 <h3 id="61-插入数据验证">6.1 插入数据验证</h3>
+
+<p><u>TBD:这里需要直接给出密码</u></p>
 
 <pre><code>#登录测试用户
 mysql -utestschema -p     #testschema账户密码参考/app/dbus-allinone/sql/4_test.sql
@@ -267,15 +343,20 @@ INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('QWEQWEQWE', '2018-01-25 16:11:2
 
 <p><img src="img/quick-start-6-4.png" alt="" /></p>
 
-<h1 id="7-验证logstash抽取心跳日志是否安装成功">7. 验证logstash抽取心跳日志是否安装成功</h1>
+<h1 id="7-验证logstash是否安装成功">7. 验证logstash是否安装成功</h1>
 
-<p>dbus-heartbeat心跳模块儿产生日志位置在：/app/dbus-allinone/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log，利用logstash抽取该日志文件，把非结构化的数据，提取成结构化的数据</p>
+<p>总体说明</p>
+
+<p>all in one的logstash是抓取 dbus heartbeat产生的心跳日志。</p>
+
+<p>dbus-heartbeat心跳模块儿产生日志位置在：/app/dbus-allinone/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log，利用logstash抽取该日志文件，把非结构化的数据，提取成结构化的数据。</p>
 
 <h3 id="71-日志中原始非结构化数据如下">7.1 日志中原始非结构化数据如下：</h3>
 
 <p>通过如下命令，查看要提取的非结构化数据，如下图所示，每一分钟产生3条包含&#8221;插入心跳包成功&#8221;的日志</p>
 
-<pre><code>tail -f heartbeat.log | grep "插入心跳包成功"
+<pre><code>cd /app/dbus-allinone/dbus-heartbeat-0.4.0/logs/heartbeat/
+tail -f heartbeat.log | grep "插入心跳包成功"
 </code></pre>
 
 <p><img src="img/quick-start-7-1.png" alt="" /></p>
