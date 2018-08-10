@@ -304,7 +304,7 @@ DBUS生态里关于全量，有贴源拉全量、租户拉全量、独立拉全�
  上传脱敏插件时可以指定应用范围：
  ![ encode-plugin-add](img/encode/encode-plugin-add.png)
 
-###### ##内置脱敏
+###### 内置脱敏
 
 ```
 ---Dbus keeper自带一个内置脱敏插件，所有项目可用
