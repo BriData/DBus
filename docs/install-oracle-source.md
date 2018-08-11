@@ -616,7 +616,7 @@ Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
 
    登录dbus-web，进入`New DataLine` 页面如下图
 
-   ![图1 新建数据源](img/install-oracle-source-dsinfo.png)
+   ![图1 新建数据源](img/oracle-add-line.png)
 
    **操作步骤说明**
 
@@ -640,7 +640,7 @@ Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
 
 2. **选择Schema和Table页面**
 
-   ![](img/install-oracle-source-tabinfo.png)
+   ![](img/oracle-add-schema-table.png)
 
    **操作步骤说明**
 
@@ -652,21 +652,11 @@ Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
    * target_topi按照DsName + "." + Schema + ".result"的规则自动生成
    * 勾选列表中的T_CUSTOMER，点击 `Next` 按钮进入到修改zk配置页面
 
-3. **修改zk配置页面**
+3. **启动Topology页面**
 
-   dbus系统各个模块的配置文件存放于zookeeper中，路径为：/DBus/Topology/，各模块的配置文件存放于DsName + "-" + 模块名的路径下例如：oratest-appender下存放dbus-stream中增量模块处理oratest数据源的配置文件。
+   此处较之前，省去了clone zk的步骤，列表中显示需要启动的Topology信息，点击右侧的 `启动` 按钮可以启动相应的模块
 
-   zookeeper目录树中被标记为：【NOT Existed】的节点是不存在的，需要从基础模板中Clone。通过点击左上角的`Clone ZkConf From Templates` 按钮从基础模板中Clone配置文件，操作成功后【NOT Existed】提示将会消失。此时如果有个性化的配置需求可以通过zookeeper树中点击配置文件名称，右侧的文本框会显示配置文件的内容，可以修改该内容点击 `修改` 按钮保存修改内容，在不了解系统的前提下暂时不建议修改默认配置。
-
-   点击`next` 按钮进入到启动Topology页面
-
-   ![](img/install-oracle-source-zk.png)
-
-4. **启动Topology页面**
-
-   列表中显示需要启动的Topology信息，点击右侧的 `启动` 按钮可以启动相应的模块
-
-   ![](img/install-oracle-source-start.png)
+   ![](img/oracle-auto-copy-zk.jpg)
 
    ​
 

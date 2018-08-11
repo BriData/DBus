@@ -50,7 +50,7 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 在数据源端新建的dbus库，可以实现无侵入方式接入多种数据源，业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。
 
 
-### dbus库和dbus账户配置
+### 源端库和账户配置
 
 在mysql_instance实例上，创建dbus 库以及数据表db_full_pull_requests和db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。
 
@@ -139,17 +139,26 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 ## 2 canal配置
 
-
-##### b) Canal Server配置：
-
-1). 下载canal包：dbus-canal-auto-0.5.0.tar.gz，此包
-
-dbus-canal-auto-0.5.0.tar.gz
+**1) 下载canal自动部署包：**
 
 
-2). 使用脚本，自动部署canal 配置文件
+下载dbus-canal-auto-0.5.0.tar.gz，该包是一体化解决方案，包含cannal，不用单独下载canal。
+将包放到要部署canal的目录下，解压后得到目录如下：
 
-解压提供的zip包（名称应该是：dbus-canal-auto-0.5.0.zip），然后将conf目录下的canal-auto.properties文件中内容，修改成自己的信息。例如：
+![canal-auto-file](img/install-mysql/canal-auto-file.png)
+
+**目录：**
+
+- canal目录是自带的canal，该文件夹不能重命名，否则脚本会运行失败。
+- conf 目录下的canal-auto.properties是需要用户配置的
+- lib 目录不用关心
+- start.sh 自动化脚本
+
+
+**2) 脚本使用：canal自动部署和检查：**
+
+
+首先，将conf目录下的canal-auto.properties文件中内容，修改成自己的信息。例如：
 
   ```properties
 #要添加的数据源名称
@@ -162,10 +171,17 @@ slave.path=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
 canal.user=canal
 #改成设置的canal用户密码
 canal.pwd=canal
-#canal安装目录
-canal.path=/app/canal
   ```
-替换完毕后，执行sh start.sh，然后会生成“canal _check _report”打头的日志文件，查看日志文件可看到执行的信息和结果。成功如下：
+  
+  **a.canal自动部署：**
+  
+
+
+替换完毕后，执行sh start.sh。 它会自动检查你填写的canal-auto.properties文件中内容。包括canal账户可用性，zk的连通性等。如果检查通过，会自动启动canal。
+如果启动成功，会打印出“canal pid start success ,pid is 70548”字样，如图：
+![canal-auto-deploy-success](img/install-mysql/canal-auto-deploy-success.png)
+
+同时会生成“canal_deploy _report”打头的日志文件，查看日志文件可看到执行的信息和结果。成功如下：
 
   ```properties
 ************ CANAL DEPLOY BEGIN! ************
@@ -174,18 +190,11 @@ zk地址: 127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
 备库地址: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
 canal 用户名: canal
 canal 密码: canal
-canal 安装目录: /app/canal
------------- update canal.properties begin ------------ 
-props: canal.port=10000
-props: canal.zkServers=localhost:2181/DBus/Canal/testdb
------------- update canal.properties end ------------ 
------------- update instance.properties begin ------------ 
-instance file path /app/canal/conf/testdb/instance.properties
-props: canal.instance.master.address=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
-props: canal.instance.dbUsername=canal
-props: canal.instance.dbPassword =canal
-props: canal.instance.connectionCharset = UTF-8
------------- update canal.properties end ------------ 
+-----check database canal account  begin 
+canal user: canal
+canal pwd: canal
+slave url: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+-----check database canal account success
 ------------ check canal zk node begin ------------ 
 zk str:  127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
 zk path :  127.0.0.1:2181
@@ -194,59 +203,94 @@ node path: /DBus/Canal/testdb
 path /DBus/Canal/testdb exist
 -----check canal zk path  end 
 ------------ check canal zk node end ------------ 
+------------ update canal.properties begin ------------ 
+props: canal.port=10000
+props: canal.zkServers=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181/DBus/Canal/testdb
+------------ update canal.properties end ------------ 
+------------ update instance.properties begin ------------ 
+instance file path /Users/lxq/Desktop/Neo/dbus-canal-auto-0.5.0/canal/conf/testdb/instance.properties
+props: canal.instance.master.address=jdbc:mysql://smp-mysql-master-test.caiwu.corp:3412/dbus?characterEncoding=utf-8
+props: canal.instance.dbUsername=canal
+props: canal.instance.dbPassword =canal
+props: canal.instance.connectionCharset = UTF-8
+------------ update canal.properties end ------------ 
+------------ starting canal.....
+exec: sh /app/dbus-canal-auto-0.5.0/canal/bin/stop.sh
+exec: sh /app/dbus-canal-auto-0.5.0/canal/bin/startup.sh
+exec: rm -f canal.log
+exec: ln -s /app/dbus-canal-auto-0.5.0/canal/logs/canal/canal.log canal.log
+exec: rm -f testdb.log
+exec: ln -s /app/dbus-canal-auto-0.5.0/canal/logs/testdb/testdb.log testdb.log
 ************ CANAL DEPLOY SCCESS! ************
   ```
-如果某一环节出错，请根据日志检查输入属性的正确性。
 
-
- 
-
-
-
-
-3). 启动canal server
-
-到目录/app/canal/bin下，运行 sh  startup.sh 
-
-
-
-5). 查看canal进程: 
-
- jps -l   后应当存在com.alibaba.otter.canal.deployer.CanalLauncher进程。并且启动成功后，会在dbus-web中ZK Manager中结点/DBus/Canal/canal-testdb（同上）生成一系列结点。
-
-
-
-###### ##错误排查 startup.sh 的check功能
-自动部署的脚本同样提供了自动拍错的功能，如果canal启动失败，可以使用命令sh start.sh check 来检查，根据生产的“canal_ check_report”文件可以为您提供帮助。如：canal账户检查失败，则需要检查这几项的正确性。
+如果执行失败，程序运行不会打印出canal的pid，例如：
+![canal-auto-deploy-fail](img/install-mysql/canal-auto-deploy-fail.png)
+然后检查部署report报告文件，此处将zk地址写错，日志会打印zk连接失败，最后部署失败，如：
 
   ```properties
-************ CANAL CHECK BEGIN! ************
+************ CANAL DEPLOY BEGIN! ************
+数据源名称: testdb
+zk地址: jdbc:mysql://localhost:3306/test?
+备库地址: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+canal 用户名: canal
+canal 密码: canal
 -----check database canal account  begin 
 canal user: canal
 canal pwd: canal
-slave url: jdbc:mysql://localhost:3311/test?characterEncoding=utf-8
+slave url: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
+-----check database canal account success
+------------ check canal zk node begin ------------ 
+zk str:  jdbc:mysql://localhost:3306/test?
+zk connect fail... 
+------------ check canal zk node fail ------------ 
+************ CANAL DEPLOY ERROR! ************
+  
+  ```
+ 如果程序执行成功，会在当前目录创建canal.log和 testdb.log的link,即可以查看canal的日志。
+ 
+
+  **b.自动check：**
+  
+  直接执行脚本执行sh start.sh，会执行配置的检测、自动替换和启动着几个动作。该脚本同时还提供单独的检测功能。执行sh start.sh check.即加上check参数，输出结果与自动部署类似。根据程序输出的pid会检测canal的启动情况，输出pid情况，表示当前canal程序在执行。
+![canal-auto-check-pid](img/install-mysql/canal-auto-check-pid.png)
+自动检测也会生产报告，“canal _check _report”打头的检测日志。同部署类似，会有打印出类似检测结果：
+
+  ```properties
+  
+************ CANAL CHECK BEGIN! ************
+-----check database canal account  begin
+canal user: dbus
+canal pwd: dbus111
+slave url: jdbc:mysql://locakhsot:3306/dbus?characterEncoding=utf-8
 [jdbc ]get connection error
 -----check database canal account fail ------------
 ************ CANAL CHECK FAIL! ************
+  
   ```
-  如果自动部署的脚本无法满足您的需求，请参考手动部署文档部分。
+
+###### ##为什么检测通过还是失败？
+脚本提供的是常规性检测。包括：canal账户连接数据库、zk连通性、zk上canal节点，检测报告是为了帮助你进行初步的检测，和提供部署的便捷。除了检测报告，您还可以根据自动部署时创建的日子link，查看canal的日志，有时，虽然canal进程启动成功，但是其实是执行失败的，在日志里有错误详情。
+###### ##为什么自动部署失败？
+脚本提供的是在特定情况下，帮助简化安装部署步骤的。如果自动部署的脚本无法满足您的需求，请参考手动部署文档部分[mysql手动部署](install-mysql-source.html)。
 ###### ##为什么不支持呢
 
 Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，而此文件打包在canal.parse-1.0.22.jar包中，因此在canal server包解压之后，需要按照替换解压后的canal目录中lib下的canal.parse-1.0.22.jar文件。
 
 可用https://github.com/BriData/DBus/blob/master/third-party-packages/canal/canal.parse-1.0.22.jar替换上述原始jar包。
 
-## 2 Dbus一键加线
+## 3 Dbus一键加线
 
 Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus keeper页面添加新数据线的步骤进行介绍
+### 3.1 Keeper加线
 
-##### 2.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线
+##### 3.1.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线
 
 ![install-mysql-1-new-dataline](img/install-mysql/new-data-line.png)
 
 
 
-##### 2.2 填写数据源基本信息 （master和slave jdbc连接串信息）
+##### 3.1.2 填写数据源基本信息 （master和slave jdbc连接串信息）
 
 其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。 
 
@@ -254,18 +298,17 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-##### 2.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；
+##### 3.1.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；
 
 ![选择schema标注](img/install-mysql/mysql-add-schema-table.png)
 
 
-##### 2.4 启动Topology
+##### 3.1.4 启动Topology
 
 在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。
 
 然后分别点击dispatcher-appender、splitter-puller、extractor的启动按钮，系统则根据path路径自动执行相应 topology的shell脚本，启动成功后Status状态变为running。
 
-![install-mysql-7-Topology-have-started](img/install-mysql/myl-start-full-pull-appender.png)
 
 新线部署完成
 
@@ -284,10 +327,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 ​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
 
 
-
-## 3 检验和查看结果
-
-### 3.1 验证增量数据
+### 3.2 验证增量数据
 
 #### a) 插入数据
 
@@ -303,6 +343,6 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-### 3.2 验证全量拉取
+### 3.3 验证全量拉取
 
 验证全量拉取是否成功，可到Dbus web的zk manager下查看全量拉取状态。如下图中，选取zookeeper Manager中的/DBus/FullPuller下相应数据源、数据库与数据表中相应拉全量版本，查看结点信息。看结点信息中Status状态，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。![install-mysql-10-fullpuller_status](img\install-mysql\install-mysql-10-fullpuller_status.PNG)

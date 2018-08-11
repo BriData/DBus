@@ -21,12 +21,22 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 配置中用到的基础环境的情况请参考[基础组件安装](install-base-components.html) 
 
 
+**相关依赖部件说明：**
+
+-  Canal  ：版本 v1.0.22   DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7 
+-  Mysql ：版本 v5.6，v5.7  存储DBus管理相关信息                             
+
+**限制：**
+
+- 被同步的Mysql blog需要是row模式
+- 考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql     MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob,     即如果表中有这样类型的数据会直接被替换为空。
+
 
 **配置总共分为3个步骤：**
 
 1. **数据库源端配置**
-2. **dbus一键加线**
-3. **检验和查看结果**
+2. **canal部署**
+3. **加线和查看结果**
 
    ​
 
@@ -39,21 +49,8 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 在数据源端新建的dbus库，可以实现无侵入方式接入多种数据源，业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。
 
-**相关依赖部件说明：**
 
-| 名称    | **版本号**   | **说明**                                   |
-| ----- | --------- | ---------------------------------------- |
-| Canal | v1.0.22   | DBus用于实时抽取binlog日志。DBus修改一个1文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7 |
-| Mysql | v5.6，v5.7 | 存储DBus管理相关信息                             |
-
-**限制：**
-
-- 被同步的Mysql blog需要是row模式
-- 考虑到kafka的message大小不宜太大，目前设置的是最大10MB，因此不支持同步mysql     MEDIUUMTEXT/MediumBlob和LongTEXT/LongBlob,     即如果表中有这样类型的数据会直接被替换为空。
-
-
-
-### 1.1 dbus库和dbus账户配置
+### 源端库和账户配置
 
 在mysql_instance实例上，创建dbus 库以及数据表db_full_pull_requests和db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。
 
@@ -129,9 +126,7 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 ```
 如上dbus库配置命令，详见https://github.com/BriData/DBus/tree/master/initScript下mysql insatall文件夹。
 
-### 1.2 canal 账户和canal server配置
-
-##### a) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：
+**d) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：**
 
 ```mysql
   --- 创建Canal用户，密码由dba指定, 此处为canal
@@ -141,19 +136,20 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
   FLUSH PRIVILEGES; 
 ```
-##### b) Canal Server配置：
 
-1). 下载Canal
+## 2 canal配置
 
-从https://github.com/alibaba/canal/releases下载Canal，到目录/app/canal-testdb，并解压。详细情况参照https://github.com/alibaba/canal/wiki/QuickStart。注意canal要下载版本为canal-1.0.22。
-
-详细情况请参考https://github.com/BriData/DBus/tree/master/third-party-packages/canal
+**1) 下载canal自动部署包：**
 
 
+下载dbus-canal-auto-0.5.0.tar.gz，该包是一体化解决方案，包含cannal，不用单独下载canal。
+将包放到要部署canal的目录下，解压然后进入目录dbus-canal-auto-0.5.0，可以看到canal目录，其他文件是自动部署需要的，不用关心。如果想使用自动部署参考[mysql自动部署](install-mysql-source-auto.html)。
 
-2). 修改canal 配置文件
 
-canal.properties文件配置：canal.properties文件在目录/app/canal-testdb/conf下
+
+**2) 修改canal 配置文件：**
+
+canal.properties文件配置：canal.properties文件在目录canal/conf下
 
   ```properties
     # 需要配置的项有：
@@ -180,6 +176,7 @@ canal.properties文件配置：canal.properties文件在目录/app/canal-testdb/
   ```
 
  instance.properties文件配置：
+ 
   ```properties
   需要配置的项有：
   	canal.instance.mysql.slaveId = slaveId
@@ -192,25 +189,23 @@ canal.properties文件配置：canal.properties文件在目录/app/canal-testdb/
   ```
 
  
+**3) 在zk中创建canal的结点：**
 
-3). 在zk中创建canal的结点
-
-在dbus-web中ZK Manager中新建结点/DBus/Canal/canal-testdb：
+在dbus keeper中ZK Manager中新建结点/DBus/Canal/canal-testdb：
 
 注意此路径需要与canal.properties的canal.zkServers值匹配。
 
 
 
-4). 启动canal server
+**4) 启动canal server：**
 
-到目录/app/canal-testdb/bin下，运行 sh  startup.sh 
+到目录/canal/bin下，运行 sh  startup.sh 
 
 
 
-5). 查看canal进程: 
+**5) 查看canal进程：** 
 
  jps -l   后应当存在com.alibaba.otter.canal.deployer.CanalLauncher进程。并且启动成功后，会在dbus-web中ZK Manager中结点/DBus/Canal/canal-testdb（同上）生成一系列结点。
-
 
 
 ###### ##为什么不支持呢
@@ -219,17 +214,18 @@ Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTE
 
 可用https://github.com/BriData/DBus/blob/master/third-party-packages/canal/canal.parse-1.0.22.jar替换上述原始jar包。
 
-## 2 Dbus一键加线
+## 3 Dbus一键加线
 
 Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus keeper页面添加新数据线的步骤进行介绍
+### 3.1 Keeper加线
 
-##### 2.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线
+##### 3.1.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线
 
 ![install-mysql-1-new-dataline](img/install-mysql/new-data-line.png)
 
 
 
-##### 2.2 填写数据源基本信息 （master和slave jdbc连接串信息）
+##### 3.1.2 填写数据源基本信息 （master和slave jdbc连接串信息）
 
 其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。 
 
@@ -237,18 +233,17 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-##### 2.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；
+##### 3.1.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；
 
 ![选择schema标注](img/install-mysql/mysql-add-schema-table.png)
 
 
-##### 2.4 启动Topology
+##### 3.1.4 启动Topology
 
 在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。
 
 然后分别点击dispatcher-appender、splitter-puller、extractor的启动按钮，系统则根据path路径自动执行相应 topology的shell脚本，启动成功后Status状态变为running。
 
-![install-mysql-7-Topology-have-started](img/install-mysql/myl-start-full-pull-appender.png)
 
 新线部署完成
 
@@ -267,10 +262,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 ​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
 
 
-
-## 3 检验和查看结果
-
-### 3.1 验证增量数据
+### 3.2 验证增量数据
 
 #### a) 插入数据
 
@@ -286,6 +278,6 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-### 3.2 验证全量拉取
+### 3.3 验证全量拉取
 
 验证全量拉取是否成功，可到Dbus web的zk manager下查看全量拉取状态。如下图中，选取zookeeper Manager中的/DBus/FullPuller下相应数据源、数据库与数据表中相应拉全量版本，查看结点信息。看结点信息中Status状态，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。![install-mysql-10-fullpuller_status](img\install-mysql\install-mysql-10-fullpuller_status.PNG)
