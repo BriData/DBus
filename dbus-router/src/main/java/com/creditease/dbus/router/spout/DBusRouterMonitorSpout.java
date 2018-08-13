@@ -389,10 +389,6 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
         Map<String, Set<String>> urlTopicsMap = new HashMap<>();
         List<Sink> sinks = monitorSpoutConfig.getSinks();
         Properties consumerConf = inner.zkHelper.loadKafkaConsumerConf();
-        //  #opensource_remove_begin#
-        if (StringUtils.equals(inner.zkHelper.getSecurityConf(), "kerberos_kafkaACL"))
-            consumerConf.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-        //  #opensource_remove_end#
 
         String bootstrapServers = consumerConf.getProperty("bootstrap.servers");
 

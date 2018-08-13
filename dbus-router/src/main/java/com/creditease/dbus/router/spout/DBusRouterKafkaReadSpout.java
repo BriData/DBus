@@ -324,10 +324,6 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
         List<TopicPartition> assignTopics = new ArrayList<>();
         if (!isCtrl) {
             Properties props = inner.zkHelper.loadKafkaConsumerConf();
-            //  #opensource_remove_begin#
-            if (StringUtils.equals(inner.zkHelper.getSecurityConf(), "kerberos_kafkaACL"))
-                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            //  #opensource_remove_end#
             consumer = new KafkaConsumer<>(props);
         }
         assignTopics(consumer.partitionsFor(obtainCtrlTopic()), assignTopics);

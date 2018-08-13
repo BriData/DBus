@@ -294,10 +294,6 @@ public class DBusRouterKafkaWriteBolt extends BaseRichBolt {
             props.put("bootstrap.servers", url);
             props.put("client.id", clientId);
 
-            //  #opensource_remove_begin#
-            if (StringUtils.equals(inner.zkHelper.getSecurityConf(), "kerberos_kafkaACL"))
-                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            //  #opensource_remove_end#
 
             producer = new KafkaProducer<>(props);
             logger.info("kafka write bolt create kafka producer. url:{}", url);
