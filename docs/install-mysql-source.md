@@ -282,4 +282,4 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 验证全量拉取是否成功，可在Table管理右侧操作栏，点击"查看拉全量状态"。![install-mysql-10-fullpuller_status](img/install-mysql/full-pull-history-global.png)
 全量拉取的信息存储在ZK上，Dbus keeper会读取的zk下相应节点的信息，来查看全量拉取状态。看结点信息中Status字段ß，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。
-![install-mysql-10-fullpuller_status](img/install-mysql/fullpull-history-check.png)
+![install-mysql-11-fullpuller_status](img/install-mysql/fullpull-history-check.png)
