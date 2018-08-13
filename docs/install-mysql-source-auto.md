@@ -209,7 +209,7 @@ props: canal.zkServers=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181/DBus/Canal/t
 ------------ update canal.properties end ------------ 
 ------------ update instance.properties begin ------------ 
 instance file path /Users/lxq/Desktop/Neo/dbus-canal-auto-0.5.0/canal/conf/testdb/instance.properties
-props: canal.instance.master.address=jdbc:mysql://smp-mysql-master-test.caiwu.corp:3412/dbus?characterEncoding=utf-8
+props: canal.instance.master.address=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
 props: canal.instance.dbUsername=canal
 props: canal.instance.dbPassword =canal
 props: canal.instance.connectionCharset = UTF-8
