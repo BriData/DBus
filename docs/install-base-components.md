@@ -338,145 +338,14 @@ ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
 ```
 
 
+# 6. 安装Grafana
 
-# 6.安装Dbus mgr库
-
-## 6.1 前提
-
-已经安装好mysql数据库服务，我们假定为db-dbusmgr节点
-
-## 6.2 下载
-
-下载dbus库的脚本，保存到/app/dbus/,  下载地址：
-
-- 初始化数据库和用户SQL ：init-scripts/init-dbusmgr/1_init_database_user.sql
-
-- 初始化表SQL:  init-scripts/init-dbusmgr/2_dbusmgr_tables/dbusmgr_tables.sql
-
-## 6.3 导入初始化SQL脚本
-
-```
-#以root身份登录mysql客户端，执行初始化脚本
-source /app/dbus/1_init_database_user.sql
-source /app/dbus/dbusmgr_tables.sql
-```
-
-# 7. 安装Dbus-heartbeat
-
-## 7.1 下载
-
-下载dbus-heartbeat版本：0.4.0
-地址： [release 页面下载最新包](https://github.com/BriData/DBus/releases)
-
-## 7.2 安装
-
-在dbus-n2上通过如下命令解压安装在目录：/app/dbus/dbus-heartbeat-0.4.0
-
-```
-unzip dbus-heartbeat-0.4.0.zip
-```
-
-在dbus-n3上的安装和dbus-n2上的步骤相同
-
-## 7.3 配置
-
-修改/app/dbus/dbus-heartbeat-0.4.0/conf/zk.properties内容如下：
-
-```
-zk.str=dbus-n1:2181,dbus-n2:2181,dbus-n3:2181
-zk.session.timeout=20000
-zk.connection.timeout=25000
-zk.retry.interval=30
-
-dbus.heartbeat.config.path=/DBus/HeartBeat/Config/heartbeat_config.json
-dbus.heartbeat.leader.path=/DBus/HeartBeat/Leader
-```
-
-修改/app/dbus/dbus-heartbeat-0.4.0/conf/consumer.properties内容如下：
-
-```
-############################# Consumer Basics #############################
-bootstrap.servers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
-group.id=heartbeat_consumer_group
-#client.id=heartbeat_consumer
-enable.auto.commit=true
-auto.commit.interval.ms=1000
-session.timeout.ms=30000
-key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-max.partition.fetch.bytes=10485760
-max.poll.records=30
-session.timeout.ms=30000
-```
-
-修改/app/dbus/dbus-heartbeat-0.4.0/conf/producer.properties内容如下：
-
-```
-############################# Producer Basics #############################
-bootstrap.servers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
-acks=1
-retries=3
-batch.size=16384
-linger.ms=1
-buffer.memory=33554432
-key.serializer=org.apache.kafka.common.serialization.StringSerializer
-value.serializer=org.apache.kafka.common.serialization.StringSerializer
-
-```
-
-修改/app/dbus/dbus-heartbeat-0.4.0/conf/jdbc.properties内容如下：
-
-```
-DB_TYPE=mysql
-DB_KEY=dbus.conf
-DB_DRIVER_CLASS=com.mysql.jdbc.Driver
-# db-dbusmgr是已安装mysql服务所在机器的IP
-DB_URL=jdbc:mysql://db-dbusmgr:3306/dbusmgr?characterEncoding=utf-8
-DB_USER=dbusmgr
-# 将(#password_place_holder#}替换成/app/dbus/DBus-0.4.0.sql中dbusmgr用户的密码
-DB_PWD=(#password_place_holder#}
-DS_INITIAL_SIZE=1
-DS_MAX_ACTIVE=1
-DS_MAX_IDLE=1
-DS_MIN_IDLE=1
-```
-
-修改/app/dbus/dbus-heartbeat-0.4.0/conf/stat_config.properties内容如下：
-
-```
-dbus.statistic.topic=dbus_statistic
-kafka.offset=none
-influxdb.url=http://dbus-n1:8086
-influxdb.dbname=dbus_stat_db
-influxdb.tablename=dbus_statistic
-```
-
-在dbus-n3上的安装和dbus-n2上的步骤相同
-
-## 7.4 启动
-
-在dbus-n2上进入/app/dbus/dbus-heartbeat-0.4.0目录执行如下命令：
-
-```
-# 赋予heartbeat.sh可执行权限
-chmod 744 heartbeat.sh
-# 启动心跳
-./heartbeat.sh &
-```
-
-在dbus-n3上的安装和dbus-n2上的步骤相同
-
-
-
-
-# 8. 安装Grafana
-
-## 8.1 下载
+## 6.1 下载
 
 推荐下载grafana版本：grafana-3.1.1
 地址：[https://grafana.com/grafana/download](https://grafana.com/grafana/download)
 
-## 8.2 安装
+## 6.2 安装
 
 在dbus-n1上首先切换到root用户，执行如下命令
 
@@ -484,7 +353,7 @@ chmod 744 heartbeat.sh
 rpm -ivh grafana-3.1.1-1470047149.x86_64.rpm
 ```
 
-## 8.3 配置
+## 6.3 配置
 
 在dbus-n1上修改配置文件/etc/grafana/grafana.ini的[decurity]部分如下，其它部分不用修改：
 
@@ -497,7 +366,7 @@ admin_user = admin
 admin_password = admin
 ```
 
-## 8.4 启动
+## 6.4 启动
 
 在dbus-n1上执行如下命令：
 
@@ -505,9 +374,9 @@ admin_password = admin
 service grafana-server start
 ```
 
-## 8.5 验证
+## 6.5 验证
 
-### 8.5.1 登录grafana
+### 6.5.1 登录grafana
 
 打开浏览器输入：http://dbus-n1:3000/login，出现如下页面：
 
@@ -517,9 +386,9 @@ service grafana-server start
 
 ![](img/install-base-components-05.png)
 
-### 8.5.2 配置grafana
+### 6.5.2 配置grafana
 
-#### 8.5.2.1 配置Grafana influxdb数据源如下图：
+#### 6.5.2.1 配置Grafana influxdb数据源如下图：
 
 ![](img/install-base-components-06.png)
 
@@ -527,7 +396,7 @@ service grafana-server start
 
 密码：dbus!@#123 (安装influxdb初始化配置脚本设置的密码)
 
-#### 8.5.2.2 配置Grafana Dashboard
+#### 6.5.2.2 配置Grafana Dashboard
 
 下载Schema Dashboard配置：initScript/init-table-grafana-config/grafana-schema.cfg
 
