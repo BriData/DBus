@@ -136,7 +136,7 @@ export default class SinkForm extends Component {
             onChange={this.handleRadioChange}
           >
             <Radio value="ums1.3">ums</Radio>
-            <Radio value="json">json</Radio>
+            <Radio disabled={true} value="json">json</Radio>
           </RadioGroup>
         </FormItem>
         {sink && sink.outputType &&

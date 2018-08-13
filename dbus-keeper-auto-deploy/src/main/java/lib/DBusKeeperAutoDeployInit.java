@@ -1,6 +1,9 @@
 package lib;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.PrintWriter;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class DBusKeeperAutoDeployInit {
     private static Properties pro;
@@ -12,7 +15,7 @@ public class DBusKeeperAutoDeployInit {
         in.close();
 
         System.out.println("解压gateway...");
-        executeNormalCmd("unzip -q lib/gateway-0.5.0.jar");
+        executeNormalCmd("unzip -oq lib/gateway-0.5.0.jar");
         System.out.println("配置gateway...");
         replaceTemplate(
                 "./BOOT-INF/classes/application-opensource.yaml",
@@ -25,7 +28,7 @@ public class DBusKeeperAutoDeployInit {
 
 
         System.out.println("解压keeper-mgr...");
-        executeNormalCmd("unzip -q lib/keeper-mgr-0.5.0.jar");
+        executeNormalCmd("unzip -oq lib/keeper-mgr-0.5.0.jar");
         System.out.println("配置keeper-mgr...");
         replaceTemplate(
                 "./BOOT-INF/classes/application-opensource.yaml",
@@ -42,7 +45,7 @@ public class DBusKeeperAutoDeployInit {
 
 
         System.out.println("解压keeper-service...");
-        executeNormalCmd("unzip -q lib/keeper-service-0.5.0.jar");
+        executeNormalCmd("unzip -oq lib/keeper-service-0.5.0.jar");
         System.out.println("配置keeper-service...");
         replaceTemplate(
                 "./BOOT-INF/classes/application-opensource.yaml",
@@ -80,9 +83,17 @@ public class DBusKeeperAutoDeployInit {
     }
 
     private static void replaceTemplate(String filepath, String key) throws Exception {
-        String cmd = String.format("sed -i 's/#{%s}#/%s/g' %s", key, pro.getProperty(key), filepath);
-        Process ps = Runtime.getRuntime().exec(cmd);
-        ps.waitFor();
+        Scanner scanner = new Scanner(new File(filepath));
+        StringBuilder sb = new StringBuilder();
+        while(scanner.hasNextLine()) {
+            String s = scanner.nextLine();
+            s = s.replace("#{" + key + "}#", pro.getProperty(key));
+            sb.append(s).append(System.getProperty("line.separator"));
+        }
+        scanner.close();
+        PrintWriter printWriter = new PrintWriter(new File(filepath));
+        printWriter.print(sb.toString());
+        printWriter.close();
     }
     private static void executeNormalCmd(String cmd) throws Exception {
         Process ps = Runtime.getRuntime().exec(cmd);

@@ -20,7 +20,6 @@
 
 package com.creditease.dbus.log.handler;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,32 +30,17 @@ public abstract class AbstractHandler implements IHandler {
     private static Logger logger = LoggerFactory.getLogger(AbstractHandler.class);
 
     @Override
-    public boolean processCheck(BufferedWriter bw) {
+    public boolean processCheckDeploy(BufferedWriter bw) {
         boolean isOk = true;
         try {
-            check(bw);
+            checkDeploy(bw);
         } catch (Exception e) {
-            logger.error("processCheck error", e);
+            logger.error("processCheckDeploy error", e);
             isOk = false;
         }
         return isOk;
     }
 
-    @Override
-    public boolean processDeploy(BufferedWriter bw) {
-        boolean isOk = true;
-        try {
-            deploy(bw);
-        } catch (Exception e) {
-            logger.error("processDeploy error", e);
-            isOk = false;
-        }
-        return isOk;
-    }
-
-
-    public abstract void check(BufferedWriter bw) throws Exception;
-
-    public abstract void deploy(BufferedWriter bw) throws Exception;
+    public abstract void checkDeploy(BufferedWriter bw) throws Exception;
 
 }

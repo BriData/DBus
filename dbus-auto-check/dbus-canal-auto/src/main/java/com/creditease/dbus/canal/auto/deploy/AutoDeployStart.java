@@ -1,6 +1,8 @@
 package com.creditease.dbus.canal.auto.deploy;
 import com.creditease.dbus.canal.auto.deploy.container.CuratorContainer;
 import com.creditease.dbus.canal.auto.deploy.bean.DeployPropsBean;
+import com.creditease.dbus.canal.auto.deploy.utils.CanalUtils;
+import com.creditease.dbus.canal.auto.deploy.utils.DBUtils;
 import com.creditease.dbus.canal.auto.deploy.utils.FileUtils;
 import com.creditease.dbus.canal.auto.deploy.utils.ZKUtils;
 
@@ -34,15 +36,21 @@ public class AutoDeployStart {
             bw = new BufferedWriter(osw);
 
             DeployPropsBean deployProps = FileUtils.readProps(currentPath+"/conf/"+DEPLOY_PROS_NAME,bw);
-            String basePath =deployProps.getCanalInstallPath();
-
-
+            String basePath =currentPath+"/"+"canal";
 
             bw.write("************ CANAL DEPLOY BEGIN! ************");
             bw.newLine();
             printDeployProps(deployProps,bw);
 
-            //修改canal.properties文件
+            // 1.检测canal账号可用性（与源端db的连通性）
+            DBUtils.checkDBAccount(deployProps,bw);
+
+            //2.检查并创建canal节点
+            ZKUtils.checkZKNode(deployProps,bw);
+
+            /* 验证通过，开始部署和启动*/
+
+            //3.修改canal.properties文件
             String canalProperties = "canal.properties";
             bw.write("------------ update canal.properties begin ------------ ");
             bw.newLine();
@@ -53,9 +61,9 @@ public class AutoDeployStart {
             bw.write("------------ update canal.properties end ------------ ");
             bw.newLine();
 
-            //创建canal目录下dsName文件夹
+            //4.创建canal目录下dsName文件夹
             checkExist(basePath,deployProps.getDsName(),bw);
-            //instance文件修改
+            //5.instance文件修改
             String instancePropsPath = basePath+"/conf/"+deployProps.getDsName()+"/"+"instance.properties";
             bw.write("------------ update instance.properties begin ------------ ");
             bw.newLine();
@@ -68,7 +76,11 @@ public class AutoDeployStart {
             bw.write("------------ update canal.properties end ------------ ");
             bw.newLine();
             //创建canal节点
-            ZKUtils.checkZKNode(deployProps,bw);
+            //ZKUtils.checkZKNode(deployProps,bw);
+
+            //启动canal
+            CanalUtils.start(currentPath,bw);
+            CanalUtils.copyLogfiles(currentPath,deployProps.getDsName(),bw);
 
             bw.write("************ CANAL DEPLOY SCCESS! ************");
 

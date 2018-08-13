@@ -26,11 +26,6 @@ public class FileUtils {
             props.setSlavePath(deployProps.getProperty("slave.path").trim());
             props.setCanalUser(deployProps.getProperty("canal.user").trim());
             props.setCanalPwd(deployProps.getProperty("canal.pwd").trim());
-            String canalPath = deployProps.getProperty("canal.path").trim();
-            if(canalPath.endsWith("/")){
-                canalPath = canalPath.substring(0,canalPath.length()-1);
-            }
-            props.setCanalInstallPath(canalPath);
 
             ins.close();
             return props;
@@ -51,8 +46,6 @@ public class FileUtils {
         bw.write("canal 用户名: "+deployProps.getCanalUser());
         bw.newLine();
         bw.write("canal 密码: "+deployProps.getCanalPwd());
-        bw.newLine();
-        bw.write("canal 安装目录: "+deployProps.getCanalInstallPath());
         bw.newLine();
     }
 

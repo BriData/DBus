@@ -13,12 +13,7 @@ import java.io.BufferedWriter;
 public class LoadConfigFileHandler extends AbstractHandler {
 
     @Override
-    public void check(BufferedWriter bw) throws Exception {
-         loadAutoCheckConfig();
-    }
-
-    @Override
-    public void deploy(BufferedWriter bw) throws Exception {
+    public void checkDeploy(BufferedWriter bw) throws Exception {
         loadAutoCheckConfig();
     }
 

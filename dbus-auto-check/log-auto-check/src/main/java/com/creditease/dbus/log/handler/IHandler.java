@@ -23,7 +23,5 @@ package com.creditease.dbus.log.handler;
 import java.io.BufferedWriter;
 
 public interface IHandler {
-
-    boolean processCheck(BufferedWriter bw);
-    boolean processDeploy(BufferedWriter bw);
+    boolean processCheckDeploy(BufferedWriter bw);
 }

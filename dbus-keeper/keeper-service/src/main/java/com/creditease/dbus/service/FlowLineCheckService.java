@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,13 +168,20 @@ public class FlowLineCheckService {
             String password = (String) infoMap.get("dbus_pwd");
             conn = DBUtils.getConn(url, schema, password);
             ps = conn.prepareStatement(getSql(dsType));
-            ps.setString(1, dsName);
-            ps.setString(2, schemaName);
-            ps.setString(3, tableName);
-            ps.setString(4, JSON.toJSONString(packet));
-            ps.setString(5, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
-            ps.setString(6, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
-
+            int idx = 1;
+            if (StringUtils.equalsIgnoreCase("mysql", dsType)) {
+                ps.setString(idx++, dsName);
+                ps.setString(idx++, schemaName);
+                ps.setString(idx++, tableName);
+                ps.setString(idx++, JSON.toJSONString(packet));
+                ps.setString(idx++, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
+                ps.setString(idx++, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
+            } else if (StringUtils.equalsIgnoreCase("oracle", dsType)) {
+                ps.setString(idx++, dsName);
+                ps.setString(idx++, schemaName);
+                ps.setString(idx++, tableName);
+                ps.setString(idx++, JSON.toJSONString(packet));
+            }
             int cnt = ps.executeUpdate();
             if (cnt != 1) {
                 isOk = false;

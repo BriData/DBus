@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -18,27 +19,32 @@ public class CheckKafkaHandler extends AbstractHandler {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public void check(BufferedWriter bw) throws Exception {
-          checkKafka(bw);
-    }
-
-    @Override
-    public void deploy(BufferedWriter bw) throws Exception {
+    public void checkDeploy(BufferedWriter bw) throws Exception {
+        checkKafka(bw);
     }
 
     public void checkKafka(BufferedWriter bw) throws Exception {
-
         LogCheckConfigBean lccb = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String kafkaBroker = lccb.getKafkaBootstrapServers();
         String []kafkaList = StringUtils.split(kafkaBroker, ",");
 
+        boolean result = true;
         for(int i = 0; i < kafkaList.length; i++) {
             String arr[] = StringUtils.split(kafkaList[i], ":");
-            testKafkaConn(bw, arr[0], arr[1]);
+            if(testKafkaConn(bw, arr[0], arr[1]) == false)
+                result = false;
         }
+
+        if(!result) {
+            bw.write("检测异常，请检查kafka配置项！\n");
+            bw.flush();
+            bw.close();
+            System.exit(0);
+        }
+
     }
 
-    private void testKafkaConn(BufferedWriter bw, String kafkaAddr, String port) throws IOException {
+    private boolean testKafkaConn(BufferedWriter bw, String kafkaAddr, String port) throws IOException {
         boolean kafkaTestResult = true;
         Socket socket = null;
         try {
@@ -59,5 +65,6 @@ public class CheckKafkaHandler extends AbstractHandler {
                 }
             }
         }
+        return kafkaTestResult;
     }
 }

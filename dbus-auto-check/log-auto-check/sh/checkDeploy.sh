@@ -10,11 +10,8 @@ LOG_CONF="-Dlogs.base.path=$basepath -Duser.dir=$basepath"
 OOM_OPTS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$basepath/logs/oom"
 JVM_OPTS="-server -Xmx4096m -Xms4096m -XX:NewRatio=1"
 CLASS_PATH=""
-MAIN=" com.creditease.dbus.log.check.Check"
-if [ "x$1" = "xdeploy" ]
-then
-        MAIN="com.creditease.dbus.log.deploy.Deploy"
-fi
+MAIN="com.creditease.dbus.log.deploy.CheckDeploy"
+
 
 
 #导入jar和config进入classpath

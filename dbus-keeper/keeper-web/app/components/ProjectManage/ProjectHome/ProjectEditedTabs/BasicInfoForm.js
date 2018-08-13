@@ -9,6 +9,7 @@ import moment from 'moment'
 const MomentFormatString = "YYYY-MM-DD HH:mm:ss"
 import { FormattedMessage } from 'react-intl'
 import { intlMessage } from '@/app/i18n'
+import dateFormat from 'dateformat'
 const FormItem = Form.Item
 @Form.create({ warppedComponentRef: true })
 export default class BasicInfoForm extends Component {
@@ -32,6 +33,16 @@ export default class BasicInfoForm extends Component {
         projectExpire: '请填写到期时间',
         topologyMessage: '拓扑个数必须为整数且 0<topologyNum<=100'
       }
+    }
+  }
+
+  componentWillMount = () => {
+    // 如果没有到期时间，则自动填进去
+    const {setBasicInfo, basicInfo} = this.props
+    if (!basicInfo || !basicInfo.projectExpire) {
+      const date = new Date()
+      date.setFullYear(date.getFullYear() + 1)
+      setBasicInfo({...basicInfo, projectExpire: dateFormat(date, 'yyyy-mm-dd HH:MM:ss')})
     }
   }
 

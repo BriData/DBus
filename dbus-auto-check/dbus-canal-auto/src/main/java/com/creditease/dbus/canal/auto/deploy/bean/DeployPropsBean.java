@@ -15,16 +15,6 @@ public class DeployPropsBean {
     private String canalUser ;
     /** canal 用户密码 */
     private String canalPwd;
-    /** canal 安装目录如：/app/dbus/canal */
-    private String canalInstallPath;
-
-    public String getCanalInstallPath() {
-        return canalInstallPath;
-    }
-
-    public void setCanalInstallPath(String canalInstallPath) {
-        this.canalInstallPath = canalInstallPath;
-    }
 
     public String getDsName() {
         return dsName;

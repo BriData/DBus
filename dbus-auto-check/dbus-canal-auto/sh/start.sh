@@ -32,4 +32,12 @@ echo "*      MAIN: " $MAIN
 echo "*         1: " $1
 echo "******************************************************************************"
 
- java $JVM_OPTS $LOG_CONF $OOM_OPTS -classpath $CLASS_PATH $MAIN
+java $JVM_OPTS $LOG_CONF $OOM_OPTS -classpath $CLASS_PATH $MAIN
+
+canal_path="$basepath/canal"
+
+pid=`ps aux | grep "$canal_path/bin" | grep -v "grep" | awk '{print $2}'`
+if [ "x$pid" != "x" ]; then
+         echo "canal pid start success ,pid is $pid "
+         sleep 1
+fi

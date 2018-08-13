@@ -16,12 +16,9 @@ import java.io.IOException;
 public class DeployFileConfigHandler extends AbstractHandler {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Override
-    public void check(BufferedWriter bw) throws Exception {
-    }
 
     @Override
-    public void deploy(BufferedWriter bw) throws Exception {
+    public void checkDeploy(BufferedWriter bw) throws Exception {
         LogCheckConfigBean lccb = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String logType = lccb.getLogType();
         if(StringUtils.equals(logType, "filebeat")) {
