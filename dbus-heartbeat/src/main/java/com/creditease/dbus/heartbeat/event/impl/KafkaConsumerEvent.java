@@ -34,15 +34,9 @@ import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
-//  #opensource_remove_begin#
-import com.creditease.dbus.heartbeat.util.KafkaUtil;
-//  #opensource_remove_end#
 import com.creditease.dbus.heartbeat.vo.PacketVo;
 
 import org.apache.commons.lang.StringUtils;
-//  #opensource_remove_begin#
-import org.apache.kafka.clients.CommonClientConfigs;
-//  #opensource_remove_end#
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -98,12 +92,6 @@ public class KafkaConsumerEvent extends AbstractEvent {
         Properties props = HeartBeatConfigContainer.getInstance().getKafkaConsumerConfig();
         Properties producerProps = HeartBeatConfigContainer.getInstance().getKafkaProducerConfig();
         try {
-            //  #opensource_remove_begin#
-            if(KafkaUtil.checkSecurity()){
-                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-                producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            }
-            //  #opensource_remove_end#
 
             dataConsumer = new KafkaConsumer<>(props);
             assignTopics = new ArrayList<>();

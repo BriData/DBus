@@ -49,11 +49,6 @@ public class Constants {
 
     public static final String GLOBAL_CTRL_TOPIC = "global_ctrl_topic";
 
-    //  #opensource_remove_begin#
-    /** 安全相关配置*/
-    public static final String SECURITY_CONFIG_TRUE_VALUE = "kerberos_kafkaACL";
-    public static final String SECURITY_CONFIG_KEY = "AuthenticationAndAuthorization";
-    //  #opensource_remove_end#
 
     /** 心跳邮件报警内容 */
     public static final String MAIL_HEART_BEAT = "尊敬的先生/女士您好，Dbus心跳监控发现数据线路:{0}发生异常，报警次数:{1},超时次数:{2},请及时处理.";

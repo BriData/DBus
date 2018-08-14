@@ -24,9 +24,6 @@ import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.ConfUtils;
-//  #opensource_remove_begin#
-import com.creditease.dbus.heartbeat.util.KafkaUtil;
-//  #opensource_remove_end#
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -39,9 +36,6 @@ import java.util.Properties;
 import javax.xml.bind.PropertyException;
 
 import org.apache.commons.lang.StringUtils;
-//  #opensource_remove_begin#
-import org.apache.kafka.clients.CommonClientConfigs;
-//  #opensource_remove_end#
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -79,12 +73,6 @@ public class KafkaSource {
         Properties statProps = ConfUtils.getProps(CONSUMER_PROPERTIES);
         statProps.setProperty("enable.auto.commit", "false");
         List<TopicPartition> topics = Arrays.asList(statTopicPartition);
-        //  #opensource_remove_begin#
-        //security
-        if(KafkaUtil.checkSecurity()){
-            statProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-        }
-        //  #opensource_remove_end#
 
         consumer = new KafkaConsumer(statProps);
         consumer.assign(topics);

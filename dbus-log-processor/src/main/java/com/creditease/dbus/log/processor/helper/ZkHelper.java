@@ -82,16 +82,6 @@ public class ZkHelper {
             throw new RuntimeException("load consumer.properties error", e);
         }
 
-        Properties props = loadSecurityConf();
-        if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "kerberos_kafkaACL")) {
-            consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            logger.info("consumer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT" );
-        } else if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
-            logger.info("consumer security_protocol is disabled!" );
-        } else {
-            logger.error("zk node[/DBus/Commons/global_security.conf] content is error!" );
-        }
-
         return consumerProps;
     }
 
@@ -105,28 +95,10 @@ public class ZkHelper {
             throw new RuntimeException("load producer.properties error", e);
         }
 
-        Properties props = loadSecurityConf();
-        if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "kerberos_kafkaACL")) {
-            producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            logger.info("producer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT" );
-        } else if(StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
-            logger.info("producer security_protocol is disabled!" );
-        } else {
-            logger.error("zk node[/DBus/Commons/global_security.conf] content is error!" );
-        }
         return producerProps;
     }
 
 
-    private Properties loadSecurityConf() {
-        String path = Constants.COMMON_ROOT + "/" + Constants.GLOBAL_SECURITY_CONF;
-        try {
-            return zkService.getProperties(path);
-        } catch (Exception e) {
-            logger.error("load global_security.conf error: ", e);
-            throw new RuntimeException("load global_security.conf error: ", e);
-        }
-    }
 
     public Properties loadMySqlConf() {
         String path = Constants.COMMON_ROOT + "/"  + Constants.MYSQL_PROPERTIES;
