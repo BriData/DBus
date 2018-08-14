@@ -357,3 +357,18 @@ service grafana-server start
 ![](img/install-base-components-10.png)
 
 导入后出现如上图所示的两个dashboards。
+
+
+
+# 7.安装Mysql dbusmgr库
+
+安装好mysql数据库服务，创建dbusmgr库，创建用户dbusmgr, 密码dbus!@#123 ，并授权用户dbusmgr能访问dbusmgr库，参考下面脚本：
+
+```
+create database dbusmgr DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+create user 'dbusmgr'@'%' identified by 'Dbusmgr!@#123';
+flush privileges;
+grant all privileges on dbusmgr.* to 'dbusmgr'@'%' identified by 'Dbusmgr!@#123';
+flush privileges;
+```
+

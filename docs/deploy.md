@@ -60,7 +60,7 @@ Dbus集群环境最少需要三台Linux服务器，以下以三台服务器为�
 | Storm         | v1.0.2   | 用于提供DBus流式计算                             |
 | Influxdb      | v1.1.0   | 用于记录实时监控数据。**创建好账号。后续配置需提供。**            |
 | Grafana       | v4.2.0   | 用于展示监控信息。                                |
-| MySql         | v5.6.x   | 创建数据库dbus_mgr。**创建好账号。后续配置需提供。**         |
+| MySql         | v5.6.x   | 创建数据库dbusmgr。**创建好账号。后续配置需提供。**          |
 | Nginx         | v1.9.3   | 用于存放静态html、js文件及反向代理。                    |
 | kafka-manager | v1.3.3.4 | **选装**。用于便捷地查看、管理Kafka集群。建议安装。           |
 
@@ -120,8 +120,8 @@ eureka.instance.metadataMap.alarmEmail=example@example.com
 zk.str=zk_server_ip1:2181,zk_server_ip2:2181,zk_server_ip3:2181
 # mysql管理库相关配置，其中mysql驱动可以不改
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
-spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbus?characterEncoding=utf-8
-spring.datasource.username=dbus
+spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbusmgr?characterEncoding=utf-8
+spring.datasource.username=dbusmgr
 spring.datasource.password=dbus!@#123
 ```
 
