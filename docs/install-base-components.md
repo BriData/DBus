@@ -55,7 +55,7 @@ echo "3" >> myid
 ## 1.3 启动
 分别在dbus-n1、dbus-n2、dbus-n3的/app/dbus/zookeeper-3.4.8/bin目录下执行如下命令：
 ```
-./zkServer.sh start &
+./zkServer.sh start
 ```
 
 
@@ -70,10 +70,13 @@ kafka安装在目录：/app/dbus/kafka_2.11-0.10.0.0
 
 ## 2.2 配置
 
-分别修改dbus-n1、dbus-n2、dbus-n3的/app/dbus/kafka_2.11-0.10.0.0/config/server.properties配置如下：
+分别修改dbus-n1、dbus-n2、dbus-n3的/app/dbus/kafka_2.11-0.10.0.0/config/server.properties配置如下（以dbus-n1为例）：
 
 ```
-# 设置监听端口
+# broker id. 需唯一
+broker.id=1
+
+# 设置监听端口（以dbus-n1为例）
 listeners=PLAINTEXT://dbus-n1:9092
 port=9092
 # 设置kafka日志地址
@@ -99,7 +102,7 @@ delete.topic.enable=true
 
 ```
  export JMX_PORT=9999;
-./kafka-server-start.sh -daemon ../config/server.properties &
+./kafka-server-start.sh -daemon ../config/server.properties
 ```
 
 
@@ -168,7 +171,7 @@ storm安装在目录：/app/dbus/app/dbus/apache-storm-1.0.1
 
 ## 4.3 配置
 
-dbus-n1的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下：
+分别修改dbus-n1、dbus-n2、dbus-n3的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下（以dbus-n1为例）：
 
 ```
 ########### These MUST be filled in for a storm configuration
@@ -184,69 +187,8 @@ storm.zookeeper.root: '/storm'
 # Nimbus HA
 nimbus.seeds: ["dbus-n1", "dbus-n2"]
 storm.local.dir: "/data/storm-data"
+# 以dbus-n1为例
 storm.local.hostname: "dbus-n1"
-
-ui.port: 8080
-
-supervisor.slots.ports:
-    - 6708
-    - 6709
-    - 6710
-    - 6711
-    - 6712
-
-#worker.childopts: "-Xms512m -Xmx2048m"
-worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
-```
-
-dbus-n2的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下：
-
-```
-########### These MUST be filled in for a storm configuration
-storm.zookeeper.servers:
-    - "dbus-n1"
-    - "dbus-n2"
-    - "dbus-n3"
-
-# zookeeper port
-storm.zookeeper.port: 2181
-storm.zookeeper.root: '/storm'
-
-# Nimbus HA
-nimbus.seeds: ["dbus-n1", "dbus-n2"]
-storm.local.dir: "/data/storm-data"
-storm.local.hostname: "dbus-n2"
-
-ui.port: 8080
-
-supervisor.slots.ports:
-    - 6708
-    - 6709
-    - 6710
-    - 6711
-    - 6712
-
-#worker.childopts: "-Xms512m -Xmx2048m"
-worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
-```
-
-dbus-n3的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下：
-
-```
-########### These MUST be filled in for a storm configuration
-storm.zookeeper.servers:
-    - "dbus-n1"
-    - "dbus-n2"
-    - "dbus-n3"
-
-# zookeeper port
-storm.zookeeper.port: 2181
-storm.zookeeper.root: '/storm'
-
-# Nimbus HA
-nimbus.seeds: ["dbus-n1", "dbus-n2"]
-storm.local.dir: "/data/storm-data"
-storm.local.hostname: "dbus-n3"
 
 ui.port: 8080
 

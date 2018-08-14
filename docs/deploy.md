@@ -1,5 +1,5 @@
 ---
-layout: global
+22layout: global
 title: 安装部署
 description: 安装部署说明
 ---
@@ -57,8 +57,8 @@ Dbus集群环境最少需要三台Linux服务器，以下以三台服务器为�
 | Canal         | v1.0.22  | DBus用于实时抽取binlog日志。DBus修改一个文件, 具体配置可参考canal相关支持说明，支持mysql5.6，5.7 |
 | Zookeeper     | v3.4.6+  | 用于构建整个系统和提供配置通知等。推荐版本：v3.4.8             |
 | Kafka         | v0.10    | 用于存储相关数据和消息，提供订阅和发布的能力                   |
-| Storm         | v1.0.1   | 用于提供DBus流式计算                             |
-| Influxdb      | v0.13.0  | 用于记录实时监控数据。**创建好账号。后续配置需提供。**            |
+| Storm         | v1.0.2   | 用于提供DBus流式计算                             |
+| Influxdb      | v1.1.0   | 用于记录实时监控数据。**创建好账号。后续配置需提供。**            |
 | Grafana       | v4.2.0   | 用于展示监控信息。                                |
 | MySql         | v5.6.x   | 创建数据库dbus_mgr。**创建好账号。后续配置需提供。**         |
 | Nginx         | v1.9.3   | 用于存放静态html、js文件及反向代理。                    |
