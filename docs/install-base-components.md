@@ -297,7 +297,7 @@ rpm -ivh grafana-3.1.1-1470047149.x86_64.rpm
 
 ## 6.3 配置
 
-在dbus-n1上修改配置文件/etc/grafana/grafana.ini的[decurity]部分如下，其它部分不用修改：
+在dbus-n1上修改配置文件/etc/grafana/grafana.ini的[security]部分如下，其它部分不用修改：
 
 ```
 [security]
