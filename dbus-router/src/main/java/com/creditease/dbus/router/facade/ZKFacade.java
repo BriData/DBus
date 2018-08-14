@@ -210,20 +210,6 @@ public class ZKFacade {
         return data;
     }
 
-    public String getSecurityConf() {
-        String security = "none";
-        String path = Constants.COMMON_ROOT + "/" + Constants.GLOBAL_SECURITY_CONF;
-        try {
-            if (zkService.isExists(path)) {
-                Properties properties = zkService.getProperties(path);
-                security = properties.getProperty("AuthenticationAndAuthorization");
-            }
-        } catch (Exception e) {
-            logger.error(MessageFormat.format("get security config for path [{0}] error.", path), e);
-        }
-        return security;
-    }
-
     public void close() {
         try {
             zkService.close();

@@ -56,7 +56,6 @@ public class StormToplogyOpHelper {
     public static String OP_RESULT_SUCCESS = "success";
 
     public static boolean inited = false;
-    public static boolean isSecurity = false;
     public static String stormRestApi = "";
     public static String loginUrl = "";
     public static String user = "";
@@ -66,7 +65,6 @@ public class StormToplogyOpHelper {
     public static void init(IZkService zkService) throws Exception {
         stormRestApi = (String) zkService.getProperties(KeeperConstants.GLOBAL_CONF).get(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_API);
         inited = true;
-        isSecurity = false;
     }
 
     public static Map getRunningTopologies(List<Map<String, Object>> dataSources) {
@@ -107,15 +105,10 @@ public class StormToplogyOpHelper {
     public static String killTopology(String topologyId, int waitTime) {
         String topologyKillApi = stormRestApi + "/topology/" + topologyId + "/kill/" + waitTime;
         JSONObject resultJson = null;
-        if (isSecurity) {
-            String cookie = HttpClientUtils.getCookie(loginUrl, user, pass);
-            String result = HttpClientUtils.httpPostWithCookie(topologyKillApi, cookie);
-            resultJson = JSONObject.parseObject(result);
-        } else {
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<JSONObject> result = restTemplate.postForEntity(topologyKillApi, new HttpEntity<>("", new HttpHeaders()), JSONObject.class);
-            resultJson = result.getBody();
-        }
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<JSONObject> result = restTemplate.postForEntity(topologyKillApi, new HttpEntity<>("", new HttpHeaders()), JSONObject.class);
+        resultJson = result.getBody();
+
         return resultJson.getString("status");
     }
 
@@ -311,13 +304,8 @@ public class StormToplogyOpHelper {
 
     private static String getForResult(String api) {
         String result = null;
-        if (isSecurity) {
-            String cookie = HttpClientUtils.getCookie(loginUrl, user, pass);
-            result = HttpClientUtils.httpGetWithCookie(api, cookie);
-        } else {
-            RestTemplate restTemplate = new RestTemplate();
-            result = restTemplate.getForObject(api, String.class);
-        }
+        RestTemplate restTemplate = new RestTemplate();
+        result = restTemplate.getForObject(api, String.class);
         return result;
     }
 }

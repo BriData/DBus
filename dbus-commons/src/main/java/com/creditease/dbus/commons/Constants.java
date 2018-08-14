@@ -90,8 +90,6 @@ public class Constants {
     public static final String BROKERS_IDS = BROKERS_ROOT + "/ids";
 
 
-    public static final String SECURITY_ROOT = "/security";
-
     public static final String RULE_TYPE_STRING = "string";
 
     public static final String RULE_TYPE_REGEX = "regex";
@@ -108,8 +106,6 @@ public class Constants {
     public static final String TRIM_ALL = "all";
 
     public static final String LOG_PROCESSOR = "log-processor";
-
-	public static final String GLOBAL_SECURITY_CONF = "global_security.conf";
 
     public static final String ROUTER = "router";
     //full puller

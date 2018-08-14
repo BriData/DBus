@@ -35,7 +35,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import static com.creditease.dbus.commons.Constants.COMMON_ROOT;
-import static com.creditease.dbus.commons.Constants.GLOBAL_SECURITY_CONF;
 
 public class KafkaUtil {
 

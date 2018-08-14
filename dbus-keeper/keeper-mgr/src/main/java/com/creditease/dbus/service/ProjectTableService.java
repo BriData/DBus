@@ -38,7 +38,7 @@ import com.creditease.dbus.enums.DbusDatasourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kafka.utils.ZkUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.kafka.common.security.JaasUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -947,47 +947,5 @@ public class ProjectTableService {
 
         return responseEntity.getBody();
     }
-
-    public void addAclTopic(String outputTopic,String kafkaUser) throws Exception{
-        Properties projectProps = zkService.getProperties(
-                Constants.KEEPER_ROOT+"/"+KeeperConstants.KEEPER_PROJECT_CONFIG);
-        String sshUser = projectProps.getProperty("kafka.ssh.user").trim();
-        String sshPort = projectProps.getProperty("kafka.ssh.port").trim();
-        String sshHost = projectProps.getProperty("kafka.ssh.host").trim();
-        //kerberos kafka目录
-        String kafka_home = StringUtils.isBlank(projectProps.getProperty("kafka.home")) ?
-                "/usr/hdp/current/kafka-broker" : projectProps.getProperty("kafka.home").trim();
-        String topicReplication = projectProps.getProperty("kafka.topic.replication").trim();
-        String topicPartition = projectProps.getProperty("kafka.topic.partition").trim();
-
-        Properties globalProps = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        String zkStr = globalProps.getProperty("zk.url");
-
-
-        ZkUtils zkUtils = ZkUtils.apply(zkStr, 30000, 30000, JaasUtils.isZkSecurityEnabled());
-        List<String> topics =JavaConversions.seqAsJavaList(zkUtils.getAllTopics());
-        //topic不存在，需要创建
-        if(!topics.contains(outputTopic)) {
-            //0.ssh port 1.ssh user,2.host,3.kafka_home:/usr/hdp/current/kafka-broker/ 4,zkStr:vdbus-19:2181/kafka 5:topic
-            //6.kafka_home;7.zkStr;8.kafka user;9.topic
-            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} " +
-                            "{3}bin/kafka-topics.sh --create --zookeeper {4} --replication-factor {10} " +
-                            "--partitions {11} --topic {5}; " +
-                            "{6}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={7} " +
-                            "--add --allow-principal User:{8} --operation Read --topic {9}",
-                    sshPort,sshUser,sshHost,kafka_home,zkStr,outputTopic,kafka_home,zkStr,kafkaUser,
-                    outputTopic,topicReplication,topicPartition);
-
-            logger.info("add cal command: {}", cmd);
-            Process process = Runtime.getRuntime().exec(cmd);
-            int exitValue = process.waitFor();
-            if (0 != exitValue) {
-                logger.error("[add table]call shell failed. cmd:{}, error code is{} :",cmd, exitValue);
-                throw new RuntimeException("add acl error");
-            }
-
-        }
-    }
-
 
 }
