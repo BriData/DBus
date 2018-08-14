@@ -431,9 +431,7 @@ public class ConfigCenterService {
             linkedHashMap.put("dbus.jars.base.path", homePath + "/dbus_jars");
             linkedHashMap.put("dbus.router.jars.base.path", homePath + "/dbus_router_jars");
             linkedHashMap.put("dbus.encode.plugins.jars.base.path", homePath + "/dbus_encoder_plugins_jars");
-            //#opensource_remove_begin#
-            linkedHashMap.put("dbus.kerberos.keytab.file.base.path", map.get("dbus.kerberos.keytab.file.base.path"));
-            //#opensource_remove_end#
+
             if (!zkService.isExists(Constants.DBUS_ROOT)) {
                 zkService.createNode(Constants.DBUS_ROOT, null);
             }
