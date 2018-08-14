@@ -65,8 +65,6 @@ hostname dbus-n1
 
 配置完成后执行如下命令看时候配置成功
 
-解压mysql-5.7.19-1.el6.x86_64.rpm-bundle.tar包后，执行以下命令安装：
-
 ```
 [app@dbus-n1 ~]$ ssh -p 22 app@dbus-n1
 Last login: Fri Aug 10 15:54:45 2018 from 10.10.169.53
