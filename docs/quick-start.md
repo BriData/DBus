@@ -379,25 +379,35 @@ check CheckFlowLineHandler end
 
 
 
-# 4. Grafana配置
+# 4. 验证all in one包是否安装成功
 
-### 4.1 登录到http://dbus-n1:3000/login
+### 登录grafana前提
 
-![](img/quick-start-5-1.png)
+需要在通过浏览器登录grafana的机器配置host文件，如果已经配置过请跳过此前提
 
-### 4.2 修改grafana数据源
+如果验证机器是windows系统，修改C:\Windows\System32\drivers\etc\hosts文件设置相应的域名信息如下：
 
-![](img/quick-start-5-2.png)
+```
+# 192.168.0.1 替换成部署allinone包的服务器ip地址
+192.168.0.1 dbus-n1
+```
 
-![](img/quick-start-5-3.png)
+如果验证机器是linux系统，修改/etc/hosts文件设置相应的域名信息如下：
 
-![](img/quick-start-5-4.png)
+```
+# 192.168.0.1 替换成部署allinone包的服务器ip地址
+192.168.0.1 dbus-n1
+```
+
+### 4.1 登录grafana
+
+登录grafana url地址: http://dbus-n1:3000/login
+
+![](img/quick-start-4-1.png)
 
 
 
-# 5. 验证Mysql是否安装成功
-
-### 5.1 插入数据验证
+### 4.2 mysql插入数据验证
 
 ```
 #登录测试用户
@@ -412,14 +422,56 @@ INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:0
 
 ```
 
-![](img/quick-start-6-1.png)
+![](img/quick-start-4-2.png)
 
-### 5.2 查看DBus是否实时获取到数据
+### 4.3 查看DBus是否实时获取到数据
 
-![](img/quick-start-6-2.png)
+![](img/quick-start-4-3-1.png)
 
-![](img/quick-start-6-3.png)
+![](img/quick-start-4-3-2.png)
 
-![](img/quick-start-6-4.png)
+![](img/quick-start-4-3-3.png)
 
 
+
+# 5. 登录DBus Keeper体检UI操作
+
+### 登录dbus keeper前提
+
+需要在通过浏览器登录dbus keeper的机器配置host文件，如果已经配置过请跳过此前提
+
+如果验证机器是windows系统，修改C:\Windows\System32\drivers\etc\hosts文件设置相应的域名信息如下：
+
+```
+# 192.168.0.1 替换成部署allinone包的服务器ip地址
+192.168.0.1 dbus-n1
+```
+
+如果验证机器是linux系统，修改/etc/hosts文件设置相应的域名信息如下：
+
+```
+# 192.168.0.1 替换成部署allinone包的服务器ip地址
+192.168.0.1 dbus-n1
+```
+
+### 5.1登录dbus keeper
+
+登录dbus keeper url地址：http://dbus-n1:6090/login
+
+![](img/quick-start-5-1-1.png)
+
+
+
+体验管理员功能，请使用用户：admin   密码：12345678
+
+管理员界面如下:
+
+![](img/quick-start-5-1-2.png)
+
+
+
+体验租户功能，请使用用户：user@dbus.com   密码：12345678
+
+租户界面如下:
+
+![](img/quick-start-5-1-3.png)
