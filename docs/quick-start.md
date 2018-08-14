@@ -149,6 +149,7 @@ influx
 create database dbus_stat_db
 use dbus_stat_db
 CREATE USER "dbus" WITH PASSWORD 'dbus!@#123'
+ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
 ```
 
 

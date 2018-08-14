@@ -105,7 +105,14 @@ DBUS HeartBeat：推荐部署dbus-n2、dbus-n3。
 ### 3.2.2  Nginx配置
 
 复制dbuskeeper_web下的nginx.conf到nginx安装目录的conf下替换默认配置文件。
+
+![nginx_conf](img/install-base-components/nginx_conf.png)
+
 复制dbuskeeper_web下的build.zip到nginx安装目录的html下解压(unzip build.zip)，启动nginx。
+
+![nginx_html_build](img/install-base-components/nginx_html_build.png)
+
+
 
 ### 3.2.3 修改Dbus-Keeper启动配置
 
