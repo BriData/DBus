@@ -191,15 +191,15 @@ cd /app/dbus-allinone
 请耐心等待(大概需要5分钟左右时间)，正确的启动日志如下：
 ```
 Start grafana...
-Grafana started. pid: 8557
+Grafana started. pid: 23381
 =============================================================================================
 Start zookeeper...
-zookeeper pid 8639
+zookeeper pid 23450
 Zookeeper started.
 =============================================================================================
 Start kafka...
 No kafka server to stop
-kafka pid 8879
+kafka pid 23690
 kafka started.
 =============================================================================================
 Start Canal ... 
@@ -207,17 +207,17 @@ canal started.
 =============================================================================================
 Start storm nimbus...
 No storm nimbus to stop
-Storm nimbus pid 8953
+Storm nimbus pid 23766
 Storm nimbus started.
 =============================================================================================
 Start storm supervisor...
 No storm supervisor to stop
-Storm supervisor pid 9388
+Storm supervisor pid 24196
 Storm supervisor started.
 =============================================================================================
 Start storm ui...
 No storm ui to stop
-Storm ui pid 9655
+Storm ui pid 24483
 Storm ui started. ui port: 6672
 =============================================================================================
 Stop storm topology.
@@ -228,7 +228,7 @@ Storm topology started.
 =============================================================================================
 Start Dbus Heartbeat...
 No Dbus Heartbeat to stop
-Dbus Heartbeat pid 11036
+Dbus Heartbeat pid 26256
 Dbus Heartbeat started.
 =============================================================================================
 Start Dbus keeper...
@@ -240,11 +240,11 @@ keeper-service process not exist
 register-server process not exist
 
 =========================start===========================
-register-server started. pid: 11221
-keeper-proxy  started. pid: 11315
-gateway started. pid: 11401
-keeper-mgr started. pid: 11576
-keeper-service started. pid: 11762
+register-server started. pid: 26547
+keeper-proxy  started. pid: 26630
+gateway started. pid: 26799
+keeper-mgr started. pid: 26896
+keeper-service started. pid: 27028
 Dbus keeper prot: 6090
 Dbus keeper started.
 =============================================================================================
@@ -266,7 +266,7 @@ cd /app/dbus-allinone/allinone-auto-check-0.5.0
 ```
 [app@dbus-n1 reports]$ tree
 .
-└── 20180810174317
+└── 20180815173707
     └── check_report.txt
 ```
 
@@ -275,18 +275,16 @@ cd /app/dbus-allinone/allinone-auto-check-0.5.0
 （注意以#开头为解释说明信息，报告中不会生成 ）
 
 ```
-check LoadAutoCheckFileConfigHandler start
-check LoadAutoCheckFileConfigHandler end
-
-check CheckDbHandler start
 # 出现以下信息说明dbusmgr库正常
-check dbusmgr start:
+check db&user dbusmgr start:
+============================================
 table t_avro_schema data count: 0
 table t_data_schema data count: 2
 table t_data_tables data count: 3
 table t_dbus_datasource data count: 1
 table t_ddl_event data count: 0
 table t_encode_columns data count: 0
+table t_encode_plugins data count: 1
 table t_fullpull_history data count: 0
 table t_meta_version data count: 3
 table t_plain_log_rule_group data count: 0
@@ -294,88 +292,107 @@ table t_plain_log_rule_group_version data count: 0
 table t_plain_log_rule_type data count: 0
 table t_plain_log_rules data count: 0
 table t_plain_log_rules_version data count: 0
+table t_project data count: 1
+table t_project_encode_hint data count: 1
+table t_project_resource data count: 1
+table t_project_sink data count: 1
+table t_project_topo data count: 1
+table t_project_topo_table data count: 1
+table t_project_topo_table_encode_output_columns data count: 1
+table t_project_topo_table_meta_version data count: 0
+table t_project_user data count: 1
 table t_query_rule_group data count: 0
+table t_sink data count: 1
 table t_storm_topology data count: 0
 table t_table_action data count: 0
 table t_table_meta data count: 3
+table t_user data count: 2
 
 # 出现以下信息说明dbus库正常
-check dbus start:
-table db_heartbeat_monitor data count: 168
-table test_table data count: 18
+check db&user dbus start:
+============================================
+table db_heartbeat_monitor data count: 18
+table test_table data count: 0
 table db_full_pull_requests data count: 0
 
 # 出现以下信息说明canal用户正常
-check canal start:
-table db_heartbeat_monitor data count: 168
-table test_table data count: 18
+check db&user canal start:
+============================================
+table db_heartbeat_monitor data count: 18
+table test_table data count: 0
 table db_full_pull_requests data count: 0
 
 # 出现以下信息说明testschema库正常
-check testschema start:
-table test_table data count: 18
+check db&user testschema start:
+============================================
+table test_table data count: 0
 
-check CheckDbHandler end
-
-check CheckBaseComponentsHandler start
 # 出现以下信息说明zk启动正常
 check base component zookeeper start:
-8639 org.apache.zookeeper.server.quorum.QuorumPeerMain
+============================================
+23450 org.apache.zookeeper.server.quorum.QuorumPeerMain
+
 # 出现以下信息说明kafka启动正常
 check base component kafka start:
-8879 kafka.Kafka
+============================================
+23690 kafka.Kafka
+
 # 出现以下信息说明storm nimbus、supervisor、ui 启动正常
 check base component storm start:
-10848 org.apache.storm.daemon.worker
-9388 org.apache.storm.daemon.supervisor
-10511 org.apache.storm.LogWriter
-11249 org.apache.storm.LogWriter
-10834 org.apache.storm.LogWriter
-9655 org.apache.storm.ui.core
-8953 org.apache.storm.daemon.nimbus
-10525 org.apache.storm.daemon.worker
-11263 org.apache.storm.daemon.worker
+============================================
+25729 org.apache.storm.daemon.worker
+24483 org.apache.storm.ui.core
+24196 org.apache.storm.daemon.supervisor
+25960 org.apache.storm.LogWriter
+26505 org.apache.storm.LogWriter
+25390 org.apache.storm.LogWriter
+25715 org.apache.storm.LogWriter
+23766 org.apache.storm.daemon.nimbus
+25974 org.apache.storm.daemon.worker
+26519 org.apache.storm.daemon.worker
+25404 org.apache.storm.daemon.worker
 
 # 出现以下信息说明influxdb 启动正常
 check base component influxdb start:
-influxdb 10265     1  0 Aug08 ?        00:15:27 /usr/bin/influxd -pidfile /var/run/influxdb/influxd.pid -config /etc/influxdb/influxdb.conf
-app      13511 13426  0 17:43 pts/1    00:00:00 /bin/sh -c ps -ef | grep influxdb
-app      13515 13511  0 17:43 pts/1    00:00:00 grep influxdb
+============================================
+influxdb 10265     1  0 Aug08 ?        00:53:30 /usr/bin/influxd -pidfile /var/run/influxdb/influxd.pid -config /etc/influxdb/influxdb.conf
+app      28266 28199  0 17:37 pts/2    00:00:00 /bin/sh -c ps -ef | grep influxdb
+app      28269 28266  0 17:37 pts/2    00:00:00 grep influxdb
 
 # 出现以下信息说明grafana 启动正常
 check base component grafana start:
-app       8557     1  0 17:31 pts/0    00:00:00 ./grafana-server
-app      13516 13426  0 17:43 pts/1    00:00:00 /bin/sh -c ps -ef | grep grafana
-app      13520 13516  0 17:43 pts/1    00:00:00 grep grafana
+============================================
+app      23381     1  0 17:27 pts/2    00:00:00 ./grafana-server
+app      28271 28199  0 17:37 pts/2    00:00:00 /bin/sh -c ps -ef | grep grafana
+app      28275 28271  0 17:37 pts/2    00:00:00 grep grafana
 
 # 出现以下信息说明心跳heartbeat 启动正常
 check base component heartbeat start:
-11036 com.creditease.dbus.heartbeat.start.Start
-check CheckBaseComponentsHandler end
-
-check CheckCanalHandler start
+============================================
+26256 com.creditease.dbus.heartbeat.start.Start
 
 # 出现以下信息说明canal 启动正常
+check canal start:
+============================================
 zk path [/DBus/Canal/otter-testdb] exists.
-8925 com.alibaba.otter.canal.deployer.CanalLauncher
-check CheckCanalHandler end
+23737 com.alibaba.otter.canal.deployer.CanalLauncher
 
-check CheckTopologyHandler start
-# 出现以下信息说明dispatcher-appender、mysql-extractor、router 启动正常
+# 出现以下信息说明dispatcher-appender、mysql-extractor、splitter-puller、router 启动正常
 check topology start:
+============================================
 api: http://dbus-n1:6672/api/v1/topology/summary
 topology testdb-dispatcher-appender status is ACTIVE
 topology tr-router status is ACTIVE
+topology testdb-splitter-puller status is ACTIVE
 topology testdb-mysql-extractor status is ACTIVE
-check CheckTopologyHandler end
 
 # 出现以下信息说明从数据库->extractor-dispatcher->appender线路正常
-check CheckFlowLineHandler start
+check flow line start:
+============================================
 first step insert heart beat success.
 data arrive at topic: testdb
 data arrive at topic: testdb.testschema
 data arrive at topic: testdb.testschema.result
-check CheckFlowLineHandler end
 ```
 
 
