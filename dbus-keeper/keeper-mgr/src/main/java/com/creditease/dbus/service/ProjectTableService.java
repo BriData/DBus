@@ -38,7 +38,6 @@ import com.creditease.dbus.enums.DbusDatasourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kafka.utils.ZkUtils;
 import org.apache.commons.lang.StringUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

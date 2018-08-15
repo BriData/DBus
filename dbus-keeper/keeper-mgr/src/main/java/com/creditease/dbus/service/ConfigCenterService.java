@@ -289,7 +289,7 @@ public class ConfigCenterService {
         HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, json);
 
         //导入Grafana Dashboard
-        url = grafanaurl + "/api/dashboards/import";
+        url = grafanaurl + "/api/dashboards/db";
         byte[] bytes = ConfUtils.toByteArray("init/grafana_schema.json");
         HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
         bytes = ConfUtils.toByteArray("init/grafana_table.json");
@@ -431,7 +431,6 @@ public class ConfigCenterService {
             linkedHashMap.put("dbus.jars.base.path", homePath + "/dbus_jars");
             linkedHashMap.put("dbus.router.jars.base.path", homePath + "/dbus_router_jars");
             linkedHashMap.put("dbus.encode.plugins.jars.base.path", homePath + "/dbus_encoder_plugins_jars");
-
             if (!zkService.isExists(Constants.DBUS_ROOT)) {
                 zkService.createNode(Constants.DBUS_ROOT, null);
             }

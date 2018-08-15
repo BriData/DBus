@@ -79,6 +79,19 @@ export default class GlobalConfigForm extends Component {
               <Input placeholder="请输入monitor_url" size="large" type="text"/>
             )}
           </FormItem>
+          <FormItem label='Influxdb Url' {...formItemLayout}>
+            {getFieldDecorator('influxdb_url', {
+              initialValue: config['influxdb_url'],
+              rules: [
+                {
+                  required: true,
+                  message: '不能为空'
+                }
+              ]
+            })(
+              <Input placeholder="请输入Influxdb_url" size="large" type="text"/>
+            )}
+          </FormItem>
           <FormItem label='Storm Nimbus 主机' {...formItemLayout}>
             {getFieldDecorator('storm@@@nimbus@@@host', {
               initialValue: config['storm.nimbus.host'],

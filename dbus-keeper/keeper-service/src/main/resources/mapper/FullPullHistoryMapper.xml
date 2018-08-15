@@ -24,6 +24,7 @@
     <result column="project_name" jdbcType="VARCHAR" property="projectName" />
     <result column="topology_table_id" jdbcType="INTEGER" property="topologyTableId" />
     <result column="target_sink_id" jdbcType="INTEGER" property="targetSinkId" />
+    <result column="target_sink_name" jdbcType="VARCHAR" property="targetSinkName" />
     <result column="target_sink_topic" jdbcType="VARCHAR" property="targetSinkTopic" />
     <result column="full_pull_req_msg_offset" jdbcType="BIGINT" property="fullPullReqMsgOffset" />
     <result column="first_shard_msg_offset" jdbcType="BIGINT" property="firstShardMsgOffset" />
@@ -106,8 +107,9 @@
     from t_fullpull_history
   </select>
   <select id="search" resultMap="BaseResultMap">
-    select pro.project_display_name, fh.* from t_fullpull_history fh left join t_project pro
+    select t_sink.sink_name as target_sink_name, pro.project_display_name, fh.* from t_fullpull_history fh left join t_project pro
     on fh.project_name = pro.project_name
+    left join t_sink on fh.target_sink_id = t_sink.id
     where 1=1
     <if test="projectName != null"> and fh.project_name = #{projectName}</if>
     <if test="dsName != null"> and fh.dsName = #{dsName}</if>

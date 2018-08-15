@@ -1,4 +1,4 @@
-server.port: 8901
+server.port: #{mgr.server.port}#
 
 spring:
   application:
@@ -19,11 +19,11 @@ management.security.enabled: false
 
 eureka:
   instance:
-    metadataMap.alarmEmail: bridata@126.com
+    metadataMap.alarmEmail: #{eureka.instance.metadataMap.alarmEmail}#
     prefer-ip-address: true
     instance-id: ${spring.cloud.client.ipAddress}:${server.port}
   client:
     serviceUrl.defaultZone: #{eureka.client.serviceUrl.defaultZone}#
 zk:
   str: #{zk.str}#
-pubKeyPath: ~/.ssh/id_rsa
+pubKeyPath: #{pubKeyPath}#

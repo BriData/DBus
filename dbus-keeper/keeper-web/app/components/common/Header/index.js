@@ -4,14 +4,14 @@ import { Avatar, Icon } from 'antd'
 import { FormattedMessage } from 'react-intl'
 import UserCards from '../UserCards'
 import styles from './Header.less'
-import favicon from '../../../logo.png'
+import logo from '../../../logo.png'
 
 export function Header (props) {
   return (
     <div className={`${props.className} ${styles.header}`}>
       <div className={styles.left}>
         <div className={styles.logo}>
-          <h2><img style={{verticalAlign: 'middle'}} height={32} width={32} src={favicon}/> KEEPER</h2>
+          <h2><img style={{verticalAlign: 'middle'}} height={36} width={36} src={logo}/> KEEPER</h2>
         </div>
         <ul>
           {props.topMenu &&

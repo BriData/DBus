@@ -1,4 +1,4 @@
-server.port: 10001
+server.port: #{service.server.port}#
 spring:
   application:
     version: v1

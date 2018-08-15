@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class ConfUtils {
-    private static String user_dir_parent = new File(SystemUtils.USER_DIR).getParent().replaceAll("\\\\", "/");
+    private static String user_dir_parent = SystemUtils.USER_DIR.replaceAll("\\\\", "/");
     public static Properties loadBasicProperties() throws IOException {
         return getProps("basic.properties");
     }

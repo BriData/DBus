@@ -82,7 +82,11 @@ export default class ProjectFullpullGrid extends Component {
    * @description 全量拉取历史 目标sink
    */
   renderSinkInfo = (text, record, index) => {
-    return this.renderNomal(`${record.targetSinkId}-${record.targetSinkTopic}`, record, index)
+    if (record.targetSinkName && record.targetSinkTopic) {
+      return this.renderNomal(`Sink名称:${record.targetSinkName},Topic:${record.targetSinkTopic}`, record, index)
+    } else {
+      return null
+    }
   }
 
   /**

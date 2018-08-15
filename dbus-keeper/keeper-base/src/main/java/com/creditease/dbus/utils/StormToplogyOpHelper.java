@@ -23,7 +23,7 @@ package com.creditease.dbus.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.commons.IZkService;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.StormTopology;
@@ -63,8 +63,8 @@ public class StormToplogyOpHelper {
 
 
     public static void init(IZkService zkService) throws Exception {
-        stormRestApi = (String) zkService.getProperties(KeeperConstants.GLOBAL_CONF).get(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_API);
-        inited = true;
+            stormRestApi = (String) zkService.getProperties(KeeperConstants.GLOBAL_CONF).get(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_API);
+            inited = true;
     }
 
     public static Map getRunningTopologies(List<Map<String, Object>> dataSources) {
@@ -105,10 +105,9 @@ public class StormToplogyOpHelper {
     public static String killTopology(String topologyId, int waitTime) {
         String topologyKillApi = stormRestApi + "/topology/" + topologyId + "/kill/" + waitTime;
         JSONObject resultJson = null;
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<JSONObject> result = restTemplate.postForEntity(topologyKillApi, new HttpEntity<>("", new HttpHeaders()), JSONObject.class);
-        resultJson = result.getBody();
-
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<JSONObject> result = restTemplate.postForEntity(topologyKillApi, new HttpEntity<>("", new HttpHeaders()), JSONObject.class);
+            resultJson = result.getBody();
         return resultJson.getString("status");
     }
 
@@ -304,8 +303,8 @@ public class StormToplogyOpHelper {
 
     private static String getForResult(String api) {
         String result = null;
-        RestTemplate restTemplate = new RestTemplate();
-        result = restTemplate.getForObject(api, String.class);
+            RestTemplate restTemplate = new RestTemplate();
+            result = restTemplate.getForObject(api, String.class);
         return result;
     }
 }

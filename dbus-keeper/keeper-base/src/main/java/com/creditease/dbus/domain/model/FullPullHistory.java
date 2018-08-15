@@ -69,6 +69,8 @@ public class FullPullHistory {
 
     private Integer targetSinkId;
 
+    private String targetSinkName;
+
     private String targetSinkTopic;
 
     private Long fullPullReqMsgOffset;
@@ -263,6 +265,14 @@ public class FullPullHistory {
 
     public void setTargetSinkId(Integer targetSinkId) {
         this.targetSinkId = targetSinkId;
+    }
+
+    public String getTargetSinkName() {
+        return targetSinkName;
+    }
+
+    public void setTargetSinkName(String targetSinkName) {
+        this.targetSinkName = targetSinkName;
     }
 
     public String getTargetSinkTopic() {

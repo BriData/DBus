@@ -27,10 +27,6 @@ export default class MonitorManageWrapper extends Component {
   }
 
   componentWillMount = () => {
-    window.onresize = () => {
-      this.resetFrame()
-    }
-
     Request(READ_ZK_PROPERTIES_API, {
       params: {
         path: ZK_PATH
@@ -51,20 +47,17 @@ export default class MonitorManageWrapper extends Component {
       })
   }
 
-  resetFrame = () => {
-    const iframe = document.getElementsByTagName('iframe')[0]
-    iframe.width = `${document.body.offsetWidth}px`
-    iframe.height = `${document.body.offsetHeight - 50}px`
-  }
-
   render() {
     return (
       <iframe
         src={this.state.url}
-        style={{margin: -12}}
+        style={{
+          marginTop: -12,
+          marginLeft: -12,
+        }}
         frameBorder='0'
-        width={document.body.offsetWidth}
-        height={document.body.offsetHeight - 50}
+        width='102%'
+        height='105%'
       />
     )
   }

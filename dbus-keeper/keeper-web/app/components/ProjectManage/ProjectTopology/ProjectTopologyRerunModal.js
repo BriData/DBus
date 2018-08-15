@@ -129,6 +129,7 @@ export default class ProjectTopologyRerunModal extends Component {
 
   render () {
     const { visible, key, rerunInitResult} = this.props
+    console.info('rerunInitResult',rerunInitResult)
     const { onClose } = this.props
     const columns = [
       {
@@ -173,7 +174,7 @@ export default class ProjectTopologyRerunModal extends Component {
         <Form>
           <Table
             size="small"
-            rowKey="partition"
+            rowKey={record => `${record.topic}_${record.partition}`}
             dataSource={rerunInitResult}
             columns={columns}
             pagination={false}

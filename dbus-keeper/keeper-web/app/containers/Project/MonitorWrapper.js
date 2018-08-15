@@ -32,7 +32,10 @@ export default class MonitorWrapper extends Component {
   render () {
     const {projectId, projectDisplayName} = this.state
     return (
-      <div>
+      <div style={{
+        width: '100%',
+        height: '100%',
+      }}>
         <Helmet
           title="Project11"
           meta={[{ name: 'description', content: 'Description of Project' }]}

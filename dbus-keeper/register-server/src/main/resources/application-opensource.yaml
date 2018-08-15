@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: registry-server
+
+server.port: #{register.server.port}#
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: #{eureka.client.serviceUrl.defaultZone}#

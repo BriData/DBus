@@ -89,7 +89,6 @@ public class Constants {
     public static final String BROKERS_ROOT = KAFKA_ROOT + "/brokers";
     public static final String BROKERS_IDS = BROKERS_ROOT + "/ids";
 
-
     public static final String RULE_TYPE_STRING = "string";
 
     public static final String RULE_TYPE_REGEX = "regex";
@@ -106,7 +105,6 @@ public class Constants {
     public static final String TRIM_ALL = "all";
 
     public static final String LOG_PROCESSOR = "log-processor";
-
     public static final String ROUTER = "router";
     //full puller
     public static final String HEARTBEAT_CONTROL_NODE = HEARTBEAT_ROOT + "/Control";

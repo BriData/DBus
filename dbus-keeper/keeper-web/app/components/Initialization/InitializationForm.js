@@ -41,7 +41,8 @@ export default class InitializationForm extends Component {
       grafanaValidateStatus,
       grafanaTokenValidateStatus,
       influxdbValidateStatus,
-      stormValidateStatus
+      stormValidateStatus,
+      heartbeatValidateStatus
     } = this.props.state
     const { getFieldDecorator } = this.props.form
     const {basicConf} = this.props
@@ -189,7 +190,7 @@ export default class InitializationForm extends Component {
               ]
             })(<Input type="text" placeholder="请输入Storm Nimbus 主机" size="large" />)}
           </FormItem>
-          <FormItem label="Storm Nimbus 端口"  hasFeedback validateStatus={stormValidateStatus} {...formItemLayout}>
+          <FormItem label="Storm Nimbus 主机 SSH 端口号"  hasFeedback validateStatus={stormValidateStatus} {...formItemLayout}>
             {getFieldDecorator('storm@@@nimbus@@@port', {
               initialValue: '22',
               rules: [
@@ -258,7 +259,7 @@ export default class InitializationForm extends Component {
           <FormItem {...titleItemLayout}>
             <h2>心跳自动部署配置</h2>
           </FormItem>
-          <FormItem label="心跳服务器IP" hasFeedback validateStatus={stormValidateStatus} {...formItemLayout}>
+          <FormItem label="心跳服务器IP" hasFeedback validateStatus={heartbeatValidateStatus} {...formItemLayout}>
             {getFieldDecorator('heartbeat@@@host', {
               initialValue: 'dbus-heartbeat-ip1,dbus-heartbeat-ip2',
               rules: [
@@ -269,7 +270,7 @@ export default class InitializationForm extends Component {
               ]
             })(<Input type="text" placeholder="请输入心跳服务器IP" size="large" />)}
           </FormItem>
-          <FormItem label="心跳服务器SSH端口" hasFeedback validateStatus={stormValidateStatus} {...formItemLayout}>
+          <FormItem label="心跳服务器SSH端口" hasFeedback validateStatus={heartbeatValidateStatus} {...formItemLayout}>
             {getFieldDecorator('heartbeat@@@port', {
               initialValue: '22',
               rules: [
@@ -284,7 +285,7 @@ export default class InitializationForm extends Component {
               ]
             })(<Input type="text" placeholder="请输入心跳服务器SSH端口" size="large" />)}
           </FormItem>
-          <FormItem label="心跳服务器SSH用户名" hasFeedback validateStatus={stormValidateStatus} {...formItemLayout}>
+          <FormItem label="心跳服务器SSH用户名" hasFeedback validateStatus={heartbeatValidateStatus} {...formItemLayout}>
             {getFieldDecorator('heartbeat@@@user', {
               initialValue: 'app',
               rules: [
@@ -295,7 +296,7 @@ export default class InitializationForm extends Component {
               ]
             })(<Input type="text" placeholder="请输入心跳服务器SSH用户名" size="large" />)}
           </FormItem>
-          <FormItem label="心跳安装路径" hasFeedback validateStatus={stormValidateStatus} {...formItemLayout}>
+          <FormItem label="心跳安装路径" hasFeedback validateStatus={heartbeatValidateStatus} {...formItemLayout}>
             {getFieldDecorator('heartbeat@@@jar@@@path', {
               initialValue: '/app/dbus/heartbeat',
               rules: [

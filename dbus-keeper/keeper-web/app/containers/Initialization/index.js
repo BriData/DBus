@@ -60,6 +60,7 @@ export default class InitializationWrapper extends Component {
       grafanaTokenValidateStatus: '',
       influxdbValidateStatus: '',
       stormValidateStatus: '',
+      heartbeatValidateStatus: '',
 
       loading: false,
     }
@@ -97,6 +98,7 @@ export default class InitializationWrapper extends Component {
       grafanaTokenValidateStatus: 'validating',
       influxdbValidateStatus: 'validating',
       stormValidateStatus: 'validating',
+      heartbeatValidateStatus: 'validating',
       loading: true
     })
     Request(SAVE_BASIC_CONF_API, {
@@ -110,6 +112,7 @@ export default class InitializationWrapper extends Component {
           grafanaTokenValidateStatus: '',
           influxdbValidateStatus: '',
           stormValidateStatus: '',
+          heartbeatValidateStatus: ''
         })
         if (res.status) message.error(errorMessage[res.status])
         switch (res.status) {
@@ -138,6 +141,11 @@ export default class InitializationWrapper extends Component {
               influxdbValidateStatus: 'error'
             })
             break
+          case INIT_HEART_BEAT_ERROR:
+            this.setState({
+              heartbeatValidateStatus: 'error'
+            })
+            break
           case 0:
             this.setState({
               kafkaValidateStatus: 'success',
@@ -145,6 +153,7 @@ export default class InitializationWrapper extends Component {
               grafanaTokenValidateStatus: 'success',
               influxdbValidateStatus: 'success',
               stormValidateStatus: 'success',
+              heartbeatValidateStatus: 'success'
             })
             message.success("初始化完成，3秒后将自动跳转到登录页面")
             setTimeout(() => this.props.router.push('/login'), 3000)

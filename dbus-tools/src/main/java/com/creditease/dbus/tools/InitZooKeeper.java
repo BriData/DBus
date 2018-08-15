@@ -36,7 +36,8 @@ import java.util.Properties;
 public class InitZooKeeper {
     private static Logger logger = LoggerFactory.getLogger(InitZooKeeper.class);
 
-    private static ZkService myZk = null;
+    // Keep two zkServices
+    private static ZkService myZk = null; // Zk server with security
     private String zkServer;
 
     private final static String HEARTBEAT_CONFIG_PATH = "InitZooKeeper/" + Constants.HEARTBEAT_JSON;
