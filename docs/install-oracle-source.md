@@ -52,7 +52,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 
 * 服务器：ora-master，安装Oracle主库，oracle实例名称为：$oratest$, 实例名称将会在*DBus web 一键加表配置* 中使用
 
-* 服务器：ora-slave，    安装Oralce备库、以及OGG
+* 服务器：ora-slave，    安装Oracle备库、以及OGG
 
 * 服务器：ogg-for-bigdata-server，存放OGG产生的远程tail file，安装OGG for bigdata
 
