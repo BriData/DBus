@@ -284,7 +284,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。
 
 然后分别点击dispatcher-appender、splitter-puller、extractor的启动按钮，系统则根据path路径自动执行相应 topology的shell脚本，启动成功后Status状态变为running。
-
+![选择schema标注](img/install-mysql/mysql-add-start-topology.png)
 
 新线部署完成
 
@@ -296,7 +296,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-##### 2.7 如果新加线过程中出现问题
+**2.7 如果新加线过程中出现问题 **
 
 如果新加线过程中出现问题时，可以先删除已经添加到一半的新线Datasource，然后再重新添加新线。
 
