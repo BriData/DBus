@@ -1,5 +1,5 @@
 ---
-22layout: global
+layout: global
 title: 安装部署
 description: 安装部署说明
 ---
@@ -82,7 +82,7 @@ DBUS HeartBeat：推荐部署dbus-n2、dbus-n3。
 
 #### 3.1.4.1 生成GrafanaToken
 
- DBUS使用Grafana展示数据线监控信息。需要提供Grafana Token进行监控模板的初始化。
+ Dbus使用Grafana展示数据线监控信息。需要提供Grafana Token进行监控模板的初始化。
 
 **1** 点击打开API Keys管理页面。  
 
@@ -96,7 +96,7 @@ DBUS HeartBeat：推荐部署dbus-n2、dbus-n3。
 
 ![grafana-token-03](img/install-base-components/grafana-token-03.png)
 
-## 3.2 DBUS安装配置
+## 3.2 Dbus安装配置
 
 ### 3.2.1 下载Dbus-Keeper
 
@@ -140,7 +140,7 @@ zk.str=zk_server_ip1:2181,zk_server_ip2:2181,zk_server_ip3:2181
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbusmgr?characterEncoding=utf-8
 spring.datasource.username=dbusmgr
-spring.datasource.password=dbusmgr!@#123
+spring.datasource.password=Dbusmgr!@#123
 ```
 
 ### 3.2.4 启动/停止Dbus-Keeper
