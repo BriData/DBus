@@ -362,13 +362,13 @@ service grafana-server start
 
 # 7.安装Mysql dbusmgr库
 
-安装好mysql数据库服务，创建dbusmgr库，创建用户dbusmgr, 密码dbusmgr!@#123 ，并授权用户dbusmgr能访问dbusmgr库，参考下面脚本：
+安装好mysql数据库服务，创建dbusmgr库，创建用户dbusmgr, 密码Dbusmgr!@#123 ，并授权用户dbusmgr能访问dbusmgr库，参考下面脚本：
 
 ```
 create database dbusmgr DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
-create user 'dbusmgr'@'%' identified by 'dbusmgr!@#123';
+create user 'dbusmgr'@'%' identified by 'Dbusmgr!@#123';
 flush privileges;
-grant all privileges on dbusmgr.* to 'dbusmgr'@'%' identified by 'dbusmgr!@#123';
+grant all privileges on dbusmgr.* to 'dbusmgr'@'%' identified by 'Dbusmgr!@#123';
 flush privileges;
 ```
 
