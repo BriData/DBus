@@ -119,7 +119,18 @@ DBUS HeartBeat：推荐部署dbus-n2、dbus-n3。
 修改解压后根目录config.properties，提供dbus-keeper初始化启动参数
 
 ```
-# eureka地址：如果用dbus自带的，不用改。否则，改成您自己的eurecka地址。
+# register端口，可以不改
+register.server.port=9090
+# gateway端口，可以不改
+gateway.server.port=5090
+# mgr端口，可以不改
+mgr.server.port=8901
+# service端口，可以不改
+service.server.port=10001
+# ssh公钥路径
+pubKeyPath=~/.ssh/id_rsa
+# eureka地址：可以不改。如果用dbus自带的，不用改。否则，改成您自己的eurecka地址。
+# 注意：端口号需和上面的register一致。
 eureka.client.serviceUrl.defaultZone=http://localhost:9090/eureka/
 # eureka预警邮箱
 eureka.instance.metadataMap.alarmEmail=example@example.com
@@ -129,10 +140,10 @@ zk.str=zk_server_ip1:2181,zk_server_ip2:2181,zk_server_ip3:2181
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbusmgr?characterEncoding=utf-8
 spring.datasource.username=dbusmgr
-spring.datasource.password=dbus!@#123
+spring.datasource.password=dbusmgr!@#123
 ```
 
-### **3.2.4 启动/停止Dbus-Keeper**
+### 3.2.4 启动/停止Dbus-Keeper
 
 ```
 >>初始化jar包。
