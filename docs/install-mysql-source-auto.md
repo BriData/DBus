@@ -61,10 +61,11 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 	create database dbus;
 
 	--- 2  创建用户，密码由dba制定
-	CREATE USER dbus IDENTIFIED BY 'dbus';
+   CREATE USER 'dbus'@'%' IDENTIFIED BY 'Dbus$%^456';
+	
 
 	--- 3 授权dbus用户访问dbus自己的库
-	GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'dbus';
+	GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'Dbus$%^456';
 
 	flush privileges; 
 ```
@@ -114,26 +115,31 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 **c)  dbus用户拉备库权限**
 
-   获取拟拉取的目标表备库的读权限，用于初始化加载，schemaName1.tableName1是需要同步的表名：
+   获取拟拉取的目标表备库的读权限，用于初始化加载。以test_schema1.t1为例。
 
-
-```mysql
-  -- GRANT select on schemaName1.tableName1 TO dbus;
-  GRANT select on test.t1 TO dbus;
-  GRANT select on test.t2 TO dbus;
-  
-  flush privileges; 
 ```
-如上dbus库配置命令，详见https://github.com/BriData/DBus/tree/master/initScript下mysql insatall文件夹。
+ -- 1  创建测试库 测试表， 用于测试的.（已有的库不需要此步骤，仅作为示例）
+ create database test_schema1;
+ use test_schema1;
+ create table t1(a int, b varchar(50));
+
+ --- 2  创建测试用户，密码由dba制定。（已有的用户不需要此步骤，仅作为示例）
+ CREATE USER 'test_user'@'%' IDENTIFIED BY 'User!#%135';
+ GRANT ALL ON test_schema1.* TO test_user@'%'  IDENTIFIED BY 'User!#%135';
+ flush privileges; 
+ 
+ --- 3 授权dbus用户 可以访问 t1 的备库只读权限
+ GRANT select on test_schema1.t1 TO dbus;
+ flush privileges; 
+```
 
 **d) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：**
 
 ```mysql
-  --- 创建Canal用户，密码由dba指定, 此处为canal
-  CREATE USER canal IDENTIFIED BY 'canal';    
+  --- 创建Canal用户，密码由dba指定, 此处为Canal&*(789
+  CREATE USER canal IDENTIFIED BY 'Canal&*(789';    
   --- 授权给Canal用户
   GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
-
   FLUSH PRIVILEGES; 
 ```
 
@@ -166,11 +172,11 @@ dsname=testdb
 #zk地址,替换成自己的zk地址
 zk.path=dbus-n1:2181
 #canal 用户连接地址。即：要canal去同步的源端库的备库的地址
-canal.address=dbus-n2:3306
+canal.address=dbus-n1:3306
 #canal用户名
 canal.user=canal
 #canal密码，替换成自己配置的
-canal.pwd=canal
+canal.pwd=Canal&*(789
   ```
   
   **a.canal自动部署：**
