@@ -41,9 +41,9 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 * **logstash版本**
   DBus使用的logstash的版本是v5.6.1。
 
-* **下载**
+* **dbus-logstash下载**
 
-  [https://www.elastic.co/downloads/past-releases/logstash-5-6-1](https://www.elastic.co/downloads/past-releases/logstash-5-6-1)](https://www.elastic.co/downloads/beats)
+   https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
 
   **dbus-logstash目录说明**
 

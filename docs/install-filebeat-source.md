@@ -45,42 +45,34 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 * **下载地址**
 
-  网盘地址
+  https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
 
 * **dbus-filebeat目录说明**
 
     **目录结构：**
 
-    dbus-filebeat包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
+    dbus-filebeat包含检测和自动配置脚本、心跳脚本以及程序启停脚本。
 
     ![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info.png)
 
-     **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即dbus-log-check-0.5.0文件夹中的脚本）
+     **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即checkDeploy.sh脚本）来自动替换配置项
+
+     **checkDeploy.sh:** 用于自动替换filebeat配置文件所需要修改的配置项，在conf目录下进行修改，该脚本会自动将配置项替换到filebeat.yml中
+
+     **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，filebeat会从中抽取心跳日志
+
+     **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
 
      **start.sh :**  启动脚本，一键启动filebeat程序、心跳程序等
 
      **stop.sh :**   停止脚本，一键停止filebeat程序、心跳程序等
-
-     **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，filebeat会从中抽取心跳日志
-
-     **log-auto-check-0.5.0 :** 内部含有检测kafka连通性及自动更换filebeat配置的功能
-
-     **readme :** 使用文档说明
-
-     **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
 
 
 ### 1.2 dbus-filebeat启动
 
 
 1. 修改通用配置：
-   修改log-auto-check-0.5.0/conf目录下的log-conf.properties文件，对于filebeat，只需要修改kafka地址、日志类型及filebeat相关配置即可。
-
-   filebeat相关配置项说明：
-
-   filebeat.base.path：filebeat.yml文件路径
-   filebeat.extract.file.path：filebeat抽取文件路径，如果是多个文件，用逗号分隔即可
-   filebeat.dst.topic：filebeat抽取日志到目的topic
+   修改conf目录下的log-conf.properties文件，对于filebeat，只需要修改kafka地址、日志类型及filebeat相关配置即可。
 
    ![filebeat目录](img/install-filebeat-source/install-filebeat-source-auto-conf.png)
 
@@ -90,13 +82,15 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
    执行命令：./checkDeploy.sh 
    ```
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到filebeat.yml文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
+   执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到filebeat.yml文件中，用户可在控制台看到相关配置项是否替换成功，也可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
+
+   控制台信息输出如下所示（检测及部署成功的信息）：
 
    ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy.png)
 
-   检测报告如下，如果没有检测未通过，则会显示报错信息。
+   控制台信息输出如下所示（检测及部署失败的信息）：
 
-   ​![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy2.png)
+   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy3.png)
 
 3. 启动方式：
 
@@ -104,8 +98,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息及包含详细错误信息的start_log文件，请根据错误信息进行修改。
-
+   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示filebeat和心跳程序启动成功。如果有错误，会提示相应错误信息及包含详细错误信息的startup.log文件，请根据错误信息进行修改。
 
    ![filebeat目录](img/install-filebeat-source/install-filebeat-source-start-log.png)
 

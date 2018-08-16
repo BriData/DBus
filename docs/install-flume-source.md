@@ -45,9 +45,9 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 
 
-* **下载**
+* **dbus-flume下载**
 
-   [http://flume.apache.org/download.html](http://flume.apache.org/download.html)](https://www.elastic.co/downloads/beats)
+  https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
 
 - **dbus-flume目录说明**
 
