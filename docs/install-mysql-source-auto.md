@@ -61,10 +61,10 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 	create database dbus;
 
 	--- 2  创建用户，密码由dba制定
-	CREATE USER dbus IDENTIFIED BY 'your_password';
+	CREATE USER dbus IDENTIFIED BY 'dbus';
 
 	--- 3 授权dbus用户访问dbus自己的库
-	GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'your_password';
+	GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'dbus';
 
 	flush privileges; 
 ```
@@ -161,15 +161,15 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 首先，将conf目录下的canal-auto.properties文件中内容，修改成自己的信息。例如：
 
   ```properties
-#要添加的数据源名称
+#数据源名称，需要与dbus keeper中添加的一致
 dsname=testdb
-#zk地址,如果是集群环境，使用逗号隔开
-zk.path=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
-#源端库备库地址
-slave.path=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
-#改成设置的canal用户名
+#zk地址,替换成自己的zk地址
+zk.path=dbus-n1:2181
+#canal 用户连接地址。即：要canal去同步的源端库的备库的地址
+canal.address=dbus-n2:3306
+#canal用户名
 canal.user=canal
-#改成设置的canal用户密码
+#canal密码，替换成自己配置的
 canal.pwd=canal
   ```
   
@@ -178,94 +178,64 @@ canal.pwd=canal
 
 
 替换完毕后，执行sh start.sh。 它会自动检查你填写的canal-auto.properties文件中内容。包括canal账户可用性，zk的连通性等。如果检查通过，会自动启动canal。
-如果启动成功，会打印出“canal pid start success ,pid is 70548”字样，如图：
+如果启动成功，会打印出“canal 进程启动成功 ”字样，如下图所示。**但是canal进程在配置出错的情况下也能启动起来，所以最后需要检查下日志文件中是否有异常 **（脚本会在当前文件下创建日志文件的链接，可以直接查看）。同时，这些报告信息会在“canal_deploy _report”打头的日志文件中保留一份，方便查看。
 ![canal-auto-deploy-success](img/install-mysql/canal-auto-deploy-success.png)
 
-同时会生成“canal_deploy _report”打头的日志文件，查看日志文件可看到执行的信息和结果。成功如下：
 
-  ```properties
-************ CANAL DEPLOY BEGIN! ************
-数据源名称: testdb
-zk地址: 127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
-备库地址: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
-canal 用户名: canal
-canal 密码: canal
------check database canal account  begin 
-canal user: canal
-canal pwd: canal
-slave url: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
------check database canal account success
------------- check canal zk node begin ------------ 
-zk str:  127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181
-zk path :  127.0.0.1:2181
------check canal zk path  begin 
-node path: /DBus/Canal/testdb
-path /DBus/Canal/testdb exist
------check canal zk path  end 
------------- check canal zk node end ------------ 
------------- update canal.properties begin ------------ 
-props: canal.port=10000
-props: canal.zkServers=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181/DBus/Canal/testdb
------------- update canal.properties end ------------ 
------------- update instance.properties begin ------------ 
-instance file path /Users/lxq/Desktop/Neo/dbus-canal-auto-0.5.0/canal/conf/testdb/instance.properties
-props: canal.instance.master.address=jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
-props: canal.instance.dbUsername=canal
-props: canal.instance.dbPassword =canal
-props: canal.instance.connectionCharset = UTF-8
------------- update canal.properties end ------------ 
------------- starting canal.....
-exec: sh /app/dbus-canal-auto-0.5.0/canal/bin/stop.sh
-exec: sh /app/dbus-canal-auto-0.5.0/canal/bin/startup.sh
-exec: rm -f canal.log
-exec: ln -s /app/dbus-canal-auto-0.5.0/canal/logs/canal/canal.log canal.log
-exec: rm -f testdb.log
-exec: ln -s /app/dbus-canal-auto-0.5.0/canal/logs/testdb/testdb.log testdb.log
-************ CANAL DEPLOY SCCESS! ************
-  ```
-
-如果执行失败，程序运行不会打印出canal的pid，例如：
+如果执行失败，信息会在某一步骤停止，说明某一部分有错。如下图所示，如果canal用户信息或备库库信息出错，则会出现数据库连接失败的情况。同时，这些信息也会在“canal_deploy _report”打头的日志文件中保留一份。
 ![canal-auto-deploy-fail](img/install-mysql/canal-auto-deploy-fail.png)
-然后检查部署report报告文件，此处将zk地址写错，日志会打印zk连接失败，最后部署失败，如：
-
-  ```properties
-************ CANAL DEPLOY BEGIN! ************
-数据源名称: testdb
-zk地址: jdbc:mysql://localhost:3306/test?
-备库地址: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
-canal 用户名: canal
-canal 密码: canal
------check database canal account  begin 
-canal user: canal
-canal pwd: canal
-slave url: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8
------check database canal account success
------------- check canal zk node begin ------------ 
-zk str:  jdbc:mysql://localhost:3306/test?
-zk connect fail... 
------------- check canal zk node fail ------------ 
-************ CANAL DEPLOY ERROR! ************
-  
-  ```
- 如果程序执行成功，会在当前目录创建canal.log和 testdb.log的link,即可以查看canal的日志。
- 
 
   **b.自动check：**
   
-  直接执行脚本执行sh start.sh，会执行配置的检测、自动替换和启动着几个动作。该脚本同时还提供单独的检测功能。执行sh start.sh check.即加上check参数，输出结果与自动部署类似。根据程序输出的pid会检测canal的启动情况，输出pid情况，表示当前canal程序在执行。
-![canal-auto-check-pid](img/install-mysql/canal-auto-check-pid.png)
-自动检测也会生产报告，“canal _check _report”打头的检测日志。同部署类似，会有打印出类似检测结果：
+  直接执行脚本执行sh start.sh，会执行配置的检测、自动替换和启动着几个动作。该脚本同时还提供单独的检测功能。执行sh start.sh check.即加上check参数，输出结果与自动部署类似。提醒：此处检查的是canal进行，还需要查看当前文件夹下日志文件中有无异常。同时，报告信息会在“canal_check _report”打头的日志文件中保留一份，方便查看。
 
   ```properties
   
-************ CANAL CHECK BEGIN! ************
+************ CANAL DEPLOY BEGIN! ************
+数据源名称: testdb
+zk地址: dbus-n1:2181
+备库地址: dbus-n2:3306
+canal 用户名: canal
+canal 密码: canal
 -----check database canal account  begin
-canal user: dbus
-canal pwd: dbus111
-slave url: jdbc:mysql://locakhsot:3306/dbus?characterEncoding=utf-8
-[jdbc ]get connection error
------check database canal account fail ------------
-************ CANAL CHECK FAIL! ************
+canal user: canal
+canal pwd: canal
+slave url: jdbc:mysql://dbus-n2:3306/dbus?characterEncoding=utf-8
+数据库连接成功...
+检查blog format: show variables like '%bin%'...
+binlog_format : ROW
+-----check database canal account success
+------------ check canal zk node begin ------------
+zk str:  dbus-n1:2181
+zk path :  dbus-n1:2181
+-----check canal zk path  begin
+node path: /DBus/Canal/testdb
+path /DBus/Canal/testdb  exist
+-----check canal zk path  end
+------------ check canal zk node end ------------
+------------ update canal.properties begin ------------
+props: canal.port=10000
+props: canal.zkServers=dbus-n1:2181/DBus/Canal/testdb
+------------ update canal.properties end ------------
+------------ update instance.properties begin ------------
+instance file path /app/dbus/dbus-canal-auto-0.5.0/canal/conf/testdb/instance.properties
+props: canal.instance.master.address=dbus-n1:2181
+props: canal.instance.dbUsername=dbus
+props: canal.instance.dbPassword =dbus
+props: canal.instance.connectionCharset = UTF-8
+------------ update canal.properties end ------------
+------------ starting canal.....
+exec: sh /app/dbus/dbus-canal-auto-0.5.0/canal/bin/stop.sh
+exec: sh /app/dbus/dbus-canal-auto-0.5.0/canal/bin/startup.sh
+exec: rm -f canal.log
+exec: ln -s /app/dbus/dbus-canal-auto-0.5.0/canal/logs/canal/canal.log canal.log
+exec: rm -f testdb.log
+exec: ln -s /app/dbus/dbus-canal-auto-0.5.0/canal/logs/testdb/testdb.log testdb.log
+exec: ps aux | grep "/Users/lxq/Desktop/Neo/dbus-canal-auto-0.5.0/canal/bin" | grep -v "grep" | awk '{print $2}'
+canal 进程启动成功， pid 4647
+请手动检查当前目录下canal.log，和testdb.log中有无错误信息。
+************ CANAL DEPLOY SCCESS! ************
+report文件： canal_deploy_report20180816152937.txt
   
   ```
 
