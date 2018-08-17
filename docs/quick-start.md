@@ -4,6 +4,8 @@ title: 快速体验
 description: Dbus快速开始手册 DBUS_VERSION_SHORT
 ---
 
+{:toc}
+
 # 1. 环境说明
 
 说明all in one是一个单机版本dbus环境，是给用户快速体验dbus的功能，只是一个简单体验版，不能用于其它环境或者用途，具体包括如下：
