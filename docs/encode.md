@@ -28,7 +28,7 @@ description: Dbus keeper脱敏管理说明
 **脱敏插件**：脱敏方式以插件的形式存在，每个脱敏插件包可有n个设置脱敏类型。管理员可以针对不同的项目上传不同的脱敏插件包，租户在设置项目级自定义脱敏信息时，根据项目下拥有的脱敏插件包，选择脱敏方式。
 
  ![encode-plugin-global](img/encode/encode-plugin-global.png)
- 
+
  上传脱敏插件时可以指定应用范围：
  ![ encode-plugin-add](img/encode/encode-plugin-add.png)
 

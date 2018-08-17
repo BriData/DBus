@@ -4,7 +4,15 @@ title: 安装基础组件
 description: Dbus 安装基础组件 DBUS_VERSION_SHORT
 ---
 
+{:toc}
+
+> DBUS依赖于Zookeeper、Kafka、Storm、InfluxDB、Grafana及Mysql等。这些通用组件的安装可到官网下载安装包，并遵循官方用户手册安装就可。也可到下面网盘地址下载：
+>
+> https://pan.baidu.com/s/1bRLz0n1FFmGWtOn-lvS5LA
+>
+
 # 1. 安装ZooKeeper
+
 ## 1.1 下载&安装
 
 推荐下载zookeeper版本；zookeeper-3.4.8
@@ -160,16 +168,14 @@ nohup ./kafka-manager -Dconfig.file=../conf/application.conf >/dev/null 2>&1 &
 
 # 4. 安装Storm
 
-## 4.1 下载
+## 4.1 下载&安装
 
 推荐下载storm版本：apache-storm-1.0.1
 地址：[http://storm.apache.org/downloads.html](http://storm.apache.org/downloads.html)
 
-## 4.2 安装
-
 storm安装在目录：/app/dbus/apache-storm-1.0.1
 
-## 4.3 配置
+## 4.2 配置
 
 分别修改dbus-n1、dbus-n2、dbus-n3的/app/dbus/apache-storm-1.0.1/conf/storm.yaml配置如下（以dbus-n1为例）：
 
@@ -203,7 +209,7 @@ supervisor.slots.ports:
 worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
 ```
 
-## 4.4 启动
+## 4.3 启动
 
 在dbus-n1的/app/dbus/apache-storm-1.0.1/bin目录下执行如下命令：
 
@@ -226,7 +232,7 @@ worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRati
 ./storm supervisor &
 ```
 
-## 4.5 验证
+## 4.4 验证
 
 在dbus-n1执行jps -l命令后看到如下信息：
 
@@ -243,12 +249,10 @@ worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRati
 
 # 5. 安装InfluxDB
 
-## 5.1 下载
+## 5.1 下载&安装
 
 推荐下载InfluxDB版本：influxdb-1.1.0.x86_64
 地址：[https://portal.influxdata.com/downloads](https://portal.influxdata.com/downloads)
-
-## 5.2 安装
 
 在dbus-n1上切换到root用户，在influxdb-1.1.0.x86_64.rpm的存放目录下执行如下命令：
 
@@ -256,7 +260,7 @@ worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRati
 rpm -ivh influxdb-1.1.0.x86_64.rpm
 ```
 
-## 5.3 启动
+## 5.2 启动
 
 在dbus-n1上执行如下命令：
 
@@ -264,7 +268,7 @@ rpm -ivh influxdb-1.1.0.x86_64.rpm
 service influxdb start
 ```
 
-## 5.4 初始化配置
+## 5.3 初始化配置
 
 在dbus-n1上执行如下命令：
 
@@ -282,12 +286,10 @@ ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
 
 # 6. 安装Grafana
 
-## 6.1 下载
+## 6.1 下载&安装
 
 推荐下载grafana版本：grafana-3.1.1
 地址：[https://grafana.com/grafana/download](https://grafana.com/grafana/download)
-
-## 6.2 安装
 
 在dbus-n1上首先切换到root用户，执行如下命令
 
@@ -295,7 +297,7 @@ ALTER RETENTION POLICY autogen ON dbus_stat_db DURATION 15d
 rpm -ivh grafana-3.1.1-1470047149.x86_64.rpm
 ```
 
-## 6.3 配置
+## 6.2 配置
 
 在dbus-n1上修改配置文件/etc/grafana/grafana.ini的[security]部分如下，其它部分不用修改：
 
@@ -308,7 +310,7 @@ admin_user = admin
 admin_password = admin
 ```
 
-## 6.4 启动
+## 6.3 启动
 
 在dbus-n1上执行如下命令：
 
@@ -316,9 +318,9 @@ admin_password = admin
 service grafana-server start
 ```
 
-## 6.5 验证
+## 6.4 验证
 
-### 6.5.1 登录grafana
+### 6.4.1 登录grafana
 
 打开浏览器输入：http://dbus-n1:3000/login，出现如下页面：
 
@@ -328,9 +330,9 @@ service grafana-server start
 
 ![](img/install-base-components-05.png)
 
-### 6.5.2 配置grafana
+### 6.4.2 配置grafana
 
-#### 6.5.2.1 配置Grafana influxdb数据源如下图：
+#### 6.4.2.1 配置Grafana influxdb数据源如下图：
 
 ![](img/install-base-components-06.png)
 
@@ -338,7 +340,7 @@ service grafana-server start
 
 密码：dbus!@#123 (安装influxdb初始化配置脚本设置的密码)
 
-#### 6.5.2.2 配置Grafana Dashboard
+#### 6.4.2.2 配置Grafana Dashboard
 
 下载Schema Dashboard配置：initScript/init-table-grafana-config/grafana-schema.cfg
 
