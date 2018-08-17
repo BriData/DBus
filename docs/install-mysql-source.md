@@ -57,24 +57,25 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 **a) 创建dbus库和dbus用户及相应权限**
 
 ```mysql
-	--- 1 创建库，库大小由dba制定(可以很小，就2张表）
-	create database dbus;
+--- 1 创建库，库大小由dba制定(可以很小，就2张表）
+create database dbus;
 
-	--- 2  创建用户，密码由dba制定
-	CREATE USER dbus IDENTIFIED BY 'your_password';
+--- 2  创建用户，密码由dba制定
+CREATE USER 'dbus'@'%' IDENTIFIED BY 'Dbus$%^456';
+	
 
-	--- 3 授权dbus用户访问dbus自己的库
-	GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'your_password';
+--- 3 授权dbus用户访问dbus自己的库
+GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'Dbus$%^456';
 
-	flush privileges; 
+flush privileges; 
 ```
 
 **b) 创建dbus库中需要包含的2张表，创建细节如下：**
 
 ```mysql
-	-- ----------------------------
-	-- Table structure for db_full_pull_requests
-	-- ----------------------------
+-- ----------------------------
+-- Table structure for db_full_pull_requests
+-- ----------------------------
 	DROP TABLE IF EXISTS `db_full_pull_requests`;
 	CREATE TABLE `db_full_pull_requests` (
 	  `seqno` bigint(19) NOT NULL AUTO_INCREMENT,
@@ -94,9 +95,9 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 	) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 	SET FOREIGN_KEY_CHECKS=0;
 	
-	-- ----------------------------
-	-- Table structure for db_heartbeat_monitor
-	-- ----------------------------
+-- ----------------------------
+-- Table structure for db_heartbeat_monitor
+-- ----------------------------
 	DROP TABLE IF EXISTS `db_heartbeat_monitor`;
 	CREATE TABLE `db_heartbeat_monitor` (
 	  `ID` bigint(19) NOT NULL AUTO_INCREMENT COMMENT '心跳表主键',
@@ -114,27 +115,32 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 **c)  dbus用户拉备库权限**
 
-   获取拟拉取的目标表备库的读权限，用于初始化加载，schemaName1.tableName1是需要同步的表名：
+   获取拟拉取的目标表备库的读权限，用于初始化加载。以test_schema1.t1为例。
 
-
-```mysql
-  -- GRANT select on schemaName1.tableName1 TO dbus;
-  GRANT select on test.t1 TO dbus;
-  GRANT select on test.t2 TO dbus;
-  
-  flush privileges; 
 ```
-如上dbus库配置命令，详见https://github.com/BriData/DBus/tree/master/initScript下mysql insatall文件夹。
+ -- 1  创建测试库 测试表， 用于测试的.（已有的库不需要此步骤，仅作为示例）
+ create database test_schema1;
+ use test_schema1;
+ create table t1(a int, b varchar(50));
+
+ --- 2  创建测试用户，密码由dba制定。（已有的用户不需要此步骤，仅作为示例）
+ CREATE USER 'test_user'@'%' IDENTIFIED BY 'User!#%135';
+ GRANT ALL ON test_schema1.* TO test_user@'%'  IDENTIFIED BY 'User!#%135';
+ flush privileges; 
+ 
+ --- 3 授权dbus用户 可以访问 t1 的备库只读权限
+ GRANT select on test_schema1.t1 TO dbus;
+ flush privileges; 
+```
 
 **d) 在mysql数据源的mysql_instance实例中创建Canal用户，并授予相应权限：**
 
 ```mysql
-  --- 创建Canal用户，密码由dba指定, 此处为canal
-  CREATE USER canal IDENTIFIED BY 'canal';    
-  --- 授权给Canal用户
-  GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
-
-  FLUSH PRIVILEGES; 
+--- 创建Canal用户，密码由dba指定, 此处为Canal&*(789
+CREATE USER 'canal'@'%' IDENTIFIED BY 'Canal&*(789';    
+--- 授权给Canal用户
+GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
+FLUSH PRIVILEGES; 
 ```
 
 ## 2 canal配置
@@ -243,11 +249,13 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。
 
 然后分别点击dispatcher-appender、splitter-puller、extractor的启动按钮，系统则根据path路径自动执行相应 topology的shell脚本，启动成功后Status状态变为running。
-
+![选择schema标注](img/install-mysql/mysql-add-start-topology.png)
 
 新线部署完成
 
-**2.6 拉取增量和全量数据**
+
+### 3.2 拉起增量和权限
+**3.2.1 拉取增量和全量数据**
 
 新添加的数据线，其schema中的table处于stopped状态。需要到dbus keeper中对相应的表，先拉取增量数据，才能让其变成OK状态。处于OK状态的表才会正常的从mysql数据源同步数据到相应的kafka中。拉取完成增量之后，可以根据业务需要确定是否需要拉取全量数据。
 
@@ -255,14 +263,22 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-##### 2.7 如果新加线过程中出现问题
+**3.2.2 如果新加线过程中出现问题**
 
 如果新加线过程中出现问题时，可以先删除已经添加到一半的新线Datasource，然后再重新添加新线。
 
 ​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
+​	
+**3.2.3 验证增量添加过程和配置配置是否正确**
 
 
-### 3.2 验证增量数据
+加完线后，可以通过检查工具，检查加线后的状态，(需要先拉起增量)。
+​	![检查加线结果入口](img/install-mysql/mysql-add-check-line-in.png)
+​如果正确，会出现如下图所示内容。中间环节出错，会有相应提示。
+​	![检查加线结果](img/install-mysql/mysql-add-check-line.png)
+
+
+### 3.3 验证增量数据
 
 #### a) 插入数据
 
@@ -278,8 +294,8 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-### 3.3 验证全量拉取
+### 3.4 验证全量拉取
 
 验证全量拉取是否成功，可在Table管理右侧操作栏，点击"查看拉全量状态"。![install-mysql-10-fullpuller_status](img/install-mysql/full-pull-history-global.png)
-全量拉取的信息存储在ZK上，Dbus keeper会读取的zk下相应节点的信息，来查看全量拉取状态。看结点信息中Status字段ß，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。
+全量拉取的信息存储在ZK上，Dbus keeper会读取的zk下相应节点的信息，来查看全量拉取状态。看结点信息中Status字段，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。
 ![install-mysql-11-fullpuller_status](img/install-mysql/fullpull-history-check.png)
