@@ -94,7 +94,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请查看该文件，根据错误信息进行修改 
+   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请查看该文件，根据错误信息进行修改。
 
 
 ![filebeat目录](img/install-flume-source/install-flume-source-start-log.png)
@@ -162,7 +162,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    - **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
      ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
-### 2.1 DBus 数据源配置修改
+### 2.2 DBus 数据源配置修改
 
    	因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
@@ -171,7 +171,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    - **填写host信息：**该数据源的数据可能来自于多个主机上的flume程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
-### 2.1 DBus 配置规则
+### 2.3 DBus 配置规则
 
    - **Rules配置：** 进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则。
 
