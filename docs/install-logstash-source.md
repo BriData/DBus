@@ -47,17 +47,16 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
   **目录结构：**
 
-  下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-logstash包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
-
+  	下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-logstash包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 ![filebeat目录](img/install-logstash-source/install-logstash-source-dir-info.png)
 
-   **logstash目录 :**logstash程序文件夹，用户可手动更改logstash配置文件，也可以使用dbus的检测和部署脚本（即checkDeploy.sh脚本）来自动替换配置项
+   	**logstash目录 :**logstash程序文件夹，用户可手动更改logstash配置文件，也可以使用dbus的检测和部署脚本（即checkDeploy.sh脚本）来自动替换配置项。
 
-   **checkDeploy.sh :** 内部含有检测kafka连通性及自动更换logstash配置的功能
+   	**checkDeploy.sh :** 内部含有检测kafka连通性及自动更换logstash配置的功能。
 
-   **start.sh :**  启动脚本，一键启动logstash程序
+   	**start.sh :**  启动脚本，一键启动logstash程序。
 
-   **stop.sh :**   停止脚本，一键停止logstash程序
+  	**stop.sh :**   停止脚本，一键停止logstash程序。
 
 
 ### 1.2. dbus-logstash启动
@@ -91,7 +90,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    执行命令：./stop.sh
    ```
 
-   停止脚本，停止logstash序。
+   停止脚本，停止logstash程序。
 
 
 
@@ -130,16 +129,15 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
       "thread": "check-heartbeat-event",
       "message": "[check-heartbeat-event] WARN : 2018/08/17 07:28:31.906 CheckHeartBeatEvent 196 - 节点:/DBus/HeartBeat/Monitor/test/dbus/db_heartbeat_monitor/0,状态:异常,报警次数:1,超时次数:1",
       "type": "monitor_log_logstash",
-      "timestamp": "2018/08/17 07:28:31.906 "
+      "timestamp": "2018/08/17 07:28:32.906 "
   }
   ```
 
 
-* ## 2 DBus 一键加线和配置
+## 2 DBus 一键加线和配置
 
    ### 2.1 DBus一键加线
-
-   logstash的新建线过程和filebeat的新建线过程是一样的，这里的图片引用了filebeat的建线过程，请知悉。
+   logstash的新加线过程和filebeat的新加线过程是一样的，这里的图片引用了filebeat的加线过程，请知悉。
 
    logstash将数据抽取到Kafka topic后，DBus程序就可以对该topic数据进行处理了，在DBus web进行数据源和table的配置工作。
 
@@ -155,21 +153,21 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
 
-       **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
-     ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
+   - **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
+       ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
    ### 2.2 数据源配置修改
 
-   ​	因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
+   	因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
-   - **修改数据源信息：** 点击modify按钮进行修改。
+   - 修改数据源信息，点击“修改”按钮进行修改。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
    - **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
    ### 2.3. 配置规则
 
-   - **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则
+   - 进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
@@ -177,7 +175,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
-   - **配置规则:** topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击Save all rules按钮，保存规则，并返回到规则组页面。
+   - **配置规则:**  topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击“保存所有规则”按钮，保存规则，并返回到规则组页面。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
@@ -188,8 +186,6 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    - **拉取增量: ** 使该表的状态变为ok，点击active生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行active生效按钮，使该表能够获取到最新的规则配置）。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
-
-   ​
 
 ##  3  验证数据
 
