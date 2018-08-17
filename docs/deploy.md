@@ -141,6 +141,10 @@ spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 spring.datasource.url=jdbc:mysql://mysql_server_ip:3306/dbusmgr?characterEncoding=utf-8
 spring.datasource.username=dbusmgr
 spring.datasource.password=Dbusmgr!@#123
+#kafka地址
+bootstrap.servers=kafka_server_ip1:9092,kafka_server_ip2:9092,kafka_server_ip3:9092
+bootstrap.servers.version=0.10.0.0
+influxdb.url=http://influxdb_server_ip:8086
 ```
 
 ### 3.2.4 启动/停止Dbus-Keeper
