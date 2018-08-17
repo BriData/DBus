@@ -74,7 +74,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
    执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到logstash配置文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
 
-   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy.png)
+   ![filebeat目录](img/install-logstash-source/install-logstash-source-check-deploy.png)
 
 3. 启动方式：
 
@@ -158,11 +158,11 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 ### 2.2 数据源配置修改
 
-   	因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
+   	因为我们在dbus-n1和dbus-n2两台机器中分别配置了logstash程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
    - 修改数据源信息，点击“修改”按钮进行修改。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-1.png](img/install-filebeat-source/install-filebeat-source-modify-ds-1.png)
-   - **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
+   - **填写host信息：**该数据源的数据可能来自于多个主机上的logstash程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
 ### 2.3. 配置规则
@@ -191,7 +191,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 我们可以在grafana配置以下，看看实际流量情况。
 
-* 上传grafana配置文件：[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/)， 点击Import，上传grafana json配置文件。
+* 上传grafana配置文件：[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/)。
    ![img/install-logstash-source/install-logstash-source-monitor-config-import-1.png](img/install-logstash-source/install-logstash-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-logstash-source/install-logstash-source-monitor-config-import-2.png](img/install-logstash-source/install-logstash-source-monitor-config-import-2.png)
