@@ -288,13 +288,8 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 新线部署完成
 
-##### 3.1.5 验证插入结果是否正确
-加完线后，可以通过检查工具，检查加线后的状态。
-​	![检查加线结果入口](img/install-mysql/mysql-add-check-line-in.png)
-​如果正确，会出现如下图所示内容。中间环节出错，会有相应提示。
-​	![检查加线结果](img/install-mysql/mysql-add-check-line.png)
 
-### 3.2 拉起增量和权限
+### 3.2 拉起增量和全量
 **3.2.1 拉取增量和全量数据**
 
 新添加的数据线，其schema中的table处于stopped状态。需要到dbus keeper中对相应的表，先拉取增量数据，才能让其变成OK状态。处于OK状态的表才会正常的从mysql数据源同步数据到相应的kafka中。拉取完成增量之后，可以根据业务需要确定是否需要拉取全量数据。
@@ -308,6 +303,14 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 如果新加线过程中出现问题时，可以先删除已经添加到一半的新线Datasource，然后再重新添加新线。
 
 ​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
+​	
+​
+**3.2.3 验证增量添加过程和配置配置是否正确 **
+
+加完线后，可以通过检查工具，检查加线后的状态，(需要先拉起增量)。
+​	![检查加线结果入口](img/install-mysql/mysql-add-check-line-in.png)
+​如果正确，会出现如下图所示内容。中间环节出错，会有相应提示。
+​	![检查加线结果](img/install-mysql/mysql-add-check-line.png)
 
 
 ### 3.3 验证增量数据
