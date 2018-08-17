@@ -137,7 +137,7 @@ flush privileges;
 
 ```mysql
 --- 创建Canal用户，密码由dba指定, 此处为Canal&*(789
-CREATE USER canal IDENTIFIED BY 'Canal&*(789';    
+ CREATE USER 'canal'@'%' IDENTIFIED BY 'Canal&*(789';    
 --- 授权给Canal用户
 GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
 FLUSH PRIVILEGES; 
