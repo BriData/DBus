@@ -72,9 +72,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    执行命令：./checkDeploy.sh
    ```
 
-   执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到logstash配置文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
 
-   ![filebeat目录](img/install-logstash-source/install-logstash-source-check-deploy.png)
 
 3. 启动方式：
 
