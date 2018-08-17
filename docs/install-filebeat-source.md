@@ -114,7 +114,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
    停止脚本，停止filebeat及定时心跳程序。
 
-### 1.5 验证filebeat配置成功
+### 1.3 验证filebeat配置成功
 
 **读取kafka的topic：monitor_log_filebeat，确认是否有数据：**
 
@@ -234,7 +234,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
 我们可以在grafana配置一下，看看实际流量情况。
 
-* **上传grafana配置文件，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config) ： **点击Import，上传grafana json配置文件。
+* 上传grafana配置文件，[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config) ： 点击Import，上传grafana json配置文件。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png](img/install-filebeat-source/install-filebeat-source-monitor-config-import-2.png)
