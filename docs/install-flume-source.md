@@ -53,7 +53,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
   **目录结构：**
 
-  dbus-flume包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
+  下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-flume包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 
   ![filebeat目录](img/install-flume-source/install-flume-source-dir-info.png)
 

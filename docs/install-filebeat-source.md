@@ -51,7 +51,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
     **目录结构：**
 
-    dbus-filebeat包含检测和自动配置脚本、心跳脚本以及程序启停脚本。
+    下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-filebeat包含检测和自动配置脚本、心跳脚本以及程序启停脚本。
 
     ![filebeat目录](img/install-filebeat-source/install-filebeat-source-dir-info.png)
 
