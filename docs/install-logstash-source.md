@@ -12,7 +12,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 ​	DBus可以接入三种数据源：logstash、flume、filebeat，下面以使用filebeat为数据抽取端，抽取DBus自身产生的监控和报警日志数据为例进行说明。
 
-​	DBus监控和报警模块部署在 dbus-n2和dbus-n3 上，路径为：/app/dbus/heartbeat/dbus-heartbeat-0.5.0/logs/heartbeat/heartbeat.log。因此，filebeat的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
+​	DBus监控和报警模块部署在 dbus-n2和dbus-n3 上，路径为：/app/dbus/heartbeat/dbus-heartbeat-0.5.0/logs/heartbeat/heartbeat.log。因此，logstash的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
 
 |  No  |   域名    | 是否有监控和报警日志？ | 是否部署logstash？ | 是否部署心跳shell脚本？ |        抽取日志        |       输出topic        |
 | :--: | :-----: | :---------: | :-----------: | :------------: | :----------------: | :------------------: |
@@ -136,7 +136,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 ## 2 DBus 一键加线和配置
 
-   ### 2.1 DBus一键加线
+### 2.1 DBus一键加线
    logstash的新加线过程和filebeat的新加线过程是一样的，这里的图片引用了filebeat的加线过程，请知悉。
 
    logstash将数据抽取到Kafka topic后，DBus程序就可以对该topic数据进行处理了，在DBus web进行数据源和table的配置工作。
@@ -156,7 +156,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    - **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
        ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
-   ### 2.2 数据源配置修改
+### 2.2 数据源配置修改
 
    	因为我们在dbus-n1和dbus-n2两台机器中分别配置了filebeat程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
@@ -165,7 +165,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    - **填写host信息：**该数据源的数据可能来自于多个主机上的filebeat程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
-   ### 2.3. 配置规则
+### 2.3. 配置规则
 
    - 进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则。
 
@@ -183,7 +183,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 
-   - **拉取增量: ** 使该表的状态变为ok，点击active生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行active生效按钮，使该表能够获取到最新的规则配置）。
+   - **拉取增量：**使该表的状态变为ok，点击active生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行active生效按钮，使该表能够获取到最新的规则配置）。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
@@ -191,7 +191,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 我们可以在grafana配置以下，看看实际流量情况。
 
-* **上传grafana配置文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/)： **点击Import，上传grafana json配置文件。
+* 上传grafana配置文件：[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/)， 点击Import，上传grafana json配置文件。
    ![img/install-logstash-source/install-logstash-source-monitor-config-import-1.png](img/install-logstash-source/install-logstash-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-logstash-source/install-logstash-source-monitor-config-import-2.png](img/install-logstash-source/install-logstash-source-monitor-config-import-2.png)
