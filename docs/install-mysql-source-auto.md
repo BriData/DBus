@@ -305,7 +305,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 ​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
 ​	
 ​
-**3.2.3 验证增量添加过程和配置配置是否正确 **
+**3.2.3 验证增量添加过程和配置配置是否正确**
 
 加完线后，可以通过检查工具，检查加线后的状态，(需要先拉起增量)。
 ​	![检查加线结果入口](img/install-mysql/mysql-add-check-line-in.png)
