@@ -29,13 +29,13 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
 **主要配置步骤：**
 
-1 配置 和 安装filebeat源相关
+1 配置和安装filebeat源相关
 
 2 一键加线和配置
 
 3 检验结果
 
-## 1  配置 和 安装filebeat源相关
+## 1  配置和安装filebeat源相关
 
 监控和报警日志在dbus-n2和dbus-n3上，因此 filebeat的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
 
@@ -49,7 +49,7 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
   包名称：dbus-filebeat.tar.gz
 
-  https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
+  网盘地址：https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
 
 * **dbus-filebeat目录说明**
 

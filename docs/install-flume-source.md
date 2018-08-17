@@ -28,7 +28,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 **主要配置步骤：**
 
-1 配置 和 安装flume源相关
+1 配置和安装flume源相关
 
 2 一键加线和配置
 
@@ -49,7 +49,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
   包名称：dbus-flume.tar.gz
 
-  https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
+  网盘地址：https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
 
 - **dbus-flume目录说明**
 
@@ -139,7 +139,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    ```
 
 
-* ## 2 DBus 一键加线和配置
+ ## 2 DBus 一键加线和配置
 
    ### 2.1 DBus一键加线
 
@@ -159,7 +159,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-new-ds-3.png](img/install-filebeat-source/install-filebeat-source-new-ds-3.png)
 
-       **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
+   - **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
      ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
    ### 2.2 数据源配置修改
@@ -173,7 +173,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
    ### 2.3. 配置规则
 
-   - **进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则，详细配置方式请参考：**
+   - **Rules配置：** 进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-1.png](img/install-filebeat-source/install-filebeat-source-add-table-1.png)
 
@@ -193,7 +193,6 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
-   ​
 
 ## 3 grafana配置与流量监控
 
