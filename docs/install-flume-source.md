@@ -12,19 +12,19 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 **总体说明：**
 
-​	DBus可以接入三种数据源：logstash、flume、filebeat，下面以使用flume为数据抽取端，抽取DBus自身产生的监控和报警日志数据。DBus监控和报警模块部署在 dbus-n2和dbus-n3 上，路径为：/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log。因此，flume的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
+​	DBus可以接入三种数据源：logstash、flume、filebeat，下面以使用flume为数据抽取端，抽取DBus自身产生的监控和报警日志数据为例进行说明。
 
-​	另外与logtash不同，flume需要一个额外的产生心跳数据的shell脚本，由crontab负责执行，输出的日志路径为：/app/dbus/dbus-agent-heartbeat/logs/agent-heartbeat.log，用于监测整条链路是否正常工作。因此，产生心跳数据的shell脚本也要部署在dbus-n2和dbus-n3 上。
+​	DBus监控和报警模块部署在 dbus-n2和dbus-n3 上，路径为：/app/dbus/heartbeat/dbus-heartbeat-0.5.0/logs/heartbeat/heartbeat.log。因此，filebeat的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
 
-​	flume抽取程序同时监控DBus自身的监控和报警日志（路径：/app/dbus/dbus-heartbeat-0.4.0/logs/heartbeat/heartbeat.log） 和shell脚本产生的心跳数据（路径：/app/dbus/dbus-agent-heartbeat/logs/agent-heartbeat.log），这样，flume既可以抽取数据日志，也可以抽取心跳日志。
+​	另外与logtash不同，flume需要一个额外的产生心跳数据的shell脚本，输出的日志在解压包的相对路径：./dbus-agent-heartbeat/logs/agent-heartbeat.log，用于监测整条链路是否正常工作。因此，产生心跳数据的shell脚本也要部署在dbus-n2和dbus-n3 上。
 
-|  No  |   域名    | 是否有监控和报警日志？ | 是否部署flume？ | 是否部署心跳shell脚本？ |                   抽取日志                   |       输出topic       |
-| :--: | :-----: | :---------: | :--------: | :------------: | :--------------------------------------: | :-----------------: |
-|  1   | dbus-n1 |      否      |     否      |       否        |                    无                     |          无          |
-|  2   | dbus-n2 |      是      |     是      |       是        | 1.DBus自身产生的监控和报警日志                                              2. shell脚本产生的心跳数据 | heartbeat_log_flume |
-|  3   | dbus-n3 |      是      |     是      |       是        | 1.DBus自身产生的监控和报警日志                                              2. shell脚本产生的心跳数据 | heartbeat_log_flume |
+​	flume抽取程序同时监控DBus自身的监控和报警日志（路径：/app/dbus/heartbeat/dbus-heartbeat-0.5.0/logs/heartbeat/heartbeat.log） 和shell脚本产生的心跳数据（相对路径：./dbus-agent-heartbeat/logs/agent-heartbeat.log），这样，flume既可以抽取监控和报警日志，也可以抽取自身产生的心跳日志。
 
-
+|  No  |   域名    | 是否有监控和报警日志？ | 是否部署flume？ | 是否部署心跳shell脚本？ |                   抽取日志                   |      输出topic      |
+| :--: | :-----: | :---------: | :--------: | :------------: | :--------------------------------------: | :---------------: |
+|  1   | dbus-n1 |      否      |     否      |       否        |                    无                     |         无         |
+|  2   | dbus-n2 |      是      |     是      |       是        | 1.DBus自身产生的监控和报警日志                                              2. shell脚本产生的心跳数据 | monitor_log_flume |
+|  3   | dbus-n3 |      是      |     是      |       是        | 1.DBus自身产生的监控和报警日志                                              2. shell脚本产生的心跳数据 | monitor_log_flume |
 
 **主要配置步骤：**
 
@@ -47,49 +47,34 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 * **dbus-flume下载**
 
+  包名称：dbus-flume.tar.gz
+
   https://pan.baidu.com/s/1b1aKueXLvO2GigB5fa4kNw
 
 - **dbus-flume目录说明**
 
   **目录结构：**
 
-  dbus-flume包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
+  下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-flume包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 
   ![filebeat目录](img/install-flume-source/install-flume-source-dir-info.png)
 
-   **flume目录 :**flume程序文件夹，用户可手动更改flume-conf.properties，也可以使用dbus的检测和部署脚本（即dbus-log-check-0.5.0文件夹）
+   **flume目录 :**flume程序文件夹，用户可手动更改flume-conf.properties，也可以使用dbus的检测和部署脚本（即checkDeploy.sh，需要先更新conf/log-conf.properties文件）
+
+   **checkDeploy.sh :** 实现了检测kafka连通性及自动更换flume配置的功能
+
+   **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，flume会从中抽取心跳日志
+
+   **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
 
    **start.sh :**  启动脚本，一键启动flume程序、心跳程序等
 
    **stop.sh :**   停止脚本，一键停止flume程序、心跳程序等
 
-   **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，flume会从中抽取心跳日志
-
-   **log-auto-check :**内部含有检测kafka连通性及自动更换flume配置的功能
-
-   **readme :** 使用文档说明
-
-   **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
-
 ### 1.4. dbus-flume启动
 
 1. 修改通用配置：
-   修改log-auto-check-0.5.0/conf目录下的log-conf.properties文件，对于flume，只需要修改kafka地址、日志类型及flume相关配置即可。
-
-   flume相关配置项说明：
-
-   flume.base.path：		flume-conf.properties文件路径
-
-   flume.host: 				运行flume的hostname
-
-   flume.data.sincedb:		存放flume记录抽取文件位置的文件路径（比如被抽取文件的inode及offset等信息）
-
-   flume.heartbeat.sincedb:	存放flume记录抽取心跳文件位置的文件路径（心跳文件的inode及offset等信息）
-
-   flume.heartbeat.file.path:	存放flume心跳文件的路径
-
-   flume.extract.file.path：flume抽取文件路径(由于flume抽取文件配置较复杂，自动配置目前仅支持单文件，对于多文件，可手动修改flume配置文件)
-   flume.dst.topic：flume抽取日志到目的topic
+   修改conf目录下的log-conf.properties文件，对于flume，只需要修改kafka地址、日志类型及flume相关配置即可。
 
    ![filebeat目录](img/install-flume-source/install-flume-source-auto-config.png)
 
@@ -99,15 +84,9 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    执行命令：./checkDeploy.sh
    ```
 
-   进入log-auto-check-0.5.0目录，执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到flume配置文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
+   执行checkDeploy.sh脚本，可以自动检测kafka是否正常连接，若kafka连接正常，部署脚本将会把conf目录下的修改项替换到flume配置文件中，用户可以查看reports目录下的检测和部署报告，确认通过后，进行后续步骤。
 
-   ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy.png)
-
-      检测报告如下，如果没有检测未通过，则会显示报错信息。
-
-      ![filebeat目录](img/install-filebeat-source/install-filebeat-source-check-deploy2.png)
-
-   ​
+   ![filebeat目录](img/install-flume-source/install-flume-source-check-deploy.png)
 
 3. 启动方式：
 
@@ -115,10 +94,11 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动filebeat程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件start_log，请根据错误信息进行修改。
+   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请根据错误信息进行修改。
 
 
-   ![filebeat目录](img/install-flume-source/install-flume-source-auto.config.png)
+   ![filebeat目录](img/install-flume-source/install-flume-source-start-log.png)
+
 4. 停止方式：
 
    ```
@@ -133,7 +113,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
 * **执行以下命令，查看数据，如果有数据，则说明flume可以成功抽取文件：**
 
-   `bin/kafka-console-consumer.sh --zookeeper dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka  --topic heartbeat_log_flume`  
+   `bin/kafka-console-consumer.sh --zookeeper dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka  --topic monitor_log_flume`  
 
 * **flume的心跳数据样例：**
 
