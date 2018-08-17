@@ -71,7 +71,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
    **stop.sh :**   停止脚本，一键停止flume程序、心跳程序等
 
-### 1.4. dbus-flume启动
+### 1.2. dbus-flume启动
 
 1. 修改通用配置：
    修改conf目录下的log-conf.properties文件，对于flume，只需要修改kafka地址、日志类型及flume相关配置即可。
@@ -94,10 +94,10 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请根据错误信息进行修改。
+   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请根据错误信息进行修改。	
 
 
-   ![filebeat目录](img/install-flume-source/install-flume-source-start-log.png)
+![filebeat目录](img/install-flume-source/install-flume-source-start-log.png)
 
 4. 停止方式：
 
@@ -139,9 +139,9 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    ```
 
 
- ## 2 DBus 一键加线和配置
+  ## 2 DBus 一键加线和配置
 
-   ### 2.1 DBus一键加线
+### 2.1 DBus一键加线
 
    flume的新建线过程和filebeat的新建线过程是一样的，这里的图片引用了filebeat的建线过程，请知悉。
 
@@ -162,7 +162,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    - **启动结果：**点击启动按钮后，当Status变为running后，表示启动成功，如果启动不成功，可以通过log定位失败原因。
      ![img/install-filebeat-source/install-filebeat-source-new-ds-end.png](img/install-filebeat-source/install-filebeat-source-new-ds-end.png)
 
-   ### 2.2 数据源配置修改
+### 2.1 DBus 数据源配置修改
 
    因为我们在dbus-n1和dbus-n2两台机器中分别配置了flume程序，用于对数据进行抽取，而DBus监控和报警模块会对来自这两台机器的数据流进行监控，因此，我们需要在数据源配置信息中，将多台主机的host信息填入dsPartition选项中，供dbus监控和报警模块使用，注意：如果主机的hostname是ip，请将"."转换为"_"，例如：127.0.0.1应该要转换为127_0_0_1。
 
@@ -171,7 +171,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    - **填写host信息：**该数据源的数据可能来自于多个主机上的flume程序，要在dsPartition中，配置上所有主机的host信息，为DBus监控和报警模块使用。
      ![img/install-filebeat-source/install-filebeat-source-modify-ds-2.png](img/install-filebeat-source/install-filebeat-source-modify-ds-2.png)
 
-   ### 2.3. 配置规则
+### 2.1 DBus 配置规则
 
    - **Rules配置：** 进入Data Table页面，查看新增加的表，点击Rules按钮，为该表配置规则。
 
@@ -189,14 +189,14 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 
-   - **拉取增量: ** 使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
+   - **拉取增量：**使该表的状态变为ok，点击Take Effect生效按钮，使该表生效（当后续再对该表进行规则组配置操作后，也应该对该表再执行Take Effect生效按钮，使该表能够获取到最新的规则配置）。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-6.png](img/install-filebeat-source/install-filebeat-source-add-table-6.png)
 
 
 ## 3 grafana配置与流量监控
 
-* **上传grafana配置文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/) ： **点击Import，上传grafana json配置文件。
+* 上传grafana配置文件[参考链接](https://github.com/BriData/DBus/tree/master/init-scripts/init-log-grafana-config/) ： 点击Import，上传grafana json配置文件。
    ![img/install-flume-source/install-flume-source-monitor-config-import-1.png](img/install-flume-source/install-flume-source-monitor-config-import-1.png)
 * **选择InDB数据库：**ds的名字必须与新建数据线中的数据源名字一致。
    ![img/install-flume-source/install-flume-source-monitor-config-import-2.png](img/install-flume-source/install-flume-source-monitor-config-import-2.png)

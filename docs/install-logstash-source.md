@@ -81,7 +81,6 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    ```
    执行命令：./start.sh
    ```
-
    启动脚本，该脚本会启动logstash程序。如果没有报错，则会提示logstash启动成功。如果有错误，会提示相应错误信息，请根据错误信息进行修改。
 
 4. 停止方式：
