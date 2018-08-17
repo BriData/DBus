@@ -94,7 +94,7 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
    执行命令：./start.sh
    ```
 
-   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请根据错误信息进行修改。	
+   启动脚本，该脚本会启动flume程序及定时心跳程序。如果没有报错，则会提示flume和心跳程序启动成功。如果有错误，会提示相应错误信息及详细错误信息文件startup.log，请查看该文件，根据错误信息进行修改 
 
 
 ![filebeat目录](img/install-flume-source/install-flume-source-start-log.png)
