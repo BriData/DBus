@@ -3,8 +3,8 @@ layout: global
 title: 安装基础组件
 description: Dbus 安装基础组件 DBUS_VERSION_SHORT
 ---
-
-{:toc}
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 
 > DBUS依赖于Zookeeper、Kafka、Storm、InfluxDB、Grafana及Mysql等。这些通用组件的安装可到官网下载安装包，并遵循官方用户手册安装就可。也可到下面网盘地址下载：
 >

@@ -3,6 +3,8 @@ layout: global
 title: Data Schema管理界面
 description: Dbus Web Schema配置管理 DBUS_VERSION_SHORT
 ---
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 ​	Data Schema管理界面主要展示schema有关的一些基本信息。在此界面可以进行schema基本信息的修改、schema删除及添加table等操作。
 
 ## 1  Data Schema管理页面入口

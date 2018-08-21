@@ -4,8 +4,8 @@ title: Oracle数据源接入DBus
 description: Dbus 安装Oracle源 DBUS_VERSION_SHORT
 ---
 
-
-
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 以下内容为DBus接入Oracle数据库的日志实时获取实现方案以及相关组件的配置说明。
 
 > Oracle数据库日志解析通过Oracle的商业软件：Oracle GoldenGate实现。

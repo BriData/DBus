@@ -3,7 +3,7 @@ layout: global
 title: FAQ
 description: FAQ DBUS_VERSION_SHORT
 ---
-
+* This will become a table of contents (this text will be scraped).
  {:toc}
 
 ***

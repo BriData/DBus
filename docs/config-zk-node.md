@@ -4,8 +4,8 @@ title: zookeeper目录结构介绍
 description: Dbus Web zk节点介绍 DBUS_VERSION_SHORT
 ---
 
-
-
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 ZookeeperManager是Dbus web主目录之一，用来展示dbus系统中存储到中zookeeper的相关信息。dbus的zookeeper中主要有DBus的主目录，其中DBus目录下存放着Dbus相关的配置文件及运行过程中的中间状态。下面重点对DBus目录下面的配置结点进行介绍。
 
 DBus目录下面ConfTemplates存储Extractor和Topology的配置模板信息，新加线时，Dbus系统会从该目录下复制相应的部分，到新的数据线中。HeartBeat结点下记录着Dbus系统的心跳子系统的相关状态信息。Topology结点下记录着Dbus系统的Storm的Topology的配置信息。
