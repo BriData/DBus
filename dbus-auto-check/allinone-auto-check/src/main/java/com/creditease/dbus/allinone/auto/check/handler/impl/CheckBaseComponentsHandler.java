@@ -20,7 +20,10 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
     }
 
     public void checkZk(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component zookeeper start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         String[] cmd = { "/bin/sh", "-c", "jps -l | grep QuorumPeerMain" };
         Process process = Runtime.getRuntime().exec(cmd);
@@ -33,7 +36,10 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
     }
 
     public void checkKafka(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component kafka start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         String[] cmd = { "/bin/sh", "-c", "jps -l | grep Kafka" };
         Process process = Runtime.getRuntime().exec(cmd);
@@ -46,7 +52,10 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
     }
 
     public void checkStrom(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component storm start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         String[] cmd = { "/bin/sh", "-c", "jps -l | grep storm" };
         Process process = Runtime.getRuntime().exec(cmd);
@@ -59,7 +68,10 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
     }
 
     public void checkInfluxdb(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component influxdb start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         String[] cmd = { "/bin/sh", "-c", "ps -ef | grep influxdb" };
         Process process = Runtime.getRuntime().exec(cmd);
@@ -72,7 +84,10 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
     }
 
     public void checkGrafana(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component grafana start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         String[] cmd = { "/bin/sh", "-c", "ps -ef | grep grafana" };
         Process process = Runtime.getRuntime().exec(cmd);
@@ -85,7 +100,10 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
     }
 
     public void checkHb(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component heartbeat start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         String[] cmd = { "/bin/sh", "-c", "jps -l | grep heartbeat.start" };
         Process process = Runtime.getRuntime().exec(cmd);

@@ -29,7 +29,10 @@ public class CheckTopologyHandler extends AbstractHandler {
     public void check(BufferedWriter bw) throws Exception {
         AutoCheckConfigBean conf = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String stormUIAPI = conf.getStormUIApi() + "/topology/summary";
+        bw.newLine();
         bw.write("check topology start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         bw.write("api: " + stormUIAPI);
         bw.newLine();

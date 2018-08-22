@@ -39,6 +39,8 @@ import com.creditease.dbus.extractor.vo.ExtractorVo;
 import com.creditease.dbus.extractor.vo.JdbcVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

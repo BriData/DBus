@@ -4,7 +4,7 @@
  */
 import { FormattedMessage } from 'react-intl'
 import React, {PropTypes, Component} from 'react'
-import {Row, Col, Icon, Tooltip, Form, Input, Button, Select, Table} from 'antd'
+import {Tag, Row, Col, Icon, Tooltip, Form, Input, Button, Select, Table} from 'antd'
 import styles from './res/styles/index.less'
 const TextArea = Input.TextArea
 const Option = Select.Option
@@ -30,6 +30,22 @@ export default class ClusterCheckForm extends Component {
       </div>
     </Tooltip>
   )
+
+  renderStatus =(text, record, index) => {
+    let color
+    switch (text) {
+      case 'ok':
+        color = 'green'
+        break
+      default:
+        color = 'red'
+    }
+    return (<div title={text} className={styles.ellipsis}>
+      <Tag color={color} style={{cursor: 'auto'}}>
+        {text}
+      </Tag>
+    </div>)
+  }
 
   handleCheckCluster = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
@@ -128,7 +144,7 @@ export default class ClusterCheckForm extends Component {
                   />,
                   dataIndex: 'state',
                   key: 'state',
-                  render: this.renderComponent(this.renderNomal)
+                  render: this.renderComponent(this.renderStatus)
                 },
               ]}
             />
@@ -142,21 +158,27 @@ export default class ClusterCheckForm extends Component {
               columns={[
                 {
                   title: <FormattedMessage
-                    id="app.components.selfCheck.clusterCheck.nodeName"
-                    defaultMessage="节点名称"
+                    id="app.components.selfCheck.clusterCheck.host"
+                    defaultMessage="主机"
                   />,
-                  dataIndex: 'name',
-                  key: 'name',
+                  dataIndex: 'host',
+                  key: 'host',
+                  render: this.renderComponent(this.renderNomal)
+                },
+                {
+                  title: 'pid',
+                  dataIndex: 'pid',
+                  key: 'pid',
                   render: this.renderComponent(this.renderNomal)
                 },
                 {
                   title: <FormattedMessage
-                    id="app.components.selfCheck.clusterCheck.nodeInfo"
-                    defaultMessage="节点信息"
+                    id="app.common.status"
+                    defaultMessage="状态"
                   />,
-                  dataIndex: 'content',
-                  key: 'content',
-                  render: this.renderComponent(this.renderNomal)
+                  dataIndex: 'state',
+                  key: 'state',
+                  render: this.renderComponent(this.renderStatus)
                 },
               ]}
             />
@@ -173,8 +195,8 @@ export default class ClusterCheckForm extends Component {
                     id="app.components.selfCheck.clusterCheck.host"
                     defaultMessage="主机"
                   />,
-                  dataIndex: 'Host',
-                  key: 'Host',
+                  dataIndex: 'host',
+                  key: 'host',
                   render: this.renderComponent(this.renderNomal)
                 },
                 {
@@ -182,18 +204,18 @@ export default class ClusterCheckForm extends Component {
                     id="app.components.selfCheck.clusterCheck.port"
                     defaultMessage="端口"
                   />,
-                  dataIndex: 'Port',
-                  key: 'Port',
+                  dataIndex: 'port',
+                  key: 'port',
                   render: this.renderComponent(this.renderNomal)
                 },
                 {
                   title: <FormattedMessage
-                    id="app.components.selfCheck.clusterCheck.jmxPort"
-                    defaultMessage="JMX端口"
+                    id="app.common.status"
+                    defaultMessage="状态"
                   />,
-                  dataIndex: 'JMX Port',
-                  key: 'JMX Port',
-                  render: this.renderComponent(this.renderNomal)
+                  dataIndex: 'state',
+                  key: 'state',
+                  render: this.renderComponent(this.renderStatus)
                 },
               ]}
             />

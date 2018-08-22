@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,18 @@
 
 package com.creditease.dbus.heartbeat.stattools;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.xml.bind.PropertyException;
+
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.ConfUtils;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Properties;
-import javax.xml.bind.PropertyException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
@@ -86,14 +88,14 @@ public class InfluxSink {
     }
 
 
-    private String statMessageToLineProtocol(StatMessage msg) {
+    private String statMessageToLineProtocol(Long offset, StatMessage msg) {
         String fullSchemaName = msg.getDsName() + "." + msg.getSchemaName();
         String fullTableName = fullSchemaName + "." + msg.getTableName();
         String keys = String.format("type=%s,ds=%s,schema=%s,table=%s", msg.getType(),
                 msg.getDsName(), fullSchemaName, fullTableName);
 
-        String fields = String.format("count=%d,errorCount=%d,warningCount=%d,latency=%f",
-                msg.getCount(), msg.getErrorCount(), msg.getWarningCount(),((float)msg.getLatencyMS())/1000);
+        String fields = String.format("count=%d,errorCount=%d,warningCount=%d,latency=%f,offset=%d",
+                msg.getCount(), msg.getErrorCount(), msg.getWarningCount(),((float)msg.getLatencyMS())/1000, offset);
 
         //time should by Nanoseconds
         long timestamp = msg.getTxTimeMS() * 1000000;
@@ -101,14 +103,14 @@ public class InfluxSink {
         return String.format ("%s,%s %s %d", tableName, keys, fields, timestamp);
     }
 
-    public int sendMessage(StatMessage msg,  long retryTimes) {
+    public int sendMessage(Long offset, StatMessage msg,  long retryTimes) {
         String content = null;
         HttpResponse response = null;
         try {
             post.setURI(uri);
 
             // add header
-            content = statMessageToLineProtocol(msg);
+            content = statMessageToLineProtocol(offset, msg);
             post.setEntity(new StringEntity(content));
             post.setConfig(RequestConfig.custom().setConnectionRequestTimeout(CUSTOM_TIME_OUT).setConnectTimeout(CUSTOM_TIME_OUT).setSocketTimeout(CUSTOM_TIME_OUT).build());
             response = client.execute(post);
@@ -132,10 +134,10 @@ public class InfluxSink {
         }
     }
 
-    public int sendBatchMessages(List<StatMessage> list, long retryTimes) throws IOException {
+    public int sendBatchMessages(Map<Long, StatMessage> map, long retryTimes) throws IOException {
         int ret;
-        for (StatMessage msg : list) {
-            ret = sendMessage(msg, retryTimes);
+        for (Map.Entry<Long, StatMessage> entry : map.entrySet()) {
+            ret = sendMessage(entry.getKey(), entry.getValue(), retryTimes);
             if (ret != 0) {
                 return ret;
             }

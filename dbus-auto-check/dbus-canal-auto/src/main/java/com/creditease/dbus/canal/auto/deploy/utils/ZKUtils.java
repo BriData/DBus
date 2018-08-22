@@ -69,7 +69,7 @@ public class ZKUtils {
                 throw new Exception();
 
             } else {
-                String canalPath = "/DBus"+"/"+"Canal"+"/"+deployProps.getDsName();
+                String canalPath = "/DBus"+"/"+"Canal"+"/canal-"+deployProps.getDsName();
                 CuratorContainer.getInstance().checkZkNodeExist(canalPath,bw);
             }
             bw.write("------------ check canal zk node end ------------ ");

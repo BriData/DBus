@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,11 @@ public class Message {
 
     private String contents;
 
-    private String hose;
+    private String fromAddress;
+
+    private String host;
+
+    private int port = -1;
 
     private String userName;
 
@@ -61,14 +65,6 @@ public class Message {
         this.contents = contents;
     }
 
-    public String getHose() {
-        return hose;
-    }
-
-    public void setHose(String hose) {
-        this.hose = hose;
-    }
-
     public String getUserName() {
         return userName;
     }
@@ -83,5 +79,29 @@ public class Message {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public String getFromAddress() {
+        return fromAddress;
+    }
+
+    public void setFromAddress(String fromAddress) {
+        this.fromAddress = fromAddress;
     }
 }

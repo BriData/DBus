@@ -34,7 +34,6 @@ function* getBasicConfRepos (action) {
     }
   } catch (err) {
     yield put(getBasicConf.fail(err))
-    message.error(err, 2)
   }
 }
 

@@ -173,7 +173,7 @@ export default class DataSchemaManageAddModal extends Component {
     }
     return (
       <Modal
-        style={{ top: 20 }}
+        className="top-modal"
         visible={visible}
         maskClosable={false}
         key={key}
@@ -256,7 +256,7 @@ export default class DataSchemaManageAddModal extends Component {
               columns={columns}
               dataSource={tableList}
               pagination={false}
-              scroll={{x:800, y: 600}}
+              scroll={{x:800, y: 350}}
             />
           ) : (
             <div style={{width: '100%', height: 100}}/>

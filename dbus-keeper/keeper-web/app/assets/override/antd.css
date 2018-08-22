@@ -193,6 +193,11 @@ form.ant-form.ant-form-horizontal.heartbeat-advance-config-form > div.ant-row.an
   margin-bottom: 5px;
 }
 
+form.ant-form.ant-form-horizontal.data-source-start-topo-form > div.ant-row.ant-form-item {
+  margin-bottom: 5px;
+}
+
+
 .ant-tooltip-inner {
   max-width: none;
 }
@@ -204,4 +209,23 @@ div.ant-table-body > table > thead.ant-table-thead > tr > th > span {
 
 div.ant-layout.ant-layout-has-sider > div.ant-layout-sider.ant-layout-sider-has-trigger > div.ant-layout-sider-children > div > ul > li.ant-menu-item-selected.ant-menu-item {
   background-color: #00a7c7;
+}
+
+/*全屏弹窗*/
+.full-modal {
+  height: 90% !important;
+  width: 90% !important;
+  top: 5% !important;
+}
+.full-modal .ant-modal-content {
+  height: 100%;
+  max-height: 100%;
+}
+
+.top-modal {
+  top: 20px
+}
+
+.high-dpi-modal .ant-modal-content {
+  min-height: 600px;
 }

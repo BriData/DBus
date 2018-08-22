@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,13 @@
  */
 
 package com.creditease.dbus.heartbeat.event.impl;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import com.creditease.dbus.heartbeat.container.AlarmResultContainer;
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
@@ -32,17 +39,19 @@ import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.util.MsgUtil;
-import com.creditease.dbus.heartbeat.vo.*;
+import com.creditease.dbus.heartbeat.vo.CheckVo;
+import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
+import com.creditease.dbus.heartbeat.vo.MasterSlaveDelayVo;
+import com.creditease.dbus.heartbeat.vo.PacketVo;
+import com.creditease.dbus.heartbeat.vo.ProjectMonitorNodeVo;
+import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
-
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * User: 王少楠
@@ -207,6 +216,13 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                   msg.setAddress(emails);
                   msg.setContents(contents);
                   msg.setSubject(subject);
+
+                  msg.setHost(hbConf.getAlarmMailSMTPAddress());
+                  msg.setPort(hbConf.getAlarmMailSMTPPort());
+                  msg.setUserName(hbConf.getAlarmMailUser());
+                  msg.setPassword(hbConf.getAlarmMailPass());
+                  msg.setFromAddress(hbConf.getAlarmSendEmail());
+
                   boolean ret = mail.send(msg);
                   LOG.info("[check-event] 发送邮件", ret == true ? "成功" : "失败");
                     html.delete(0, html.length());

@@ -18,21 +18,8 @@ import {SAVE_BASIC_CONF_API} from './api'
 import Request from "@/app/utils/request";
 import {CHECK_INIT_API} from "@/app/containers/ConfigManage/api";
 
-const errorMessage = {
-  17002: "请检查初始化配置,zk初始化异常",
-  17004: "请检查心跳配置,心跳初始化异常",
-  17005: "请检查inluxdb配置,inluxdb初始化异常",
-  17006: "请检查kafka配置,kafka初始化异常",
-  17007: "请检查grafana配置,grafana初始化异常",
-  17008: "请检查grafana_token配置,前缀必须是Bearer",
-  17009: "请检查storm配置,storm初始化异常",
-  17010: "请检查mgr数据库配置,mgr数据库初始化异常",
-  17011: "初始化默认sink异常",
-  17012: "初始化默认super_user异常",
-  17013: "初始化默认encode_plugin异常",
-}
 const INIT_ZOOKEEPER_ERROR = 17002;
-const INIT_HEART_BEAT_ERROR = 17004;
+const HEART_BEAT_SSH_ERROR = 17004;
 const INFLUXDB_URL_IS_WRONG = 17005;
 const KAFKA_BOOTSTRAP_SERVERS_IS_WRONG = 17006;
 const MONITOR_URL_IS_WRONG = 17007;
@@ -42,6 +29,9 @@ const MGR_IS_WRONG = 17010
 const SINK_IS_WRONG = 17011
 const SUPER_USER_ERROR = 17012
 const ENCODE_PLUGIN_ERROR = 17013
+const STORM_HOME_PATH_ERROR = 17014
+const HEART_BEAT_PATH_ERROR = 17015
+const STORM_UI_ERROR = 17016
 @connect(
   createStructuredSelector({
     InitializationData: InitializationModel()
@@ -55,14 +45,22 @@ export default class InitializationWrapper extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      kafkaValidateStatus: '',
-      grafanaValidateStatus: '',
-      grafanaTokenValidateStatus: '',
-      influxdbValidateStatus: '',
-      stormValidateStatus: '',
-      heartbeatValidateStatus: '',
-
+      ...this.generateStateValidateStatus(''),
       loading: false,
+    }
+  }
+
+  generateStateValidateStatus = value => {
+    return {
+      kafkaValidateStatus: value,
+      grafanaValidateStatus: value,
+      grafanaTokenValidateStatus: value,
+      influxdbValidateStatus: value,
+      stormValidateStatus: value,
+      stormHomePathValidateStatus: value,
+      stormUIValidateStatus: value,
+      heartbeatValidateStatus: value,
+      heartbeatPathValidateStatus: value,
     }
   }
 
@@ -78,27 +76,21 @@ export default class InitializationWrapper extends Component {
       .then(res => {
         if (res && res.status === 0) {
           if(res.payload) {
-            message.error('请注意，Keeper已经初始化')
+            message.error('请注意，Keeper已经初始化，2秒后自动跳转到登陆页面')
+            setTimeout(() => this.props.router.push('/login'), 2000)
           }
         } else {
           message.error(res.message)
         }
       })
       .catch(error => {
-        error.response.data && error.response.data.message
-          ? message.error(error.response.data.message)
-          : message.error(error.message)
+        message.error('服务异常，可能是后台服务启动缓慢，请等待30秒后再尝试', 5)
       })
   }
 
   handleSave = data => {
     this.setState({
-      kafkaValidateStatus: 'validating',
-      grafanaValidateStatus: 'validating',
-      grafanaTokenValidateStatus: 'validating',
-      influxdbValidateStatus: 'validating',
-      stormValidateStatus: 'validating',
-      heartbeatValidateStatus: 'validating',
+      ...this.generateStateValidateStatus('validating'),
       loading: true
     })
     Request(SAVE_BASIC_CONF_API, {
@@ -106,15 +98,10 @@ export default class InitializationWrapper extends Component {
       method: 'post' })
       .then(res => {
         this.setState({
-          loading: false,
-          kafkaValidateStatus: '',
-          grafanaValidateStatus: '',
-          grafanaTokenValidateStatus: '',
-          influxdbValidateStatus: '',
-          stormValidateStatus: '',
-          heartbeatValidateStatus: ''
+          ...this.generateStateValidateStatus(''),
+          loading: false
         })
-        if (res.status) message.error(errorMessage[res.status])
+        if (res.status) message.error(res.message)
         switch (res.status) {
           case KAFKA_BOOTSTRAP_SERVERS_IS_WRONG:
             this.setState({
@@ -136,24 +123,34 @@ export default class InitializationWrapper extends Component {
               stormValidateStatus: 'error'
             })
             break
+          case STORM_HOME_PATH_ERROR:
+            this.setState({
+              stormHomePathValidateStatus: 'error'
+            })
+            break
+          case STORM_UI_ERROR:
+            this.setState({
+              stormUIValidateStatus: 'error'
+            })
+            break
           case INFLUXDB_URL_IS_WRONG:
             this.setState({
               influxdbValidateStatus: 'error'
             })
             break
-          case INIT_HEART_BEAT_ERROR:
+          case HEART_BEAT_SSH_ERROR:
             this.setState({
               heartbeatValidateStatus: 'error'
             })
             break
+          case HEART_BEAT_PATH_ERROR:
+            this.setState({
+              heartbeatPathValidateStatus: 'error'
+            })
+            break
           case 0:
             this.setState({
-              kafkaValidateStatus: 'success',
-              grafanaValidateStatus: 'success',
-              grafanaTokenValidateStatus: 'success',
-              influxdbValidateStatus: 'success',
-              stormValidateStatus: 'success',
-              heartbeatValidateStatus: 'success'
+              ...this.generateStateValidateStatus('success')
             })
             message.success("初始化完成，3秒后将自动跳转到登录页面")
             setTimeout(() => this.props.router.push('/login'), 3000)
@@ -163,6 +160,7 @@ export default class InitializationWrapper extends Component {
         this.setState({
           loading: false,
         })
+        message.error('服务器异常')
         error.response.data && error.response.data.message
           ? message.error(error.response.data.message)
           : message.error(error.message)

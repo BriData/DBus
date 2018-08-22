@@ -33,16 +33,11 @@ export default class DataTableManageVersionModal extends Component {
           version1: `${receivedVersionList[1].id}`,
           version2: `${receivedVersionList[0].id}`,
         })
-        this.handleCompareVersion(receivedVersionList[1].id, receivedVersionList[0].id)
       } else if (receivedVersionList.length === 1) {
-        message.info('只有一个版本信息')
         this.setState({
           version1: `${receivedVersionList[0].id}`,
           version2: `${receivedVersionList[0].id}`,
         })
-        this.handleCompareVersion(receivedVersionList[0].id, receivedVersionList[0].id)
-      } else if (receivedVersionList.length === 0) {
-        message.info('没有版本信息')
       }
     }
   }
@@ -240,6 +235,7 @@ export default class DataTableManageVersionModal extends Component {
     return (
       <div className={styles.table}>
         <Modal
+          className="top-modal"
           key={key}
           visible={visible}
           maskClosable={false}

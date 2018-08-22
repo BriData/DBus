@@ -288,7 +288,7 @@ export default class DataSchemaManageAddLogModal extends Component {
             columns={columns}
             dataSource={tableList}
             pagination={false}
-            scroll={{x:800, y: 600}}
+            scroll={{x:800, y: 350}}
           />
           <DataSchemaAddLogSchemaTableModal
             visible={addLogTableModalVisible}

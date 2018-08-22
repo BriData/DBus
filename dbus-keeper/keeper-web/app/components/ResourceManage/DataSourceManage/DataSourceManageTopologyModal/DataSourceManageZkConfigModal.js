@@ -53,6 +53,7 @@ export default class DataSourceManageZkConfigModal extends Component {
     const {currentEditPath, contentKey} = this.state
     return (
       <Modal
+        className="top-modal"
         key={key}
         visible={visible}
         maskClosable={false}

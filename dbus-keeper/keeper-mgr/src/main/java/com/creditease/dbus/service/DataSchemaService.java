@@ -153,7 +153,7 @@ public class DataSchemaService {
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
 
-        /* 插入table信息到源端库: LOG_XX 类型不需要*/
+        /* 插入table的信息到源端库: LOG_XX 类型不需要*/
         if(DbusDatasourceType.ORACLE == datasourceType || DbusDatasourceType.MYSQL == datasourceType){
             //构造sourceTablesBean的参数
             SourceTablesBean sourceTablesBean = new SourceTablesBean();

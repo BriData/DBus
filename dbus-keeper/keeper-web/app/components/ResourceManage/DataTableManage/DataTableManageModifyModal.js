@@ -53,6 +53,7 @@ export default class DataTableManageModifyModal extends Component {
     return (
       <div className={styles.table}>
         <Modal
+          className="top-modal"
           key={key}
           visible={visible}
           maskClosable={false}

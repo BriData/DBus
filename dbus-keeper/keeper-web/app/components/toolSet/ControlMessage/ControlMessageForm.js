@@ -77,6 +77,7 @@ export default class ControlMessageForm extends Component {
       topic: ctrlTopic,
       message: JSON.stringify(json)
     }
+    if (!data.topic) delete data.topic
     const {onSend} = this.props
     onSend(data)
   }

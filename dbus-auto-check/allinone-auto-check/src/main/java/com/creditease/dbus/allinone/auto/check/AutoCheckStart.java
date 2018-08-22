@@ -59,7 +59,7 @@ public class AutoCheckStart {
                 handler.process(bw);
             }
         } catch (Exception e) {
-
+            System.out.println(e.getMessage());
         } finally {
             IOUtils.closeQuietly(bw);
             IOUtils.closeQuietly(osw);

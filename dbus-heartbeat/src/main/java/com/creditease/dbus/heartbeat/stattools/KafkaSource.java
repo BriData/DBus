@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,22 +20,25 @@
 
 package com.creditease.dbus.heartbeat.stattools;
 
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.StatMessage;
-import com.creditease.dbus.heartbeat.log.LoggerFactory;
-import com.creditease.dbus.heartbeat.util.ConfUtils;
-import com.google.common.collect.Lists;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
+
 import javax.xml.bind.PropertyException;
 
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.StatMessage;
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.util.ConfUtils;
+import com.creditease.dbus.heartbeat.util.KafkaUtil;
+import com.google.common.collect.Lists;
+
 import org.apache.commons.lang.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -43,6 +46,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
+
 
 /**
  * Created by dongwang47 on 2016/9/2.
@@ -94,7 +98,7 @@ public class KafkaSource {
     }
 
 
-    public List<StatMessage> poll() {
+    public Map<Long, StatMessage> poll() {
                     /* 快速取，如果没有就立刻返回 */
         ConsumerRecords<String, String> records = consumer.poll(1000);
         if (records.count() == 0) {
@@ -108,17 +112,17 @@ public class KafkaSource {
 
         LOG.info(String.format("KafkaSource got %d records......", records.count()));
 
-        List<StatMessage> list = new ArrayList<>();
+        Map<Long, StatMessage> map = new TreeMap<>();
         for (ConsumerRecord<String, String> record : records) {
             String key = record.key();
             long offset = record.offset();
             if(StringUtils.isEmpty(record.value())) continue;
             StatMessage msg = StatMessage.parse(record.value());
-            list.add(msg);
+            map.put(offset, msg);
             //logger.info(String.format("KafkaSource got record key=%s, offset=%d......", key, offset));
         }
 
-        return list;
+        return map;
     }
 
     public void commitOffset() {

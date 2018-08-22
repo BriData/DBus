@@ -279,7 +279,10 @@ export default class ProjectTableWrapper extends Component {
       .then(res => {
         if (res && res.status === 0) {
           message.success(res.message)
-          getTableList(tableParams)
+          message.success('5秒后会自动刷新一次')
+          setTimeout(() => {
+            getTableList(tableParams)
+          }, 5000)
           this.stateStartModalVisible(false)
         } else {
           message.warn(res.message)
@@ -302,7 +305,10 @@ export default class ProjectTableWrapper extends Component {
       .then(res => {
         if (res && res.status === 0) {
           message.success(res.message)
-          getTableList(tableParams)
+          message.success('5秒后会自动刷新一次')
+          setTimeout(() => {
+            getTableList(tableParams)
+          }, 5000)
         } else {
           message.warn(res.message)
         }

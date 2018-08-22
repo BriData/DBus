@@ -198,6 +198,7 @@ export default class DataSourceManageTopologyModal extends Component {
     list = list && list.filter(ds => ds.id === id)
     const dataSource = list && list[0]
     this.setState({
+      startModalKey: this.handleRandom('startModalKey'),
       startModalVisible: true,
       startModalDataSource: dataSource,
       startModalRecord: record

@@ -20,10 +20,10 @@
 
 package com.creditease.dbus.stream.appender.utils;
 
-import org.apache.storm.shade.com.codahale.metrics.Meter;
-import org.apache.storm.shade.com.codahale.metrics.MetricRegistry;
-import org.apache.storm.shade.com.codahale.metrics.ScheduledReporter;
-import org.apache.storm.shade.com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Slf4jReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

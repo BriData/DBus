@@ -23,7 +23,7 @@ public class FileUtils {
             DeployPropsBean props = new DeployPropsBean();
             props.setDsName(deployProps.getProperty("dsname").trim());
             props.setZkPath(deployProps.getProperty("zk.path").trim());
-            props.setSlavePath(deployProps.getProperty("slave.path").trim());
+            props.setSlavePath(deployProps.getProperty("canal.address").trim());
             props.setCanalUser(deployProps.getProperty("canal.user").trim());
             props.setCanalPwd(deployProps.getProperty("canal.pwd").trim());
 

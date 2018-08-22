@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,6 +92,12 @@ public class HeartBeatVo implements Serializable {
     private Long checkMasterSlaveDelayInterval;
 
     private Long masterSlaveDelayTimeout;
+
+    private String alarmSendEmail;
+    private String alarmMailSMTPAddress;
+    private Integer alarmMailSMTPPort;
+    private String alarmMailUser;
+    private String alarmMailPass;
 
     public Long getHeartbeatInterval() {
         return heartbeatInterval;
@@ -341,5 +347,45 @@ public class HeartBeatVo implements Serializable {
 
     public void setMasterSlaveDelayTimeout(Long masterSlaveDelayTimeout) {
         this.masterSlaveDelayTimeout = masterSlaveDelayTimeout;
+    }
+
+    public String getAlarmSendEmail() {
+        return alarmSendEmail;
+    }
+
+    public void setAlarmSendEmail(String alarmSendEmail) {
+        this.alarmSendEmail = alarmSendEmail;
+    }
+
+    public String getAlarmMailSMTPAddress() {
+        return alarmMailSMTPAddress;
+    }
+
+    public void setAlarmMailSMTPAddress(String alarmMailSMTPAddress) {
+        this.alarmMailSMTPAddress = alarmMailSMTPAddress;
+    }
+
+    public Integer getAlarmMailSMTPPort() {
+        return alarmMailSMTPPort;
+    }
+
+    public void setAlarmMailSMTPPort(Integer alarmMailSMTPPort) {
+        this.alarmMailSMTPPort = alarmMailSMTPPort;
+    }
+
+    public String getAlarmMailUser() {
+        return alarmMailUser;
+    }
+
+    public void setAlarmMailUser(String alarmMailUser) {
+        this.alarmMailUser = alarmMailUser;
+    }
+
+    public String getAlarmMailPass() {
+        return alarmMailPass;
+    }
+
+    public void setAlarmMailPass(String alarmMailPass) {
+        this.alarmMailPass = alarmMailPass;
     }
 }

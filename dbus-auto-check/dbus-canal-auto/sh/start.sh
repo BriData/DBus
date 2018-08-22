@@ -3,7 +3,7 @@
 #获得当前shell所在路径
 basepath=$(cd `dirname $0`; pwd)
 #echo $basepath
-
+echo "************ starting ************"
 #jvm启动参数
 #GC_OPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -Xloggc:/data/dbus-canal-auto/logs/gc/gc.log"
 LOG_CONF="-Dlogs.base.path=$basepath -Duser.dir=$basepath"
@@ -23,21 +23,11 @@ for i in $basepath/lib/*.jar;
 done
 export CLASS_PATH=.:$CLASS_PATH
 
-echo "******************************************************************************"
-echo "*CLASS_PATH: " $CLASS_PATH
-echo "*   GC_OPTS: " $GC_OPTS
-echo "*  OOM_OPTS: " $OOM_OPTS
-echo "*  JVM_OPTS: " $JVM_OPTS
-echo "*      MAIN: " $MAIN
-echo "*         1: " $1
-echo "******************************************************************************"
-
 java $JVM_OPTS $LOG_CONF $OOM_OPTS -classpath $CLASS_PATH $MAIN
-
-canal_path="$basepath/canal"
-
-pid=`ps aux | grep "$canal_path/bin" | grep -v "grep" | awk '{print $2}'`
-if [ "x$pid" != "x" ]; then
-         echo "canal pid start success ,pid is $pid "
+sleep 1
+filename=`ls -l |grep canal_| tail -n 1 | awk '{print $9}'`
+if [ "x$filename" != "x" ]; then
+         cat $filename
+         echo "report文件： $filename"
          sleep 1
 fi

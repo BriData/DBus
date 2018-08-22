@@ -26,6 +26,11 @@
             <artifactId>storm-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.codahale.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

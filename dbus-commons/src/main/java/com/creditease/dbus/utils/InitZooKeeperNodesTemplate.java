@@ -78,12 +78,14 @@ public class InitZooKeeperNodesTemplate {
 			"Streaming",
 			"ControlMessageResult",
 			"FullPuller",
+			"FullPuller/Projects",
 			"FullPullerGlobal",
 			"Canal",
 			"NameSpace",
 			"Extractor",
 			"Topology",
-			"Router"
+			"Router",
+			"HeartBeat/ProjectMonitor"
 	};
 
 	public static String[] ZK_PROTECT_NODES_PATHS = {
@@ -145,5 +147,6 @@ public class InitZooKeeperNodesTemplate {
 			"/DBus/Extractor",
 			"/DBus/Topology",
 			"/DBus/Router",
+			"/DBus/HeartBeat/ProjectMonitor"
 	};
 }

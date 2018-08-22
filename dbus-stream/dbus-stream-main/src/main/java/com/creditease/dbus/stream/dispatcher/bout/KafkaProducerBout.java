@@ -20,6 +20,9 @@
 
 package com.creditease.dbus.stream.dispatcher.bout;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.stream.common.bean.DispatcherPackage;
 import com.creditease.dbus.stream.dispatcher.helper.ZKHelper;
@@ -28,9 +31,6 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.storm.shade.com.codahale.metrics.Meter;
-import org.apache.storm.shade.com.codahale.metrics.MetricRegistry;
-import org.apache.storm.shade.com.codahale.metrics.Slf4jReporter;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
