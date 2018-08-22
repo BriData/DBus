@@ -45,7 +45,7 @@ autopurge.snapRetainCount=3
 autopurge.purgeInterval=1
 ```
 
-### 1.2.2 特殊配置：
+### 1.2.2 特殊配置
 
 分别在dbus-n1、dbus-n2、dbus-n3的/data/zookeeper-data/目录下执行如下命令：
 

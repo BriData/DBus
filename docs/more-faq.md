@@ -5,10 +5,9 @@ description: FAQ DBUS_VERSION_SHORT
 ---
 * This will become a table of contents (this text will be scraped).
  {:toc}
-
 ***
 
-## <a name="faq_grafana_err" id="faq_grafana_err">Q1:为什么grafana不显示统计数据？</a>
+## Q1:为什么grafana不显示统计数据？
 dbus是一个包含多个模块流式计算系统，实时数据需要经过的链路为：`canal`→`extractor`→`dispatcher`→`appender`，任何一个环节出现问题都可能导致grafana中无法显示统计数据，针对以下三种场景给出问题的可能的原因以及解决办法；
 * 添加schema或table
 
@@ -31,10 +30,10 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
     解决办法：登录dbus web进入到`Data table`菜单，在查询条件中选择datasource，在schemaName输入框中输入相应的schema name点击Search并在列表中找到停止处理数据的表（状态为非`ok`状态），点击`IncrementPuller`按钮即可恢复数据流.
 
 
-## <a name="faq_monitor_err">Q2:为什么monitor页面无法显示？</a>
+## Q2:为什么monitor页面无法显示？
 此页面的地址需在web配置页面进行配置，Global-Config的Monitor内容为此页面的地址。将统计数据的grafana页面的url填入Monitor保存即可。
 
-## <a name="faq_control_message">Q3:如何重新加载模块？</a>
+## Q3:如何重新加载模块？
 
 模块重新加载功能通过发送 `control message` 实现，请登录dbus web管理系统进入 `control message` 页面，如下图所示，其中 `message type` 定义了要加载的模块，`data source` 定义了要加载的数据源，`ctrl_topic` 表示消息写入的kafka topic，此项不需要修改，下方为消息预览和 `Send Control Message` 按钮，点击这个按钮即可完成控制消息的发送从而完成模块重新加载.
 
@@ -44,7 +43,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 
 
-## <a name="faq_deployment_err">Q4:一键上线为何失败？</a>
+## Q4:一键上线为何失败？
 
 一键上线的作用是配置抽取新数据库数据的完整流程，因此影响一键上线的因素非常多，下面针对一键上线中步骤中需要注意的问题：
 
@@ -56,7 +55,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 * 启动Topology步骤的作用是运行三个storm topology，启动storm topology之前需要首先将topology jar和启动脚本包上传的storm nimbus所在服务器的指定目录，同时在 `global config` 中配置启动脚本所在的目录，参考：[Usage(3) web basic configuration]( https://github.com/BriData/DBus/wiki/Usage(3)-web-basic-configuration)的全局配置部分，由于dbus web服务器和storm nimbus服务器通常不是同一台服务器，因此需要配置两台机器之间的ssh免密登录。
 
-## <a name="faq_view_monitor_alarm">Q5:如何看监控和报警？</a>
+## Q5:如何看监控和报警？
 
 **邮件**
 
@@ -78,7 +77,7 @@ dbus是一个包含多个模块流式计算系统，实时数据需要经过的�
 
 在心跳log中，搜索关键字：`Address`或`Subject`或`Contents`，即可找到报警记录
 
-## <a name="faq_auth_tab2dbus" id="faq_auth_tab2dbus">Q6:如何授权dbus用户读取源端表?</a>
+## Q6:如何授权dbus用户读取源端表?
 
 dbus web会通过`data source` 中的 `slave_url` 和 `dbus` 用户与源库建立jdbc连接，以便于通过dbus web配置以及使用dbus系统进行初始化数据拉取，因此为了能够读取到源库表的信息，需要给`dbus`用户赋带抽取表的查询权限，具体授权语句如下：
 ```sql
