@@ -46,13 +46,13 @@ export default class Login extends Component {
       .then(res => {
         if (res && res.status === 0 && res.payload) {
         } else {
-          message.error('Zookeeper无法访问或Keeper未初始化')
-          this.props.router.push('/init')
+          message.error('Zookeeper无法访问或Keeper未初始化，您可以点击下方初始化链接进入初始化页面')
+          // this.props.router.push('/init')
         }
       })
       .catch(error => {
-        message.error('Zookeeper无法访问或Keeper未初始化')
-        this.props.router.push('/init')
+        message.error('Zookeeper无法访问或Keeper未初始化，您可以点击下方初始化链接进入初始化页面')
+        // this.props.router.push('/init')
       })
   }
   render () {

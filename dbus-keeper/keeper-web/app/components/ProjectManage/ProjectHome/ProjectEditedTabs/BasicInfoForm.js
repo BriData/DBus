@@ -110,9 +110,7 @@ export default class BasicInfoForm extends Component {
             rules: [
               {
                 required: true,
-                pattern: /^\S+$/,
                 message: localeMessage({ id: 'projectDisplayNameMessage' }),
-                whitespace: true
               }
             ]
           })(

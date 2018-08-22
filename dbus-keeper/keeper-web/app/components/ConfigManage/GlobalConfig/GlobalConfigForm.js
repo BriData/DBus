@@ -52,7 +52,7 @@ export default class GlobalConfigForm extends Component {
     const {config} = this.props
     return (
       <div>
-        <Form>
+        <Form className="heartbeat-advance-config-form">
           <FormItem label='Kafka Bootstrap Servers' {...formItemLayout}>
             {getFieldDecorator('bootstrap@@@servers', {
               initialValue: config['bootstrap.servers'],
@@ -64,6 +64,19 @@ export default class GlobalConfigForm extends Component {
               ]
             })(
               <Input placeholder="请输入kafka地址" size="large" type="text"/>
+            )}
+          </FormItem>
+          <FormItem label='Kafka Version' {...formItemLayout}>
+            {getFieldDecorator('bootstrap@@@servers@@@version', {
+              initialValue: config['bootstrap.servers.version'],
+              rules: [
+                {
+                  required: true,
+                  message: '不能为空'
+                }
+              ]
+            })(
+              <Input placeholder="请输入kafka版本" size="large" type="text"/>
             )}
           </FormItem>
           <FormItem label='Monitor Url' {...formItemLayout}>
@@ -207,6 +220,58 @@ export default class GlobalConfigForm extends Component {
               ]
             })(
               <Input placeholder="请输入脱敏Jar包路径" size="large" type="text"/>
+            )}
+          </FormItem>
+          <FormItem label='心跳ip地址' {...formItemLayout}>
+            {getFieldDecorator('heartbeat@@@host', {
+              initialValue: config['heartbeat.host'],
+              rules: [
+                {
+                  required: true,
+                  message: '不能为空'
+                }
+              ]
+            })(
+              <Input placeholder="请输入心跳ip地址" size="large" type="text"/>
+            )}
+          </FormItem>
+          <FormItem label='心跳机器SSH端口号' {...formItemLayout}>
+            {getFieldDecorator('heartbeat@@@port', {
+              initialValue: config['heartbeat.port'],
+              rules: [
+                {
+                  required: true,
+                  message: '不能为空'
+                }
+              ]
+            })(
+              <Input placeholder="请输入SSH端口号" size="large" type="text"/>
+            )}
+          </FormItem>
+          <FormItem label='心跳机器SSH用户名' {...formItemLayout}>
+            {getFieldDecorator('heartbeat@@@user', {
+              initialValue: config['heartbeat.user'],
+              rules: [
+                {
+                  required: true,
+                  message: '不能为空'
+                }
+              ]
+            })(
+              <Input placeholder="请输入SSH用户名" size="large" type="text"/>
+            )}
+          </FormItem>
+          <FormItem label='心跳路径' {...formItemLayout}>
+            {getFieldDecorator('heartbeat@@@jar@@@path', {
+              initialValue: config['heartbeat.jar.path'],
+              rules: [
+                {
+                  required: true,
+                  message: '不能为空'
+                }
+              ]
+            })(
+              <Input placeholder="请输入心跳路径" size="large" type="text"/>
             )}
           </FormItem>
           <FormItem {...tailFormItemLayout}>

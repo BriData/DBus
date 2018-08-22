@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@
 package com.creditease.dbus.service;
 
 import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.domain.mapper.DataTableMapper;
 import com.creditease.dbus.domain.model.DataTable;
@@ -40,6 +41,10 @@ import java.nio.charset.Charset;
 import java.sql.*;
 import java.util.*;
 
+import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS;
+import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION;
+import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_INFLUXDB_URL;
+
 /**
  * Created by xiancangao on 2018/05/04.
  */
@@ -50,6 +55,9 @@ public class ToolSetService {
 
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private IZkService zkService;
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -313,13 +321,25 @@ public class ToolSetService {
         return null;
     }
 
-    public HashMap<String, String> getMgrDBMsg() {
+    public HashMap<String, String> getMgrDBMsg() throws Exception {
         HashMap<String, String> map = new HashMap<>();
         map.put("url", environment.getProperty("spring.datasource.url"));
         map.put("username", environment.getProperty("spring.datasource.username"));
         map.put("password", environment.getProperty("spring.datasource.password"));
         map.put("driverClassName", environment.getProperty("spring.datasource.driver-class-name"));
         map.put("zkServers", environment.getProperty("zk.str"));
+        Properties properties = null;
+        if(zkService.isExists("/DBusInit")){
+            properties = zkService.getProperties("/DBusInit");
+            map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+            map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
+            map.put(GLOBAL_CONF_KEY_INFLUXDB_URL, properties.getProperty("influxdb.url"));
+        }else{
+            properties = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+            map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+            map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
+            map.put(GLOBAL_CONF_KEY_INFLUXDB_URL, properties.getProperty(GLOBAL_CONF_KEY_INFLUXDB_URL));
+        }
         return map;
     }
 

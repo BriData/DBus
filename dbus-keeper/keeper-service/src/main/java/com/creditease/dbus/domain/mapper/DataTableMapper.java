@@ -62,4 +62,6 @@ public interface DataTableMapper {
 
     Map<String, Object> getFlowLineCheckInfo(Integer tableId);
 
+    List<DataTable> findAllTables();
+
 }

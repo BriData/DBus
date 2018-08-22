@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,6 @@ import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.FullPullHistory;
-import com.creditease.dbus.domain.model.ZkNode;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -439,11 +438,11 @@ public class ToolSetService {
         String influxdbUrl = global.getProperty(GLOBAL_CONF_KEY_INFLUXDB_URL);
         String pubKeyPath = env.getProperty("pubKeyPath");
         //测试storm免密配置是否可用
-        int res = configCenterService.exeCmd(user, stormNimbusHost, stormNimbusPort, pubKeyPath, "ls");
-        if (res == 0) {
-            result.put("stormSSHSecretFree", "ok");
+        String res = configCenterService.exeCmd(user, stormNimbusHost, stormNimbusPort, pubKeyPath, "ls");
+        if (null == res) {
+            result.put("stormSSHSecretFree", "error");
         } else {
-            result.put("stormSSHSecretFree", "notok");
+            result.put("stormSSHSecretFree", "ok");
         }
         //storm信息
         if (!StormToplogyOpHelper.inited) {
@@ -455,22 +454,44 @@ public class ToolSetService {
         result.put("supervisors", supervisors);
 
         //心跳节点
-        result.put("heartBeatLeader", zkConfService.loadSubTreeOfPath(Constants.HEARTBEAT_LEADER));
-
+        String[] heartbeatList = global.getProperty("heartbeat.host").split(",");
+        int heartbeatport = Integer.parseInt(global.getProperty("heartbeat.port"));
+        String heartbeatuser = global.getProperty("heartbeat.user");
+        ArrayList<Map<String, String>> heartBeatLeader = new ArrayList<>();
+        for (String s : heartbeatList) {
+            String pid = configCenterService.exeCmd(heartbeatuser, s, heartbeatport, env.getProperty("pubKeyPath"), "jps -l | grep 'heartbeat' | awk '{print $1}'");
+            HashMap<String, String> heartbeatStat = new HashMap<>();
+            if (StringUtils.isNotBlank(pid)) {
+                heartbeatStat.put("host", s);
+                heartbeatStat.put("pid", pid);
+                heartbeatStat.put("state", "ok");
+            } else {
+                heartbeatStat.put("host", s);
+                heartbeatStat.put("pid", pid);
+                heartbeatStat.put("state", "error");
+            }
+            heartBeatLeader.add(heartbeatStat);
+        }
+        result.put("heartBeatLeader", heartBeatLeader);
         //kafka信息
-        List<ZkNode> zkNodes = zkConfService.loadSubTreeOfPath(Constants.BROKERS_IDS);
+        String[] bootstrapList = global.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS).split(",");
         ArrayList<Map<String, String>> kafkaBrokers = new ArrayList<>();
-        for (ZkNode zkNode : zkNodes) {
-            HashMap<String, String> kafkaBroker = new HashMap<>();
-            kafkaBroker.put("id", zkNode.getName());
-            JSONObject content = JSONObject.parseObject(zkNode.getContent());
-            kafkaBroker.put("Host", content.getString("host"));
-            kafkaBroker.put("Port", content.getString("port"));
-            kafkaBroker.put("JMX Port", content.getString("jmx_port"));
-            kafkaBrokers.add(kafkaBroker);
+        for (String bootstrap : bootstrapList) {
+            Map<String, String> kafkaStat = new HashMap<>();
+            String[] ipPort = bootstrap.split(":");
+            boolean b = configCenterService.urlTest(ipPort[0], Integer.parseInt(ipPort[1]));
+            if (b) {
+                kafkaStat.put("host", ipPort[0]);
+                kafkaStat.put("port", ipPort[1]);
+                kafkaStat.put("state", "ok");
+            } else {
+                kafkaStat.put("host", ipPort[0]);
+                kafkaStat.put("port", ipPort[1]);
+                kafkaStat.put("state", "error");
+            }
+            kafkaBrokers.add(kafkaStat);
         }
         result.put("kafkaBrokers", kafkaBrokers);
-
         //zk节点状态
         String[] zkServerList = env.getProperty("zk.str").split(",");
         ArrayList<Map<String, String>> zkStats = new ArrayList<>();
@@ -485,7 +506,7 @@ public class ToolSetService {
             } else {
                 zkStat.put("host", monitorZKServer[0]);
                 zkStat.put("port", monitorZKServer[1]);
-                zkStat.put("state", "notok");
+                zkStat.put("state", "error");
             }
             zkStats.add(zkStat);
         }
@@ -493,13 +514,13 @@ public class ToolSetService {
         if (configCenterService.urlTest(grafanaUrl)) {
             result.put("grafanaUrl", "ok");
         } else {
-            result.put("grafanaUrl", "notok");
+            result.put("grafanaUrl", "error");
         }
         String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
         if ("200".equals(HttpClientUtils.httpGet(url))) {
             result.put("influxdbUrl", "ok");
         } else {
-            result.put("influxdbUrl", "notok");
+            result.put("influxdbUrl", "error");
         }
         return result;
     }

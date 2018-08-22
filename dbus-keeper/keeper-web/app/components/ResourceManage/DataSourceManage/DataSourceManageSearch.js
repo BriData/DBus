@@ -27,6 +27,16 @@ export default class DataSourceManageSearch extends Component {
   render () {
     const { getFieldDecorator } = this.props.form
     const {onCreateDataSource} = this.props
+    const dsTypeList = [
+      null,
+      'mysql',
+      'oracle',
+      'log_logstash',
+      'log_logstash_json',
+      'log_ums',
+      'log_flume',
+      'log_filebeat',
+    ]
     return (
       <div className="form-search">
         <Form autoComplete="off"
@@ -47,6 +57,27 @@ export default class DataSourceManageSearch extends Component {
               </Button>
             </Col>
             <Col span={18} className={styles.formRight}>
+              <FormItem>
+                {getFieldDecorator('dsType', {
+                  initialValue: null
+                })(
+                  <Select
+                    showSearch
+                    optionFilterProp='children'
+                    className={styles.select}
+                    placeholder="select a data source"
+                  >
+                    {dsTypeList.map(dsType => (
+                      <Option
+                        value={dsType}
+                        key={dsType}
+                      >
+                        {dsType ? dsType : '请选择数据源类型'}
+                      </Option>
+                    ))}
+                  </Select>
+                )}
+              </FormItem>
               <FormItem>
                 {getFieldDecorator('dsName', {
                   initialValue: ''

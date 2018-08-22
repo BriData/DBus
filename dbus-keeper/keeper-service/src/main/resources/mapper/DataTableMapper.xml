@@ -190,4 +190,11 @@
         AND tdt.`schema_id` = tds.`id`
         AND tdt.`ds_id` = tdds.`id`
   </select>
+  <select id="findAllTables" resultMap="BaseResultMap">
+    select t1.*, t2.ds_name,t2.ds_type,t2.ctrl_topic, t3.version, t3.inner_version
+    from t_data_tables t1
+    left join t_dbus_datasource t2 on t1.ds_id = t2.id
+    left join t_meta_version t3 on t1.ver_id = t3.id
+    order by t1.create_time desc
+  </select>
 </mapper>

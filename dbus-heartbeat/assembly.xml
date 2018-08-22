@@ -7,8 +7,8 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}\conf</directory>
-            <outputDirectory>\conf</outputDirectory>
+            <directory>${project.basedir}\conf_opensource</directory>
+            <outputDirectory>\conf_opensource</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}\lib</directory>

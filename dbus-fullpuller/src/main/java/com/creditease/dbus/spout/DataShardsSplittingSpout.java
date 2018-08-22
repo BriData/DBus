@@ -126,7 +126,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             e.printStackTrace();
             throw new InitializationException();
         }
-        LOG.info("Splitting Spout {} is started!", topologyId);
+         LOG.info("Splitting Spout {} is started!", topologyId);
     }
 
     /**

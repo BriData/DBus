@@ -141,7 +141,7 @@ export default class AddDataSource extends Component {
     const imageProps = {style: {verticalAlign: 'middle'}}
     return (
       <div>
-        <Form>
+        <Form className='data-source-start-topo-form'>
           <FormItem label='数据源名称' {...formItemLayout}>
             {getFieldDecorator('dsName', {
               initialValue: null,

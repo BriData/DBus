@@ -52,8 +52,9 @@ public class CheckKafkaHandler extends AbstractHandler {
             socket.connect(new InetSocketAddress(kafkaAddr, Integer.parseInt(port)));
             socket.close();
             bw.write("kafka 连接正常: [kafka 地址： " + kafkaAddr + "  端口： " + port +"]\n");
+            System.out.println("kafka 连接正常: [kafka 地址： " + kafkaAddr + "  端口： " + port +"]");
         } catch (IOException e) {
-            logger.error("连通性测试异常. errorMessage:{};host:{},port:{}", e.getMessage(), kafkaAddr, port, e);
+            System.out.println("kafka 连接超时，请检查kafka配置!\n " + "[host: " + kafkaAddr + "port: " + port + "]");
             bw.write("kafka 连接超时，请检查kafka配置！\n ERROR: " + e.getMessage() + "\n");
             kafkaTestResult = false;
         } finally {

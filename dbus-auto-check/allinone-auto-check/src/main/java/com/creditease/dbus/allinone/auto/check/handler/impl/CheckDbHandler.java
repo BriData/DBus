@@ -27,7 +27,9 @@ public class CheckDbHandler extends AbstractHandler {
     }
 
     private void checkDbusMgr(BufferedWriter bw) throws Exception {
-        bw.write("check dbusmgr start:");
+        bw.write("check db&user dbusmgr start:");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         AutoCheckConfigBean conf = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String[] sqls = StringUtils.split(conf.getDbDbusmgrTestSql(), ",");
@@ -47,7 +49,7 @@ public class CheckDbHandler extends AbstractHandler {
                     bw.newLine();
                 }
             } catch (Exception e) {
-                throw e;
+                throw new RuntimeException("db&user dbusmgr check fail", e);
             } finally {
                 DBUtils.close(rs);
                 DBUtils.close(ps);
@@ -58,7 +60,9 @@ public class CheckDbHandler extends AbstractHandler {
     }
 
     private void checkDbus(BufferedWriter bw) throws Exception {
-        bw.write("check dbus start: ");
+        bw.write("check db&user dbus start:");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         AutoCheckConfigBean conf = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String[] sqls = StringUtils.split(conf.getDbDbusTestSql(), ",");
@@ -78,7 +82,7 @@ public class CheckDbHandler extends AbstractHandler {
                     bw.newLine();
                 }
             } catch (Exception e) {
-                throw e;
+                throw new RuntimeException("db&user dbus check fail", e);
             } finally {
                 DBUtils.close(rs);
                 DBUtils.close(ps);
@@ -89,10 +93,13 @@ public class CheckDbHandler extends AbstractHandler {
     }
 
     private void checkCanal(BufferedWriter bw) throws Exception {
-        bw.write("check canal start: ");
+        bw.write("check db&user canal start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         AutoCheckConfigBean conf = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String[] sqls = StringUtils.split(conf.getDbCanalTestSql(), ",");
+        int idx = 0;
         for (String sql : sqls) {
             Connection conn = null;
             PreparedStatement ps = null;
@@ -101,6 +108,15 @@ public class CheckDbHandler extends AbstractHandler {
                 String[] arrs = StringUtils.split(sql, "\\.");
                 String url = MsgUtil.format("jdbc:mysql://{0}:{1}/{2}?characterEncoding=utf-8", conf.getDbCanalHost(), String.valueOf(conf.getDbCanalPort()), arrs[0]);
                 conn = DBUtils.getConn(url, conf.getDbCanalSchema(), conf.getDbCanalPassword());
+                if (idx == 0) {
+                    ps = conn.prepareStatement("show master status");
+                    rs = ps.executeQuery();
+                    if (rs.next()) {
+                        bw.write(MsgUtil.format("master status File:{0}, Position:{1}", rs.getString("File"), rs.getString("Position")));
+                        bw.newLine();
+                    }
+                    idx++;
+                }
                 String sqlWk = MsgUtil.format("select count(*) cnt from {0}", arrs[1]);
                 ps = conn.prepareStatement(sqlWk);
                 rs = ps.executeQuery();
@@ -109,7 +125,7 @@ public class CheckDbHandler extends AbstractHandler {
                     bw.newLine();
                 }
             } catch (Exception e) {
-                throw e;
+                throw new RuntimeException("db&user canal check fail", e);
             } finally {
                 DBUtils.close(rs);
                 DBUtils.close(ps);
@@ -120,7 +136,9 @@ public class CheckDbHandler extends AbstractHandler {
     }
 
     private void checkTestSchema(BufferedWriter bw) throws Exception {
-        bw.write("check testschema start: ");
+        bw.write("check db&user testschema start: ");
+        bw.newLine();
+        bw.write("============================================");
         bw.newLine();
         AutoCheckConfigBean conf = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String[] sqls = StringUtils.split(conf.getDbTestSchemaTestSql(), ",");
@@ -140,14 +158,13 @@ public class CheckDbHandler extends AbstractHandler {
                     bw.newLine();
                 }
             } catch (Exception e) {
-                throw e;
+                throw new RuntimeException("db&user testschema check fail", e);
             } finally {
                 DBUtils.close(rs);
                 DBUtils.close(ps);
                 DBUtils.close(conn);
             }
         }
-        bw.newLine();
     }
 
 }

@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +67,7 @@ public class DataSchemaService {
     public static final String RESULT = "result";
 
     public static final String MYSQL = "mysql";
+    public static final String ORACLE = "oracle";
 
     /**
      * schema索
@@ -221,15 +223,21 @@ public class DataSchemaService {
 
             /*schema插入完毕,然后插入tables信息*/
 
+
+
             /*插入table时，也跟插入schema类似，需要对默认的表进行尝试插入的操作（默认添加默认的表）*/
 
-            //构造默认需要插入的表
+            //构造默认需要插入的表。
+            // mysql和oracle添加，需要对默认表检查插入
+            //log类型的不需要
             List<DataTable> defaultTables;
             if(StringUtils.equals(MYSQL,dsType)){
                 //！！！ 注意dbusSchemaId和schemaId的使用处
                 defaultTables = dataTableService.getDefaultTableForMySQL(dsId,dsName,dbusSchemaId);
-            }else {
+            }else if(StringUtils.equals(ORACLE,dsType)){
                 defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId,dsName,dbusSchemaId);
+            }else {
+                defaultTables = new ArrayList<>();
             }
             //构造需要插入的表列表，然后将需要插入的表加入
             List<DataTable> tablesToAdd = defaultTables;

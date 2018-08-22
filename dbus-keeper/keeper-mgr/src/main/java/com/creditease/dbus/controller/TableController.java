@@ -349,4 +349,14 @@ public class TableController extends BaseController {
         return tableService.findTablesToAdd(URLDecoder.decode(request.getQueryString(), "UTF-8"));
     }
 
+    @GetMapping("/riderSearch")
+    public ResultEntity riderSearch() throws Exception {
+        try {
+            return resultEntityBuilder().payload(tableService.riderSearch()).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request riderSearch .", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
 }

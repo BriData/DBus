@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,12 @@
  */
 
 package com.creditease.dbus.heartbeat.event.impl;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -37,11 +43,10 @@ import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-
-import java.util.*;
 
 
 public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
@@ -72,6 +77,8 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
         String key = null;
         String value = null;
         try {
+            // 获取心跳配置信息
+            HeartBeatVo hbConf = HeartBeatConfigContainer.getInstance().getHbConf();
             while (isRun.get()) {
                 try {
                     ConsumerRecords<String, String> records = dataConsumer.poll(1000);
@@ -130,6 +137,13 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setAddress(email);
                             msg.setContents(contents);
                             msg.setSubject(subject);
+
+                            msg.setHost(hbConf.getAlarmMailSMTPAddress());
+                            msg.setPort(hbConf.getAlarmMailSMTPPort());
+                            msg.setUserName(hbConf.getAlarmMailUser());
+                            msg.setPassword(hbConf.getAlarmMailPass());
+                            msg.setFromAddress(hbConf.getAlarmSendEmail());
+
                             boolean ret = mail.send(msg);
                             LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件", ret ? "成功" : "失败");
 
@@ -153,6 +167,13 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setAddress(email);
                             msg.setContents(contents);
                             msg.setSubject(subject);
+
+                            msg.setHost(hbConf.getAlarmMailSMTPAddress());
+                            msg.setPort(hbConf.getAlarmMailSMTPPort());
+                            msg.setUserName(hbConf.getAlarmMailUser());
+                            msg.setPassword(hbConf.getAlarmMailPass());
+                            msg.setFromAddress(hbConf.getAlarmSendEmail());
+
                             boolean ret = mail.send(msg);
                             LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件", ret == true ? "成功" : "失败");
                         }else  if (ControlType.KEEPER_PROJECT_EXPIRE.toString().equals(key)) {
@@ -185,6 +206,13 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setAddress(email);
                             msg.setContents(content);
                             msg.setSubject(subject);
+
+                            msg.setHost(hbConf.getAlarmMailSMTPAddress());
+                            msg.setPort(hbConf.getAlarmMailSMTPPort());
+                            msg.setUserName(hbConf.getAlarmMailUser());
+                            msg.setPassword(hbConf.getAlarmMailPass());
+                            msg.setFromAddress(hbConf.getAlarmSendEmail());
+
                             LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件，emails:{}",emails);
                             boolean ret = mail.send(msg);
                             LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件", ret == true ? "成功" : "失败");

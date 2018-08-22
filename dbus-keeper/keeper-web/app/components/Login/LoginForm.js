@@ -103,6 +103,7 @@ export default class LoginForm extends Component {
         </Button>
         <br/>
         <a href="/register">注册</a>
+        <a style={{marginLeft: 10}} href="/init">初始化</a>
       </div>
     )
   }

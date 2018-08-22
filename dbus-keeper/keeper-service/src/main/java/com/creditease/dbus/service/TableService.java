@@ -751,8 +751,9 @@ public class TableService {
         newTable.setCreateTime(new Timestamp(System.currentTimeMillis()));
         tableMapper.insert(newTable);
 
-        //t_data_tables中没有dsName等信息，查询后可获得
-        newTable = getById(newTable.getId());
+        //t_data_tables中没有dsName等信息，查询后可获得 不插入。
+        //以后初始化功能如果放在web，可以在此操作
+       /* newTable = getById(newTable.getId());
 
         //插入table后，将table的version放入t_meta_verion中
         TableVersion tableVersion = new TableVersion();
@@ -765,11 +766,11 @@ public class TableService {
         tableVersion.setInnerVersion(INIT_VERSION);
         tableVersion.setEventOffset(INIT_VERSION);
         tableVersion.setEventPos(INIT_VERSION);
-        tableVersionMapper.insert(tableVersion);
+        tableVersionMapper.insert(tableVersion);*/
 
         //meta插入完毕后，更新table的verId
-        newTable.setVerId(tableVersion.getId());
-        tableMapper.updateByPrimaryKey(newTable);
+        //newTable.setVerId(tableVersion.getId());
+        //tableMapper.updateByPrimaryKey(newTable);
         return newTable.getId();
     }
 
@@ -849,4 +850,7 @@ public class TableService {
     }
 
 
+    public List<DataTable> findAllTables() {
+        return tableMapper.findAllTables();
+    }
 }

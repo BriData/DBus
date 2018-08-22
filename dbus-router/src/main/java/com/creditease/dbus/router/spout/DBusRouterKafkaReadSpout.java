@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -370,15 +370,25 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
                     String topic = jsonObject.getString("topic");
                     String offsetParis = jsonObject.getString("offsetParis");
                     if (StringUtils.contains(offsetParis, "->")) {
-                        for (String pair : StringUtils.split(offsetParis, ",")){
+                        for (String pair : StringUtils.split(offsetParis, ",")) {
                             String[] val = StringUtils.split(pair, "->");
-                            long offset = Long.parseLong(val[1]);
                             String key = StringUtils.joinWith("_", topic, val[0]);
-                            if (readSpoutConfig.getTopicPartitionMap().get(key) !=  null)
-                                consumer.seek(readSpoutConfig.getTopicPartitionMap().get(key), offset);
-
-                            long position = consumer.position(readSpoutConfig.getTopicPartitionMap().get(key));
-                            logger.info("topic:{}, partition:{}, position:{}", topic, val[0], position);
+                            long offset = -1;
+                            if (val.length == 2) {
+                                offset = Long.parseLong(val[1]);
+                            }
+                            if (readSpoutConfig.getTopicPartitionMap().get(key) !=  null) {
+                                if (offset != -1) {
+                                    logger.info("topic:{}, partition:{}, seek position:{}", topic, val[0], offset);
+                                    consumer.seek(readSpoutConfig.getTopicPartitionMap().get(key), offset);
+                                } else {
+                                    logger.info("topic:{}, partition:{}, not seek position", topic, val[0]);
+                                }
+                                long position = consumer.position(readSpoutConfig.getTopicPartitionMap().get(key));
+                                logger.info("topic:{}, partition:{}, start position:{}", topic, val[0], position);
+                            } else {
+                                logger.warn("don't find topic:{}, partition:{} of info.", topic, val[0]);
+                            }
                         }
                     } else {
                         if (StringUtils.equals(offsetParis, "begin")) {
