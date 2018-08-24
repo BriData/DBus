@@ -11,7 +11,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 **总体说明：**
 
-​	DBus可以接入三种数据源：logstash、flume、filebeat，下面以使用filebeat为数据抽取端，抽取DBus自身产生的监控和报警日志数据为例进行说明。
+​	DBus可以接入三种数据源：logstash、flume、filebeat，下面以使用logstash为数据抽取端，抽取DBus自身产生的监控和报警日志数据为例进行说明。
 
 ​	DBus监控和报警模块部署在 dbus-n2和dbus-n3 上，路径为：/app/dbus/heartbeat/dbus-heartbeat-0.5.0/logs/heartbeat/heartbeat.log。因此，logstash的日志数据抽取端也要部署在dbus-n2和dbus-n3 上。
 
@@ -51,13 +51,20 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
   	下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-logstash包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 ![filebeat目录](img/install-logstash-source/install-logstash-source-dir-info.png)
 
-   	**logstash目录 :**logstash程序文件夹，用户可手动更改logstash配置文件，也可以使用dbus的检测和部署脚本（即checkDeploy.sh脚本）来自动替换配置项。
+```
+   	logstash目录 :logstash程序文件夹。
+   	checkDeploy.sh : 内部含有检测kafka连通性及自动更换logstash配置的功能。
+   	start.sh :  启动脚本，一键启动logstash程序。
+  	stop.sh :   停止脚本，一键停止logstash程序。
+```
 
-   	**checkDeploy.sh :** 内部含有检测kafka连通性及自动更换logstash配置的功能。
+执行下面命令，自动替换配置项logstash配置项，并检测相关资源连通性：
 
-   	**start.sh :**  启动脚本，一键启动logstash程序。
+```
+./checkDeploy.sh
+```
 
-  	**stop.sh :**   停止脚本，一键停止logstash程序。
+注：用户也可手动更改logstash配置文件，完成logstash配置。
 
 
 ### 1.2. dbus-logstash启动
@@ -99,11 +106,11 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 **读取kafka的topic: monitor_log_logstash，确认是否有数据：**
 
 *  **进入kafka安装目录。**
+*  **执行以下命令，查看数据，如果有数据，则说明logstash可以成功抽取文件：**
 
-* **执行以下命令，查看数据，如果有数据，则说明logstash可以成功抽取文件：**
 
-   `bin/kafka-console-consumer.sh --zookeeper dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka  --topic monitor_log_logstash`  
 
+	bin/kafka-console-consumer.sh --zookeeper dbus-n1:2181,dbus-n2:2181,dbus-n3:2181/kafka  --topic monitor_log_logstash
 * **logstash的心跳数据样例：**
 
   ```json
@@ -175,7 +182,11 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
-   - **配置规则:**  topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击“保存所有规则”按钮，保存规则，并返回到规则组页面。
+   - **配置规则:**  topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。
+
+     添加规则具体步骤和方法，参考：
+
+   - 配置完规则后，查看过滤出的数据，点击“保存所有规则”按钮，保存规则，并返回到规则组页面。
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
@@ -201,3 +212,4 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
    ![img/install-logstash-source/install-logstash-source-monitor-1.png](img/install-logstash-source/install-logstash-source-monitor-1.png)
 * **\_unknown_table_表示不满足任何表的数据**
    ![img/install-logstash-source/install-logstash-source-monitor-2.png](img/install-logstash-source/install-logstash-source-monitor-2.png)
+
