@@ -1,5 +1,5 @@
 ---
-monitolayout: global
+layout: global
 title: logstash作为数据源接入DBus
 description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 ---
