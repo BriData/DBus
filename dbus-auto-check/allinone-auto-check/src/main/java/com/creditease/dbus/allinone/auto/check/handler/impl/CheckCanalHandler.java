@@ -21,6 +21,10 @@ public class CheckCanalHandler extends AbstractHandler {
     }
 
     private void checkCanalZkNode(BufferedWriter bw) throws Exception {
+        bw.newLine();
+        bw.write("check canal start: ");
+        bw.newLine();
+        bw.write("============================================");
         AutoCheckConfigBean conf = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         IZkService zkService = new ZkService(conf.getZkHost(), 5000);
         if (zkService.isExists(conf.getCanalZkNode())) {

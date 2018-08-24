@@ -6,16 +6,13 @@ import com.creditease.dbus.log.container.AutoCheckConfigContainer;
 import com.creditease.dbus.log.handler.AbstractHandler;
 import com.creditease.dbus.log.utils.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 
 
 public class DeployFileConfigHandler extends AbstractHandler {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
 
     @Override
     public void checkDeploy(BufferedWriter bw) throws Exception {
@@ -29,46 +26,75 @@ public class DeployFileConfigHandler extends AbstractHandler {
              deployLogstash(lccb, bw);
         } else {
             bw.write("日志类型错误！请检查配置项!\n");
+            System.out.println("ERROR: 日志类型错误！请检查log.type配置项！");
+            updateConfigProcessExit(bw);
         }
     }
 
     private void deployFilebeat(LogCheckConfigBean lccb, BufferedWriter bw) throws IOException {
         String kafkaBootstrapServers = lccb.getKafkaBootstrapServers();
         String filebeatExtractFilePath = lccb.getFilebeatExtractFilePath();
-        String filebeatHeartbeatFilePath = lccb.getFilebeatHeartBeatFilePath();
         String filebeatBasePath = lccb.getFilebeatBasePath();
         String dstTopic = lccb.getFilebeatDstTopic();
 
+        String filebeatConfigFilePath = StringUtils.joinWith("/", filebeatBasePath, "filebeat.yml");
+        File filebeatConfigFile = new File(filebeatConfigFilePath);
+        String filebeatTemplateFilePath = StringUtils.joinWith("/", filebeatBasePath, "filebeat.yml.template");
+        File filebeatTemplateFile = new File(filebeatTemplateFilePath);
+
+        //利用文件模板，仅对多个抽取路径有效
+        //1. 删除所要修改的配置文件
+        if(filebeatConfigFile.exists())
+            FileUtils.deleteFile(filebeatConfigFilePath);
+
+        //2. 复制要修改的配置文件
+        if(!filebeatTemplateFile.exists()) {
+            System.out.println("ERROR: [" + filebeatTemplateFile + "] is not exist!");
+            bw.write(filebeatTemplateFile + " is not exist!");
+            updateConfigProcessExit(bw);
+        }
+
+        FileUtils.copyFileUsingFileChannels(filebeatTemplateFile, filebeatConfigFile);
+
+        //3. 对复制文件追加内容
         String []extractFilePaths = StringUtils.split(filebeatExtractFilePath,",");
         //构造多个抽取路径
         for (int i = 0; i < extractFilePaths.length; i++) {
-            String filebeatFileExtractSection = buildFilebeatFileExtractSection(extractFilePaths[i]);
-            FileUtils.insert(filebeatBasePath, 22, filebeatFileExtractSection);
+            File file = new File(extractFilePaths[i]);
+            if(FileUtils.checkFileAndFolderIsExist(extractFilePaths[i])) {
+                String filebeatFileExtractSection = buildFilebeatFileExtractSection(extractFilePaths[i]);
+                FileUtils.insert(filebeatConfigFilePath, 22, filebeatFileExtractSection);
+            } else {
+                updateConfigProcessExit(bw);
+            }
         }
-
-        //构造心跳抽取路径
-//        String filebeatHBExtractSection = buildFilebeatHBExtractSection(filebeatExtractFilePath);
-//        FileUtils.insert(filebeatBasePath, 22, filebeatHBExtractSection);
 
         //修改kafka地址
         String oldKafkaStr = "hosts: ";
         String newKafkaStr = buildFilebeatKafkaBrokerConfig(kafkaBootstrapServers);
         try {
-            FileUtils.modifyFileProperties(filebeatBasePath, oldKafkaStr, newKafkaStr, bw);
+            FileUtils.modifyFileProperties(filebeatConfigFilePath + "/", oldKafkaStr, newKafkaStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！filebeatBasePath： " + filebeatBasePath + "oldKafkaStr: " + oldKafkaStr + "newKafkaStr: " + newKafkaStr);
+            updateConfigException(bw, filebeatConfigFilePath, oldKafkaStr, newKafkaStr, e);
         }
 
         //修改topic
         String oldTopicStr = "topic: ";
         String newTopicStr = buildFilebeatKafkaTopicConfig(dstTopic);
         try {
-            FileUtils.modifyFileProperties(filebeatBasePath, oldTopicStr, newTopicStr, bw);
+            FileUtils.modifyFileProperties(filebeatConfigFilePath, oldTopicStr, newTopicStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！filebeatBasePath： " + filebeatBasePath + "olTopicStr: " + oldTopicStr + "newTopicStr: " + newTopicStr);
+            updateConfigException(bw, filebeatConfigFilePath, oldTopicStr, newTopicStr, e);
         }
 
         bw.write("更新filebeat配置成功！\n");
+        System.out.println("更新filebeat配置成功！\n");
+    }
+
+    private void updateConfigException(BufferedWriter bw, String fileConfigFilePath, String oldTopicStr, String newTopicStr, IOException e) throws IOException {
+        System.out.println("修改文件配置出错！fileBasePath： " + fileConfigFilePath + "oldTopicStr: " + oldTopicStr + "newTopicStr: " + newTopicStr);
+        System.out.println("Error Message: " + e + "\n");
+        updateConfigProcessExit(bw);
     }
 
     private void deployFlume(LogCheckConfigBean lccb, BufferedWriter bw) throws IOException {
@@ -81,155 +107,156 @@ public class DeployFileConfigHandler extends AbstractHandler {
         String flumeExtractFilePath = lccb.getFlumeExtractFilePath();
         String flumeDstTopic = lccb.getFlumeDstTopic();
 
+        String flumeConfigFilePath = StringUtils.joinWith("/", flumeBasePath, "conf/flume-conf.properties");
+        File flumeConfigFile = new File(flumeConfigFilePath);
+
+        if(!flumeConfigFile.exists()) {
+            System.out.println("ERROR: [" + flumeConfigFilePath + "] is not exist!");
+            bw.write(flumeConfigFilePath + " is not exist!");
+            updateConfigProcessExit(bw);
+        }
 
         //替换心跳包
         String oldHeartbeatStr = "agent.sources.r_hb_0.interceptors.i_sr_2.replaceString";
         String newHeartbeatStr = buildFlumeHeartbeat(flumeHost);
         try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldHeartbeatStr, newHeartbeatStr, bw);
+            FileUtils.modifyFileProperties(flumeConfigFilePath, oldHeartbeatStr, newHeartbeatStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + "oldHeartbeatStr: " + oldHeartbeatStr + "newHeartbeatStr: " + newHeartbeatStr);
+            System.out.println("ERROR: 修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + "oldHeartbeatStr: " + oldHeartbeatStr + "newHeartbeatStr: " + newHeartbeatStr);
+            bw.write("修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldHeartbeatStr: " + oldHeartbeatStr + " newHeartbeatStr: " + newHeartbeatStr);
+            updateConfigProcessExit(bw);
         }
 
-        //替换数据sincedb
-        String oldSincedbStr = "agent.sources.r_hb_0.positionFile";
-        String newSincedbStr = buildFlumeSincedbStr(flumeDataSincedb);
-        try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldSincedbStr, newSincedbStr, bw);
-        } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + "oldSincedbStr: " + oldSincedbStr + "newSincedbStr: " + newSincedbStr);
+
+        File flumeExtractFile = new File(flumeExtractFilePath);
+        if(FileUtils.checkFileAndFolderIsExist(flumeExtractFilePath)) {
+            //替换抽取文件路径，flume比较特殊，目前只允许配置一个文件路径，可以是文件夹
+            String oldExtractFileStr = "agent.sources.r_hb_0.filegroups.hblf";
+            String newExtractFileStr = buildFlumeExtractFileStr(flumeExtractFilePath);
+            try {
+                FileUtils.modifyFileProperties(flumeConfigFilePath, oldExtractFileStr, newExtractFileStr, bw);
+            } catch (IOException e) {
+                System.out.println("ERROR: 修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + "oldExtractFileStr: " + oldExtractFileStr + "newExtractFileStr: " + newExtractFileStr);
+                bw.write("修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + "oldExtractFileStr: " + oldExtractFileStr + "newExtractFileStr: " + newExtractFileStr);
+                updateConfigProcessExit(bw);
+            }
+        } else {
+            updateConfigProcessExit(bw);
         }
 
-        //替换抽取文件路径，flume比较特殊，目前只允许配置一个文件路径，可以是文件夹
-        String oldExtractFileStr = "agent.sources.r_hb_0.filegroups.hblf";
-        String newExtractFileStr = buildFlumeExtractFileStr(flumeExtractFilePath);
-        try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldExtractFileStr, newExtractFileStr, bw);
-        } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + "oldExtractFileStr: " + oldExtractFileStr + "newExtractFileStr: " + newExtractFileStr);
+
+        if(FileUtils.checkFileAndFolderIsExist(flumeHeartbeatFilePath)) {
+            //替换心跳日志文件路径
+            String oldHBFilePathStr = "agent.sources.r_dahb.filegroups.dahblf";
+            String newHBFilePathStr = buildFlumeHBExtractFilePathStr(flumeHeartbeatFilePath);
+            try {
+                FileUtils.modifyFileProperties(flumeConfigFilePath, oldHBFilePathStr, newHBFilePathStr, bw);
+            } catch (IOException e) {
+                System.out.println("ERROR: 修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldHBFilePathStr: " + oldHBFilePathStr + " newHBFilePathStr: " + newHBFilePathStr);
+                bw.write("修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldHBFilePathStr: " + oldHBFilePathStr + " newHBFilePathStr: " + newHBFilePathStr);
+                updateConfigProcessExit(bw);
+            }
+        } else {
+            updateConfigProcessExit(bw);
         }
 
-        //替换心跳sincedb
-        String oldHBSincedbStr = "agent.sources.r_dahb.positionFile";
-        String newHBSincedbStr = buildFlumeSincedbStr(flumeHeartbeatSincedb);
-        try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldHBSincedbStr, newHBSincedbStr, bw);
-        } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + " oldHBSincedbStr: " + oldHBSincedbStr + " newHBSincedbStr: " + newHBSincedbStr);
-        }
-
-        //替换心跳日志文件路径
-        String oldHBFilePathStr = "agent.sources.r_dahb.filegroups.dahblf";
-        String newHBFilePathStr = buildFlumeHBExtractFilePathStr(flumeExtractFilePath);
-        try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldHBFilePathStr, newHBSincedbStr, bw);
-        } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + " oldHBFilePathStr: " + oldHBFilePathStr + " newHBFilePathStr: " + newHBFilePathStr);
-        }
 
         //替换topic
         String oldTopicStr = "agent.sinks.k.kafka.topic";
         String newTopicStr = buildFlumeTopic(flumeDstTopic);
         try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldTopicStr, newTopicStr, bw);
+            FileUtils.modifyFileProperties(flumeConfigFilePath, oldTopicStr, newTopicStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + " oldTopicStr: " + oldTopicStr + " newTopicStr: " + newTopicStr);
+            System.out.println("ERROR: 修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldTopicStr: " + oldTopicStr + " newTopicStr: " + newTopicStr);
+            bw.write("修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldTopicStr: " + oldTopicStr + " newTopicStr: " + newTopicStr);
+            updateConfigProcessExit(bw);
         }
 
         //替换kafka地址
         String oldKafkaBrokerStr = "agent.sinks.k.kafka.bootstrap.servers";
         String newKafkaBrokerStr = buildFlumeKafkaBrokerStr(kafkaBootstrapServers);
         try {
-            FileUtils.modifyFileProperties(flumeBasePath, oldKafkaBrokerStr, newKafkaBrokerStr, bw);
+            FileUtils.modifyFileProperties(flumeConfigFilePath, oldKafkaBrokerStr, newKafkaBrokerStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！flumeBasePath： " + flumeBasePath + " oldKafkaBrokerStr: " + oldKafkaBrokerStr + " newKafkaBrokerStr: " + newKafkaBrokerStr);
+            System.out.println("ERROR: 修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldKafkaBrokerStr: " + oldKafkaBrokerStr + " newKafkaBrokerStr: " + newKafkaBrokerStr);
+            bw.write("修改文件配置出错！flumeBasePath： " + flumeConfigFilePath + " oldKafkaBrokerStr: " + oldKafkaBrokerStr + " newKafkaBrokerStr: " + newKafkaBrokerStr);
+            updateConfigProcessExit(bw);
         }
 
-        bw.write("更新flume配置成功！\n");
+        bw.write("更新flume配置完成！\n");
+        System.out.println("更新flume配置成功！\n");
+    }
+
+    private void updateConfigProcessExit(BufferedWriter bw) throws IOException {
+        bw.write("更新配置失败！\n");
+        bw.flush();
+        bw.close();
+        System.exit(-1);
     }
 
     private void deployLogstash(LogCheckConfigBean lccb, BufferedWriter bw) throws IOException {
         String kafkaBootstrapServers = lccb.getKafkaBootstrapServers();
         String logstashBasePath = lccb.getLogstashBasePath();
         String logstashExtractFilePath = lccb.getLogstashExtractFilePath();
-        String logstashSincedbPath = lccb.getLogstashSincedbPath();
-        String logstashType = lccb.getLogstashType();
         String logstashFileStartPosition = lccb.getLogstashFileStartPosition();
-        String logstashFilterType = lccb.getLogstashFilterType();
         String logstashDstTopic = lccb.getLogstashDstTopic();
 
-
-        //修改logstash文件抽取路径
-        String oldExtractFilePathStr = "path => [";
-        String newExtractFilePathStr = buildLogstashExtractFilePathStr(logstashExtractFilePath);
-        try {
-            FileUtils.modifyFileProperties(logstashBasePath, oldExtractFilePathStr, newExtractFilePathStr, bw);
-        } catch (IOException e) {
-            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldExtractFilePathStr: " + oldExtractFilePathStr + " newExtractFilePathStr: " + newExtractFilePathStr);
+        String logstashConfigFilePath = StringUtils.joinWith("/", logstashBasePath, "etc/logstash.conf");
+        File logstashConfigFile = new File(logstashConfigFilePath);
+        if(!logstashConfigFile.exists()) {
+            System.out.println("ERROR: " + logstashConfigFilePath + " is not exist!");
+            bw.write(logstashConfigFilePath + " is not exist!");
+            updateConfigProcessExit(bw);
         }
 
-        //修改抽取文件sincedb存放路径
-        String oldExtractFilePathSincedbStr = "sincedb_path => ";
-        String newExtractFilePathSincedbStr = buildLogstashExtractFileSincedbStr(logstashSincedbPath);
-        try {
-            FileUtils.modifyFileProperties(logstashBasePath, oldExtractFilePathSincedbStr, newExtractFilePathSincedbStr, bw);
-        } catch (IOException e) {
-            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldExtractFilePathSincedbStr: " + oldExtractFilePathSincedbStr + " newExtractFilePathSincedbStr: " + newExtractFilePathSincedbStr);
+        File logstashExtractFile = new File(logstashExtractFilePath);
+        if(FileUtils.checkFileAndFolderIsExist(logstashExtractFilePath)) {
+            //修改logstash文件抽取路径
+            String oldExtractFilePathStr = "path => [";
+            String newExtractFilePathStr = buildLogstashExtractFilePathStr(logstashExtractFilePath);
+            try {
+                FileUtils.modifyFileProperties(logstashConfigFilePath, oldExtractFilePathStr, newExtractFilePathStr, bw);
+            } catch (IOException e) {
+                System.out.println("ERROR: 修改文件配置出错！logstashConfigFilePath： " + logstashConfigFilePath + " oldExtractFilePathStr: " + oldExtractFilePathStr + " newExtractFilePathStr: " + newExtractFilePathStr);
+                bw.write("修改文件配置出错！logstashConfigFilePath： " + logstashConfigFilePath + " oldExtractFilePathStr: " + oldExtractFilePathStr + " newExtractFilePathStr: " + newExtractFilePathStr);
+                updateConfigProcessExit(bw);
+            }
+        } else {
+            updateConfigProcessExit(bw);
         }
-
-        //修改数据类型，根据该数据类型可对此类数据进行过滤
-//        String oldLogstashDsTypeStr = "type => ";
-//        String newLogstashDsTypeStr = buildLogstashDsTypeStr(logstashType);
-//        try {
-//            FileUtils.modifyFileProperties(logstashBasePath, oldLogstashDsTypeStr, newLogstashDsTypeStr, bw);
-//        } catch (IOException e) {
-//            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldLogstashDsTypeStr: " + oldLogstashDsTypeStr + " newLogstashDsTypeStr: " + newLogstashDsTypeStr);
-//        }
-
-        //修改过滤类型，该过滤类型应该要和数据类型一致
-//        String oldLogstashFileFilterTypeStr = "start_position => ";
-//        String newLogstashFileFilterTypeStr = buildLogstashFileFilterType(logstashFilterType);
-//        try {
-//            FileUtils.modifyFileProperties(logstashBasePath, oldLogstashFileFilterTypeStr, newLogstashFileFilterTypeStr, bw);
-//        } catch (IOException e) {
-//            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldLogstashFileFilterTypeStr: " + oldLogstashFileFilterTypeStr + " newLogstashFileFilterTypeStr: " + newLogstashFileFilterTypeStr);
-//        }
-
-
-
-        //增加logstash心跳组件，必须在修改完数据类型后才能执行该段代码，不可调换顺序
-//        String logstashHBExtractSection = buildLogstashHBExtractSection();
-//        FileUtils.insert(logstashBasePath, 15, logstashHBExtractSection);
 
 
         //修改抽取文件是从开始读，还是从末端读，可以为beginning或end
         String oldLogstashFileStartPositionStr = "start_position => ";
         String newLogstashFileStartPositionStr = buildLogstashFileStartPosition(logstashFileStartPosition);
         try {
-            FileUtils.modifyFileProperties(logstashBasePath, oldLogstashFileStartPositionStr, newLogstashFileStartPositionStr, bw);
+            FileUtils.modifyFileProperties(logstashConfigFilePath, oldLogstashFileStartPositionStr, newLogstashFileStartPositionStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldLogstashFileStartPositionStr: " + oldLogstashFileStartPositionStr + " newLogstashFileStartPositionStr: " + newLogstashFileStartPositionStr);
+            System.out.println("ERROR: 修改文件配置出错！logstashConfigFilePath： " + logstashConfigFilePath + " oldLogstashFileStartPositionStr: " + oldLogstashFileStartPositionStr + " newLogstashFileStartPositionStr: " + newLogstashFileStartPositionStr);
+            updateConfigProcessExit(bw);
         }
-
 
         //修改kafka地址
         String oldkafkaBrokerStr = "bootstrap_servers => ";
         String newkafkaBrokerStr = buildLogstashKafkaBroker(kafkaBootstrapServers);
         try {
-            FileUtils.modifyFileProperties(logstashBasePath, oldkafkaBrokerStr, newkafkaBrokerStr, bw);
+            FileUtils.modifyFileProperties(logstashConfigFilePath, oldkafkaBrokerStr, newkafkaBrokerStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldkafkaBrokerStr: " + oldkafkaBrokerStr + " newkafkaBrokerStr: " + newkafkaBrokerStr);
+            System.out.println("ERROR: 修改文件配置出错！logstashConfigFilePath： " + logstashConfigFilePath + " oldkafkaBrokerStr: " + oldkafkaBrokerStr + " newkafkaBrokerStr: " + newkafkaBrokerStr);
+            updateConfigProcessExit(bw);
         }
         //修改topic地址
         String oldTopicStr = "topic_id => ";
         String newTopicStr = buildLogstashTopic(logstashDstTopic);
         try {
-            FileUtils.modifyFileProperties(logstashBasePath, oldTopicStr, newTopicStr, bw);
+            FileUtils.modifyFileProperties(logstashConfigFilePath, oldTopicStr, newTopicStr, bw);
         } catch (IOException e) {
-            logger.error("修改文件配置出错！logstashBasePath： " + logstashBasePath + " oldTopicStr: " + oldTopicStr + " newTopicStr: " + newTopicStr);
+            System.out.println("ERROR: 修改文件配置出错！logstashConfigFilePath： " + logstashConfigFilePath + " oldTopicStr: " + oldTopicStr + " newTopicStr: " + newTopicStr);
+            updateConfigProcessExit(bw);
         }
 
         bw.write("更新Logstash配置成功！\n");
+        System.out.println("更新Logstash配置成功！\n");
     }
 
     private String buildFilebeatFileExtractSection(String filePath) {
@@ -263,19 +290,19 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private String buildFilebeatKafkaBrokerConfig(String kafkaBroker) {
-        return  "hosts: [\" "+ kafkaBroker + "\"]";
+        return  "  hosts: [\""+ kafkaBroker + "\"]";
     }
 
     private String buildFilebeatKafkaTopicConfig(String topic) {
-        return  "topic: '" + topic + "'";
+        return  "  topic: '" + topic + "'";
     }
 
     private String buildFlumeHeartbeat(String host) {
-        return  "agent.sources.r_hb_0.interceptors.i_sr_2.replaceString={\\\"message\\\":\\\"$1\\\", \\\"type\\\":\\\"dbus_log\\\", \\\"host\\\":\\\"" + host + "\\\"}\n";
+        return  "agent.sources.r_hb_0.interceptors.i_sr_2.replaceString={\\\"message\\\":\\\"$1\\\", \\\"type\\\":\\\"dbus_log\\\", \\\"host\\\":\\\"" + host + "\\\"}";
     }
 
     private String buildFlumeSincedbStr(String path) {
-        return  "agent.sources.r_hb_0.positionFile=" + path + " ";
+        return  "agent.sources.r_hb_0.positionFile=" + path;
     }
 
     private  String buildFlumeExtractFileStr(String path) {
@@ -283,7 +310,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private  String buildFlumeHBSincedbStr(String path) {
-        return  "agent.sources.r_dahb.positionFile=" + path + " ";
+        return  "agent.sources.r_dahb.positionFile=" + path;
     }
 
     private  String buildFlumeHBExtractFilePathStr(String path) {
@@ -291,11 +318,11 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private  String buildFlumeTopic(String topic) {
-        return  "agent.sinks.k.kafka.topic=" + topic + " ";
+        return  "agent.sinks.k.kafka.topic=" + topic;
     }
 
     private  String buildFlumeKafkaBrokerStr(String kafkaBroker) {
-        return  "agent.sinks.k.kafka.bootstrap.servers=" + kafkaBroker + " ";
+        return  "agent.sinks.k.kafka.bootstrap.servers=" + kafkaBroker;
     }
 
     private  String buildLogstashExtractFilePathStr(String path) {

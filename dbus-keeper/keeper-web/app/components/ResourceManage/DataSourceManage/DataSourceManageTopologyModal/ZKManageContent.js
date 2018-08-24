@@ -38,12 +38,12 @@ export default class ZKManageContent extends Component {
     const { getFieldDecorator } = this.props.form
     const formItemLayout = {
       labelCol: {
-        xs: { span: 3 },
-        sm: { span: 3 }
+        xs: { span: 6 },
+        sm: { span: 6 }
       },
       wrapperCol: {
-        xs: { span: 19 },
-        sm: { span: 12 }
+        xs: { span: 17 },
+        sm: { span: 17 }
       }
     }
     const {zkData} = this.props
@@ -57,14 +57,14 @@ export default class ZKManageContent extends Component {
                 {getFieldDecorator('value', {
                   initialValue: zkData && zkData.content
                 })(
-                  <Textarea autosize={{minRows: 25, maxRows: 25}}/>
+                  <Textarea autosize={{minRows: 20, maxRows: 20}}/>
                 )}
               </FormItem>
               <Button onClick={this.handleSave}>Save</Button>
             </Form>
           </TabPane>
           <TabPane tab="Node Meta Data" key="nodeMeta">
-            <Form>
+            <Form className="heartbeat-advance-config-form">
               <FormItem
                 label='czxid'
                 {...formItemLayout}

@@ -321,7 +321,7 @@ public class FullPullHelper {
             String zkPath = zkMonitorRootNodePath + "/" + dsName;
             getMonitorPaths(zkPath, paths, zkService);
             //多租户监控
-            zkPath = zkMonitorRootNodePath + "/projects";
+            zkPath = zkMonitorRootNodePath + "/Projects";
             for (String projectName : zkService.getChildren(zkPath)) {
                 List<String> dsNames = zkService.getChildren(zkPath + "/" + projectName);
                 for (String dsname : dsNames) {
@@ -603,24 +603,24 @@ public class FullPullHelper {
                     zkService.createNode(zkPath, null);
                 }
             } else {
-                zkPath = buildZkPath(zkMonitorRootNodePath, "projects");
+                zkPath = buildZkPath(zkMonitorRootNodePath, "Projects");
                 if (!zkService.isExists(zkPath)) {
                     zkService.createNode(zkPath, null);
                 }
                 String projectsName = projectName + "_" + projectId;
-                zkPath = buildZkPath(zkMonitorRootNodePath, "projects/" + projectsName);
+                zkPath = buildZkPath(zkMonitorRootNodePath, "Projects/" + projectsName);
                 if (!zkService.isExists(zkPath)) {
                     zkService.createNode(zkPath, null);
                 }
-                zkPath = buildZkPath(zkMonitorRootNodePath, "projects/" + projectsName + "/" + dbName);
+                zkPath = buildZkPath(zkMonitorRootNodePath, "Projects/" + projectsName + "/" + dbName);
                 if (!zkService.isExists(zkPath)) {
                     zkService.createNode(zkPath, null);
                 }
-                zkPath = buildZkPath(zkMonitorRootNodePath, "projects/" + projectsName + "/" + dbName + "/" + dbSchema);
+                zkPath = buildZkPath(zkMonitorRootNodePath, "Projects/" + projectsName + "/" + dbName + "/" + dbSchema);
                 if (!zkService.isExists(zkPath)) {
                     zkService.createNode(zkPath, null);
                 }
-                zkPath = buildZkPath(zkMonitorRootNodePath, "projects/" + projectsName + "/" + dbName + "/" + dbSchema + "/" + tableName);
+                zkPath = buildZkPath(zkMonitorRootNodePath, "Projects/" + projectsName + "/" + dbName + "/" + dbSchema + "/" + tableName);
                 if (!zkService.isExists(zkPath)) {
                     zkService.createNode(zkPath, null);
                 }
@@ -677,7 +677,7 @@ public class FullPullHelper {
         int projectId = projectJson.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_ID);
         String projectName = projectJson.getString(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_NAME);
         StringBuilder sb = new StringBuilder();
-        sb.append(zkMonitorRootNodePath).append("/projects/")
+        sb.append(zkMonitorRootNodePath).append("/Projects/")
                 .append(projectName).append("_").append(projectId)
                 .append("/").append(dbNameSpace);
         return sb.toString();

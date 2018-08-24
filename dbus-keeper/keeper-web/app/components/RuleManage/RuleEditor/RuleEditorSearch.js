@@ -29,7 +29,7 @@ export default class RuleEditorSearch extends Component {
       <div className="form-search">
         <Form autoComplete="off" layout="inline" className={styles.searchForm}>
           <Row>
-            <Col span={12}>
+            <Col span={16}>
               <FormItem label='Topic'>
                 {getFieldDecorator('kafkaTopic', {
                   initialValue: kafkaTopic,
@@ -63,6 +63,7 @@ export default class RuleEditorSearch extends Component {
                   <Input
                     placeholder="请输入offset"
                     type="text"
+                    style={{width: 120}}
                   />
                 )}
               </FormItem>
@@ -83,6 +84,7 @@ export default class RuleEditorSearch extends Component {
                   <Input
                     placeholder="请输入Count"
                     type="text"
+                    style={{width: 80}}
                   />
                 )}
               </FormItem>
@@ -98,7 +100,7 @@ export default class RuleEditorSearch extends Component {
                 </Button>
               </FormItem>
             </Col>
-            <Col span={12} className={styles.formRight}>
+            <Col span={8} className={styles.formRight}>
               <FormItem>
                   <Button
                     type="primary"

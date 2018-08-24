@@ -165,6 +165,22 @@ function* getVersionListRepos (action) {
       message.error('网络连接错误', 2)
     } else if (repos.status !== 0) {
       message.error(repos.message || '获取失败', 2)
+    } else {
+      const receivedVersionList = repos.payload
+      if (receivedVersionList.length >= 2) {
+        yield put(getVersionDetail.request({
+          versionId1: receivedVersionList[1].id,
+          versionId2: receivedVersionList[0].id
+        }))
+      } else if (receivedVersionList.length === 1) {
+        yield put(getVersionDetail.request({
+          versionId1: receivedVersionList[0].id,
+          versionId2: receivedVersionList[0].id
+        }))
+        message.info('只有一个版本信息')
+      } else {
+        message.info('没有版本信息')
+      }
     }
   } catch (err) {
     yield put(getVersionList.fail(err))

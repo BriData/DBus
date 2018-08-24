@@ -325,6 +325,10 @@ public class TableController extends BaseController {
         return resultEntityBuilder().payload(tableService.insertManageTable(table)).build();
     }
 
+    @GetMapping("/findAllTables")
+    public ResultEntity findAllTables(){
+        return resultEntityBuilder().payload(tableService.findAllTables()).build();
+    }
 }
 
 

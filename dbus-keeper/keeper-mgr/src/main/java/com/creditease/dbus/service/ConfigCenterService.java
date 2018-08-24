@@ -55,10 +55,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.creditease.dbus.constant.KeeperConstants.*;
 
@@ -200,10 +197,13 @@ public class ConfigCenterService {
         logger.info("9.Influxdb初始化完成。");
 
         //10.初始化脱敏
-        if (initEncode(map) != 0) {
+        if (initEncode() != 0) {
             return MessageCode.ENCODE_PLUGIN_INIT_ERROR;
         }
         logger.info("10.脱敏插件初始化完成。");
+        if (zkService.isExists("/DBusInit")) {
+            zkService.deleteNode("/DBusInit");
+        }
         return 0;
     }
 
@@ -216,18 +216,19 @@ public class ConfigCenterService {
         String jarsPath = homePath + "/dbus_jars";
         String routerJarsPath = homePath + "/dbus_router_jars";
         String encodePluginsPath = homePath + "/dbus_encoder_plugins_jars";
+        String baseJarsPath = homePath + "/base_jars.zip";
         if (initialized) {
-            String cmd = MessageFormat.format("rm -rf {0}; rm -rf {1}; rm -rf {2}",
-                    jarsPath, routerJarsPath, encodePluginsPath);
+            String cmd = MessageFormat.format("rm -rf {0}; rm -rf {1}; rm -rf {2};rm -rf {3}",
+                    jarsPath, routerJarsPath, encodePluginsPath, baseJarsPath);
             logger.info("cmd:{}", cmd);
-            if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+            if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
                 return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
             }
         }
         //7.1.新建目录
         String cmd = MessageFormat.format(" mkdir -pv {0}", homePath);
         logger.info("cmd:{}", cmd);
-        if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
         //7.2.上传压缩包
@@ -235,17 +236,18 @@ public class ConfigCenterService {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
         //7.3.解压压缩包
-        cmd = MessageFormat.format(" cd {0}; unzip base_jars.zip", homePath);
+        cmd = MessageFormat.format(" cd {0}; unzip -oq base_jars.zip", homePath);
         logger.info("cmd:{}", cmd);
-        if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
         return 0;
     }
 
-    private int initEncode(LinkedHashMap<String, String> map) {
-        String encodePluginsPath = map.get("dbus.encode.plugins.jars.base.path");
-        String path = encodePluginsPath + "/0/20180809_155150/encoder-plugins-0.5.0.jar";
+    private int initEncode() throws Exception {
+        Properties global = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+        String basePath = global.getProperty("dbus.encode.plugins.jars.base.path");
+        String path = basePath + "/0/20180809_155150/encoder-plugins-0.5.0.jar";
         EncodePlugins encodePlugin = new EncodePlugins();
         encodePlugin.setName("encoder-plugins-0.5.0.jar");
         encodePlugin.setPath(path);
@@ -289,7 +291,7 @@ public class ConfigCenterService {
         HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, json);
 
         //导入Grafana Dashboard
-        url = grafanaurl + "/api/dashboards/db";
+        url = grafanaurl + "/api/dashboards/import";
         byte[] bytes = ConfUtils.toByteArray("init/grafana_schema.json");
         HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
         bytes = ConfUtils.toByteArray("init/grafana_table.json");
@@ -304,15 +306,8 @@ public class ConfigCenterService {
     }
 
     private int checkInitData(LinkedHashMap<String, String> map) {
+        //1.bootstrapServers检测
         String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
-        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
-
-        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
-        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
-        String pubKeyPath = env.getProperty("pubKeyPath");
-
-        //1.bootstrapServers测试
         String[] split = bootstrapServers.split(",");
         for (String s : split) {
             String[] hostPort = s.split(":");
@@ -325,17 +320,58 @@ public class ConfigCenterService {
             }
             logger.info("1.1.bootstrapServers，url：{}测试通过", bootstrapServers);
         }
-        //2.monitURL测试
+        //2.Grafana检测
+        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
         if (!urlTest(monitURL)) {
             return MessageCode.MONITOR_URL_IS_WRONG;
         }
+        String grafanaToken = map.get("grafanaToken");
+        grafanaToken = "Bearer " + grafanaToken;
+        Integer code = HttpClientUtils.httpGetWithAuthorization(monitURL, grafanaToken);
+        if (code == 401) {
+            return MessageCode.GRAFANATOKEN_IS_ERROR;
+        }
         logger.info("1.2.grafana_url，url：{}测试通过", monitURL);
 
-        //3.测试stormStartScriptPath地址是否可用
-        if (exeCmd(user, host, port, pubKeyPath, "ls") != 0) {
+        //3.storm检测
+        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
+        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String path = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
+        String pubKeyPath = env.getProperty("pubKeyPath");
+        String s = exeCmdErrorStream(user, host, port, pubKeyPath, "cd " + path);
+        if (s == null) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
+        if (StringUtils.isNotBlank(s)) {
+            return MessageCode.STORM_HOME_PATH_ERROR;
+        }
+        String stormUI = map.get(GLOBAL_CONF_KEY_STORM_REST_API);
+        if (!urlTest(stormUI+"/nimbus/summary")) {
+            return MessageCode.STORM_UI_ERROR;
+        }
         logger.info("1.3.storm免密配置测试通过,host:{},port:{},user:{}", host, port, user);
+        //4.Influxdb检测
+        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+        String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
+        if (!"200".equals(HttpClientUtils.httpGet(url))) {
+            return MessageCode.INFLUXDB_URL_ERROR;
+        }
+        logger.info("1.4.influxdbUrl测试通过,influxdbUrl:{}", influxdbUrl);
+        //5.心跳检测
+        String[] hosts = map.get("heartbeat.host").split(",");
+        int heartport = Integer.parseInt(map.get("heartbeat.port"));
+        String heartuser = map.get("heartbeat.user");
+        String heartpath = map.get("heartbeat.jar.path");
+        for (String hearthost : hosts) {
+            String res = exeCmdErrorStream(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath);
+            if (res == null) {
+                return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+            }
+            if (StringUtils.isNotBlank(s)) {
+                return MessageCode.HEARTBEAT_JAR_PATH_ERROR;
+            }
+        }
         return 0;
     }
 
@@ -344,22 +380,12 @@ public class ConfigCenterService {
             //heartbeat_config.json
             byte[] data = zkService.getData(Constants.HEARTBEAT_CONFIG_JSON);
             JSONObject json = JSONObject.parseObject(new String(data, UTF8));
-            String adminEmail = map.get("adminEmail");
-            if (StringUtils.isNotBlank(adminEmail)) {
-                json.put("adminEmail", adminEmail);
-            }
-            String alarmMailSMTPAddress = map.get("alarmMailSMTPAddress");
-            if (StringUtils.isNotBlank(alarmMailSMTPAddress)) {
-                json.put("alarmMailSMTPAddress", alarmMailSMTPAddress);
-            }
-            String alarmMailOutBox = map.get("alarmMailOutBox");
-            if (StringUtils.isNotBlank(alarmMailOutBox)) {
-                json.put("alarmMailOutBox", alarmMailOutBox);
-            }
-            String alarmMailPass = map.get("alarmMailPass");
-            if (StringUtils.isNotBlank(alarmMailPass)) {
-                json.put("alarmMailPass", alarmMailPass);
-            }
+            json.put("alarmSendEmail", map.get("alarmSendEmail"));
+            json.put("alarmMailSMTPAddress", map.get("alarmMailSMTPAddress"));
+            json.put("alarmMailSMTPPort", map.get("alarmMailSMTPPort"));
+            json.put("alarmMailUser", map.get("alarmMailUser"));
+            json.put("alarmMailPass", map.get("alarmMailPass"));
+
             //格式化json
             String format = this.formatJsonString(json.toString());
             zkService.setData(Constants.HEARTBEAT_CONFIG_JSON, format.getBytes(UTF8));
@@ -369,24 +395,26 @@ public class ConfigCenterService {
             int port = Integer.parseInt(map.get("heartbeat.port"));
             String user = map.get("heartbeat.user");
             String path = map.get("heartbeat.jar.path");
+            String heartPath = path + "/dbus-heartbeat-0.5.0";
+            String heartZipPath = path + "/dbus-heartbeat-0.5.0.zip";
             String pubKeyPath = env.getProperty("pubKeyPath");
             for (String host : hosts) {
                 if (initialized) {
                     String cmd = "kill -s TERM $(jps -l | grep 'heartbeat' | awk '{print $1}')";
                     logger.info("cmd:{}", cmd);
-                    if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+                    if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
                         return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                     }
-                    cmd = MessageFormat.format(" rm -rf {0}", path);
+                    cmd = MessageFormat.format(" rm -rf {0};rm -rf {1}", heartPath, heartZipPath);
                     logger.info("cmd:{}", cmd);
-                    if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+                    if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
                         return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                     }
                 }
                 //6.1.新建目录
                 String cmd = MessageFormat.format(" mkdir -pv {0}", path);
                 logger.info("cmd:{}", cmd);
-                if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+                if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
                 //6.2.上传压缩包
@@ -394,15 +422,15 @@ public class ConfigCenterService {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
                 //6.3.解压压缩包
-                cmd = MessageFormat.format("cd {0};unzip dbus-heartbeat-0.5.0.zip", path);
+                cmd = MessageFormat.format("cd {0};unzip -oq dbus-heartbeat-0.5.0.zip", path);
                 logger.info("cmd:{}", cmd);
-                if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+                if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
                 //6.4启动心跳
                 cmd = MessageFormat.format("cd {0}; nohup ./heartbeat.sh >/dev/null 2>&1 & ", path + "/dbus-heartbeat-0.5.0");
                 logger.info("cmd:{}", cmd);
-                if (exeCmd(user, host, port, pubKeyPath, cmd) != 0) {
+                if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
             }
@@ -415,18 +443,25 @@ public class ConfigCenterService {
 
     private int initZKNodes(LinkedHashMap<String, String> map) throws Exception {
         try {
+            //清空zk节点
+            deleteNodeRecursively(Constants.DBUS_ROOT);
             //初始化global.properties节点
             LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<String, String>();
             linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
             linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
             linkedHashMap.put(GLOBAL_CONF_KEY_MONITOR_URL, map.get(GLOBAL_CONF_KEY_MONITOR_URL));
-            linkedHashMap.put(GLOBAL_CONF_KEY_INFLUXDB_URL, map.get(GLOBAL_CONF_KEY_INFLUXDB_URL));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_SSH_USER, map.get(GLOBAL_CONF_KEY_STORM_SSH_USER));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_HOME_PATH, map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_REST_API, map.get(GLOBAL_CONF_KEY_STORM_REST_API));
+            linkedHashMap.put(GLOBAL_CONF_KEY_INFLUXDB_URL, map.get(GLOBAL_CONF_KEY_INFLUXDB_URL));
             linkedHashMap.put("zk.url", env.getProperty("zk.str"));
+            linkedHashMap.put("heartbeat.host", map.get("heartbeat.host"));
+            linkedHashMap.put("heartbeat.port", map.get("heartbeat.port"));
+            linkedHashMap.put("heartbeat.user", map.get("heartbeat.user"));
+            linkedHashMap.put("heartbeat.jar.path", map.get("heartbeat.jar.path"));
+
             String homePath = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
             linkedHashMap.put("dbus.jars.base.path", homePath + "/dbus_jars");
             linkedHashMap.put("dbus.router.jars.base.path", homePath + "/dbus_router_jars");
@@ -455,15 +490,30 @@ public class ConfigCenterService {
         }
     }
 
-    public Integer updateGlobalConf(LinkedHashMap<String, String> map) throws Exception {
-        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
-        String stormNimbusHost = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        int stormNimbusPort = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
-        String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
-        String user = map.get("user");
-        String pubKeyPath = env.getProperty("pubKeyPath");
+    /**
+     * 递归删除给定路径的zk结点
+     */
+    private void deleteNodeRecursively(String path) throws Exception {
+        List<String> children = null;
+        children = zkService.getChildren(path);
+        if (children.size() > 0) {
+            for (String child : children) {
+                String childPath = null;
+                if (path.equals("/")) {
+                    childPath = path + child;
+                } else {
+                    childPath = path + "/" + child;
+                }
+                deleteNodeRecursively(childPath);
+            }
+        }
+        zkService.deleteNode(path);
+        logger.info("deleting zkNode......." + path);
+    }
 
-        //测试bootstrapServers地址是否可用
+    public Integer updateGlobalConf(LinkedHashMap<String, String> map) throws Exception {
+        //1.bootstrapServers检测
+        String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
         String[] split = bootstrapServers.split(",");
         for (String s : split) {
             String[] hostPort = s.split(":");
@@ -475,15 +525,50 @@ public class ConfigCenterService {
                 return MessageCode.KAFKA_BOOTSTRAP_SERVERS_IS_WRONG;
             }
         }
-        //测试monitURL地址是否可用
+        //2.Grafana检测
+        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
         if (!urlTest(monitURL)) {
             return MessageCode.MONITOR_URL_IS_WRONG;
         }
-        //测试stormStartScriptPath地址是否可用
-        int res = exeCmd(user, stormNimbusHost, stormNimbusPort, pubKeyPath, "ls");
-        if (res != 0) {
+
+        //3.storm检测
+        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
+        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String path = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
+        String pubKeyPath = env.getProperty("pubKeyPath");
+        String s = exeCmdErrorStream(user, host, port, pubKeyPath, "cd " + path);
+        if (s == null) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
+        if (StringUtils.isNotBlank(s)) {
+            return MessageCode.STORM_HOME_PATH_ERROR;
+        }
+        String stormUI = map.get(GLOBAL_CONF_KEY_STORM_REST_API);
+        if (!urlTest(stormUI+"/nimbus/summary")) {
+            return MessageCode.STORM_UI_ERROR;
+        }
+        //4.Influxdb检测
+        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+        String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
+        if (!"200".equals(HttpClientUtils.httpGet(url))) {
+            return MessageCode.INFLUXDB_URL_ERROR;
+        }
+        //5.心跳检测
+        String[] hosts = map.get("heartbeat.host").split(",");
+        int heartport = Integer.parseInt(map.get("heartbeat.port"));
+        String heartuser = map.get("heartbeat.user");
+        String heartpath = map.get("heartbeat.jar.path");
+        for (String hearthost : hosts) {
+            String res = exeCmdErrorStream(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath);
+            if (res == null) {
+                return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+            }
+            if (StringUtils.isNotBlank(s)) {
+                return MessageCode.HEARTBEAT_JAR_PATH_ERROR;
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : map.entrySet()) {
             sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
@@ -590,7 +675,7 @@ public class ConfigCenterService {
         return zkService.isExists(Constants.DBUS_ROOT);
     }
 
-    public int exeCmd(String user, String host, int port, String pubKeyPath, String command) {
+    public String exeCmd(String user, String host, int port, String pubKeyPath, String command) {
         Session session = null;
         ChannelExec channel = null;
         try {
@@ -610,10 +695,44 @@ public class ConfigCenterService {
             while ((msg = in.readLine()) != null) {
                 sb.append(msg).append("\n");
             }
-            return 0;
+            return sb.toString();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            return -1;
+            return null;
+        } finally {
+            if (channel != null) {
+                channel.disconnect();
+            }
+            if (session != null) {
+                session.disconnect();
+            }
+        }
+    }
+
+    public String exeCmdErrorStream(String user, String host, int port, String pubKeyPath, String command) {
+        Session session = null;
+        ChannelExec channel = null;
+        try {
+            JSch jsch = new JSch();
+            jsch.addIdentity(pubKeyPath);
+
+            session = jsch.getSession(user, host, port);
+            session.setConfig("StrictHostKeyChecking", "no");
+            session.connect();
+            channel = (ChannelExec) session.openChannel("exec");
+            channel.setCommand(command);
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(channel.getErrStream()));
+            channel.connect();
+            String msg;
+            StringBuilder sb = new StringBuilder();
+            while ((msg = in.readLine()) != null) {
+                sb.append(msg).append("\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return null;
         } finally {
             if (channel != null) {
                 channel.disconnect();
@@ -664,65 +783,8 @@ public class ConfigCenterService {
         }
     }
 
+    public static void main(String[] args) {
 
-    /*public int execCmd(String cmd, List<String> lines) {
-        int exitValue = -1;
-        try {
-            Process process = Runtime.getRuntime().exec(cmd);
-            Thread errorThread = new Thread(new StreamRunnable(process.getErrorStream(), lines));
-            Thread inputThread = new Thread(new StreamRunnable(process.getInputStream(), lines));
-            errorThread.start();
-            inputThread.start();
-            exitValue = process.waitFor();
-            if (lines != null)
-                logger.info("result: " + JSON.toJSONString(lines));
-            if (exitValue != 0) process.destroyForcibly();
-        } catch (Exception e) {
-            logger.error("execCmd error", e);
-            logger.error(e.getMessage(), e);
-        }
-        return exitValue;
-    }*/
-
-    class StreamRunnable implements Runnable {
-
-        private Reader reader = null;
-
-        private BufferedReader br = null;
-
-        List<String> lines = null;
-
-        public StreamRunnable(InputStream is, List<String> lines) {
-            Reader reader = new InputStreamReader(is);
-            br = new BufferedReader(reader);
-            this.lines = lines;
-        }
-
-        @Override
-        public void run() {
-            try {
-                String line = br.readLine();
-                while (StringUtils.isNotBlank(line)) {
-                    logger.info(line);
-                    if (lines != null)
-                        lines.add(line);
-                    line = br.readLine();
-                }
-            } catch (Exception e) {
-                logger.error("stream runnable error", e);
-            } finally {
-                close(br);
-                close(reader);
-            }
-        }
-
-        private void close(Closeable closeable) {
-            try {
-                if (closeable != null)
-                    closeable.close();
-            } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
     }
+
 }

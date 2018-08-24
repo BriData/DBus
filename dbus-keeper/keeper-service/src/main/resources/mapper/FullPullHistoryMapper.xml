@@ -107,8 +107,13 @@
     from t_fullpull_history
   </select>
   <select id="search" resultMap="BaseResultMap">
-    select t_sink.sink_name as target_sink_name, pro.project_display_name, fh.* from t_fullpull_history fh left join t_project pro
-    on fh.project_name = pro.project_name
+    select t_sink.sink_name as target_sink_name, pro.project_display_name, fh.*
+    from t_fullpull_history fh
+    <if test="userId != null">
+      join t_project_topo_table tt on fh.topology_table_id = tt.id
+      join t_project_user pu on tt.project_id =pu.project_id and pu.user_id = #{userId}
+    </if>
+    left join t_project pro on fh.project_name = pro.project_name
     left join t_sink on fh.target_sink_id = t_sink.id
     where 1=1
     <if test="projectName != null"> and fh.project_name = #{projectName}</if>

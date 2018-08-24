@@ -57,7 +57,7 @@ public class AutoDeployStart {
             WriteProperties(basePath+"/conf/"+canalProperties,
                     "canal.port",String.valueOf(getAvailablePort()),bw);
             WriteProperties(basePath+"/conf/"+canalProperties,
-                    "canal.zkServers", deployProps.getZkPath()+"/DBus/Canal/"+deployProps.getDsName(),bw);
+                    "canal.zkServers", deployProps.getZkPath()+"/DBus/Canal/canal-"+deployProps.getDsName(),bw);
             bw.write("------------ update canal.properties end ------------ ");
             bw.newLine();
 
@@ -82,13 +82,42 @@ public class AutoDeployStart {
             CanalUtils.start(currentPath,bw);
             CanalUtils.copyLogfiles(currentPath,deployProps.getDsName(),bw);
 
+            //无论怎么canal都会启动起来，如果出错，可以看日志;成功的话，echo pid
+            String cmd = "ps aux | grep \""+basePath+"/bin\" | grep -v \"grep\" | awk '{print $2}'";
+            bw.write("exec: " + cmd);
+            bw.newLine();
+            try {
+                String[] shell = {
+                        "/bin/sh",
+                        "-c",
+                        cmd
+                };
+
+                String pid = CanalUtils.exec(shell);
+                bw.write("canal 进程启动成功， pid " + pid);
+                bw.newLine();
+                bw.write("请手动检查当前目录下canal.log，和"+deployProps.getDsName()+".log中有无错误信息。");
+                bw.newLine();
+            }catch (Exception e){
+                bw.write("exec fail.");
+                bw.newLine();
+                //如果执行失败,将canal进程停掉
+                String stopPath = currentPath+"/canal/bin/"+"stop.sh";
+                String stopCmd = "sh "+stopPath;
+                CanalUtils.exec(stopCmd);
+                throw e;
+            }
+
             bw.write("************ CANAL DEPLOY SCCESS! ************");
+            bw.newLine();
 
 
         }catch (Exception e){
             bw.write("************ CANAL DEPLOY ERROR! ************");
+            bw.newLine();
         }finally {
             if(bw!=null){
+                bw.flush();
                 bw.close();
             }
             if(osw != null){

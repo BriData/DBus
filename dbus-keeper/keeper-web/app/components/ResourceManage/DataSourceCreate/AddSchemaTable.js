@@ -273,8 +273,8 @@ export default class AddSchemaTable extends Component {
     }
     const tailFormItemLayout = {
       wrapperCol: {
-        span: 4,
-        offset: 20,
+        span: 6,
+        offset: 18,
       }
     }
 

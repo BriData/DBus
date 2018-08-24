@@ -12,7 +12,7 @@ const Option = Select.Option
 const TextArea = Input.TextArea
 
 @Form.create()
-export default class DataSourceManageModifyModal extends Component {
+export default class DataSourceManageStartTopoModal extends Component {
   constructor (props) {
     super(props)
     this.state = {
@@ -23,9 +23,19 @@ export default class DataSourceManageModifyModal extends Component {
     }
   }
 
+  componentWillMount = () => {
+    const {record, dataSource} = this.props
+    const dsName = dataSource.name || ''
+    const topoName = record.topologyName || ''
+    const initialType = topoName.substr(dsName.length + 1).replace(/-/g, '_')
+    this.setState({
+      type: initialType
+    })
+  }
+
   handleVersionChange = value => {
     this.setState({version: value})
-    this.props.form.setFieldsValue({type:null, minorVersion: null})
+    this.props.form.setFieldsValue({minorVersion: null})
   }
 
   handleTypeChange = value => {
@@ -38,11 +48,7 @@ export default class DataSourceManageModifyModal extends Component {
       if (!err) {
         this.props.form.setFieldsValue({log: null})
         const {topoJarStartApi} = this.props
-        let {jarInfos} = this.props
-        jarInfos = jarInfos.map(jar => ({
-          ...jar,
-          type: jar.type === 'mysql_extractor' ? 'extractor' : jar.type
-        }))
+        const {jarInfos} = this.props
         const jar = jarInfos.filter(jar => jar.version === values.version && jar.type === values.type && jar.minorVersion === values.minorVersion)[0]
 
         this.setState({loading: true})
@@ -77,11 +83,7 @@ export default class DataSourceManageModifyModal extends Component {
   render () {
     const {loading} = this.state
     const {key, visible, record, dataSource, onClose} = this.props
-    let {jarInfos} = this.props
-    jarInfos = jarInfos.map(jar => ({
-      ...jar,
-      type: jar.type === 'mysql_extractor' ? 'extractor' : jar.type
-    }))
+    const {jarInfos} = this.props
     const { getFieldDecorator } = this.props.form
     const {version, type} = this.state
     const versionList = Array.from(new Set(jarInfos.map(jar => jar.version)))
@@ -103,10 +105,12 @@ export default class DataSourceManageModifyModal extends Component {
         sm: { offset: 6, span: 12 }
       }
     }
+
     return (
       <div className={styles.table}>
         <Modal
           key={key}
+          className="top-modal"
           visible={visible}
           maskClosable={false}
           width={1000}
@@ -115,13 +119,41 @@ export default class DataSourceManageModifyModal extends Component {
           footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
         >
           <Form autoComplete="off"
-            className={styles.register}
+            className="data-source-start-topo-form"
           >
             <FormItem label="数据源名称" {...formItemLayout}>
               {getFieldDecorator('dsName', {
                 initialValue: dataSource.name,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
+
+            <FormItem
+              label={"Type"} {...formItemLayout}
+            >
+              {getFieldDecorator('type', {
+                initialValue: type,
+                rules: [
+                  {
+                    required: true,
+                    message: 'type不能为空'
+                  }
+                ]
+              })(
+                <Select
+                  showSearch
+                  disabled={true}
+                  optionFilterProp='children'
+                  className={styles.select}
+                  placeholder="Select type"
+                  onChange={this.handleTypeChange}
+                >
+                  {typeList.map(type => (
+                    <Option value={type} key={type}>{type}</Option>
+                  ))}
+                </Select>
+              )}
+            </FormItem>
+
             <FormItem
               label={"Version"} {...formItemLayout}
             >
@@ -143,32 +175,6 @@ export default class DataSourceManageModifyModal extends Component {
                 >
                   {versionList.map(version => (
                     <Option value={version} key={version}>{version}</Option>
-                  ))}
-                </Select>
-              )}
-            </FormItem>
-
-            <FormItem
-              label={"Type"} {...formItemLayout}
-            >
-              {getFieldDecorator('type', {
-                initialValue:null,
-                rules: [
-                  {
-                    required: true,
-                    message: 'type不能为空'
-                  }
-                ]
-              })(
-                <Select
-                  showSearch
-                  optionFilterProp='children'
-                  className={styles.select}
-                  placeholder="Select type"
-                  onChange={this.handleTypeChange}
-                >
-                  {typeList.map(type => (
-                    <Option value={type} key={type}>{type}</Option>
                   ))}
                 </Select>
               )}
@@ -221,5 +227,5 @@ export default class DataSourceManageModifyModal extends Component {
   }
 }
 
-DataSourceManageModifyModal.propTypes = {
+DataSourceManageStartTopoModal.propTypes = {
 }

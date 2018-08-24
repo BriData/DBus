@@ -4,7 +4,8 @@ title: filebeat作为数据源接入DBus
 description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 ---
 
-
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 **系统架构：**
 
 ![系统架构](img/install-filebeat-source/install-filebeat-source-system-architecture.png)

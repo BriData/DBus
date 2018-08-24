@@ -227,6 +227,7 @@ export default class DataTableWrapper extends Component {
     const {getVersionList} = this.props
     getVersionList(record)
     this.setState({
+      versionModalKey: this.handleRandom('version'),
       versionModalVisible: true,
       versionModalRecord: record
     })

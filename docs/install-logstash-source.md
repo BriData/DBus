@@ -3,7 +3,8 @@ monitolayout: global
 title: logstash作为数据源接入DBus
 description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 ---
-
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 **系统架构：**
 
 ![系统架构](img/install-logstash-source/install-logstash-source-system-architecture.png)

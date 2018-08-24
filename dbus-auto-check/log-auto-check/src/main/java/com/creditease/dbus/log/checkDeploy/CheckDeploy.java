@@ -1,10 +1,13 @@
-package com.creditease.dbus.log.check;
+package com.creditease.dbus.log.checkDeploy;
 
 import com.creditease.dbus.log.handler.IHandler;
 import com.creditease.dbus.log.handler.impl.CheckKafkaHandler;
+import com.creditease.dbus.log.handler.impl.DeployFileConfigHandler;
 import com.creditease.dbus.log.handler.impl.LoadConfigFileHandler;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -15,34 +18,31 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class Check {
-    public static void main(String[] args) {
+public class CheckDeploy {
 
+    public static void main(String[] args) {
         List<IHandler> list = new ArrayList<>();
         list.add(new LoadConfigFileHandler());
         list.add(new CheckKafkaHandler());
+        list.add(new DeployFileConfigHandler());
 
         FileOutputStream fos = null;
         OutputStreamWriter osw = null;
         BufferedWriter bw = null;
         try {
-
             File userDir = new File(SystemUtils.USER_DIR.replaceAll("\\\\", "/"));
             File outDir = new File(userDir, "reports");
             if (!outDir.exists()) outDir.mkdirs();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String strTime = sdf.format(new Date());
-            File file = new File(outDir, "check_report_" + strTime + ".txt");
+            File file = new File(outDir, "check_deploy_report_" + strTime + ".txt");
 
             fos = new FileOutputStream(file);
             osw = new OutputStreamWriter(fos);
             bw = new BufferedWriter(osw);
-            bw.write("check kafka start\n");
             for (IHandler handler : list) {
-                handler.processCheck(bw);
+                handler.processCheckDeploy(bw);
             }
-            bw.write("check kafka end!\n");
-
         } catch (Exception e) {
 
         } finally {
@@ -51,5 +51,4 @@ public class Check {
             IOUtils.closeQuietly(fos);
         }
     }
-
 }

@@ -60,8 +60,10 @@ public class AutoCheckStart {
 
         } catch (Exception e) {
             bw.write("************ CANAL CHECK FAIL! ************");
+            bw.newLine();
         }finally {
             if(bw!=null){
+                bw.flush();
                 bw.close();
             }
             if(osw != null){

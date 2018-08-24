@@ -66,11 +66,10 @@ export default class ProjectTopologyRerunModal extends Component {
     const temp = {}
     Object.keys(values).forEach(key => {
       // 表单中的key不能有点，所以全部替换为特殊标记，此处恢复
-      const item = JSON.parse(key.replace(/@@@/g,'.'))
-      if (values[key]) {
-        if (!temp[item.topic]) temp[item.topic] = []
-        temp[item.topic] = [...temp[item.topic], {partition: item.partition, offset: values[key]}]
-      }
+      const item = JSON.parse(key.replace(/@@@/g, '.'))
+      values[key] = ''
+      if (!temp[item.topic]) temp[item.topic] = []
+      temp[item.topic] = [...temp[item.topic], {partition: item.partition, offset: values[key]}]
     })
     const offset = Object.keys(temp).map(topic => ({
       topic: topic,

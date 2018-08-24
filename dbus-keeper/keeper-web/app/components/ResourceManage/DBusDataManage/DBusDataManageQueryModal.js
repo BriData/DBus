@@ -85,20 +85,19 @@ export default class DBusDataManageQueryModal extends Component {
     }
     return (
       <Modal
+        className="top-modal"
         visible={visible}
         maskClosable={false}
         key={key}
         onCancel={onClose}
         footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
         width={1000}
-        title={<div>
-          查询源库信息
-        </div>}
+        title='查询源库信息'
       >
         <Form autoComplete="off" className={styles.searchForm}>
           <Row>
             <Col span={24}>
-              <FormItem label={'SQL'} {...formItemLayout}>
+              <FormItem style={{marginTop: -5}} label={'SQL'} {...formItemLayout}>
                 {getFieldDecorator('sql', {
                   initialValue: sql,
                   rules: [
@@ -108,10 +107,10 @@ export default class DBusDataManageQueryModal extends Component {
                     }
                   ]
                 })(<TextArea
-                  autosize={{minRows:3}}
+                  autosize={{minRows:2}}
                 />)}
               </FormItem>
-              <FormItem style={{marginTop: -15}} wrapperCol={{offset: 19, span: 5}}>
+              <FormItem style={{marginTop: -20, marginBottom: 5}} wrapperCol={{offset: 19, span: 5}}>
                 <Button style={{marginLeft: 10}} onClick={() => this.handleExecuteSql('master')}>查询主库</Button>
                 <Button style={{marginLeft: 10}} onClick={() => this.handleExecuteSql('slave')}>查询备库</Button>
               </FormItem>
@@ -122,6 +121,7 @@ export default class DBusDataManageQueryModal extends Component {
           {!loading ? (
             <Table
               rowKey={record => JSON.stringify(record)}
+              size="small"
               columns={columns}
               dataSource={executeResult}
               scroll={{x: true}}

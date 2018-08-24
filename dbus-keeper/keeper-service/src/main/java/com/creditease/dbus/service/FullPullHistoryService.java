@@ -49,13 +49,16 @@ public class FullPullHistoryService {
         param.put("dsName", history.getDsName());
         param.put("schemaName", history.getSchemaName());
         param.put("tableName", history.getTableName());
+        if(!"admin".equals(roleType)){
+            param.put("userId", userId);
+        }
         List<FullPullHistory> list = mapper.search(param);
 
         //非admin用户数据脱敏
-        if (!"admin".equals(roleType)) {
+       /* if (!"admin".equals(roleType)) {
             List<Long> ids = mapper.searchIdsByUid(userId);
             encodeColumus(list, ids);
-        }
+        }*/
         PageInfo pageInfo = new PageInfo(list);
         return pageInfo;
     }

@@ -39,12 +39,7 @@ public abstract class AbstractHandler implements IHandler {
     public boolean process(BufferedWriter bw) {
         boolean isOk = true;
         try {
-            bw.newLine();
-            bw.write("check " + this.getClass().getSimpleName() + " start");
-            bw.newLine();
             check(bw);
-            bw.write("check " + this.getClass().getSimpleName() + " end");
-            bw.newLine();
         } catch (Exception e) {
             logger.error("process error", e);
             isOk = false;

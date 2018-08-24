@@ -656,8 +656,7 @@ public class ProjectTableService {
 
             //构造payloadOffset的offset中的offsetParis信息
             if(StringUtils.isBlank(offset)){
-                //空, 没有修改，则不用管。
-                continue;
+                offsetParis.append(partition).append("->").append(",");
             /*}else if(StringUtils.equalsIgnoreCase(offset,"head")) {
                 //begining
                 offsetParis.append("begin").append(",");

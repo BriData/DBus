@@ -40,6 +40,12 @@ public class CheckFlowLineHandler extends AbstractHandler {
         KafkaConsumer<String, byte[]> consumerFourth = null;
 
         try {
+            bw.newLine();
+            bw.write("check flow line start: ");
+            bw.newLine();
+            bw.write("============================================");
+            bw.newLine();
+
             List<Object> listSecond = initConsumer("testdb", "second");
             consumerSecond = (KafkaConsumer<String, byte[]>) listSecond.get(0);
             long offsetSecond = (Long) listSecond.get(1);
@@ -88,7 +94,6 @@ public class CheckFlowLineHandler extends AbstractHandler {
             String url = MsgUtil.format("jdbc:mysql://{0}:{1}/{2}?characterEncoding=utf-8",
                     conf.getDbDbusHost(), String.valueOf(conf.getDbDbusPort()), "dbus");
 
-            time = System.currentTimeMillis();
             Map<String, Object> packet = new HashMap<>();
             packet.put("node", "/DBus/HeartBeat/Monitor/testdb/testschema/test_table/0");
             packet.put("time", time);
@@ -115,7 +120,7 @@ public class CheckFlowLineHandler extends AbstractHandler {
         } catch (Exception e) {
             bw.write("first step insert heart beat error: " + e.getMessage());
             bw.newLine();
-            throw e;
+            throw new RuntimeException("first step insert heart beat error", e);
         } finally {
             DBUtils.close(rs);
             DBUtils.close(ps);
@@ -166,7 +171,7 @@ public class CheckFlowLineHandler extends AbstractHandler {
         } catch (Exception e) {
             bw.write("auto check table second step error: " + e.getMessage());
             bw.newLine();
-            throw e;
+            throw new RuntimeException("auto check table second step error", e);
         }
 
         if (!isOk) {
@@ -193,7 +198,7 @@ public class CheckFlowLineHandler extends AbstractHandler {
         } catch (Exception e) {
             bw.write("auto check table third step error: " + e.getMessage());
             bw.newLine();
-            throw e;
+            throw new RuntimeException("auto check table third step error", e);
         }
 
         if (!isOk) {
@@ -221,7 +226,7 @@ public class CheckFlowLineHandler extends AbstractHandler {
         } catch (Exception e) {
             bw.write("auto check table fourth step error: " + e.getMessage());
             bw.newLine();
-            throw e;
+            throw new RuntimeException("auto check table fourth step error", e);
         }
 
         if (!isOk) {

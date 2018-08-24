@@ -322,7 +322,7 @@ export default class DataTableManageEncodeModal extends Component {
 
     return (
       <Modal
-        style={{ top: 20 }}
+        className="top-modal"
         key={key}
         title={'脱敏配置'}
         width={1000}
@@ -340,7 +340,7 @@ export default class DataTableManageEncodeModal extends Component {
                 dataSource={dataSource}
                 columns={columns}
                 pagination={false}
-                scroll={{x:800, y: 600}}
+                scroll={{x:800, y: 400}}
               />
             ) : (
               <div style={{ height: '378px' }} />

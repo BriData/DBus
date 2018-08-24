@@ -3,7 +3,8 @@ layout: global
 title: Mysql数据源接入DBus
 description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 ---
-
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 > 原理：
 >
 > 同步mysql数据源是通过 canal 抽取程序读取binlog的方式获得增量数据， 通过从mysql 备库以分片的方式scan数据来获得全量数据，最后转换为UMS 输出到kafka 提供给下游数据使用方使用。
@@ -49,8 +50,7 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 在数据源端新建的dbus库，可以实现无侵入方式接入多种数据源，业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。
 
-
-### 源端库和账户配置
+**源端库和账户配置**
 
 在mysql_instance实例上，创建dbus 库以及数据表db_full_pull_requests和db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。
 
@@ -182,7 +182,7 @@ canal.properties文件配置：canal.properties文件在目录canal/conf下
   ```
 
  instance.properties文件配置：
- 
+
   ```properties
   需要配置的项有：
   	canal.instance.mysql.slaveId = slaveId
@@ -194,7 +194,7 @@ canal.properties文件配置：canal.properties文件在目录canal/conf下
   	canal.instance.dbPassword = xxxxx  #此处为canal
   ```
 
- 
+
 **3) 在zk中创建canal的结点：**
 
 在dbus keeper中ZK Manager中新建结点/DBus/Canal/canal-testdb：
@@ -213,8 +213,7 @@ canal.properties文件配置：canal.properties文件在目录canal/conf下
 
  jps -l   后应当存在com.alibaba.otter.canal.deployer.CanalLauncher进程。并且启动成功后，会在dbus-web中ZK Manager中结点/DBus/Canal/canal-testdb（同上）生成一系列结点。
 
-
-###### ##为什么不支持呢
+**为什么不支持呢**
 
 Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，而此文件打包在canal.parse-1.0.22.jar包中，因此在canal server包解压之后，需要按照替换解压后的canal目录中lib下的canal.parse-1.0.22.jar文件。
 
@@ -225,13 +224,13 @@ Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTE
 Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus keeper页面添加新数据线的步骤进行介绍
 ### 3.1 Keeper加线
 
-##### 3.1.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线
+**3.1.1 管理员身份进入dbus keeper页面，数据源管理-新建数据线**
 
 ![install-mysql-1-new-dataline](img/install-mysql/new-data-line.png)
 
 
 
-##### 3.1.2 填写数据源基本信息 （master和slave jdbc连接串信息）
+**3.1.2 填写数据源基本信息 （master和slave jdbc连接串信息）**
 
 其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。 
 
@@ -239,12 +238,11 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 
 
-##### 3.1.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；
+**3.1.3 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；**
 
 ![选择schema标注](img/install-mysql/mysql-add-schema-table.png)
 
-
-##### 3.1.4 启动Topology
+**3.1.4 启动Topology**
 
 在点击启动操作按钮之前请确保，storm服务器上面的/app/dbus/apache-storm-1.0.2/dbus_jars目录下，已经上传了最新的jar包。
 
@@ -280,13 +278,13 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 ### 3.3 验证增量数据
 
-#### a) 插入数据
+**a) 插入数据**
 
 ​	向数据源的数据表中添加数据，检验效果。此处以testdb数据源的test数据库的表actor中添加数据为例，向此表插入几条数据之后，会看到kafka UI中相应的topic:  testdb, testdb.test, testdb.test.result的offset均有所增加。也可以在grafana中查看数据流的情况。
 
 ​	如果数据源中添加的schema和数据表已经存在数据，点击dbus web中的拉增量和拉全量，将现有数据同步到kafka中。
 
-#### b) grafana看增量流量
+**b) grafana看增量流量**
 
 ​	上述向数据表中添加完数据后，过大约几分钟，会在grafana中显示数据的处理情况。如下图中，两组则线图分别表示：计数和延时，正常情况下计数图中"分发计数器"和"增量计数器"两条线是重合的。在图左上角，选择要查看的数据表，此处为testdb.test.actor。上部的分发器计数图展示了此表的分发和增量程序接收到7条数据；下部的分发器延时展示分发延时、增量延时和末端延时情况。
 

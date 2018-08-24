@@ -98,6 +98,9 @@ public class MessageCode {
     public static final int CREATE_DEFAULT_SINK_ERROR = 17011;
     public static final int CREATE_SUPER_USER_ERROR = 17012;
     public static final int ENCODE_PLUGIN_INIT_ERROR = 17013;
+    public static final int STORM_HOME_PATH_ERROR = 17014;
+    public static final int HEARTBEAT_JAR_PATH_ERROR = 17015;
+    public static final int STORM_UI_ERROR = 17016;
 
     //ToolSet module code 18xxx
     public static final int PARAM_IS_WRONG = 18001;

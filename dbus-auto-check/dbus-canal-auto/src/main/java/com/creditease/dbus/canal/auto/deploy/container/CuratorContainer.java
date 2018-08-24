@@ -68,7 +68,7 @@ public class CuratorContainer {
                 bw.write("-----check canal zk path  end ");
                 bw.newLine();
             } else {
-                bw.write("path " + path +"exist");
+                bw.write("path " + path +"  exist");
                 bw.newLine();
                 bw.write("-----check canal zk path  end ");
                 bw.newLine();

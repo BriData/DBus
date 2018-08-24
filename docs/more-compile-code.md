@@ -4,6 +4,8 @@ title: 编译源代码
 description: 编译源代码 DBUS_VERSION_SHORT
 ---
 
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 ## 1 添加依赖
 
 在dbus-commons/pom.xml 中，需要在占位符 处引入 mysql和 oracle相关包， 占位符如下：

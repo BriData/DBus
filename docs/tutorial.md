@@ -3,7 +3,7 @@ layout: global
 title: 用户手册
 description: Dbus用户手册
 ---
-
+* This will become a table of contents (this text will be scraped).
  {:toc}
 
 # 1. 总体说明
@@ -165,7 +165,7 @@ Sink即数据输出目标端，现阶段一般为Kafka集群。Sink既可借用D
 - 新增 ： jar包和jar包版本的选择，依赖admin通过“jar包管理“操作添加的内容。
 - 拖回重跑 ： 如果租户觉得自己的数据有问题，想重新消费kafka的数据，该功能可以提供该能力。该功能只有running状态的topology能使用。
 
-###### ##如果拖回重跑，有什么影响？
+**如果拖回重跑，有什么影响？**
 
 ```
 （1）能从指定offset重新消费数据，这是我们想要的;    
@@ -233,7 +233,9 @@ Sink即数据输出目标端，现阶段一般为Kafka集群。Sink既可借用D
 
 DBUS提供了高效的初始化加载全量数据加载，支持指定输出topic及是否升版本号等，灵活应对客户需求。
 
-### <a name="faq_grafana_err" id="independent-fullpull">1.1 贴源全量数据拉取</a>
+<span id="independent-fullpull"></span>
+
+### 1.1 贴源全量数据拉取
 
 前面我们提到，贴源数据采集独立于多租户数据分发。所以，“贴源数据采集”是一套功能完备的数据采集平台，亦提供了“全量数据拉取”功能。这一级拉取的数据，会吐到“贴源数据输出Kafka”，即：衔接贴源数据采集和租户数据分发的kafka。
 
@@ -277,7 +279,9 @@ DBUS生态里关于全量，有贴源拉全量、租户拉全量、独立拉全�
 
 ![global-fullpull](img/manual/global-fullpull.png)
 
-## <a id="encode-intro">4.2 脱敏配置介绍</a>
+<span id="encode-intro"></span>
+
+## 4.2 脱敏配置介绍
 
 ### 4.2.1 脱敏插件化机制及脱敏插件管理
 

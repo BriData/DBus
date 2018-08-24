@@ -1,6 +1,8 @@
 package com.creditease.dbus.canal.auto.deploy.utils;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.InputStreamReader;
 
 /**
  * User: 王少楠
@@ -60,11 +62,48 @@ public class CanalUtils {
         }
     }
 
-    private static void exec(String cmd) throws Exception{
-        Process process = Runtime.getRuntime().exec(cmd);
-        int exitValue = process.waitFor();
-        if (0 != exitValue) {
-            throw new RuntimeException("");
+    public static String exec(Object cmd) throws Exception{
+        Process process = null;
+        BufferedReader bufrIn = null;
+        BufferedReader bufrError = null;
+        StringBuilder result = new StringBuilder();
+
+        try {
+            if(cmd instanceof String) {
+                process = Runtime.getRuntime().exec(cmd.toString());
+            }else {
+                String[] cmd2 = (String[]) cmd;
+                process = Runtime.getRuntime().exec(cmd2);
+            }
+
+            int exitValue = process.waitFor();
+
+            if (0 != exitValue) {
+                bufrError = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
+                String line = null;
+                while ((line = bufrError.readLine()) != null) {
+                    result.append(line).append("\n");
+                }
+                bufrError.close();
+                throw new RuntimeException("");
+            }else {
+                // 读取输出
+                // 获取命令执行结果, 有两个结果: 正常的输出 和 错误的输出（PS: 子进程的输出就是主进程的输入）
+                bufrIn = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                String line = null;
+                while ((line = bufrIn.readLine()) != null) {
+                    result.append(line);
+                }
+                return result.toString();
+            }
+        }finally {
+            if(bufrIn !=null){
+                bufrIn.close();
+            }
+            if(process != null){
+                process.destroy();
+            }
         }
+
     }
 }

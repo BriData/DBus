@@ -58,11 +58,12 @@ export default class DataTableManageReadZkModal extends Component {
     return (
       <div className={styles.table}>
         <Modal
+          className="top-modal"
           key={key}
           visible={visible}
           maskClosable={true}
           width={1000}
-          title={'Read ZK'}
+          title={'查看全量拉取状态'}
           onCancel={onClose}
           footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
         >

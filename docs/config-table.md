@@ -4,8 +4,8 @@ title: 表配置介绍
 description: Dbus Web 表配置介绍 BUS_VERSION_SHORT
 ---
 
-
-
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 ## 1 表基本信息
 
 ​	Data Table页面展示表的信息，如图所示。
@@ -182,7 +182,7 @@ comments：列注释
 
 ​        在ZK的DBus/Commons/encodrPlugins文件下，可查看所有脱敏类型。配置完成后，点击save按钮，显示配置脱敏信息成功即可对表进行脱敏。或者点击more的下拉列表的生效按钮则可生效脱敏配置。
 
-#### 例子：
+**例子：**
 
 对表testdb/test/actor进行如下脱敏配置：
 
@@ -326,7 +326,6 @@ comments：列注释
  - parameter 表示正则表达式
 
 
-
-#### **例子**
+**例子**
 
 可参考：[基于可视化配置的日志结构化转换实现](http://dbaplus.cn/news-134-1860-1.html)

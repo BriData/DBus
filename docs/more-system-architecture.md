@@ -5,6 +5,8 @@ title: 系统架构
 description: Dbus系统架构 DBUS_VERSION_SHORT
 ---
 
+* This will become a table of contents (this text will be scraped).
+ {:toc}
 大体来说，Dbus支持两类数据源：
 
 1. **RDBMS数据源**

@@ -21,6 +21,10 @@
 package com.creditease.dbus.stream.oracle.appender.bolt.processor.dispatcher;
 
 import com.alibaba.fastjson.JSON;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Slf4jReporter;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.Constants.MessageBodyKey;
@@ -37,10 +41,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.storm.shade.com.codahale.metrics.Meter;
-import org.apache.storm.shade.com.codahale.metrics.MetricRegistry;
-import org.apache.storm.shade.com.codahale.metrics.ScheduledReporter;
-import org.apache.storm.shade.com.codahale.metrics.Slf4jReporter;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

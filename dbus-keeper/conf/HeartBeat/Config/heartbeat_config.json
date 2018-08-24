@@ -24,10 +24,12 @@
   "fullPullOldVersionCnt": "3",
   "adminSMSNo": "13800138000",
   "adminUseSMS": "N",
-  "adminEmail": "example@example.com",
-  "alarmMailSMTPAddress": "smtp.example.com",
-  "alarmMailOutBox": "example@example.com",
-  "alarmMailPass": "pass1234",
-  "adminUseEmail": "Y",
+  "adminEmail": "",
+  "alarmSendEmail": "",
+  "alarmMailSMTPAddress": "",
+  "alarmMailSMTPPort": "",
+  "alarmMailUser": "",
+  "alarmMailPass": "",
+  "adminUseEmail": "N",
   "additionalNotify": {}
 }

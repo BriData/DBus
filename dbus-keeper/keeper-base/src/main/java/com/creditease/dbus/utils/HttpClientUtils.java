@@ -22,6 +22,7 @@ package com.creditease.dbus.utils;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -151,6 +152,36 @@ public class HttpClientUtils {
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             return "";
+        } finally {
+            close(httpclient, input, br);
+        }
+    }
+
+    public static Integer httpGetWithAuthorization(String url, String authorization) {
+        CloseableHttpClient httpclient = null;
+        InputStream input = null;
+        BufferedReader br = null;
+        Integer statusCode = null;
+        try {
+            RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).build();
+            httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+            HttpGet httpget = new HttpGet(url);
+            httpget.addHeader("Authorization", authorization);
+            HttpResponse response = httpclient.execute(httpget);
+            statusCode = response.getStatusLine().getStatusCode();
+            HttpEntity entity = response.getEntity();
+            input = entity.getContent();
+            br = new BufferedReader(new InputStreamReader(input));
+            StringBuilder data = new StringBuilder();
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                data.append(line);
+            }
+            logger.info(data.toString());
+            return statusCode;
+        } catch (IOException e) {
+            logger.error(e.getMessage(), e);
+            return statusCode;
         } finally {
             close(httpclient, input, br);
         }
