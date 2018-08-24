@@ -59,17 +59,25 @@ description: Dbus 安装Flume源 DBUS_VERSION_SHORT
 
   ![filebeat目录](img/install-flume-source/install-flume-source-dir-info.png)
 
-   **flume目录 :**flume程序文件夹，用户可手动更改flume-conf.properties，也可以使用dbus的检测和部署脚本（即checkDeploy.sh，需要先更新conf/log-conf.properties文件）
+   **flume目录 :**flume程序文件夹。
 
-   **checkDeploy.sh :** 实现了检测kafka连通性及自动更换flume配置的功能
+   **checkDeploy.sh :** 实现了检测kafka连通性及自动更换flume配置的功能。
 
-   **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，flume会从中抽取心跳日志
+   **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，flume会从中抽取心跳日志。
 
-   **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
+   **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志。
 
-   **start.sh :**  启动脚本，一键启动flume程序、心跳程序等
+   **start.sh :**  启动脚本，一键启动flume程序、心跳程序等。
 
-   **stop.sh :**   停止脚本，一键停止flume程序、心跳程序等
+   **stop.sh :**   停止脚本，一键停止flume程序、心跳程序等。
+
+  执行下面命令，自动替换配置项flume配置项，并检测相关资源连通性：
+
+  ```
+  ./checkDeploy.sh
+  ```
+
+  注：用户也可手动更改flume配置文件，完成flume配置。
 
 ### 1.2. dbus-flume启动
 

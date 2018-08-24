@@ -62,8 +62,6 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
      **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即checkDeploy.sh脚本）来自动替换配置项
 
-     **checkDeploy.sh:** 用于自动替换filebeat配置文件所需要修改的配置项，在conf目录下进行修改，该脚本会自动将配置项替换到filebeat.yml中
-
      **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，filebeat会从中抽取心跳日志
 
      **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
@@ -72,6 +70,12 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
      **stop.sh :**   停止脚本，一键停止filebeat程序、心跳程序等
 
+
+​	执行下面命令，自动替换配置项flume配置项，并检测相关资源连通性：
+
+​	**./checkDeploy.sh**
+
+​	注：用户也可手动更改flume配置文件，完成flume配置。
 
 ### 1.2 dbus-filebeat启动
 
