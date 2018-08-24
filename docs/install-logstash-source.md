@@ -93,7 +93,7 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
 
 
-### 1.4. logstash验证
+### 1.3. logstash验证
 
 **读取kafka的topic: monitor_log_logstash，确认是否有数据：**
 
