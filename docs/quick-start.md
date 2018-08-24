@@ -15,6 +15,7 @@ description: Dbus快速开始手册 DBUS_VERSION_SHORT
   - kafka 0.10.0.0
   - storm 1.0.1
   - granfana  4.2.0
+  - logstash 5.6.1
   - influxdb （需要单独安装， 参考如下步骤3）
   - mysql （需要单独安装，参考如下步骤2）
 - dbus相关包：
@@ -22,6 +23,7 @@ description: Dbus快速开始手册 DBUS_VERSION_SHORT
   - dbus-stream-main 0.5.0
   - dbus-router 0.5.0
   - dbus-heartbeat 0.5.0
+  - dbus-log-processor 0.5.0
 - mysql数据源所需：
   - canal 
 
@@ -193,33 +195,39 @@ cd /app/dbus-allinone
 请耐心等待(大概需要5分钟左右时间)，正确的启动日志如下：
 ```
 Start grafana...
-Grafana started. pid: 23381
+Grafana started. pid: 23760
 =============================================================================================
 Start zookeeper...
-zookeeper pid 23450
+zookeeper pid 23818
 Zookeeper started.
 =============================================================================================
 Start kafka...
 No kafka server to stop
-kafka pid 23690
+kafka pid 24055
 kafka started.
 =============================================================================================
 Start Canal ... 
 canal started.
 =============================================================================================
+Start logstash...
+No logstash to stop
+nohup: appending output to `nohup.out'
+logstash pid 24151
+logstash started.
+=============================================================================================
 Start storm nimbus...
 No storm nimbus to stop
-Storm nimbus pid 23766
+Storm nimbus pid 24215
 Storm nimbus started.
 =============================================================================================
 Start storm supervisor...
 No storm supervisor to stop
-Storm supervisor pid 24196
+Storm supervisor pid 24674
 Storm supervisor started.
 =============================================================================================
 Start storm ui...
 No storm ui to stop
-Storm ui pid 24483
+Storm ui pid 24939
 Storm ui started. ui port: 6672
 =============================================================================================
 Stop storm topology.
@@ -230,7 +238,7 @@ Storm topology started.
 =============================================================================================
 Start Dbus Heartbeat...
 No Dbus Heartbeat to stop
-Dbus Heartbeat pid 26256
+Dbus Heartbeat pid 26854
 Dbus Heartbeat started.
 =============================================================================================
 Start Dbus keeper...
@@ -242,11 +250,11 @@ keeper-service process not exist
 register-server process not exist
 
 =========================start===========================
-register-server started. pid: 26547
-keeper-proxy  started. pid: 26630
-gateway started. pid: 26799
-keeper-mgr started. pid: 26896
-keeper-service started. pid: 27028
+register-server started. pid: 27077
+keeper-proxy  started. pid: 27172
+gateway started. pid: 27267
+keeper-mgr started. pid: 27504
+keeper-service started. pid: 27645
 Dbus keeper prot: 6090
 Dbus keeper started.
 =============================================================================================
@@ -268,7 +276,7 @@ cd /app/dbus-allinone/allinone-auto-check-0.5.0
 ```
 [app@dbus-n1 reports]$ tree
 .
-└── 20180815173707
+└── 20180824111905
     └── check_report.txt
 ```
 
@@ -281,19 +289,19 @@ cd /app/dbus-allinone/allinone-auto-check-0.5.0
 check db&user dbusmgr start:
 ============================================
 table t_avro_schema data count: 0
-table t_data_schema data count: 2
-table t_data_tables data count: 3
-table t_dbus_datasource data count: 1
+table t_data_schema data count: 4
+table t_data_tables data count: 4
+table t_dbus_datasource data count: 2
 table t_ddl_event data count: 0
 table t_encode_columns data count: 0
 table t_encode_plugins data count: 1
 table t_fullpull_history data count: 0
-table t_meta_version data count: 3
-table t_plain_log_rule_group data count: 0
-table t_plain_log_rule_group_version data count: 0
+table t_meta_version data count: 5
+table t_plain_log_rule_group data count: 1
+table t_plain_log_rule_group_version data count: 1
 table t_plain_log_rule_type data count: 0
-table t_plain_log_rules data count: 0
-table t_plain_log_rules_version data count: 0
+table t_plain_log_rules data count: 5
+table t_plain_log_rules_version data count: 5
 table t_project data count: 1
 table t_project_encode_hint data count: 1
 table t_project_resource data count: 1
@@ -307,89 +315,98 @@ table t_query_rule_group data count: 0
 table t_sink data count: 1
 table t_storm_topology data count: 0
 table t_table_action data count: 0
-table t_table_meta data count: 3
+table t_table_meta data count: 7
 table t_user data count: 2
 
 # 出现以下信息说明dbus库正常
 check db&user dbus start:
 ============================================
-table db_heartbeat_monitor data count: 18
+table db_heartbeat_monitor data count: 15
 table test_table data count: 0
 table db_full_pull_requests data count: 0
 
 # 出现以下信息说明canal用户正常
-check db&user canal start:
+check db&user canal start: 
 ============================================
-table db_heartbeat_monitor data count: 18
+master status File:mysql-bin.000002, Position:12047338
+table db_heartbeat_monitor data count: 15
 table test_table data count: 0
 table db_full_pull_requests data count: 0
 
 # 出现以下信息说明testschema库正常
-check db&user testschema start:
+check db&user testschema start: 
 ============================================
 table test_table data count: 0
 
 # 出现以下信息说明zk启动正常
-check base component zookeeper start:
+check base component zookeeper start: 
 ============================================
-23450 org.apache.zookeeper.server.quorum.QuorumPeerMain
+23818 org.apache.zookeeper.server.quorum.QuorumPeerMain
 
 # 出现以下信息说明kafka启动正常
-check base component kafka start:
+check base component kafka start: 
 ============================================
-23690 kafka.Kafka
+24055 kafka.Kafka
 
 # 出现以下信息说明storm nimbus、supervisor、ui 启动正常
-check base component storm start:
+check base component storm start: 
 ============================================
-25729 org.apache.storm.daemon.worker
-24483 org.apache.storm.ui.core
-24196 org.apache.storm.daemon.supervisor
-25960 org.apache.storm.LogWriter
-26505 org.apache.storm.LogWriter
-25390 org.apache.storm.LogWriter
-25715 org.apache.storm.LogWriter
-23766 org.apache.storm.daemon.nimbus
-25974 org.apache.storm.daemon.worker
-26519 org.apache.storm.daemon.worker
-25404 org.apache.storm.daemon.worker
+26500 org.apache.storm.daemon.worker
+25929 org.apache.storm.daemon.worker
+27596 org.apache.storm.LogWriter
+26258 org.apache.storm.LogWriter
+24215 org.apache.storm.daemon.nimbus
+27035 org.apache.storm.LogWriter
+27611 org.apache.storm.daemon.worker
+26272 org.apache.storm.daemon.worker
+24674 org.apache.storm.daemon.supervisor
+24939 org.apache.storm.ui.core
+26486 org.apache.storm.LogWriter
+27064 org.apache.storm.daemon.worker
+25915 org.apache.storm.LogWriter
 
 # 出现以下信息说明influxdb 启动正常
-check base component influxdb start:
+check base component influxdb start: 
 ============================================
-influxdb 10265     1  0 Aug08 ?        00:53:30 /usr/bin/influxd -pidfile /var/run/influxdb/influxd.pid -config /etc/influxdb/influxdb.conf
-app      28266 28199  0 17:37 pts/2    00:00:00 /bin/sh -c ps -ef | grep influxdb
-app      28269 28266  0 17:37 pts/2    00:00:00 grep influxdb
+influxdb 10265     1  0 Aug08 ?        02:28:06 /usr/bin/influxd -pidfile /var/run/influxdb/influxd.pid -config /etc/influxdb/influxdb.conf
+app      28823 28746  0 11:19 pts/3    00:00:00 /bin/sh -c ps -ef | grep influxdb
+app      28827 28823  0 11:19 pts/3    00:00:00 grep influxdb
 
 # 出现以下信息说明grafana 启动正常
-check base component grafana start:
+check base component grafana start: 
 ============================================
-app      23381     1  0 17:27 pts/2    00:00:00 ./grafana-server
-app      28271 28199  0 17:37 pts/2    00:00:00 /bin/sh -c ps -ef | grep grafana
-app      28275 28271  0 17:37 pts/2    00:00:00 grep grafana
+app      23760     1  0 11:09 pts/3    00:00:00 ./grafana-server
+app      28828 28746  0 11:19 pts/3    00:00:00 /bin/sh -c ps -ef | grep grafana
+app      28832 28828  0 11:19 pts/3    00:00:00 grep grafana
 
 # 出现以下信息说明心跳heartbeat 启动正常
-check base component heartbeat start:
+check base component heartbeat start: 
 ============================================
-26256 com.creditease.dbus.heartbeat.start.Start
+26854 com.creditease.dbus.heartbeat.start.Start
+
+# 出现以下信息说明logstash 启动正常
+check base component logstash start: 
+============================================
+24151 org.jruby.Main
 
 # 出现以下信息说明canal 启动正常
-check canal start:
+check canal start: 
 ============================================
 zk path [/DBus/Canal/otter-testdb] exists.
-23737 com.alibaba.otter.canal.deployer.CanalLauncher
+24105 com.alibaba.otter.canal.deployer.CanalLauncher
 
 # 出现以下信息说明dispatcher-appender、mysql-extractor、splitter-puller、router 启动正常
-check topology start:
+check topology start: 
 ============================================
 api: http://dbus-n1:6672/api/v1/topology/summary
+topology testlog-log-processor status is ACTIVE
+topology testdb-mysql-extractor status is ACTIVE
+topology testdb-splitter-puller status is ACTIVE
 topology testdb-dispatcher-appender status is ACTIVE
 topology tr-router status is ACTIVE
-topology testdb-splitter-puller status is ACTIVE
-topology testdb-mysql-extractor status is ACTIVE
 
 # 出现以下信息说明从数据库->extractor-dispatcher->appender线路正常
-check flow line start:
+check flow line start: 
 ============================================
 first step insert heart beat success.
 data arrive at topic: testdb
@@ -454,7 +471,44 @@ INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:0
 
 
 
-# 5. 登录DBus Keeper体检UI操作
+# 5. 验证logstash抽取心跳日志是否安装成功
+
+dbus-heartbeat心跳模块儿产生日志位置在：/app/dbus-allinone/dbus-heartbeat-0.5.0/logs/heartbeat/heartbeat.log，利用logstash抽取该日志文件，把非结构化的数据，提取成结构化的数据
+
+### 5.1 日志中原始非结构化数据如下：
+
+通过如下命令，查看要提取的非结构化数据，如下图所示，每一分钟产生3条包含"插入心跳包成功"的日志
+
+```
+cd /app/dbus-allinone/dbus-heartbeat-0.5.0/logs/heartbeat/
+tail -f heartbeat.log | grep "插入心跳包成功"
+```
+
+![](img/quick-start-6-1-1.png)
+
+### 5.2 在Dbus Keeper上配置相应的结构化规则和查看规则执行后的结果
+
+提取规则如下图：
+
+![](img/quick-start-6-2-1.png)
+
+规则执行后结果
+
+![](img/quick-start-6-2-2.png)
+
+### 5.3 在grafana查看实时提取流量监控
+
+选择log table deatil board
+
+![](img/quick-start-6-3-1.png)
+
+选择table：testlog.testlog_schema.t_heartbeat_data 
+
+![](img/quick-start-6-3-2.png)
+
+
+
+# 6. 登录DBus Keeper体检UI操作
 
 ### 登录dbus keeper前提
 
@@ -474,7 +528,7 @@ INSERT INTO test_table (NAME, BIRTHDAY) VALUES ('testdataname', '2018-08-10 18:0
 192.168.0.1 dbus-n1
 ```
 
-### 5.1登录dbus keeper
+### 6.1登录dbus keeper
 
 登录dbus keeper url地址：http://dbus-n1:6090/login
 
