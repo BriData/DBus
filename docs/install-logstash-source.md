@@ -182,11 +182,9 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
-   - **配置规则:**  topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。
+   - **配置规则:**  topic是在logstash中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击“保存所有规则”按钮，保存规则，并返回到规则组页面。
 
-     添加规则具体步骤和方法，参考：
-
-   - 配置完规则后，查看过滤出的数据，点击“保存所有规则”按钮，保存规则，并返回到规则组页面。
+     添加规则具体步骤和方法，请参考：[日志规则配置](config-rule.html)
 
      ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
