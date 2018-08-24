@@ -51,8 +51,6 @@ description: Dbus 安装Logstash源 DBUS_VERSION_SHORT
   	下载之后，直接在任意目录解压即可，解压目录如下图所示。dbus-logstash包含检测脚本、自动配置脚本、心跳脚本以及启停脚本。
 
    ![filebeat目录](img/install-logstash-source/install-logstash-source-dir-info.png)
-
-
 ```
    	logstash目录 :logstash程序文件夹。
    	checkDeploy.sh : 内部含有检测kafka连通性及自动更换logstash配置的功能。
