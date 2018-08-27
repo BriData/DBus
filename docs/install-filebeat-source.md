@@ -62,8 +62,6 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
      **filebeat目录 :**filebeat程序文件夹，用户可手动更改filebeat.yml，也可以使用dbus的检测和部署脚本（即checkDeploy.sh脚本）来自动替换配置项
 
-     **checkDeploy.sh:** 用于自动替换filebeat配置文件所需要修改的配置项，在conf目录下进行修改，该脚本会自动将配置项替换到filebeat.yml中
-
      **time_heartbeat.sh :** 定时产生心跳，并将心跳日志写入dbus-agent-heartbeat文件夹中，filebeat会从中抽取心跳日志
 
      **dbus-agent-heartbeat :** 放置定时心跳脚本产生的心跳日志
@@ -72,6 +70,12 @@ description: Dbus 安装Filebeat源 DBUS_VERSION_SHORT
 
      **stop.sh :**   停止脚本，一键停止filebeat程序、心跳程序等
 
+
+​	执行下面命令，自动替换配置项flume配置项，并检测相关资源连通性：
+
+​	**./checkDeploy.sh**
+
+​	注：用户也可手动更改flume配置文件，完成flume配置。
 
 ### 1.2 dbus-filebeat启动
 
@@ -219,6 +223,8 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
    ![img/install-filebeat-source/install-filebeat-source-add-table-2.png](img/install-filebeat-source/install-filebeat-source-add-table-2.png)
 
 * **配置规则:** topic是在filebeat中配置的topic，即源topic，可以指定offset，获取固定区间的数据，然后点击show data按钮，此时会在页面下方显示原始数据，点击Add，新增一些过滤规则，对数据进行处理。配置完规则后，查看过滤出的数据，点击"保存规则"按钮，保存规则，并返回到规则组页面。
+
+   添加规则具体步骤和方法，请参考：[日志规则配置](config-rule.html)
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
