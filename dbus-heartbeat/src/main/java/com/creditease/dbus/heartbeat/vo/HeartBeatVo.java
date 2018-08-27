@@ -95,7 +95,7 @@ public class HeartBeatVo implements Serializable {
 
     private String alarmSendEmail;
     private String alarmMailSMTPAddress;
-    private Integer alarmMailSMTPPort;
+    private String alarmMailSMTPPort;
     private String alarmMailUser;
     private String alarmMailPass;
 
@@ -365,11 +365,11 @@ public class HeartBeatVo implements Serializable {
         this.alarmMailSMTPAddress = alarmMailSMTPAddress;
     }
 
-    public Integer getAlarmMailSMTPPort() {
+    public String getAlarmMailSMTPPort() {
         return alarmMailSMTPPort;
     }
 
-    public void setAlarmMailSMTPPort(Integer alarmMailSMTPPort) {
+    public void setAlarmMailSMTPPort(String alarmMailSMTPPort) {
         this.alarmMailSMTPPort = alarmMailSMTPPort;
     }
 

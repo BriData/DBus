@@ -101,6 +101,7 @@ public class MessageCode {
     public static final int STORM_HOME_PATH_ERROR = 17014;
     public static final int HEARTBEAT_JAR_PATH_ERROR = 17015;
     public static final int STORM_UI_ERROR = 17016;
+    public static final int DBUS_ENVIRONMENT_IS_ALREADY_INIT = 17017;
 
     //ToolSet module code 18xxx
     public static final int PARAM_IS_WRONG = 18001;

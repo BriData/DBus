@@ -255,7 +255,7 @@ export default class InitializationForm extends Component {
               </FormItem>
             </Col>
             <Col style={{color: commentColor}} span={commentSpan} offset={commentOffset}>
-              例如：http://dbus-n1:3000
+              例如：http://grafana_server_ip:3000
             </Col>
           </Row>
           <Row>

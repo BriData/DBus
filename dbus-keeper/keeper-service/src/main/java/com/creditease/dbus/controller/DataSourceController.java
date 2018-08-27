@@ -59,13 +59,13 @@ public class DataSourceController extends BaseController{
     @GetMapping("/search")
     public ResultEntity search(@RequestParam(defaultValue = "1") Integer pageNum,
                                @RequestParam(defaultValue = "10") Integer pageSize,
-                               String dsName,String sortBy,String order){
+                               String dsName,String sortBy,String order,String dsType){
         if (!StringUtils.isBlank(order)) {
             if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
                 order = "desc";
             }
         }
-        return resultEntityBuilder().payload(service.search(pageNum,pageSize,dsName,sortBy,order)).build();
+        return resultEntityBuilder().payload(service.search(pageNum,pageSize,dsName,sortBy,order,dsType)).build();
     }
 
     @GetMapping("/{id}")

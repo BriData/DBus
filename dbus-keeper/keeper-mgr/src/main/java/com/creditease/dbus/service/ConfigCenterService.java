@@ -20,7 +20,9 @@
 
 package com.creditease.dbus.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
 import com.creditease.dbus.commons.Constants;
@@ -79,6 +81,72 @@ public class ConfigCenterService {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
+    public Integer updateGlobalConf(LinkedHashMap<String, String> map) throws Exception {
+        //1.bootstrapServers检测
+        String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
+        String[] split = bootstrapServers.split(",");
+        for (String s : split) {
+            String[] hostPort = s.split(":");
+            if (hostPort == null || hostPort.length != 2) {
+                return MessageCode.KAFKA_BOOTSTRAP_SERVERS_IS_WRONG;
+            }
+            boolean b = urlTest(hostPort[0], Integer.parseInt(hostPort[1]));
+            if (!b) {
+                return MessageCode.KAFKA_BOOTSTRAP_SERVERS_IS_WRONG;
+            }
+        }
+        //2.Grafana检测
+        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
+        if (!urlTest(monitURL)) {
+            return MessageCode.MONITOR_URL_IS_WRONG;
+        }
+
+        //3.storm检测
+        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
+        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String path = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
+        String pubKeyPath = env.getProperty("pubKeyPath");
+        String s = exeCmdErrorStream(user, host, port, pubKeyPath, "cd " + path);
+        if (s == null) {
+            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
+        }
+        if (StringUtils.isNotBlank(s)) {
+            return MessageCode.STORM_HOME_PATH_ERROR;
+        }
+        String stormUI = map.get(GLOBAL_CONF_KEY_STORM_REST_API);
+        if (!urlTest(stormUI+"/nimbus/summary")) {
+            return MessageCode.STORM_UI_ERROR;
+        }
+        //4.Influxdb检测
+        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+        String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
+        if (!"200".equals(HttpClientUtils.httpGet(url))) {
+            return MessageCode.INFLUXDB_URL_ERROR;
+        }
+        //5.心跳检测
+        String[] hosts = map.get("heartbeat.host").split(",");
+        int heartport = Integer.parseInt(map.get("heartbeat.port"));
+        String heartuser = map.get("heartbeat.user");
+        String heartpath = map.get("heartbeat.jar.path");
+        for (String hearthost : hosts) {
+            String res = exeCmdErrorStream(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath);
+            if (res == null) {
+                return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+            }
+            if (StringUtils.isNotBlank(s)) {
+                return MessageCode.HEARTBEAT_JAR_PATH_ERROR;
+            }
+        }
+        map.remove("grafanaToken");
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        }
+        zkService.setData(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
+        return 0;
+    }
+
     public Integer updateMgrDB(Map<String, String> map) throws Exception {
         Connection connection = null;
         try {
@@ -117,6 +185,9 @@ public class ConfigCenterService {
     }
 
     public int updateBasicConf(LinkedHashMap<String, String> map) throws Exception {
+        if (isInitialized()) {
+            return MessageCode.DBUS_ENVIRONMENT_IS_ALREADY_INIT;
+        }
         Boolean initialized = isInitialized();
 
         //1 检测配置数据是否正确
@@ -204,107 +275,65 @@ public class ConfigCenterService {
         if (zkService.isExists("/DBusInit")) {
             zkService.deleteNode("/DBusInit");
         }
+        //11.初始化报警配置
+        initAlarm(map);
+        logger.info("11.报警配置初始化完成。");
         return 0;
     }
 
-    private int initStormJars(LinkedHashMap<String, String> map, Boolean initialized) {
-        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
-        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
-        String pubKeyPath = env.getProperty("pubKeyPath");
-        String homePath = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
-        String jarsPath = homePath + "/dbus_jars";
-        String routerJarsPath = homePath + "/dbus_router_jars";
-        String encodePluginsPath = homePath + "/dbus_encoder_plugins_jars";
-        String baseJarsPath = homePath + "/base_jars.zip";
-        if (initialized) {
-            String cmd = MessageFormat.format("rm -rf {0}; rm -rf {1}; rm -rf {2};rm -rf {3}",
-                    jarsPath, routerJarsPath, encodePluginsPath, baseJarsPath);
-            logger.info("cmd:{}", cmd);
-            if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+    public int updateBasicConfByOption(LinkedHashMap<String, String> map, String options) throws Exception {
+        Integer res = updateGlobalConf(map);
+        if (res != 0) {
+            return res;
+        }
+        List<String> optionList = Arrays.asList(options.split("-"));
+        if (optionList.contains("grafana")) {
+            String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
+            String grafanaToken = map.get("grafanaToken");
+            String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+            initGrafana(monitURL, influxdbUrl, grafanaToken);
+            logger.info("grafana初始化完成。");
+        }
+        if (optionList.contains("influxdb")) {
+            String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+            if (initInfluxdb(influxdbUrl) != 0) {
+                return MessageCode.INFLUXDB_URL_ERROR;
+            }
+            logger.info("influxdb初始化完成。");
+        }
+        if (optionList.contains("storm")) {
+            if (initStormJars(map, false) != 0) {
                 return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
             }
+            logger.info("storm程序包初始化完成。");
         }
-        //7.1.新建目录
-        String cmd = MessageFormat.format(" mkdir -pv {0}", homePath);
-        logger.info("cmd:{}", cmd);
-        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
-            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
+        if (optionList.contains("heartBeat")) {
+            int heartRes = initHeartBeat(map, false);
+            if (heartRes != 0) {
+                return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+            }
+            logger.info("heartbeat程序包初始化完成。");
         }
-        //7.2.上传压缩包
-        if (uploadFile(user, host, port, pubKeyPath, ConfUtils.getParentPath() + "/base_jars.zip", homePath) != 0) {
-            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
-        }
-        //7.3.解压压缩包
-        cmd = MessageFormat.format(" cd {0}; unzip -oq base_jars.zip", homePath);
-        logger.info("cmd:{}", cmd);
-        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
-            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
-        }
-        return 0;
-    }
-
-    private int initEncode() throws Exception {
-        Properties global = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
-        String basePath = global.getProperty("dbus.encode.plugins.jars.base.path");
-        String path = basePath + "/0/20180809_155150/encoder-plugins-0.5.0.jar";
-        EncodePlugins encodePlugin = new EncodePlugins();
-        encodePlugin.setName("encoder-plugins-0.5.0.jar");
-        encodePlugin.setPath(path);
-        encodePlugin.setProjectId(0);
-        encodePlugin.setStatus(KeeperConstants.ACTIVE);
-        encodePlugin.setEncoders("md5,default-value,murmur3,regex,replace");
-        ResponseEntity<ResultEntity> post = sender.post(ServiceNames.KEEPER_SERVICE, "encode-plugins/create", encodePlugin);
-        if (post.getBody().getStatus() != 0) {
-            return MessageCode.ENCODE_PLUGIN_INIT_ERROR;
+        if(!isInitialized()){
+            int zkRes = initZKNodes(map);
+            if (zkRes != 0) {
+                return zkRes;
+            }
+            logger.info("zookeeper节点初始化完成。");
         }
         return 0;
     }
 
-    private int initInfluxdb(String influxdbUrl) {
-        String head = influxdbUrl + "/query?q=";
-        String tail = "&db=_internal";
-        String result = HttpClientUtils.httpGet(head + "create+database+dbus_stat_db" + tail);
-        logger.info(head + "create+database+test" + tail);
-        if (!"200".equals(result)) {
-            return MessageCode.INFLUXDB_URL_ERROR;
-        }
-        tail = "&db=_test";
-        result = HttpClientUtils.httpGet(head + "CREATE+USER+%22dbus%22+WITH+PASSWORD+%27dbus!%40%23123%27" + tail);
-        logger.info(head + "CREATE+USER+%22dbus1%22+WITH+PASSWORD+%27password%27" + tail);
-        if (!"200".equals(result)) {
-            return MessageCode.INFLUXDB_URL_ERROR;
-        }
-        result = HttpClientUtils.httpGet(head + "ALTER+RETENTION+POLICY+autogen+ON+dbus_stat_db+DURATION+15d" + tail);
-        logger.info(head + "ALTER+RETENTION+POLICY+autogen+ON+dbus_stat_db+DURATION+15d" + tail);
-        if (!"200".equals(result)) {
-            return MessageCode.INFLUXDB_URL_ERROR;
-        }
-        return 0;
+    public Boolean isInitialized() throws Exception {
+        return zkService.isExists(Constants.DBUS_ROOT);
     }
 
-    private int initGrafana(String grafanaurl, String influxdbUrl, String grafanaToken) throws Exception {
-        //新建data source
-        grafanaToken = "Bearer " + grafanaToken;
-        String url = grafanaurl + "/api/datasources";
-        String json = "{\"name\":\"inDB\",\"type\":\"influxdb\",\"url\":\"" + influxdbUrl + "\",\"access\":\"direct\",\"jsonData\":{},\"database\":\"dbus_stat_db\",\"user\":\"dbus\",\"password\":\"dbus!@#123\"}";
-        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, json);
-
-        //导入Grafana Dashboard
-        url = grafanaurl + "/api/dashboards/import";
-        byte[] bytes = ConfUtils.toByteArray("init/grafana_schema.json");
-        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
-        bytes = ConfUtils.toByteArray("init/grafana_table.json");
-        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
-        bytes = ConfUtils.toByteArray("init/Heartbeat_log_filebeat.json");
-        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
-        bytes = ConfUtils.toByteArray("init/Heartbeat_log_flume.json");
-        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
-        bytes = ConfUtils.toByteArray("init/Heartbeat_log_logstash.json");
-        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
-        return 0;
-    }
-
+    /**
+     * 1
+     *
+     * @param map
+     * @return
+     */
     private int checkInitData(LinkedHashMap<String, String> map) {
         //1.bootstrapServers检测
         String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
@@ -375,21 +404,69 @@ public class ConfigCenterService {
         return 0;
     }
 
+    /**
+     * 2
+     *
+     * @param map
+     * @return
+     * @throws Exception
+     */
+    private int initZKNodes(LinkedHashMap<String, String> map) throws Exception {
+        try {
+            //初始化global.properties节点
+            LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<String, String>();
+            linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+            linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
+            linkedHashMap.put(GLOBAL_CONF_KEY_MONITOR_URL, map.get(GLOBAL_CONF_KEY_MONITOR_URL));
+            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST));
+            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
+            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_SSH_USER, map.get(GLOBAL_CONF_KEY_STORM_SSH_USER));
+            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_HOME_PATH, map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH));
+            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_REST_API, map.get(GLOBAL_CONF_KEY_STORM_REST_API));
+            linkedHashMap.put(GLOBAL_CONF_KEY_INFLUXDB_URL, map.get(GLOBAL_CONF_KEY_INFLUXDB_URL));
+            linkedHashMap.put("zk.url", env.getProperty("zk.str"));
+            linkedHashMap.put("heartbeat.host", map.get("heartbeat.host"));
+            linkedHashMap.put("heartbeat.port", map.get("heartbeat.port"));
+            linkedHashMap.put("heartbeat.user", map.get("heartbeat.user"));
+            linkedHashMap.put("heartbeat.jar.path", map.get("heartbeat.jar.path"));
+
+            String homePath = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
+            linkedHashMap.put("dbus.jars.base.path", homePath + "/dbus_jars");
+            linkedHashMap.put("dbus.router.jars.base.path", homePath + "/dbus_router_jars");
+            linkedHashMap.put("dbus.encode.plugins.jars.base.path", homePath + "/dbus_encoder_plugins_jars");
+            if (!zkService.isExists(Constants.DBUS_ROOT)) {
+                zkService.createNode(Constants.DBUS_ROOT, null);
+            }
+            if (!zkService.isExists(Constants.COMMON_ROOT)) {
+                zkService.createNode(Constants.COMMON_ROOT, null);
+            }
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> entry : linkedHashMap.entrySet()) {
+                sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+            }
+            if (zkService.isExists(Constants.GLOBAL_PROPERTIES_ROOT)) {
+                zkService.setData(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
+            } else {
+                zkService.createNode(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
+            }
+            //初始化其他节点数据
+            toolSetService.initConfig(null);
+            return 0;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return MessageCode.INIT_ZOOKEEPER_ERROR;
+        }
+    }
+
+    /**
+     * 3
+     *
+     * @param map
+     * @param initialized
+     * @return
+     */
     private int initHeartBeat(LinkedHashMap<String, String> map, boolean initialized) {
         try {
-            //heartbeat_config.json
-            byte[] data = zkService.getData(Constants.HEARTBEAT_CONFIG_JSON);
-            JSONObject json = JSONObject.parseObject(new String(data, UTF8));
-            json.put("alarmSendEmail", map.get("alarmSendEmail"));
-            json.put("alarmMailSMTPAddress", map.get("alarmMailSMTPAddress"));
-            json.put("alarmMailSMTPPort", map.get("alarmMailSMTPPort"));
-            json.put("alarmMailUser", map.get("alarmMailUser"));
-            json.put("alarmMailPass", map.get("alarmMailPass"));
-
-            //格式化json
-            String format = this.formatJsonString(json.toString());
-            zkService.setData(Constants.HEARTBEAT_CONFIG_JSON, format.getBytes(UTF8));
-
             //上传并启动心跳程序
             String[] hosts = map.get("heartbeat.host").split(",");
             int port = Integer.parseInt(map.get("heartbeat.port"));
@@ -441,54 +518,162 @@ public class ConfigCenterService {
         }
     }
 
-    private int initZKNodes(LinkedHashMap<String, String> map) throws Exception {
-        try {
-            //清空zk节点
-            deleteNodeRecursively(Constants.DBUS_ROOT);
-            //初始化global.properties节点
-            LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<String, String>();
-            linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
-            linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
-            linkedHashMap.put(GLOBAL_CONF_KEY_MONITOR_URL, map.get(GLOBAL_CONF_KEY_MONITOR_URL));
-            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST));
-            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
-            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_SSH_USER, map.get(GLOBAL_CONF_KEY_STORM_SSH_USER));
-            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_HOME_PATH, map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH));
-            linkedHashMap.put(GLOBAL_CONF_KEY_STORM_REST_API, map.get(GLOBAL_CONF_KEY_STORM_REST_API));
-            linkedHashMap.put(GLOBAL_CONF_KEY_INFLUXDB_URL, map.get(GLOBAL_CONF_KEY_INFLUXDB_URL));
-            linkedHashMap.put("zk.url", env.getProperty("zk.str"));
-            linkedHashMap.put("heartbeat.host", map.get("heartbeat.host"));
-            linkedHashMap.put("heartbeat.port", map.get("heartbeat.port"));
-            linkedHashMap.put("heartbeat.user", map.get("heartbeat.user"));
-            linkedHashMap.put("heartbeat.jar.path", map.get("heartbeat.jar.path"));
-
-            String homePath = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
-            linkedHashMap.put("dbus.jars.base.path", homePath + "/dbus_jars");
-            linkedHashMap.put("dbus.router.jars.base.path", homePath + "/dbus_router_jars");
-            linkedHashMap.put("dbus.encode.plugins.jars.base.path", homePath + "/dbus_encoder_plugins_jars");
-            if (!zkService.isExists(Constants.DBUS_ROOT)) {
-                zkService.createNode(Constants.DBUS_ROOT, null);
+    /**
+     * 7
+     *
+     * @param map
+     * @param initialized
+     * @return
+     */
+    private int initStormJars(LinkedHashMap<String, String> map, Boolean initialized) {
+        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
+        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String pubKeyPath = env.getProperty("pubKeyPath");
+        String homePath = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
+        String jarsPath = homePath + "/dbus_jars";
+        String routerJarsPath = homePath + "/dbus_router_jars";
+        String encodePluginsPath = homePath + "/dbus_encoder_plugins_jars";
+        String baseJarsPath = homePath + "/base_jars.zip";
+        if (initialized) {
+            String cmd = MessageFormat.format("rm -rf {0}; rm -rf {1}; rm -rf {2};rm -rf {3}",
+                    jarsPath, routerJarsPath, encodePluginsPath, baseJarsPath);
+            logger.info("cmd:{}", cmd);
+            if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+                return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
             }
-            if (!zkService.isExists(Constants.COMMON_ROOT)) {
-                zkService.createNode(Constants.COMMON_ROOT, null);
-            }
-            StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> entry : linkedHashMap.entrySet()) {
-                sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
-            }
-            if (zkService.isExists(Constants.GLOBAL_PROPERTIES_ROOT)) {
-                zkService.setData(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
-            } else {
-                zkService.createNode(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
-            }
-            //初始化其他节点数据
-            toolSetService.initConfig(null);
-            return 0;
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return MessageCode.INIT_ZOOKEEPER_ERROR;
         }
+        //7.1.新建目录
+        String cmd = MessageFormat.format(" mkdir -pv {0}", homePath);
+        logger.info("cmd:{}", cmd);
+        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
+        }
+        //7.2.上传压缩包
+        if (uploadFile(user, host, port, pubKeyPath, ConfUtils.getParentPath() + "/base_jars.zip", homePath) != 0) {
+            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
+        }
+        //7.3.解压压缩包
+        cmd = MessageFormat.format(" cd {0}; unzip -oq base_jars.zip", homePath);
+        logger.info("cmd:{}", cmd);
+        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
+        }
+        return 0;
     }
+
+    /**
+     * 8
+     *
+     * @param grafanaurl
+     * @param influxdbUrl
+     * @param grafanaToken
+     * @return
+     * @throws Exception
+     */
+    private int initGrafana(String grafanaurl, String influxdbUrl, String grafanaToken) throws Exception {
+        //新建data source
+        grafanaToken = "Bearer " + grafanaToken;
+        String url = grafanaurl + "/api/datasources";
+        String json = "{\"name\":\"inDB\",\"type\":\"influxdb\",\"url\":\"" + influxdbUrl + "\",\"access\":\"direct\",\"jsonData\":{},\"database\":\"dbus_stat_db\",\"user\":\"dbus\",\"password\":\"dbus!@#123\"}";
+        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, json);
+
+        //导入Grafana Dashboard
+        url = grafanaurl + "/api/dashboards/import";
+        byte[] bytes = ConfUtils.toByteArray("init/grafana_schema.json");
+        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
+        bytes = ConfUtils.toByteArray("init/grafana_table.json");
+        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
+        bytes = ConfUtils.toByteArray("init/Heartbeat_log_filebeat.json");
+        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
+        bytes = ConfUtils.toByteArray("init/Heartbeat_log_flume.json");
+        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
+        bytes = ConfUtils.toByteArray("init/Heartbeat_log_logstash.json");
+        HttpClientUtils.httpPostWithAuthorization(url, grafanaToken, new String(bytes, KeeperConstants.UTF8));
+        return 0;
+    }
+
+    /**
+     * 9
+     *
+     * @param influxdbUrl
+     * @return
+     */
+    private int initInfluxdb(String influxdbUrl) {
+        String head = influxdbUrl + "/query?q=";
+        String tail = "&db=_internal";
+        String result = HttpClientUtils.httpGet(head + "create+database+dbus_stat_db" + tail);
+        logger.info(head + "create+database+test" + tail);
+        if (!"200".equals(result)) {
+            return MessageCode.INFLUXDB_URL_ERROR;
+        }
+        tail = "&db=_test";
+        result = HttpClientUtils.httpGet(head + "CREATE+USER+%22dbus%22+WITH+PASSWORD+%27dbus!%40%23123%27" + tail);
+        logger.info(head + "CREATE+USER+%22dbus1%22+WITH+PASSWORD+%27password%27" + tail);
+        if (!"200".equals(result)) {
+            return MessageCode.INFLUXDB_URL_ERROR;
+        }
+        result = HttpClientUtils.httpGet(head + "ALTER+RETENTION+POLICY+autogen+ON+dbus_stat_db+DURATION+15d" + tail);
+        logger.info(head + "ALTER+RETENTION+POLICY+autogen+ON+dbus_stat_db+DURATION+15d" + tail);
+        if (!"200".equals(result)) {
+            return MessageCode.INFLUXDB_URL_ERROR;
+        }
+        return 0;
+    }
+
+    /**
+     * 10
+     *
+     * @return
+     * @throws Exception
+     */
+    private int initEncode() throws Exception {
+        Properties global = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+        String basePath = global.getProperty("dbus.encode.plugins.jars.base.path");
+        String path = basePath + "/0/20180809_155150/encoder-plugins-0.5.0.jar";
+        EncodePlugins encodePlugin = new EncodePlugins();
+        encodePlugin.setName("encoder-plugins-0.5.0.jar");
+        encodePlugin.setPath(path);
+        encodePlugin.setProjectId(0);
+        encodePlugin.setStatus(KeeperConstants.ACTIVE);
+        encodePlugin.setEncoders("md5,default-value,murmur3,regex,replace");
+        ResponseEntity<ResultEntity> post = sender.post(ServiceNames.KEEPER_SERVICE, "encode-plugins/create", encodePlugin);
+        if (post.getBody().getStatus() != 0) {
+            return MessageCode.ENCODE_PLUGIN_INIT_ERROR;
+        }
+        return 0;
+    }
+
+    /**
+     * 11
+     *
+     * @param map
+     * @throws Exception
+     */
+    private void initAlarm(LinkedHashMap<String, String> map) throws Exception {
+        //heartbeat_config.json
+        byte[] data = zkService.getData(Constants.HEARTBEAT_CONFIG_JSON);
+        JSONObject json = JSONObject.parseObject(new String(data, UTF8));
+        if(StringUtils.isNotBlank(map.get("alarmSendEmail"))){
+            json.put("alarmSendEmail", map.get("alarmSendEmail"));
+        }
+        if(StringUtils.isNotBlank(map.get("alarmMailSMTPAddress"))){
+            json.put("alarmMailSMTPAddress", map.get("alarmMailSMTPAddress"));
+        }
+        if(StringUtils.isNotBlank(map.get("alarmMailSMTPPort"))){
+            json.put("alarmMailSMTPPort", map.get("alarmMailSMTPPort"));
+        }
+        if(StringUtils.isNotBlank(map.get("alarmMailUser"))){
+            json.put("alarmMailUser", map.get("alarmMailUser"));
+        }
+        if(StringUtils.isNotBlank(map.get("alarmMailPass"))){
+            json.put("alarmMailPass", map.get("alarmMailPass"));
+        }
+        //格式化jsonjson
+        String format = this.formatJsonString(JSON.toJSONString(json, SerializerFeature.WriteMapNullValue));
+        zkService.setData(Constants.HEARTBEAT_CONFIG_JSON, format.getBytes(UTF8));
+    }
+
 
     /**
      * 递归删除给定路径的zk结点
@@ -511,71 +696,6 @@ public class ConfigCenterService {
         logger.info("deleting zkNode......." + path);
     }
 
-    public Integer updateGlobalConf(LinkedHashMap<String, String> map) throws Exception {
-        //1.bootstrapServers检测
-        String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
-        String[] split = bootstrapServers.split(",");
-        for (String s : split) {
-            String[] hostPort = s.split(":");
-            if (hostPort == null || hostPort.length != 2) {
-                return MessageCode.KAFKA_BOOTSTRAP_SERVERS_IS_WRONG;
-            }
-            boolean b = urlTest(hostPort[0], Integer.parseInt(hostPort[1]));
-            if (!b) {
-                return MessageCode.KAFKA_BOOTSTRAP_SERVERS_IS_WRONG;
-            }
-        }
-        //2.Grafana检测
-        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
-        if (!urlTest(monitURL)) {
-            return MessageCode.MONITOR_URL_IS_WRONG;
-        }
-
-        //3.storm检测
-        String host = map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        int port = Integer.parseInt(map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
-        String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
-        String path = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
-        String pubKeyPath = env.getProperty("pubKeyPath");
-        String s = exeCmdErrorStream(user, host, port, pubKeyPath, "cd " + path);
-        if (s == null) {
-            return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
-        }
-        if (StringUtils.isNotBlank(s)) {
-            return MessageCode.STORM_HOME_PATH_ERROR;
-        }
-        String stormUI = map.get(GLOBAL_CONF_KEY_STORM_REST_API);
-        if (!urlTest(stormUI+"/nimbus/summary")) {
-            return MessageCode.STORM_UI_ERROR;
-        }
-        //4.Influxdb检测
-        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
-        String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
-        if (!"200".equals(HttpClientUtils.httpGet(url))) {
-            return MessageCode.INFLUXDB_URL_ERROR;
-        }
-        //5.心跳检测
-        String[] hosts = map.get("heartbeat.host").split(",");
-        int heartport = Integer.parseInt(map.get("heartbeat.port"));
-        String heartuser = map.get("heartbeat.user");
-        String heartpath = map.get("heartbeat.jar.path");
-        for (String hearthost : hosts) {
-            String res = exeCmdErrorStream(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath);
-            if (res == null) {
-                return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
-            }
-            if (StringUtils.isNotBlank(s)) {
-                return MessageCode.HEARTBEAT_JAR_PATH_ERROR;
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
-        }
-        zkService.setData(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
-        return 0;
-    }
 
     public boolean urlTest(String url) {
         boolean result = false;
@@ -669,10 +789,6 @@ public class ConfigCenterService {
             levelStr.append("\t");
         }
         return levelStr.toString();
-    }
-
-    public Boolean isInitialized() throws Exception {
-        return zkService.isExists(Constants.DBUS_ROOT);
     }
 
     public String exeCmd(String user, String host, int port, String pubKeyPath, String command) {
@@ -786,5 +902,4 @@ public class ConfigCenterService {
     public static void main(String[] args) {
 
     }
-
 }

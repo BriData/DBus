@@ -79,6 +79,7 @@
     FROM t_dbus_datasource
     <where>
       <if test="dsName != null">ds_name LIKE "%"#{dsName,jdbcType=VARCHAR}"%"</if>
+      <if test="dsType != null"> AND ds_type LIKE "%"#{dsType,jdbcType=VARCHAR}"%"</if>
     </where>
     ORDER BY
     <choose>

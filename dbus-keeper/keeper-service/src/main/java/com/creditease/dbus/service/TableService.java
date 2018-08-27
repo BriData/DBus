@@ -297,8 +297,12 @@ public class TableService {
         List<RuleInfo> ruleInfos = dataTableRuleMapper.getAsRuleInfo(Integer.parseInt(map.get("tableId").toString()), Rules.SAVEAS.name);
         for (int i = 0; i < ruleInfos.size(); i++) {
             if (ruleInfos.get(i).getStatus().equals(INACTIVE)) continue;
+            if (StringUtils.isEmpty(ruleInfos.get(i).getRuleGrammar()))
+                return ruleInfos.get(i).getGroupName();
             for (int j = i + 1; j < ruleInfos.size(); j++) {
                 if (ruleInfos.get(j).getStatus().equals(INACTIVE)) continue;
+                if (StringUtils.isEmpty(ruleInfos.get(j).getRuleGrammar()))
+                    return ruleInfos.get(j).getGroupName();
                 List<RuleGrammar> ruleGrammar1 = JSON.parseArray(ruleInfos.get(i).getRuleGrammar(), RuleGrammar.class);
                 List<RuleGrammar> ruleGrammar2 = JSON.parseArray(ruleInfos.get(j).getRuleGrammar(), RuleGrammar.class);
                 if (!compareRuleGrammarAsType(ruleGrammar1, ruleGrammar2)) {
@@ -330,8 +334,10 @@ public class TableService {
         if (tableVersion != null) {
             tableVersion.setId(null);
             tableVersion.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-
-            verId = tableVersionMapper.insert(tableVersion);
+            tableVersion.setVersion(tableVersion.getVersion() + 1);
+            tableVersion.setInnerVersion(tableVersion.getInnerVersion() + 1);
+            tableVersionMapper.insert(tableVersion);
+            verId = tableVersion.getId();
         } else {
             TableVersion tv = new TableVersion();
             tv.setTableId(tableId);
@@ -345,7 +351,8 @@ public class TableService {
             tv.setEventPos(0);
             tv.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 
-            verId = tableVersionMapper.insert(tv);
+            tableVersionMapper.insert(tv);
+            verId = tableVersion.getId();
         }
         tableMapper.updateVerId(verId, tableId);
         return verId;
@@ -365,7 +372,8 @@ public class TableService {
             ruleGroupVersion.put("status", dataTableRuleGroup.getStatus());
             ruleGroupVersion.put("ver_id", verId);
             ruleGroupVersion.put("update_time", timestamp);
-            int groupId = dataTableRuleMapper.insertRuleGroupVersion(ruleGroupVersion);
+            dataTableRuleMapper.insertRuleGroupVersion(ruleGroupVersion);
+            int groupId = Integer.parseInt(ruleGroupVersion.get("id").toString());
 
             for (DataTableRule dataTableRule : allRules) {
                 HashMap<String, Object> rulesVersion = new HashMap<>();
@@ -752,25 +760,28 @@ public class TableService {
         tableMapper.insert(newTable);
 
         //t_data_tables中没有dsName等信息，查询后可获得 不插入。
-        //以后初始化功能如果放在web，可以在此操作
-       /* newTable = getById(newTable.getId());
+        newTable = getById(newTable.getId());
+        DbusDatasourceType dsType = DbusDatasourceType.parse(newTable.getDsType());
+        //此处默认，非MySQL和Oracle的则为log类型，需要处理version信息;MySQL和Oracle的meta和version信息由增量处理
+        if(DbusDatasourceType.MYSQL != dsType && DbusDatasourceType.ORACLE != dsType){
+            //插入table后，将table的version放入t_meta_verion中
+            TableVersion tableVersion = new TableVersion();
+            tableVersion.setTableId(newTable.getId());
+            tableVersion.setDsId(newTable.getDsId());
+            tableVersion.setDbName(newTable.getDsName());
+            tableVersion.setSchemaName(newTable.getSchemaName());
+            tableVersion.setTableName(newTable.getTableName());
+            tableVersion.setVersion(INIT_VERSION);
+            tableVersion.setInnerVersion(INIT_VERSION);
+            tableVersion.setEventOffset(INIT_VERSION);
+            tableVersion.setEventPos(INIT_VERSION);
+            tableVersionMapper.insert(tableVersion);
 
-        //插入table后，将table的version放入t_meta_verion中
-        TableVersion tableVersion = new TableVersion();
-        tableVersion.setTableId(newTable.getId());
-        tableVersion.setDsId(newTable.getDsId());
-        tableVersion.setDbName(newTable.getDsName());
-        tableVersion.setSchemaName(newTable.getSchemaName());
-        tableVersion.setTableName(newTable.getTableName());
-        tableVersion.setVersion(INIT_VERSION);
-        tableVersion.setInnerVersion(INIT_VERSION);
-        tableVersion.setEventOffset(INIT_VERSION);
-        tableVersion.setEventPos(INIT_VERSION);
-        tableVersionMapper.insert(tableVersion);*/
+            //meta插入完毕后，更新table的verId
+            newTable.setVerId(tableVersion.getId());
+            tableMapper.updateByPrimaryKey(newTable);
+        }
 
-        //meta插入完毕后，更新table的verId
-        //newTable.setVerId(tableVersion.getId());
-        //tableMapper.updateByPrimaryKey(newTable);
         return newTable.getId();
     }
 

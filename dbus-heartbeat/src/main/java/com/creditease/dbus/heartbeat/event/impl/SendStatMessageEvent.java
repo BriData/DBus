@@ -20,13 +20,13 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.stattools.InfluxSink;
 import com.creditease.dbus.heartbeat.stattools.KafkaSource;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class SendStatMessageEvent extends AbstractEvent{
 

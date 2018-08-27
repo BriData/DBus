@@ -57,10 +57,22 @@
                 <!-- 以下部分如果调试不过可以删除exclusions -->
                 <exclusions>
                     <exclusion>
+                        <groupId>com.codahale.metrics</groupId>
+                        <artifactId>metrics-core</artifactId>
+                    </exclusion>
+                    <!-- 以下部分如果调试不过可以删除exclusions -->
+                    <exclusion>
                         <groupId>org.clojure</groupId>
                         <artifactId>clojure</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/com.codahale.metrics/metrics-core -->
+            <dependency>
+                <groupId>com.codahale.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>3.0.2</version>
             </dependency>
 
             <dependency>

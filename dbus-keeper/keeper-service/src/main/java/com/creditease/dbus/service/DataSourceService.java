@@ -84,10 +84,11 @@ public class DataSourceService {
      * @return
      */
     public PageInfo<Map<String, Object>> search(int pageNum, int pageSize, String dsName,
-                                                String sortBy, String order) {
+                                                String sortBy, String order, String dsType) {
         Map<String, Object> param = new HashedMap();
         param.put("dsName", dsName==null?dsName:dsName.trim());
         param.put("sortBy", sortBy==null?sortBy:sortBy.trim());
+        param.put("dsType", dsType==null?dsType:dsType.trim());
         param.put("order", order);
 
         PageHelper.startPage(pageNum, pageSize);

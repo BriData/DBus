@@ -139,7 +139,8 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setSubject(subject);
 
                             msg.setHost(hbConf.getAlarmMailSMTPAddress());
-                            msg.setPort(hbConf.getAlarmMailSMTPPort());
+                            if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
+                                msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
                             msg.setUserName(hbConf.getAlarmMailUser());
                             msg.setPassword(hbConf.getAlarmMailPass());
                             msg.setFromAddress(hbConf.getAlarmSendEmail());
@@ -169,7 +170,8 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setSubject(subject);
 
                             msg.setHost(hbConf.getAlarmMailSMTPAddress());
-                            msg.setPort(hbConf.getAlarmMailSMTPPort());
+                            if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
+                                msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
                             msg.setUserName(hbConf.getAlarmMailUser());
                             msg.setPassword(hbConf.getAlarmMailPass());
                             msg.setFromAddress(hbConf.getAlarmSendEmail());
@@ -208,7 +210,8 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setSubject(subject);
 
                             msg.setHost(hbConf.getAlarmMailSMTPAddress());
-                            msg.setPort(hbConf.getAlarmMailSMTPPort());
+                            if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
+                                msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
                             msg.setUserName(hbConf.getAlarmMailUser());
                             msg.setPassword(hbConf.getAlarmMailPass());
                             msg.setFromAddress(hbConf.getAlarmSendEmail());

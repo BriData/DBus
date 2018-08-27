@@ -17,6 +17,7 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
         checkInfluxdb(bw);
         checkGrafana(bw);
         checkHb(bw);
+        checkLogstash(bw);
     }
 
     public void checkZk(BufferedWriter bw) throws Exception {
@@ -115,10 +116,13 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
         if (exitValue != 0) process.destroyForcibly();
     }
 
-    /*public void checkLogstash(BufferedWriter bw) throws Exception {
+    public void checkLogstash(BufferedWriter bw) throws Exception {
+        bw.newLine();
         bw.write("check base component logstash start: ");
         bw.newLine();
-        String[] cmd = { "/bin/sh", "-c", "ps -ef | grep grafana" };
+        bw.write("============================================");
+        bw.newLine();
+        String[] cmd = { "/bin/sh", "-c", "jps -l | grep jruby.Main" };
         Process process = Runtime.getRuntime().exec(cmd);
         Thread outThread = new Thread(new StreamRunnable(process.getInputStream(), bw));
         Thread errThread = new Thread(new StreamRunnable(process.getErrorStream(), bw));
@@ -126,6 +130,6 @@ public class CheckBaseComponentsHandler extends AbstractHandler {
         errThread.start();
         int exitValue = process.waitFor();
         if (exitValue != 0) process.destroyForcibly();
-    }*/
+    }
 
 }

@@ -334,7 +334,7 @@ public class ToolSetService {
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
             map.put(GLOBAL_CONF_KEY_INFLUXDB_URL, properties.getProperty("influxdb.url"));
-        }else{
+        }else if(zkService.isExists("/DBus")){
             properties = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
