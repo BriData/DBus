@@ -595,7 +595,7 @@ dbus.kafka.BootstrapServers=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
 # db-dbusmgr是已安装mysql服务所在机器的IP
 url=jdbc:mysql://db-dbusmgr:3306/dbusmgr?characterEncoding=utf-8
 # 将(#password_place_holder#}替换成/app/dbus/DBus-0.4.0.sql中dbusmgr用户的密码
-password=dmVvY9bibMGBGD3X
+password=12345678d
 ```
 
 ## 8.4 执行sh脚本完成配置
