@@ -147,43 +147,40 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 ### 2.2 OGG添加extract进程
 
   *  在OGG所在的 **ora-slave 服务器** 上执行
-	
-	
-	```shell
-	#首先确保mgr进程启动
-	GGSCI> info mgr
-   Manager is running (IP port yourip.7890, Process ID 24092).
-   ```
+  
+  	
+  ```shell
+  #首先确保mgr进程启动
+  GGSCI> info mgr
+  Manager is running (IP port yourip.7890, Process ID 24092).
+  ```
    
-   如果没有启动参考[mgr启动](#mgr)
-   
-   
+  如果没有启动参考[mgr启动](#mgr)
+     
   *  配置extract进程   
    
-   此处使用脚本自动配置，如果手动配置，请参考[extract手动配置](#extract_nauto)
+  此处使用脚本自动配置，如果手动配置，请参考[extract手动配置](#extract_nauto)
    
    1. 解压dbus-ogg-auto-0.5.0.zip脚本文件，然后修改ogg-auto-extract.properties文件中的内容,如图；
 
    ![dbus-ogg-auto解压目录](img/install-oracle-extractor-unzip.png)
 
-
-	具体修改的配置项如下：
-	
+  * 具体修改的配置项如下：
 	
 	```
 	#OGG安装目录，公共基础，必填
 	ogg.home=/u01/golden123111
 	#extract进程名称，同时也是生成的配置文件的名称，需要不与其他extract重复
 	extract.name=extr_oratest
-	
-	
+		
+		
 	#--- 加表配置项 ---
-	
+		
 	#如果只是加表，只配置这一项即可，后面的不用管；如果是新增extract配置,请保持空
 	tables.append=
 		
 	#--- 首次配置项 ---
-	
+		
 	#ogg用户名，ogg信息根据配置的填写
 	ogg.user=ogg
 	#ogg用户密码
@@ -199,13 +196,15 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	#添加同步的表，逗号分隔。
 	tables=UTEST.T_CUSTOMER
 	```
+  **“加表配置项”和“首次配置项” ？**
 	
+  脚本提供了两个功能：一个是添加新的抽取进程，然后生成新的配置文件，此功能需要在配置文件中保持“tables.append”参数值为空。第二个，是在抽取进程已存在，只是新增一些表，那么就只需要将新增的表添加到“加表配置项”下的“tables.append”的参数中，“首次配置项”中的参数可忽略。此时，脚本只会将这些表，追加到配置文件，设置完毕，将已有的抽取进程重启即可。	
 	
-  修改完毕后运行脚本 **sh start.sh master**, 加上master参数，运行效果图如下：
+  * 修改完毕后运行脚本 **sh start.sh master**, 加上master参数，运行效果图如下：
 
    ![dbus-ogg-auto解压目录](img/install-oracle-extract-prm.png)
    
-  然后添加和启动extract进程
+  * 配置添加成功，然后添加和启动extract进程
    
 	```
 	#制定抽取tranlog，这里的：now是参数值，也可以写一个固定的时间值
@@ -231,10 +230,6 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	SQL> alter system set enable_goldengate_replication=true;
 	
 	```
-
-  **“加表配置项”和“首次配置项” ？**
-	
-  脚本提供了两个功能：一个是添加新的抽取进程，然后生成新的配置文件，此功能需要在配置文件中保持“tables.append”参数值为空。第二个，是在抽取进程已存在，只是新增一些表，那么就只需要将新增的表添加到“加表配置项”下的“tables.append”的参数中，“首次配置项”中的参数可忽略。此时，脚本只会将这些表，追加到配置文件，设置完毕，将已有的抽取进程重启即可。
 
 
 
@@ -307,7 +302,9 @@ https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#
 * 进入安装目录
 
 	```shell
-	#!!此处需要注意 1.exttrail的内容要与2.2节中配置项一致;2.replicat进程名称要与2.3.1生成的repl_oratest.prm文件一致
+	#!!此处需要注意： 
+	#1.exttrail的内容要与2.2节中配置项一致;
+	#2.replicat进程名称要与2.3.1生成的repl_oratest.prm文件名一致
 	GGSCI> add replicat repl_oratest, exttrail /u01/golden123111/dirdat/ab
 	GGSCI> start repl_oratest
 	#验证启动是否成功
@@ -331,14 +328,14 @@ https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#
 
    **操作步骤说明**
 
-   * DsName：这里设置的值要和 **2.3.1 添加配置** 步骤中oratest.props文件里的配置项`gg.handler.kafkahandler.topicMappingTemplate`的值相同，即：oratest
-   * Type选择oracle
-   * Status选择active
-   * Desc为描述信息
-   * User **1 dbus数据库初始化** 步骤中创建的dbus用户名称，即：dbus
-   * Password为dbus用户的密码，即：dbus
-   * MasterURL为主备环境中使用dbus用户连接主库的jdbc连接串
-   * SlaveURL为主备环境中使用dbus用户连接备库的jdbc连接串，单机环境和MasterURL相同即可
+   * ”数据源名称“：这里设置的值要和 **2.3.1 添加配置** 步骤中oratest.props文件里的配置项`gg.handler.kafkahandler.topicMappingTemplate`的值相同，即：oratest
+   * “数据源类型”选择“oracle”
+   * “状态”选择“active”
+   * “描述”为描述信息
+   * “用户名”：是章节**1 dbus数据库初始化** 步骤中创建的dbus用户名称，即：dbus
+   * “密码”：为dbus用户的密码，此处是：dbus
+   * ”主库URL“：为主备环境中使用dbus用户连接主库的jdbc连接串
+   * “从库URL”：为主备环境中使用dbus用户连接备库的jdbc连接串，单机环境和”主库URL“相同即可
 
 
    * Topic CtrlTopic SchemaTopic SplitTopic 这四项会根据DsName自动生成，生成规则如下
@@ -444,31 +441,27 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 2. 主库归档模式启动
 
 
-	
- ```shell 
- 	#sysdba登入，检查下面命令的输出结果
+	```shell 
+	#sysdba登入，检查下面命令的输出结果
 	SQL> archive log list;
-
-
+	
 	#如果没有启动。需要先创建目录
- 	--切换到root用户，查看目录是否存在
- 	Shell> sudo -i
+	--切换到root用户，查看目录是否存在
+	Shell> sudo -i
 	Shell> ll /u01/arch
-  	--不存在则创建arch目录
-  	Shell> mkdir /u01/arch
-  	Shell> chown oracle:oinstall /u01/arch/
-   
-   --然后登录sqlplus,开启归档日志
-   Shell> su - oracle
-   Shell> sqlplus / as sysdba;
-   SQL> alter system set log_archive_dest_1='location=/u01/arch/';
-   SQL> shutdown immediate;
-   SQL> startup mount;
-   SQL> alter database archivelog;
-   SQL> archive log list;
-```
-
-
+	--不存在则创建arch目录
+	Shell> mkdir /u01/arch
+	Shell> chown oracle:oinstall /u01/arch/
+	   
+	--然后登录sqlplus,开启归档日志
+	Shell> su - oracle
+	Shell> sqlplus / as sysdba;
+	SQL> alter system set log_archive_dest_1='location=/u01/arch/';
+	SQL> shutdown immediate;
+	SQL> startup mount;
+	SQL> alter database archivelog;
+	SQL> archive log list;
+	```
 
 3. 启用supplement log mode
 	
@@ -501,16 +494,17 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
 5. 创建ogg用户
 
-	```sql
-       --创建表空间
-       --请注意根据环境修改datafile路径
-       SQL> create tablespace tbs_gguser datafile '/u01/data/ogg.dbf' size 50m autoextend on; 
-       --创建OGG用户
-       SQL> create user ogg identified by ogg default tablespace tbs_gguser temporary tablespace temp quota unlimited on tbs_gguser;
 
-       --给ogg用户授权
-       SQL> grant connect,resource, DBA to ogg;
-       ```
+	```sql
+	--创建表空间
+	--请注意根据环境修改datafile路径
+	SQL> create tablespace tbs_gguser datafile '/u01/data/ogg.dbf' size 50m autoextend on; 
+	--创建OGG用户
+	SQL> create user ogg identified by ogg default tablespace tbs_gguser temporary tablespace temp quota unlimited on tbs_gguser;
+	
+	--给ogg用户授权
+	SQL> grant connect,resource, DBA to ogg;
+	```
  
 
 ##### 4.1.2 安装OGG到配库服务器ora-slave
@@ -518,66 +512,64 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
    
    1. 注意事项
 
-       OGG源端需要和Oracle数据库安装在同一台机器(一般选择备库)
+     * OGG源端需要和Oracle数据库安装在同一台机器(一般选择备库)
 
-       使用oracle用户在 **ora-slave 服务器**执行以下操作
+	  使用oracle用户在 **ora-slave 服务器**执行以下操作
 
-       ```shell
-       #切换到oracle用户
-       Shell> su - oracle
-       ```
+	```shell
+	#切换到oracle用户
+	Shell> su - oracle
+	```
 
-    2. 设置环境变量
-
-        ```shell
-        export ORACLE_SID=oratest
-        export ORACLE_BASE=/app/u01/oracle
-        export ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
-        ```
-
+   2. 设置环境变量
+	
+	```shell
+	export ORACLE_SID=oratest
+	export ORACLE_BASE=/app/u01/oracle
+	export ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
+	```
   
-    3. 安装环境准备
+   3. 安装环境准备
+	
+	```shell
+	#上传123012_fbo_ggs_Linux_x64_shiphome.zip包至/home/oracle/
+	#解压
+	Shell> unzip 123012_fbo_ggs_Linux_x64_shiphome.zip
+	
+	#解压后的文件和目录信息
+	-rw-r--r-- 1 oracle oinstall 338735172 1月  19 15:50 123012_fbo_ggs_Linux_x64_shiphome.zip
+	drwxr-xr-x 3 oracle oinstall      4096 12月  9 22:02 fbo_ggs_Linux_x64_shiphome
+	-rw-r--r-- 1 oracle oinstall      1440 12月 20 01:21 OGG-12.3.0.1-README.txt
+	-rw-r--r-- 1 oracle oinstall    236538 12月 20 03:32 OGG_WinUnix_Rel_Notes_12.3.0.1.pdf
+	```
 
+   4. 执行安装
 
-        ```shell
-        #上传123012_fbo_ggs_Linux_x64_shiphome.zip包至/home/oracle/
-        #解压
-        Shell> unzip 123012_fbo_ggs_Linux_x64_shiphome.zip
-
-        #解压后的文件和目录信息
-        -rw-r--r-- 1 oracle oinstall 338735172 1月  19 15:50 123012_fbo_ggs_Linux_x64_shiphome.zip
-        drwxr-xr-x 3 oracle oinstall      4096 12月  9 22:02 fbo_ggs_Linux_x64_shiphome
-        -rw-r--r-- 1 oracle oinstall      1440 12月 20 01:21 OGG-12.3.0.1-README.txt
-        -rw-r--r-- 1 oracle oinstall    236538 12月 20 03:32 OGG_WinUnix_Rel_Notes_12.3.0.1.pdf
-        ```
-
-    4. 执行安装
-
-        ```shell
-        #进入到安装目录
-        Shell> cd fbo_ggs_Linux_x64_shiphome/Disk1/
-
-        #修改oggcore.rsp文件中的配置项：INSTALL_OPTION 和 SOFTWARE_LOCATION
-        Shell> vim response/oggcore.rsp
-
-        #找到待修改的配置项：INSTALL_OPTION 和 SOFTWARE_LOCATION
-        #-------------------------------------------------------------------------------
-        # Specify the installation option.
-        # Specify ORA12c for installing Oracle GoldenGate for Oracle Database 12c and
-        #         ORA11g for installing Oracle GoldenGate for Oracle Database 11g 
-        #-------------------------------------------------------------------------------
-        INSTALL_OPTION=ORA11g #这里是你的数据库版本
-
-        #-------------------------------------------------------------------------------
-        # Specify a location to install Oracle GoldenGate
-        #-------------------------------------------------------------------------------
-        SOFTWARE_LOCATION=/u01/golden123012/
-
-        # 执行安装命令（以下两行为同一条命令）
-        Shell> ./runInstaller -silent -nowait -responseFile /home/oracle/fbo_ggs_Linux_x64_shiphome/Disk1/response/oggcore.rsp
-        #安装结果确认
-        [oracle@10 Disk1]$ Oracle GoldenGate Core 的 安装 已成功。
-        ```
+	```shell
+	#进入到安装目录
+	Shell> cd fbo_ggs_Linux_x64_shiphome/Disk1/
+	
+	#修改oggcore.rsp文件中的配置项：INSTALL_OPTION 和 SOFTWARE_LOCATION
+	Shell> vim response/oggcore.rsp
+	
+	#找到待修改的配置项：INSTALL_OPTION 和 SOFTWARE_LOCATION
+	#-------------------------------------------------------------------------------
+	# Specify the installation option.
+	# Specify ORA12c for installing Oracle GoldenGate for Oracle Database 12c and
+	#         ORA11g for installing Oracle GoldenGate for Oracle Database 11g 
+	#-------------------------------------------------------------------------------
+	INSTALL_OPTION=ORA11g #这里是你的数据库版本
+	
+	#-------------------------------------------------------------------------------
+	# Specify a location to install Oracle GoldenGate
+	#-------------------------------------------------------------------------------
+	SOFTWARE_LOCATION=/u01/golden123012/
+	
+	# 执行安装命令（以下两行为同一条命令）
+	Shell> ./runInstaller -silent -nowait -responseFile /home/oracle/fbo_ggs_Linux_x64_shiphome/Disk1/response/oggcore.rsp
+	#安装结果确认
+	[oracle@10 Disk1]$ Oracle GoldenGate Core 的 安装 已成功。
+	```
 
 ##### 4.1.3 初始化和配置OGG，在备库服务器ora-slave执行
 
@@ -761,17 +753,14 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
   ​
 
-* 安装参考：https://docs.oracle.com/goldengate/bd123110/gg-bd/GBDIG/installing-oracle-goldengate-big-data.htm#GBDIG-GUID-2379B9F2-BDBF-47C8-8B7B-AB273773FBD3
+ * 安装参考：https://docs.oracle.com/goldengate/bd123110/gg-bd/GBDIG/installing-oracle-goldengate-big-data.htm#GBDIG-GUID-2379B9F2-BDBF-47C8-8B7B-AB273773FBD3
 
-* 参考文档：https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#GADBD449
+ * 参考文档：https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#GADBD449
 
 
-
-###4.3 <span id="extract_nauto">手动配置extract进程</span>
+### 4.3 手动配置extract进程 <span id="extract_nauto"></span>
 
 *  在OGG所在的 **ora-slave 服务器** 上执行
-
-
 
 	```
 	#编辑extract进程配置文件
@@ -819,7 +808,7 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
 
 
-###4.4 <span id="non-auto">手动添加ogg for bigdata的replicate进程配置文件</span>
+###4.4 手动添加ogg for bigdata的replicate进程配置文件 <span id="non-auto"></span>
 
 
 * kafka_producer.properties配置文件
