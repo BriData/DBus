@@ -154,38 +154,71 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	GGSCI> info mgr
    Manager is running (IP port yourip.7890, Process ID 24092).
    ```
+   
    如果没有启动参考[mgr启动](#mgr)
    
+   
+  *  配置extract进程   
+   
+   此处使用脚本自动配置，如果手动配置，请参考[extract手动配置](#extract_nauto)
+   
+   1. 解压dbus-ogg-auto-0.5.0.zip脚本文件，然后修改ogg-auto-extract.properties文件中的内容,如图；
+
+   ![dbus-ogg-auto解压目录](img/install-oracle-extractor-unzip.png)
+
+
+	具体修改的配置项如下：
+	
+	
 	```
-	#编辑extract进程配置文件
-	GGSCI> edit param extr01
-	#输入以下内容并保存
-	EXTRACT EXTR01
-	--数据库配置的字符集可以通过select userenv('language') from dual查询
-	SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
-	USERID ogg,PASSWORD ogg
-	RMTHOST ip, MGRPORT 7890 --这里的ip指的是安装Oracle GoldenGate for Big Data机器的ip
-	rmttrail /u01/golden123111/dirdat/ab
-	DDL INCLUDE MAPPED
-	TRANLOGOPTIONS DBLOGREADER
+	#OGG安装目录，公共基础，必填
+	ogg.home=/u01/golden123111
+	#extract进程名称，同时也是生成的配置文件的名称，需要不与其他extract重复
+	extract.name=extr_oratest
 	
-	TABLE UTEST.T_CUSTOMER;
-	TABLE DBUS.DB_FULL_PULL_REQUESTS;
-	TABLE DBUS.DB_HEARTBEAT_MONITOR;
-	TABLE DBUS.META_SYNC_EVENT;
-	TABLE DBUS.TEST_TABLE;
 	
+	#--- 加表配置项 ---
+	
+	#如果只是加表，只配置这一项即可，后面的不用管；如果是新增extract配置,请保持空
+	tables.append=
+		
+	#--- 首次配置项 ---
+	
+	#ogg用户名，ogg信息根据配置的填写
+	ogg.user=ogg
+	#ogg用户密码
+	ogg.pwd=ogg
+	#数据库配置的字符集可以通过select userenv('language') from dual查询
+	nls.lang=AMERICAN_AMERICA.AL32UTF8
+	#安装OGG for bigdata机器的ip，一般是备库ip
+	rm.host=dbus-n2
+	#安装OGG for bigdata机器中配置的OGG for bigdata的mgr进程配置的port
+	mgr.port=7890
+	#远程trail文件分配的占位字符，只能有两个字符
+	extract.file.portion=ab
+	#添加同步的表，逗号分隔。
+	tables=UTEST.T_CUSTOMER
+	```
+	
+	
+  修改完毕后运行脚本 **sh start.sh master**, 加上master参数，运行效果图如下：
+
+   ![dbus-ogg-auto解压目录](img/install-oracle-extract-prm.png)
+   
+  然后添加和启动extract进程
+   
+	```
 	#制定抽取tranlog，这里的：now是参数值，也可以写一个固定的时间值
-	GGSCI> add extract extr01, tranlog, begin now
+	GGSCI> add extract extr_oratest, tranlog, begin now
 	
 	#添加远程
-	GGSCI> add rmttrail /u01/golden123111/dirdat/ab, extract extr01
+	GGSCI> add rmttrail /u01/golden123111/dirdat/ab, extract extr_oratest
 	#启动抽取进程
-	GGSCI> start extr01
+	GGSCI> start extr_oratest
 	#确认启动成功
-	GGSCI> info extr01
+	GGSCI> info extr_oratest
 	# Status RUNNING 表示启动成功
-	EXTRACT    EXTR01    Last Started 2018-01-24 12:03   Status RUNNING
+	EXTRACT    EXTR_ORATEST    Last Started 2018-01-24 12:03   Status RUNNING
 	Checkpoint Lag       00:00:00 (updated 00:00:05 ago)
 	Process ID           15216
 	Log Read Checkpoint  Oracle Redo Logs
@@ -198,7 +231,12 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	SQL> alter system set enable_goldengate_replication=true;
 	
 	```
+
+  **“加表配置项”和“首次配置项” ？**
 	
+  脚本提供了两个功能：一个是添加新的抽取进程，然后生成新的配置文件，此功能需要在配置文件中保持“tables.append”参数值为空。第二个，是在抽取进程已存在，只是新增一些表，那么就只需要将新增的表添加到“加表配置项”下的“tables.append”的参数中，“首次配置项”中的参数可忽略。此时，脚本只会将这些表，追加到配置文件，设置完毕，将已有的抽取进程重启即可。
+
+
 
 ### 2.3 OGG for Bigdata添加replicat进程
 #### 2.3.1 添加配置信息
@@ -208,39 +246,57 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 * 如未依赖的kafka相关jar包，参考[添加kafka依赖](#kafka)
 * 本节内容基于脚本添加配置文件，如需手动添加，请参考[手动添加配置](#non-auto)
 
-1. 将ogg脚本dbus-ogg-auto-0.5.0.zip拷贝至服务器，并解压。
+1. 将ogg脚本dbus-ogg-auto-0.5.0.zip拷贝至服务器，并解压，然后修改ogg-auto.properties文件，如下图所示：
 
 	
 	![dbus-ogg-auto解压目录](img/install-oracle-auto-directs.png)
 	
-	如上图，修改ogg-auto.properties文件，将需要替换的属性修改。其中，kafka.producer.name表示要写入的文件名称，如果已存在则会覆盖写。
+	
+	具体的配置信息如下：
 	
 	```shell
-	#解压安装OGG for bigdata的目录，在dirprm的上一层
+	#解压安装OGG for bigdata的目录，必填
 	ogg.big.home=/u01/golden123111
-	#数据源名称
+	#数据源名称，同时也是配置文件名称的来源
 	dsname=oratest
-	#oracle连接串，根据自己数据库配置填写
+	
+	#--- 加表配置项 ---
+	
+	#如果只是加表，只配置这一项即可，后面的不用管；如果是新增extract配置,请保持空
+	tables.append=
+	
+	#--- 首次配置项 ---
+	
+	#oracle连接串，根据自己的数据库配置填写
 	ogg.url=jdbc:oracle:thin:@(DESCRIPTION=(FAILOVER = yes)(ADDRESS = (PROTOCOL = TCP)(HOST = dbus-n2)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = orcl)))
-	#ogg用户名
+	#ogg用户名，ogg信息根据配置的填写
 	ogg.user=ogg
 	#ogg用户密码
 	ogg.pwd=ogg
-	#默认不用修改，如果需要配置与之前的producer不同的配置，填写新的文件名称
-	kafka.producer.name=kafka_producer2.properties
+	#默认不用修改，如果需要配置与之前的producer不同的配置，填写新的文件名称。否则，会覆盖之前的配置文件。
+	kafka.producer.name=kafka_producer.properties
 	#kafka地址
-	kafka.url=dbus-n1:9092,dbus-n2:9092,dbus-n1:9092
+	kafka.url=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
+	#数据库配置的字符集
+	nls.lang=SIMPLIFIED CHINESE_CHINA.AL32UTF8
+	#添加同步的表，逗号分隔。
+	tables=UTEST.T_CUSTOMER
 	```
 	
 	
-2. 然后运行脚本，sh start.sh，会打印执行结果，并在当前文件下的report文件夹下生成相应的报告文件。
-
-	执行过程会检查填写的配置项的正确性，包括kafka的连接、ogg用户连接和DBA权限的授权情况、以及ogg.big.home目录的正确性。
-
-	若执行成功，会打印大致如下信息，表示部署成功。
+	**“加表配置项”和“首次配置项” ？**
 	
-	![dbus-ogg-auto运行成功](img/install-oracle-auto-success.png)
-  
+	与OGG提供的功能类似，脚本为OGG for bigdata也提供了两个功能：一个是添加新的replicate进程，然后生成新的配置文件，此功能需要在配置文件中保持“tables.append”参数值为空。第二个，是进程已存在，只是新增一些表，那么就只需要将新增的表添加到“加表配置项”下的“tables.append”的参数中，“首次配置项”中的参数可忽略。此时，脚本只会将这些表，追加到配置文件，设置完毕，将已有的抽取进程重启即可。	
+	
+
+
+
+	
+2. 然后运行脚本，sh start.sh，会打印执行结果，并在当前文件下的report文件夹下生成相应的报告文件,若执行成功，会打印大致如下信息，表示部署成功:
+	
+	![dbus-ogg-auto运行成功](img/install-oracle-replicate-sucess.png)
+ 
+
 
 详细信息请参考：
 
@@ -251,27 +307,12 @@ https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#
 * 进入安装目录
 
 	```shell
-	GGSCI> edit param oratest
-	#输入以下内容并保存
-	REPLICAT oratest
-	SETENV (NLS_LANG= SIMPLIFIED CHINESE_CHINA.AL32UTF8)
-	#props文件需要与上一节生成的props文件名称一致
-	TARGETDB LIBFILE libggjava.so SET property=dirprm/oratest.props
-	DDL INCLUDE ALL
-	
-	GROUPTRANSOPS 500
-	MAXTRANSOPS 1000
-	
-	MAP UTEST.T_CUSTOMER, TARGET UTEST.T_CUSTOMER;
-	MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS;
-	MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR;
-	MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT;
-	
-	GGSCI> add replicat oratest, exttrail /u01/golden123111/dirdat/ab
-	GGSCI> start oratest
+	#!!此处需要注意 1.exttrail的内容要与2.2节中配置项一致;2.replicat进程名称要与2.3.1生成的repl_oratest.prm文件一致
+	GGSCI> add replicat repl_oratest, exttrail /u01/golden123111/dirdat/ab
+	GGSCI> start repl_oratest
 	#验证启动是否成功
-	GGSCI> info oratest
-	REPLICAT   ORATEST   Last Started 2018-01-24 14:58   Status RUNNING
+	GGSCI> info repl_oratest
+	REPLICAT   REPL_ORATEST   Last Started 2018-01-24 14:58   Status RUNNING
 	Checkpoint Lag       00:00:00 (updated 00:00:08 ago)
 	Process ID           21887
 	Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
@@ -725,7 +766,61 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 * 参考文档：https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#GADBD449
 
 
-###4.3 <span id="non-auto">手动添加ogg for bigdata的replicat进程配置文件</span>
+
+###4.3 <span id="extract_nauto">手动配置extract进程</span>
+
+*  在OGG所在的 **ora-slave 服务器** 上执行
+
+
+
+	```
+	#编辑extract进程配置文件
+	GGSCI> edit param extr01
+	#输入以下内容并保存
+	EXTRACT EXTR01
+	--数据库配置的字符集可以通过select userenv('language') from dual查询
+	SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
+	USERID ogg,PASSWORD ogg
+	RMTHOST ip, MGRPORT 7890 --这里的ip指的是安装Oracle GoldenGate for Big Data机器的ip
+	rmttrail /u01/golden123111/dirdat/ab
+	DDL INCLUDE MAPPED
+	TRANLOGOPTIONS DBLOGREADER
+	
+	TABLE UTEST.T_CUSTOMER;
+	TABLE DBUS.DB_FULL_PULL_REQUESTS;
+	TABLE DBUS.DB_HEARTBEAT_MONITOR;
+	TABLE DBUS.META_SYNC_EVENT;
+	TABLE DBUS.TEST_TABLE;
+	
+	#制定抽取tranlog，这里的：now是参数值，也可以写一个固定的时间值
+	GGSCI> add extract extr01, tranlog, begin now
+	
+	#添加远程
+	GGSCI> add rmttrail /u01/golden123111/dirdat/ab, extract extr01
+	#启动抽取进程
+	GGSCI> start extr01
+	#确认启动成功
+	GGSCI> info extr01
+	# Status RUNNING 表示启动成功
+	EXTRACT    EXTR01    Last Started 2018-01-24 12:03   Status RUNNING
+	Checkpoint Lag       00:00:00 (updated 00:00:05 ago)
+	Process ID           15216
+	Log Read Checkpoint  Oracle Redo Logs
+	                     2018-01-24 12:04:06  Seqno 4270, RBA 15248896
+	                     SCN 0.52999102 (52999102)
+	                     
+	# 如果出现
+	#ERROR   OGG-02091  Oracle GoldenGate Capture for Oracle, orcl.prm:  Operation not supported because enable_goldengate_replication is not set to true.
+	# 请在主库执行以下语句
+	SQL> alter system set enable_goldengate_replication=true;
+	
+	```
+
+
+
+
+###4.4 <span id="non-auto">手动添加ogg for bigdata的replicate进程配置文件</span>
+
 
 * kafka_producer.properties配置文件
 
@@ -784,6 +879,37 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
   gg.classpath = dirprm/:kafka-jars/*:
   javawriter.bootoptions = -Xmx512m -Xms32m -Djava.class.path=ggjava/ggjava.jar
   ```
+  
+* 添加和启动replicate进程
+
+  ```shell
+	GGSCI> edit param oratest
+	#输入以下内容并保存
+	REPLICAT oratest
+	SETENV (NLS_LANG= SIMPLIFIED CHINESE_CHINA.AL32UTF8)
+	#props文件需要与上一节生成的props文件名称一致
+	TARGETDB LIBFILE libggjava.so SET property=dirprm/oratest.props
+	DDL INCLUDE ALL
+	
+	GROUPTRANSOPS 500
+	MAXTRANSOPS 1000
+	
+	MAP UTEST.T_CUSTOMER, TARGET UTEST.T_CUSTOMER;
+	MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS;
+	MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR;
+	MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT;
+	
+	GGSCI> add replicat oratest, exttrail /u01/golden123111/dirdat/ab
+	GGSCI> start oratest
+	#验证启动是否成功
+	GGSCI> info oratest
+	REPLICAT   ORATEST   Last Started 2018-01-24 14:58   Status RUNNING
+	Checkpoint Lag       00:00:00 (updated 00:00:08 ago)
+	Process ID           21887
+	Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
+	                     2018-01-24 12:02:37.818342  RBA 1472
+	```
+	
 
 详细信息请参考：
 
