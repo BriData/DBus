@@ -147,13 +147,12 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 ### 2.2 OGG添加extract进程
 
   *  在OGG所在的 **ora-slave 服务器** 上执行
-  
   	
-  ```shell
-  #首先确保mgr进程启动
-  GGSCI> info mgr
-  Manager is running (IP port yourip.7890, Process ID 24092).
-  ```
+    ```shell
+    #首先确保mgr进程启动
+    GGSCI> info mgr
+    Manager is running (IP port yourip.7890, Process ID 24092).
+    ```
    
   如果没有启动参考[mgr启动](#mgr)
      
