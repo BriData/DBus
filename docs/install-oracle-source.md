@@ -148,11 +148,12 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 
   *  在OGG所在的 **ora-slave 服务器** 上执行
   	
-    ```shell
-    #首先确保mgr进程启动
-    GGSCI> info mgr
-    Manager is running (IP port yourip.7890, Process ID 24092).
-    ```
+  	
+	```shell
+	#首先确保mgr进程启动
+	GGSCI> info mgr
+	Manager is running (IP port yourip.7890, Process ID 24092).
+	```
    
   如果没有启动参考[mgr启动](#mgr)
      
@@ -168,9 +169,10 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	
 	```
 	#OGG安装目录，公共基础，必填
-	ogg.home=/u01/golden123111
+	ogg.home=/u01/golden-ora
 	#extract进程名称，同时也是生成的配置文件的名称，需要不与其他extract重复
-	extract.name=extr_oratest
+	#此字符不宜过长（不能大于8个字符）
+	extract.name=extr01
 		
 		
 	#--- 加表配置项 ---
@@ -190,8 +192,8 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	rm.host=dbus-n2
 	#安装OGG for bigdata机器中配置的OGG for bigdata的mgr进程配置的port
 	mgr.port=7890
-	#远程trail文件分配的占位字符，只能有两个字符
-	extract.file.portion=ab
+	#远程ogg for bigdata目录下的dirdat目录。最后的占位字符只能有两个字符。
+   extract.file=/u01/golden/dirdat/ad
 	#添加同步的表，逗号分隔。
 	tables=UTEST.T_CUSTOMER
 	```
@@ -207,21 +209,21 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
    
 	```
 	#制定抽取tranlog，这里的：now是参数值，也可以写一个固定的时间值
-	GGSCI> add extract extr_oratest, tranlog, begin now
+	GGSCI> add extract extr01, tranlog, begin now
 	
-	#添加远程
-	GGSCI> add rmttrail /u01/golden123111/dirdat/ab, extract extr_oratest
+	#添加远程, 与上一步添加的配置一样
+	GGSCI> add rmttrail /u01/golden/dirdat/ad, extract extr01
 	#启动抽取进程
-	GGSCI> start extr_oratest
+	GGSCI> start extr01
 	#确认启动成功
-	GGSCI> info extr_oratest
+	GGSCI> info extr01
 	# Status RUNNING 表示启动成功
-	EXTRACT    EXTR_ORATEST    Last Started 2018-01-24 12:03   Status RUNNING
-	Checkpoint Lag       00:00:00 (updated 00:00:05 ago)
-	Process ID           15216
-	Log Read Checkpoint  Oracle Redo Logs
-	                     2018-01-24 12:04:06  Seqno 4270, RBA 15248896
-	                     SCN 0.52999102 (52999102)
+	EXTRACT    EXTR01    Last Started 2018-09-05 13:52   Status RUNNING
+   Checkpoint Lag       00:00:00 (updated 00:00:32 ago)
+   Process ID           11396
+   Log Read Checkpoint  Oracle Redo Logs
+                     2018-09-05 13:51:55  Seqno 47, RBA 11880464
+                     SCN 0.0 (0)
 	                     
 	# 如果出现
 	#ERROR   OGG-02091  Oracle GoldenGate Capture for Oracle, orcl.prm:  Operation not supported because enable_goldengate_replication is not set to true.
@@ -245,12 +247,11 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	
 	![dbus-ogg-auto解压目录](img/install-oracle-auto-directs.png)
 	
-	
 	具体的配置信息如下：
 	
 	```shell
 	#解压安装OGG for bigdata的目录，必填
-	ogg.big.home=/u01/golden123111
+	ogg.big.home=/u01/golden
 	#数据源名称，同时也是配置文件名称的来源
 	dsname=oratest
 	
@@ -268,7 +269,7 @@ DBus处理OGG for bigdata实时输出的AVRO格式的二进制数据，并处理
 	#ogg用户密码
 	ogg.pwd=ogg
 	#默认不用修改，如果需要配置与之前的producer不同的配置，填写新的文件名称。否则，会覆盖之前的配置文件。
-	kafka.producer.name=kafka_producer.properties
+	kafka.producer.name=kafka_producer4.properties
 	#kafka地址
 	kafka.url=dbus-n1:9092,dbus-n2:9092,dbus-n3:9092
 	#数据库配置的字符集
@@ -303,16 +304,16 @@ https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#
 	```shell
 	#!!此处需要注意： 
 	#1.exttrail的内容要与2.2节中配置项一致;
-	#2.replicat进程名称要与2.3.1生成的repl_oratest.prm文件名一致
-	GGSCI> add replicat repl_oratest, exttrail /u01/golden123111/dirdat/ab
-	GGSCI> start repl_oratest
+	#2.replicat进程名称要与2.3.1生成的oratest.prm文件名一致
+	GGSCI> add replicat oratest, exttrail /u01/golden/dirdat/ad
+	GGSCI> start oratest
 	#验证启动是否成功
-	GGSCI> info repl_oratest
-	REPLICAT   REPL_ORATEST   Last Started 2018-01-24 14:58   Status RUNNING
-	Checkpoint Lag       00:00:00 (updated 00:00:08 ago)
-	Process ID           21887
-	Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
-	                     2018-01-24 12:02:37.818342  RBA 1472
+	GGSCI> info oratest
+	REPLICAT   ORATEST   Last Started 2018-09-05 14:01   Status RUNNING
+   Checkpoint Lag       00:00:00 (updated 00:00:07 ago)
+   Process ID           14189
+   Log Read Checkpoint  File /u01/golden/dirdat/ad000000000
+                     First Record  RBA 0
 	```
 
 至此utest.t_customer表中的数据变化就可以写到kafka中了，接下来使用dbus-keeper系统进行配置，将数据接入到dbus系统并输出UMS到kafka。
@@ -656,12 +657,12 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
        ```shell
        #进入ggsci命令行
-       Shell> /u01/golden123012/ggsci
+       Shell> /u01/golden-ora/ggsci
        #编辑mgr配置文件(执行后会进入vi环境)
        GGSCI> edit param mgr
        #输入以下内容并保存
        PORT 7890
-       PURGEOLDEXTRACTS /u01/golden123012/dirdat, USECHECKPOINTS
+       PURGEOLDEXTRACTS /u01/golden-ora/dirdat, USECHECKPOINTS
        #自动重启的配置
        AUTORESTART EXTRACT *,RETRIES 5,WAITMINUTES 1
        #启动mgr进程
@@ -696,8 +697,8 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
   2. 解压安装
 
      ```shell
-     Shell> mkdir /u01/golden123111/
-     #上传 123111_ggs_Adapters_Linux_x64.zip包至/u01/golden123111/
+     Shell> mkdir /u01/golden/
+     #上传 123111_ggs_Adapters_Linux_x64.zip包至/u01/golden/
      Shell> unzip 123111_ggs_Adapters_Linux_x64.zip
      Shell> tar -xvf ggs_Adapters_Linux_x64.tar
      ```
@@ -706,13 +707,13 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
      ```shell
      #执行ggsci命令
-     Shell> /u01/golden123111/ggsci
+     Shell> /u01/golden/ggsci
      GGSCI> create subdirs
      GGSCI> edit param mgr
      # 输入以下内容并保存
      PORT 7890
      # 只保留 7 天的 trail file 文件
-     PURGEOLDEXTRACTS /u01/golden123111/dirdat/*, usecheckpoints, minkeepdays 7
+     PURGEOLDEXTRACTS /u01/golden/dirdat/*, usecheckpoints, minkeepdays 7
      AUTORESTART REPLICAT *,RETRIES 5,WAITMINUTES 1
 
      GGSCI> start mgr
@@ -734,9 +735,9 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 然后到安装目录下，创建kafka-jars目录
 
   	  ```shell
-		Shell> cd /u01/golden123111/
+		Shell> cd /u01/golden/
 		Shell> mkdir kafka-jars
-		#上传jar到/u01/golden123111/kafka-jars目录
+		#上传jar到/u01/golden/kafka-jars目录
 		Shell> ll
 		-rw-r--r-- 1 oracle oracle  743727 5月  18 2016 kafka-clients-0.10.0.0.jar
 		-rw-r--r-- 1 oracle oracle  236880 1月  13 2016 lz4-1.3.0.jar
@@ -770,7 +771,7 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 	SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
 	USERID ogg,PASSWORD ogg
 	RMTHOST ip, MGRPORT 7890 --这里的ip指的是安装Oracle GoldenGate for Big Data机器的ip
-	rmttrail /u01/golden123111/dirdat/ab
+	rmttrail /u01/golden/dirdat/ad
 	DDL INCLUDE MAPPED
 	TRANLOGOPTIONS DBLOGREADER
 	
@@ -784,7 +785,7 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 	GGSCI> add extract extr01, tranlog, begin now
 	
 	#添加远程
-	GGSCI> add rmttrail /u01/golden123111/dirdat/ab, extract extr01
+	GGSCI> add rmttrail /u01/golden/dirdat/ad, extract extr01
 	#启动抽取进程
 	GGSCI> start extr01
 	#确认启动成功
@@ -814,7 +815,7 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
   ```properties
   #创建kafka_producer.properties文件
-  Shell> cd /u01/golden123111/dirprm/
+  Shell> cd /u01/golden/dirprm/
   Shell> vim kafka_producer.properties
 
   #输入以下内容并保存
@@ -837,7 +838,7 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 
   ```properties
   #创建oratest.props文件
-  Shell> cd /u01/golden123111/dirprm/
+  Shell> cd /u01/golden/dirprm/
   Shell> vim oratest.props
 
   #输入以下内容并保存
@@ -887,14 +888,14 @@ ORACLE_HOME=$ORACLE_BASE/11.2.0/db_1
 	MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR;
 	MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT;
 	
-	GGSCI> add replicat oratest, exttrail /u01/golden123111/dirdat/ab
+	GGSCI> add replicat oratest, exttrail /u01/golden/dirdat/ad
 	GGSCI> start oratest
 	#验证启动是否成功
 	GGSCI> info oratest
 	REPLICAT   ORATEST   Last Started 2018-01-24 14:58   Status RUNNING
 	Checkpoint Lag       00:00:00 (updated 00:00:08 ago)
 	Process ID           21887
-	Log Read Checkpoint  File /u01/golden123111/dirdat/ab000000002
+	Log Read Checkpoint  File /u01/golden/dirdat/ab000000002
 	                     2018-01-24 12:02:37.818342  RBA 1472
 	```
 	
