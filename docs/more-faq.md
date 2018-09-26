@@ -88,3 +88,19 @@ grant select on db1.table to dbus;
 ## Q7:初始化心跳后没有找到心跳进程?
 
 如果发现初始化心跳后没有进程，请检查心跳所在服务器是否安装了unzip命令。初始化需要unzip命令支持。
+
+## Q8:启动Topology时报和storm.py相关异常?
+
+启动topology时报如下异常：
+
+```sql
+2018-02-28 18:27:19:999 - error: /app/dbus-allinone/distribution-0.4.0-bin/manager/lib/service/start-topology-service.js[37] - startTopo err: Error: Command failed: ssh -p 22 root@localhost 'cd /app/dbus-allinone/apache-storm-1.0.1//dbus_jars; ./dbus_startTopology.sh /app/dbus-allinone/apache-storm-1.0.1/ log-processor localhost:2181 heartbeat_log 0.4.x/log_processor/20180123_201400/dbus-log-processor-0.4.0-jar-with-dependencies.jar'Traceback (most recent call last):  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 766, in <module>    main()  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 763, in main    (COMMANDS.get(COMMAND, unknown_command))(*ARGS)  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 234, in jar    transform_class = confvalue("client.jartransformer.class", [CLUSTER_CONF_DIR])  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 144, in confvalue    p = sub.Popen(command, stdout=sub.PIPE)  File "/usr/lib64/python2.6/subprocess.py", line 642, in __init__    errread, errwrite)  File "/usr/lib64/python2.6/subprocess.py", line 1238, in _execute_child    raise child_exceptionOSError: [Errno 2] No such file or directory
+```
+
+原因：ssh -p 22 root@localhost没有把JAVA_HOME环境变量带过来。
+
+解决办法：
+
+```sql
+在/apache-storm-1.0.1/bin/storm脚本最上面增加java环境变量export JAVA_HOME=/opt/programs/jdk1.8.0_152export JRE_HOME=/opt/programs/jdk1.8.0_152/jreexport CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/libexport PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+```
