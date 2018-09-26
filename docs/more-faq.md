@@ -85,3 +85,6 @@ dbus web会通过`data source` 中的 `slave_url` 和 `dbus` 用户与源库建�
 grant select on db1.table to dbus;
 ```
 
+## Q7:初始化心跳后没有找到心跳进程?
+
+如果发现初始化心跳后没有进程，请检查心跳所在服务器是否安装了unzip命令。初始化需要unzip命令支持。
