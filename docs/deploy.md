@@ -166,6 +166,8 @@ influxdb.url=http://influxdb_server_ip:8086
 
 ![](img/web_init2.png)
 
+![](img/web_init3.png)
+
 ```
 点击确定，后台会自动完成以下初始化动作：
     1、配置数据正确性检测
