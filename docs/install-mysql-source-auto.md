@@ -22,6 +22,7 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 配置中用到的基础环境的情况请参考[基础组件安装](install-base-components.html) 
 
+如果只是加表，请参考[加表流程](#add-table)
 
 **相关依赖部件说明：**
 
@@ -277,7 +278,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 ![数据基本信息填写标注](img/install-mysql/mysql-add-ds.png)
 
-**（3） 下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；**
+**（3） <span id="3.1.3"></span>下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；**
 
 ![选择schema标注](img/install-mysql/mysql-add-schema-table.png)
 
@@ -314,7 +315,7 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 ​如果正确，会出现如下图所示内容。中间环节出错，会有相应提示。
 ​	![检查加线结果](img/install-mysql/mysql-add-check-line.png)
 
-
+<span id="3.3"></span>
 ### 3.3 验证增量数据
 
 **a) 插入数据**
@@ -330,9 +331,40 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 ![install-mysql-9-grafana-actor](img/install-mysql/install-mysql-9-grafana-actor.PNG)
 
 
-
 ### 3.4 验证全量拉取
 
 验证全量拉取是否成功，可在Table管理右侧操作栏，点击"查看拉全量状态"。![install-mysql-10-fullpuller_status](img/install-mysql/full-pull-history-global.png)
 全量拉取的信息存储在ZK上，Dbus keeper会读取的zk下相应节点的信息，来查看全量拉取状态。看结点信息中Status字段，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。
 ![install-mysql-11-fullpuller_status](img/install-mysql/fullpull-history-check.png)
+
+
+## 4 加表流程
+<span id="add-table"></span>
+本部分流程是建立在数据线部署完毕的基础上的，即在部署完数据线后，后续添加需要抽取的表。
+
+### 4.1 加表入口
+单独加表有两个入口：一，在数据源管理--操作（添加schema），可以选择schema，然后选择要添加的table。此步骤与3.1中[第三步](#3.1.3)操作一致（实际上是在加线的步骤中集成了加表的操作），可以选择多个schema下的多个table添加；二，数据源管理--Schema管理--操作（添加table）。如果要添加的表都在一个schema下，或者您已确定需要添加哪个schema下的表，可以选择这个方式加表。
+
+**4.1.1 数据源管理处入口**
+
+![install-mysql-add-table-entrance1](img/install-mysql/install-mysql-add-table-entrance1.png)
+
+点击添加按钮后，可以进一步选择shcema和table进行操作，可选择多个schema的多个table
+
+![install-mysql-add-table-entrance1-schema](img/install-mysql/install-mysql-add-table-entrance1-schema.png)
+
+**4.1.2 Schema管理处入口**
+
+![install-mysql-add-table-entrance2](img/install-mysql/install-mysql-add-table-entrance2.png)
+
+点击添加按钮后，直接选择table进行操作，因为schema已经固定。
+
+![install-mysql-add-table-entrance2-table](img/install-mysql/install-mysql-add-table-entrance2-table.png)
+
+### 4.2 验证增量数据
+加表完毕，可以在“数据源管理--表管理”中将表增量启动起来(需要保证版本不是“null”，即：需要保证xx-dispatcher-appender拓扑正常启动，如果没有启动，在“数据源管理--数据源管理--拓扑管理”中启动)。
+
+![install-mysql-add-table-start](img/install-mysql/install-mysql-add-table-start.png)
+
+表启动起来（状态变为“running”）后，可以进行增量数据的验证。参考步骤[3.3](#3.3)
+
