@@ -120,7 +120,8 @@ export default class DataSchemaWrapper extends Component {
   }
 
   handleAdd = record => {
-    if (record.ds_type === 'oracle' || record.ds_type === 'mysql') {
+    if (record.ds_type === 'oracle' || record.ds_type === 'mysql'
+    ) {
       this.handleOpenAddModal(record)
     } else {
       this.handleOpenAddLogModal(record)

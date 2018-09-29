@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -301,7 +301,12 @@ public class FullPullHelper {
                 //回写源端数据库状态
                 FullPullHelper.updateFullPullReqTable(dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), null, null, null);
             }
-//            writeSplitStatusToDbManager(dataSourceInfo, currentTimeStampString, version, batchNo, 0, 0);
+            //更新全量历史记录表,开始分片
+            JSONObject fullpullUpdateParams = new JSONObject();
+            fullpullUpdateParams.put("dataSourceInfo", dataSourceInfo);
+            fullpullUpdateParams.put("status", "splitting");
+            fullpullUpdateParams.put("start_split_time", FullPullHelper.getCurrentTimeStampString());
+            FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             String errorMsg = "Encountered exception when writing msg to zk monitor.";
@@ -335,7 +340,7 @@ public class FullPullHelper {
         for (String path : paths) {
             ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, path);
             String status = progressObj.getStatus();
-            if (!status.equals("ending") && !status.equals("abort")) {
+            if (StringUtils.isBlank(status) || (!status.equals("ending") && !status.equals("abort"))) {
                 progressObj.setUpdateTime(currentTimeStampString);
                 progressObj.setErrorMsg("重启topoloby,pending任务状态置为abort!");
                 progressObj.setStatus("abort");
@@ -444,58 +449,60 @@ public class FullPullHelper {
                 StringBuilder sb = new StringBuilder();
                 sb.append("UPDATE t_fullpull_history SET ");
                 Object version = fullpullUpdateParams.get("version");
-                if(version != null){
+                if (version != null) {
                     sb.append("version=").append(version).append(",");
                 }
                 Object batch_id = fullpullUpdateParams.get("batch_id");
-                if(batch_id != null){
+                if (batch_id != null) {
                     sb.append("batch_id=").append(batch_id).append(",");
                 }
                 Object status = fullpullUpdateParams.get("status");
-                if(status != null){
+                if (status != null) {
                     if ("ok".equals(status)) {
                         status = "ending";
                     }
+                    String state = rs.getString("state");
+                    status = getStateForUpdate(state, (String) status);
                     sb.append("state='").append(status).append("',");
                 }
                 Object error_msg = fullpullUpdateParams.get("error_msg");
-                if(error_msg != null){
+                if (error_msg != null) {
                     sb.append("error_msg='").append(error_msg).append("',");
                 }
                 Object start_split_time = fullpullUpdateParams.get("start_split_time");
-                if(start_split_time != null){
+                if (start_split_time != null) {
                     sb.append("start_split_time='").append(start_split_time).append("',");
                 }
                 Object start_pull_time = fullpullUpdateParams.get("start_pull_time");
-                if(start_pull_time != null){
+                if (start_pull_time != null) {
                     sb.append("start_pull_time='").append(start_pull_time).append("',");
                 }
                 Object end_time = fullpullUpdateParams.get("end_time");
-                if(end_time != null){
+                if (end_time != null) {
                     sb.append("end_time='").append(end_time).append("',");
                 }
                 Object finished_partition_count = fullpullUpdateParams.get("finished_partition_count");
-                if(finished_partition_count != null){
+                if (finished_partition_count != null) {
                     sb.append("finished_partition_count=").append(finished_partition_count).append(",");
                 }
                 Object total_partition_count = fullpullUpdateParams.get("total_partition_count");
-                if(total_partition_count != null){
+                if (total_partition_count != null) {
                     sb.append("total_partition_count=").append(total_partition_count).append(",");
                 }
                 Object finished_row_count = fullpullUpdateParams.get("finished_row_count");
-                if(finished_row_count != null){
+                if (finished_row_count != null) {
                     sb.append("finished_row_count=").append(finished_row_count).append(",");
                 }
                 Object total_row_count = fullpullUpdateParams.get("total_row_count");
-                if(total_row_count != null){
+                if (total_row_count != null) {
                     sb.append("total_row_count=").append(total_row_count).append(",");
                 }
                 Object first_shard_msg_offset = fullpullUpdateParams.get("first_shard_msg_offset");
-                if(first_shard_msg_offset != null){
+                if (first_shard_msg_offset != null) {
                     sb.append("first_shard_msg_offset=").append(first_shard_msg_offset).append(",");
                 }
                 Object last_shard_msg_offset = fullpullUpdateParams.get("last_shard_msg_offset");
-                if(last_shard_msg_offset != null){
+                if (last_shard_msg_offset != null) {
                     sb.append("last_shard_msg_offset=").append(last_shard_msg_offset).append(",");
                 }
                 Date startSplitTime = rs.getTimestamp("start_split_time");
@@ -526,6 +533,45 @@ public class FullPullHelper {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * 目前拉全量状态有init<splitting<pulling<ending<abort
+     * 实践发现数据库状态更新并不按照理想状态更新,可能已经是pulling状态,又被更新为splitting
+     * 针对这个情况按照init<splitting<pulling<ending<abort做一下处理
+     *
+     * @param state
+     * @param status
+     * @return
+     */
+    private static String getStateForUpdate(String state, String status) {
+        int oldState = getNumberByState(state);
+        int newState = getNumberByState(status);
+        if (oldState > newState) {
+            return state;
+        }
+        return status;
+    }
+
+    private static int getNumberByState(String state) {
+        int num = 0;
+        switch (state) {
+            case "init":
+                num = 0;
+                break;
+            case "splitting":
+                num = 1;
+                break;
+            case "pulling":
+                num = 2;
+                break;
+            case "ending":
+                num = 3;
+                break;
+            case "abort":
+                num = 4;
+        }
+        return num;
     }
 
     private static String getCostTime(Date startTime) {
@@ -840,6 +886,8 @@ public class FullPullHelper {
                 properties.put("group.id", groupId);
                 LOG.warn("typoType: {}, path: {}, client.id: {}, group.id: {}", topoType, path, clientId, groupId);
             }
+            if (Constants.ZkTopoConfForFullPull.BYTE_PRODUCER_CONFIG.equals(confFileName)) {
+            }
             return properties;
         } catch (Exception e) {
             return new Properties();
@@ -886,8 +934,7 @@ public class FullPullHelper {
         return pendingTaskKey;
     }
 
-    public static void updatePendingTasksToHistoryTable(String dataSourceInfo, String dsName, String opType, Consumer<String, byte[]> consumer,
-                                                        String topic, String errorMsg) {
+    public static void updatePendingTasksToHistoryTable(String dsName, String opType, Consumer<String, byte[]> consumer, String topic) {
         String type = "";
         if (isGlobal) {
             type = "global";
@@ -908,7 +955,7 @@ public class FullPullHelper {
                 sql.append("SELECT * FROM   ");
                 sql.append("( SELECT h.* FROM t_fullpull_history h   ");
                 sql.append("WHERE h.type = '").append(type).append("'");
-                if(!isGlobal){
+                if (!isGlobal) {
                     sql.append(" and h.dsName = '").append(dsName).append("'");
                 }
                 sql.append(") h1 ");
@@ -916,13 +963,14 @@ public class FullPullHelper {
                 sql.append("( SELECT h2.init_time FROM   ");
                 sql.append("( SELECT h.* FROM t_fullpull_history h   ");
                 sql.append("WHERE h.type = '").append(type).append("'");
-                if(!isGlobal){
+                if (!isGlobal) {
                     sql.append(" and h.dsName = '").append(dsName).append("'");
                 }
                 sql.append(") h2 ");
                 sql.append("WHERE h2.state = 'ending' OR h2.state = 'abort' ORDER BY h2.init_time DESC LIMIT 1 )   ");
                 sql.append("ORDER BY h1.init_time LIMIT 2  ");
 
+                LOG.info("splittingSpout restart :{}", sql.toString());
                 ps = conn.prepareStatement(sql.toString());
                 rs = ps.executeQuery();
                 Long rowId1 = null;
@@ -966,8 +1014,6 @@ public class FullPullHelper {
                     ps.setLong(1, rowId1);
                     ps.executeUpdate();
 
-                    //更新该数据源所有的监控节点信息为完成状态
-                    finishPullReport(dsName);
                     LOG.info("splittingSpout restart : find pening task ! set the state of pending task to abort! id:{}", rowId1);
                 } else {
                     if (rowId1 != null) {
@@ -977,8 +1023,10 @@ public class FullPullHelper {
                                 " FULL_PULL_REQ_MSG_OFFSET :{}!", fullPullReqMsgOffset1);
                     }
                 }
+                //更新该数据源pending任务的监控节点信息为完成状态
+                finishPullReport(dsName);
 
-                if(!isGlobal){
+                if (!isGlobal) {
                     //把所有的普通阻断增量的拉全量状态置为abort,是否还会处理这些任务需要看他们的full_pull_req_msg_offset offset的位置决定
                     sql = new StringBuilder();
                     sql.append(" UPDATE ");
@@ -1273,12 +1321,46 @@ public class FullPullHelper {
         }
     }
 
-    public static boolean isDbusKeeper(String dataSourceInfo){
+    public static boolean isDbusKeeper(String dataSourceInfo) {
         JSONObject json = JSONObject.parseObject(dataSourceInfo);
         JSONObject project = json.getJSONObject("project");
         if (project != null && !project.isEmpty()) {
-           return true;
+            return true;
         }
         return false;
+    }
+
+    public static String getTopoName(String dataSourceInfo) {
+        JSONObject json = JSONObject.parseObject(dataSourceInfo);
+        JSONObject project = json.getJSONObject("project");
+        Integer topo_table_id = project.getInteger("topo_table_id");
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String topo_name = null;
+        try {
+            conn = DBHelper.getDBusMgrConnection();
+            String sql = "select p.topo_name from t_project_topo_table t ,t_project_topo p " +
+                    "where t.topo_id = p.id and t.id = " + topo_table_id;
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                topo_name = rs.getString("topo_name");
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (ps != null)
+                    ps.close();
+                if (conn != null)
+                    conn.close();
+            } catch (SQLException e) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
+        return topo_name;
     }
 }

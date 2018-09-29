@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,8 @@ package com.creditease.dbus.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.commons.*;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.StormTopology;
@@ -37,7 +38,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,14 +62,13 @@ public class StormToplogyOpHelper {
 
     public static boolean inited = false;
     public static String stormRestApi = "";
-    public static String loginUrl = "";
-    public static String user = "";
-    public static String pass = "";
+    private static IZkService zk;
 
 
     public static void init(IZkService zkService) throws Exception {
-            stormRestApi = (String) zkService.getProperties(KeeperConstants.GLOBAL_CONF).get(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_API);
-            inited = true;
+        zk = zkService;
+        stormRestApi = (String) zkService.getProperties(KeeperConstants.GLOBAL_CONF).get(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_API);
+        inited = true;
     }
 
     public static Map getRunningTopologies(List<Map<String, Object>> dataSources) {
@@ -102,7 +106,7 @@ public class StormToplogyOpHelper {
 
     }
 
-    public static String killTopology(String topologyId, int waitTime) {
+    public static String killTopology(String topologyId, int waitTime) throws Exception {
         String topologyKillApi = stormRestApi + "/topology/" + topologyId + "/kill/" + waitTime;
         JSONObject resultJson = null;
             RestTemplate restTemplate = new RestTemplate();
@@ -229,6 +233,7 @@ public class StormToplogyOpHelper {
                 }
             }
 
+
             if (type.toLowerCase().indexOf("log") != -1) {
                 String logTopoName = dsName + "-log-processor";
 
@@ -307,4 +312,5 @@ public class StormToplogyOpHelper {
             result = restTemplate.getForObject(api, String.class);
         return result;
     }
+
 }

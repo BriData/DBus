@@ -180,7 +180,12 @@ export default class ProjectTableGrid extends Component {
         />,
         icon: 'check',
         onClick: () => onReload(record),
-        confirmText: '确认生效？'
+        confirmText: <span>
+          <FormattedMessage
+            id="app.components.projectManage.projectTable.active"
+            defaultMessage="生效"
+          />?
+        </span>
       },
       {
         text: <FormattedMessage
@@ -189,7 +194,12 @@ export default class ProjectTableGrid extends Component {
         />,
         icon: 'delete',
         onClick: () => onDelete(record),
-        confirmText: '确认删除？'
+        confirmText: <span>
+          <FormattedMessage
+            id="app.common.delete"
+            defaultMessage="删除"
+          />?
+        </span>
       }
     ]
     return (

@@ -14,5 +14,6 @@ export {
 } from '@/app/components/ConfigManage/ZKManage/redux/action'
 
 export {
-  updateGlobalConf
+  updateGlobalConf,
+  initGlobalConf
 } from '@/app/components/ConfigManage/GlobalConfig/redux/action'

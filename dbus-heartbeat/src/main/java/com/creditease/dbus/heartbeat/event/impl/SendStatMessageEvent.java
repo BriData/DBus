@@ -20,7 +20,7 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.creditease.dbus.commons.StatMessage;
@@ -42,16 +42,16 @@ public class SendStatMessageEvent extends AbstractEvent{
         try {
             source = new KafkaSource();
             sink = new InfluxSink();
-            Map<Long, StatMessage> map = null;
+            List<StatMessage> list = null;
             long retryTimes = 0;
             while (isRun.get()) {
-                map = source.poll();
-                if (map == null)
+                list = source.poll();
+                if (list == null)
                     continue;
 
                 retryTimes = 0;
                 while (isRun.get()) {
-                    if (sink.sendBatchMessages(map, retryTimes) == 0) {
+                    if (sink.sendBatchMessages(list, retryTimes) == 0) {
                         source.commitOffset();
                         //如果写influxdb成功， 就退出循环
                         break;

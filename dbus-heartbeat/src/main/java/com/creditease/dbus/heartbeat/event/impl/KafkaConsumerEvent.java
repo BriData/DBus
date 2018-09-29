@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -188,7 +188,7 @@ public class KafkaConsumerEvent extends AbstractEvent {
                                 cpTime = Long.valueOf(times[0]);
                                 txTime = Long.valueOf(times[1]);
                                 //有心跳来, 但无法判断 是否数据被abort了,因为没有状态
-                                sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key);
+                                sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key, record.offset());
                             } else {
                                 LOG.error("it should not be here. key:{}", key);
                             }
@@ -223,7 +223,7 @@ public class KafkaConsumerEvent extends AbstractEvent {
                                             //这种情况，只发送stat，不更新zk
                                             isTableOK = false;
                                         }
-                                        sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key);
+                                        sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key, record.offset());
                                     } else {
                                         LOG.error("it should not be here. key:{}", key);
                                     }
@@ -295,13 +295,14 @@ public class KafkaConsumerEvent extends AbstractEvent {
     }
 
 
-    private void sendStatMsg(String dsName, String schemaName, String tableName, long cpTime, long txTime, long curTime, String key) {
+    private void sendStatMsg(String dsName, String schemaName, String tableName, long cpTime, long txTime, long curTime, String key, long offset) {
         //这个是带有checkpoint的心跳包
         StatMessage sm = new StatMessage(dsName, schemaName, tableName, "HEART_BEAT");
         sm.setCheckpointMS(cpTime);
         sm.setTxTimeMS(txTime);
         sm.setLocalMS(curTime);
         sm.setLatencyMS(curTime - cpTime);
+        sm.setOffset(offset);
         producerSend("dbus_statistic", key, sm.toJSONString());
     }
 

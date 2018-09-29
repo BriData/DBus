@@ -113,11 +113,21 @@ export default class SinkForm extends Component {
         onCancel={() => onCloseModal(false)}
         onOk={this.handleSubmit}
         confirmLoading={false}
-        title={modalStatus === 'modify' ? '修改Sink' : '添加Sink'}
+        title={modalStatus === 'modify' ? <FormattedMessage
+          id="app.components.sinkManage.modifySink"
+          defaultMessage="修改Sink"
+        /> : <FormattedMessage
+          id="app.components.sinkManage.addSink"
+          defaultMessage="添加Sink"
+        />}
       >
         <Form autoComplete="off" layout="horizontal">
           <FormItem
-            label={"名称"
+            label={
+              <FormattedMessage
+                id="app.common.name"
+                defaultMessage="名称"
+              />
             }
             {...this.formItemLayout}
           >
@@ -139,7 +149,10 @@ export default class SinkForm extends Component {
           </FormItem>
           <FormItem
             label={
-              'Bootstrap Servers'
+              <FormattedMessage
+                id="app.components.configCenter.globalConfig.bootstrapServers"
+                defaultMessage="Kafka 服务器"
+              />
             }
             {...this.formItemLayout}
           >
@@ -158,7 +171,12 @@ export default class SinkForm extends Component {
               />
             )}
           </FormItem>
-          <FormItem label="Version" {...this.formItemLayout}>
+          <FormItem label={
+            <FormattedMessage
+              id="app.common.version"
+              defaultMessage="版本"
+            />
+          } {...this.formItemLayout}>
             {getFieldDecorator('sinkType', {
               initialValue: (sinkInfo && sinkInfo.sinkType) ||'0.10.0.0',
               rules: [

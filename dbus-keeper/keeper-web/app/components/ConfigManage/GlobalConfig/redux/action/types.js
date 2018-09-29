@@ -12,3 +12,9 @@ export const UPDATE_GLOBAL_CONF = createActionTypes('configManage/zkManage/UPDAT
   'SUCCESS',
   'FAIL'
 ])
+// 初始化
+export const INIT_GLOBAL_CONF = createActionTypes('configManage/zkManage/INIT_GLOBAL_CONF', [
+  'LOAD',
+  'SUCCESS',
+  'FAIL'
+])

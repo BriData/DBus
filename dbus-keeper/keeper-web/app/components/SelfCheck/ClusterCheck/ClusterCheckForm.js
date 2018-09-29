@@ -81,7 +81,10 @@ export default class ClusterCheckForm extends Component {
         <Form autoComplete="off" layout="horizontal">
           <FormItem {...tailFormItemLayout}>
             <Button type="primary" onClick={this.handleCheckCluster}>
-              查询集群状态
+              <FormattedMessage
+                id="app.components.clusterCheck.clusterCheck.checkClusterStatus"
+                defaultMessage="查询集群状态"
+              />
             </Button>
           </FormItem>
           <FormItem {...titleItemLayout}>
@@ -103,7 +106,10 @@ export default class ClusterCheckForm extends Component {
                 )}
               </Col>
               <Col span={6}>
-                Storm服务器免密登录：
+                <FormattedMessage
+                  id="app.components.clusterCheck.clusterCheck.stormSSH"
+                  defaultMessage="Storm服务器免密登录"
+                />：
                 {stormSSHSecretFree === 'ok' ? (
                   <Icon style={{color: 'green'}} type="check-circle" />
                 ) : (
@@ -112,7 +118,10 @@ export default class ClusterCheckForm extends Component {
               </Col>
             </Row>
           </FormItem>
-          <FormItem label="ZK状态" {...formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.clusterCheck.clusterCheck.zkStatus"
+            defaultMessage="ZK状态"
+          />} {...formItemLayout}>
             <Table
               size="small"
               rowKey={record => `${record.host}:${record.port}`}
@@ -149,7 +158,10 @@ export default class ClusterCheckForm extends Component {
               ]}
             />
           </FormItem>
-          <FormItem label="心跳节点" {...formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.clusterCheck.clusterCheck.heartbeatStatus"
+            defaultMessage="心跳状态"
+          />} {...formItemLayout}>
             <Table
               size="small"
               rowKey={record => record.name}
@@ -183,7 +195,10 @@ export default class ClusterCheckForm extends Component {
               ]}
             />
           </FormItem>
-          <FormItem label="Kafka Broker" {...formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.clusterCheck.clusterCheck.kafkaBrokerStatus"
+            defaultMessage="Kafka集群状态"
+          />} {...formItemLayout}>
             <Table
               size="small"
               rowKey={record => record.id}
@@ -287,7 +302,7 @@ export default class ClusterCheckForm extends Component {
                   title: 'ID',
                   dataIndex: 'id',
                   key: 'id',
-                  width: '25%',
+                  width: '15%',
                   render: this.renderComponent(this.renderNomal)
                 },
                 {

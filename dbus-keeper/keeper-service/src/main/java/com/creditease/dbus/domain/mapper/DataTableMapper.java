@@ -20,6 +20,7 @@
 
 package com.creditease.dbus.domain.mapper;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,5 +64,7 @@ public interface DataTableMapper {
     Map<String, Object> getFlowLineCheckInfo(Integer tableId);
 
     List<DataTable> findAllTables();
+
+    List<HashMap<String,Object>> findTablesByUserId(Integer userId);
 
 }

@@ -56,7 +56,8 @@ export {
 
 
 export {
-  setDataTableParams
+  setDataTableParams,
+  clearVersionDetail
 } from '@/app/components/ResourceManage/DataTableManage/redux/action'
 
 export {

@@ -47,6 +47,8 @@ export const DATA_TABLE_GET_VERSION_LIST = createActionTypes('dataTable/dataTabl
   'FAIL'
 ])
 
+export const DATA_TABLE_CLEAR_VERSION_DETAIL = 'dataTable/dataTableManager/DATA_TABLE_CLEAR_VERSION_DETAIL'
+
 export const DATA_TABLE_GET_VERSION_DETAIL = createActionTypes('dataTable/dataTableManager/DATA_TABLE_GET_VERSION_DETAIL', [
   'LOAD',
   'SUCCESS',

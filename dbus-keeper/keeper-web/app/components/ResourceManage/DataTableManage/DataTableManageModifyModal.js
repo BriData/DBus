@@ -58,7 +58,10 @@ export default class DataTableManageModifyModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={'修改表信息'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataTable.modifyTable"
+            defaultMessage="修改表"
+          />}
           onCancel={onClose}
           onOk={this.handleSubmit}
         >
@@ -70,39 +73,60 @@ export default class DataTableManageModifyModal extends Component {
                 initialValue: tableInfo.id,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="dsName" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataSourceName"
+              defaultMessage="数据源名称"
+            />} {...formItemLayout}>
               {getFieldDecorator('dsName', {
                 initialValue: tableInfo.dsName,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="schemaName" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataSchemaName"
+              defaultMessage="Schema名称"
+            />} {...formItemLayout}>
               {getFieldDecorator('schemaName', {
                 initialValue: tableInfo.schemaName,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="tableName" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataTableName"
+              defaultMessage="表名"
+            />} {...formItemLayout}>
               {getFieldDecorator('tableName', {
                 initialValue: tableInfo.tableName,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="PTRegex" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataTableNameRegex"
+              defaultMessage="表名正则"
+            />} {...formItemLayout}>
               {getFieldDecorator('physicalTableRegex', {
                 initialValue:tableInfo.physicalTableRegex,
               })(<Input size="large" type="text" />)}
             </FormItem>
-            <FormItem label="Alias" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataTableNameAlias"
+              defaultMessage="表别名"
+            />} {...formItemLayout}>
               {getFieldDecorator('tableNameAlias', {
                 initialValue:tableInfo.tableNameAlias,
               })(<Input size="large" type="text" />)}
             </FormItem>
-            <FormItem label="description" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.common.description"
+              defaultMessage="描述"
+            />} {...formItemLayout}>
               {getFieldDecorator('description', {
                 initialValue: tableInfo.description,
               })(<Input size="large" type="text" />)}
             </FormItem>
 
             <FormItem
-              label={"beforeUpdate"} {...formItemLayout}
+              label={<FormattedMessage
+                id="app.components.resourceManage.dataTable.beforeUpdate"
+                defaultMessage="输出before"
+              />} {...formItemLayout}
             >
               {getFieldDecorator('outputBeforeUpdateFlg', {
                 initialValue:`${tableInfo.outputBeforeUpdateFlg}`

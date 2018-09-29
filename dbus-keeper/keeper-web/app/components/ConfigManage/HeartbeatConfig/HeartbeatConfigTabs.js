@@ -1,6 +1,7 @@
 import React, {PropTypes, Component} from 'react'
 import {Form, Select, Tabs} from 'antd'
 const TabPane = Tabs.TabPane;
+import { FormattedMessage } from 'react-intl'
 // 导入组件
 import BasicConfigForm from './BasicConfigForm'
 import AdvancedConfigForm from './AdvancedConfigForm'
@@ -48,7 +49,10 @@ export default class HeartbeatConfigTabs extends Component {
     return (
       <div>
         <Tabs defaultActiveKey="basicConfig">
-          <TabPane tab="基础配置" key="basicConfig">
+          <TabPane tab={<FormattedMessage
+            id="app.components.configCenter.heartbeatConfig.basicConfig"
+            defaultMessage="基础配置"
+          />} key="basicConfig">
             <BasicConfigForm
               config={config}
               onValueChange={this.handleValueChange}
@@ -56,14 +60,20 @@ export default class HeartbeatConfigTabs extends Component {
               onSave={this.handleSave}
             />
           </TabPane>
-          <TabPane tab="高级配置" key="advancedConfig">
+          <TabPane tab={<FormattedMessage
+            id="app.components.configCenter.heartbeatConfig.advancedConfig"
+            defaultMessage="高级配置"
+          />} key="advancedConfig">
             <AdvancedConfigForm
               config={config}
               onValueChange={this.handleValueChange}
               onSave={this.handleSave}
             />
           </TabPane>
-          <TabPane tab="超时补充配置" key="timeoutConfig">
+          <TabPane tab={<FormattedMessage
+            id="app.components.configCenter.heartbeatConfig.timeoutConfig"
+            defaultMessage="超时补充配置"
+          />} key="timeoutConfig">
             <TimeoutConfigForm
               config={config}
               allDataSchemaList={allDataSchemaList}
@@ -71,7 +81,10 @@ export default class HeartbeatConfigTabs extends Component {
               onSave={this.handleSave}
             />
           </TabPane>
-          <TabPane tab="通知补充配置" key="notifyConfig">
+          <TabPane tab={<FormattedMessage
+            id="app.components.configCenter.heartbeatConfig.notifyConfig"
+            defaultMessage="通知补充配置"
+          />} key="notifyConfig">
             <NotifyConfigForm
               config={config}
               allDataSchemaList={allDataSchemaList}

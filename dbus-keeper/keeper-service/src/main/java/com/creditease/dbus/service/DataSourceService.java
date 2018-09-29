@@ -204,7 +204,8 @@ public class DataSourceService {
                 return VALIDATE_OK;//1;
             }
             else if(dsType.equals(DbusDatasourceType.MYSQL)
-                    || dsType.equals(DbusDatasourceType.ORACLE)){
+                    || dsType.equals(DbusDatasourceType.ORACLE)
+                    ){
                 SourceFetcher fetcher = SourceFetcher.getFetcher(map);
                 int temp = fetcher.fetchSource(map);
                 return temp;
@@ -332,8 +333,8 @@ public class DataSourceService {
         }else if(dbusDatasourceType == DbusDatasourceType.ORACLE){
             topologyTypes.add(TopologyType.DISPATCHER_APPENDER);
             topologyTypes.add(TopologyType.SPLITTER_PULLER);
-
-        }else if(dbusDatasourceType ==DbusDatasourceType.LOG_FILEBEAT ||
+        }
+        else if(dbusDatasourceType ==DbusDatasourceType.LOG_FILEBEAT ||
                 dbusDatasourceType == DbusDatasourceType.LOG_FLUME ||
                 dbusDatasourceType == DbusDatasourceType.LOG_LOGSTASH ||
                 dbusDatasourceType == DbusDatasourceType.LOG_LOGSTASH_JSON ||

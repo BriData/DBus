@@ -112,6 +112,23 @@ public class ConfigCenterController extends BaseController {
     }
 
     /**
+     * 重置mgr数据库表结构
+     *
+     * @param map
+     * @return
+     */
+    @PostMapping(path = "/ResetMgrDB", consumes = "application/json")
+    public ResultEntity ResetMgrDB(@RequestBody LinkedHashMap<String, String> map) {
+        try {
+            int i = configCenterService.ResetMgrDB(map);
+            return resultEntityBuilder().status(i).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while ResetMgrDB ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    /**
      * 根据勾选web部分初始化
      *
      * @param map

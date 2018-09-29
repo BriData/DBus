@@ -25,7 +25,8 @@ export default class DBusDataManageSearch extends Component {
     const dataSource = [
       {dsId: null, dsTypeName: '请选择DataSource'},
       ...dataSourceList
-        .filter(ds => ds.ds_type === 'mysql' || ds.ds_type === 'oracle')
+        .filter(ds => ds.ds_type === 'mysql' || ds.ds_type === 'oracle'
+        )
         .map(ds => ({dsId: ds.dsId,dsTypeName: ds.dsTypeName}))
     ]
     return (

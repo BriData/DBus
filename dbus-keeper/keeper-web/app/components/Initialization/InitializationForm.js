@@ -3,6 +3,7 @@
  * @description  登录From 组件
  */
 
+import { FormattedMessage } from 'react-intl'
 import React, { PropTypes, Component } from 'react'
 import Request, { setToken } from '@/app/utils/request'
 import { Form, Input, Button, message, Row, Col } from 'antd'
@@ -214,9 +215,20 @@ export default class InitializationForm extends Component {
 
           <Row>
             <Col span={contentSpan}>
-              <FormItem label="Influxdb URL"  hasFeedback validateStatus={influxdbValidateStatus} {...formItemLayout}>
-                {getFieldDecorator('influxdb_url', {
-                  initialValue: basicConf['influxdb_url'],
+              <FormItem label={<FormattedMessage id="app.components.configCenter.globalConfig.influxdbUrl" defaultMessage="Influxdb 外网网址" />} {...formItemLayout}>
+                {getFieldDecorator('influxdb_url_web', {
+                  initialValue: basicConf['influxdb_url_web'],
+                })(<Input disabled={true} type="text" placeholder="请输入Influxdb URL" size="large" />)}
+              </FormItem>
+            </Col>
+            <Col style={{color: commentColor}} span={commentSpan} offset={commentOffset}>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={contentSpan}>
+              <FormItem label={<FormattedMessage id="app.components.configCenter.globalConfig.influxdbInnerUrl" defaultMessage="Influxdb 内网网址" />} hasFeedback validateStatus={influxdbValidateStatus} {...formItemLayout}>
+                {getFieldDecorator('influxdb_url_dbus', {
+                  initialValue: basicConf['influxdb_url_dbus'],
                   rules: [
                     {
                       required: true,
@@ -242,16 +254,28 @@ export default class InitializationForm extends Component {
           </Row>
           <Row>
             <Col span={contentSpan}>
-              <FormItem label="Grafana Dashboard URL"  hasFeedback validateStatus={grafanaValidateStatus} {...formItemLayout}>
-                {getFieldDecorator('monitor_url', {
+              <FormItem label={<FormattedMessage id="app.components.configCenter.globalConfig.grafanaUrl" defaultMessage="Grafana 外网网址" />} {...formItemLayout}>
+                {getFieldDecorator('grafana_url_web', {
+                  initialValue: 'http://grafana_server_ip:3000',
+                })(<Input type="text" placeholder="Grafana URL" size="large" />)}
+              </FormItem>
+            </Col>
+            <Col style={{color: commentColor}} span={commentSpan} offset={commentOffset}>
+              例如：http://grafana_server_ip:3000
+            </Col>
+          </Row>
+          <Row>
+            <Col span={contentSpan}>
+              <FormItem label={<FormattedMessage id="app.components.configCenter.globalConfig.grafanaInnerUrl" defaultMessage="Grafana 内网网址" />}  hasFeedback validateStatus={grafanaValidateStatus} {...formItemLayout}>
+                {getFieldDecorator('grafana_url_dbus', {
                   initialValue: 'http://grafana_server_ip:3000',
                   rules: [
                     {
                       required: true,
-                      message: '请输入Monitor URL'
+                      message: 'Please Input Grafana URL'
                     }
                   ]
-                })(<Input type="text" placeholder="请输入Monitor URL" size="large" />)}
+                })(<Input type="text" placeholder="Grafana URL" size="large" />)}
               </FormItem>
             </Col>
             <Col style={{color: commentColor}} span={commentSpan} offset={commentOffset}>

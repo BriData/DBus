@@ -35,7 +35,7 @@ export default class MonitorManageWrapper extends Component {
     })
       .then(res => {
         if (res && res.status === 0) {
-          this.setState({url: res.payload.monitor_url})
+          this.setState({url: res.payload.grafana_url_web})
         } else {
           message.warn(res.message)
         }

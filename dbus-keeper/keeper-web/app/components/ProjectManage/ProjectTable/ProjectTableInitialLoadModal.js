@@ -53,14 +53,20 @@ export default class ProjectTableInitialLoadModal extends Component {
           visible={visible}
           maskClosable={true}
           width={1000}
-          title={'拉全量'}
+          title={<FormattedMessage
+            id="app.components.projectManage.projectTable.fullpull"
+            defaultMessage="拉全量"
+          />}
           onCancel={onClose}
           onOk={this.handleSubmit}
         >
           <Form autoComplete="off" onKeyUp={e => {
             e.keyCode === 13 && this.handleSubmit()
           }}>
-            <FormItem label="输出topic" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.projectManage.projectTable.outputTopic"
+              defaultMessage="输出Topic"
+            />} {...formItemLayout}>
               {getFieldDecorator('outputTopic', {
                 initialValue: record.outputTopic,
                 rules: [

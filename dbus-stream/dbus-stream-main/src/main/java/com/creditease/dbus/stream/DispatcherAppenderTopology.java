@@ -181,9 +181,14 @@ public class DispatcherAppenderTopology {
     }
 
     private int getBoltParallelism(String key, int defaultValue) {
+        return getConfigureValueWithDefault(key, defaultValue);
+    }
+
+    private int getConfigureValueWithDefault(String key, int defaultValue) {
         Integer num = PropertiesHolder.getIntegerValue(Constants.Properties.CONFIGURE, key);
         return num == null ? defaultValue: num.intValue();
     }
+
     private void start(StormTopology topology, boolean runAsLocal) throws Exception {
 
         Config conf = new Config();
@@ -220,8 +225,9 @@ public class DispatcherAppenderTopology {
         conf.setNumAckers(1);
         //设置worker数
         conf.setNumWorkers(1);
-        //设置任务在发出后，但还没处理完成的中间状态任务的最大数量
-        conf.setMaxSpoutPending(50);
+        //设置任务在发出后，但还没处理完成的中间状态任务的最大数量, 如果没有设置最大值为50
+        int MaxSpoutPending = getConfigureValueWithDefault(Constants.ConfigureKey.MAX_SPOUT_PENDING, 50);
+        conf.setMaxSpoutPending(MaxSpoutPending);
         //设置任务在多久之内没处理完成，就任务这个任务处理失败
         conf.setMessageTimeoutSecs(120);
 

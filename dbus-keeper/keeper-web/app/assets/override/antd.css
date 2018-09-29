@@ -1,5 +1,7 @@
 /***************用来替换and样式***************/
 
+@import "../../../iconfont/iconfont.css";
+
 /* 替换input填充样式 */
 input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 1000px #fff inset !important;
@@ -18,6 +20,10 @@ input:-webkit-autofill {
   > .ant-menu-submenu-title {
   padding: 0;
 }
+.DBus-menu.ant-menu-inline > .ant-menu-item {
+  margin-left: -8px;
+}
+
 .ant-layout-sider-trigger{
   position: absolute;
 }

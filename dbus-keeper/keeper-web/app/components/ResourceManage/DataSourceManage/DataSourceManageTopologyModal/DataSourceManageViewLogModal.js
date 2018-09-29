@@ -58,17 +58,30 @@ export default class DataSourceManageViewLogModal extends Component {
           width={1000}
           title={content.runningInfo}
           onCancel={onClose}
-          footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
+          footer={[<Button type="primary" onClick={onClose}>
+            <FormattedMessage
+              id="app.common.back"
+              defaultMessage="返回"
+            />
+          </Button>]}
         >
           <Form>
-            <FormItem label="Log" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.common.log"
+              defaultMessage="日志"
+            />} {...formItemLayout}>
               <Spin spinning={loading} tip="正在加载数据中...">
                 <TextArea ref={ref => (this.textarea = ref)} wrap='off' value={content.execResult} autosize={{minRows: 10, maxRows: 24}}/>
               </Spin>
 
             </FormItem>
             <FormItem {...tailItemLayout}>
-              <Button loading={loading} onClick={() => onRefresh(record)}> 刷 新 </Button>
+              <Button loading={loading} onClick={() => onRefresh(record)}>
+                <FormattedMessage
+                  id="app.common.refresh"
+                  defaultMessage="刷新"
+                />
+              </Button>
             </FormItem>
           </Form>
         </Modal>

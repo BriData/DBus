@@ -78,9 +78,14 @@ export default class UserManageGrid extends Component {
         <FormattedMessage id="app.common.modify" defaultMessage="修改" />
       </OperatingButton>
       <OperatingButton onClick={() => this.props.onSearchProject({userId: record.id, roleType: record.roleType})} icon="fork">
-        查看已分配项目
+        <FormattedMessage
+          id="app.components.userManage.viewAllocationProject"
+          defaultMessage="查看已分配项目"
+        />
       </OperatingButton>
-      <Popconfirm placement="bottom" title="确定删除？" onConfirm={() => this.handleDelUser(record.id)} okText="Yes" cancelText="No">
+      <Popconfirm placement="bottom" title={<span>
+        <FormattedMessage id="app.common.delete" defaultMessage="删除" />?
+      </span>} onConfirm={() => this.handleDelUser(record.id)} okText="Yes" cancelText="No">
         <OperatingButton icon="delete">
           <FormattedMessage id="app.common.delete" defaultMessage="删除" />
         </OperatingButton>

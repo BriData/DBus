@@ -105,6 +105,7 @@ export default class EditRuleGrammarLine extends Component {
                                   onChange={this.handleRuleParamterChange}/>);
         } else if (ruleType === 'keyFilter') {
             line.push(<Input key={ruleGrammar.key+"keyFilterInput1"} addonBefore="Key"
+                             style={{width: 100}}
                                   defaultValue={ruleGrammar.filterKey}
                                   onChange={this.handleFilterKeyChange}/>);
         }
@@ -112,6 +113,7 @@ export default class EditRuleGrammarLine extends Component {
 
         if (ruleType !== 'flattenUms' && ruleType !== 'keyFilter') {
             line.push(<Input key={ruleGrammar.key+"Field"} addonBefore="Field"
+                             style={ruleType === 'select' || ruleType === 'concat' ? {width: 300} : {width: 100}}
                                   disabled={ruleType === 'toIndex'}
                                   defaultValue={ruleGrammar.ruleScope}
                                   onChange={this.handleRuleScopeChange}/>);
@@ -122,7 +124,7 @@ export default class EditRuleGrammarLine extends Component {
                 <span key={ruleGrammar.key+"keyFilterSpan1"} className="ant-input-group-wrapper">
                     <span className="ant-input-wrapper ant-input-group">
                         <span className="ant-input-group-addon">Operate</span>
-                        <Select style={{ width: 100 }} key={ruleGrammar.key+"Operate"}
+                        <Select style={{ width: 80 }} key={ruleGrammar.key+"Operate"}
                                      defaultValue={ruleGrammar.ruleOperate=defaultEqualValue(ruleGrammar.ruleOperate)}
                                      onChange={this.handleRuleOperateSelectChange}>
                             <Select.Option value="==">include</Select.Option>
@@ -135,7 +137,7 @@ export default class EditRuleGrammarLine extends Component {
                 <span key={ruleGrammar.key+"keyFilterSpan2"} className="ant-input-group-wrapper">
                     <span className="ant-input-wrapper ant-input-group">
                         <span className="ant-input-group-addon">parameterType</span>
-                        <Select style={{ width: 100 }} key={ruleGrammar.key+"parameterType"}
+                        <Select style={{ width: 80 }} key={ruleGrammar.key+"parameterType"}
                                      defaultValue={ruleGrammar.ruleType=defaultRuleTypeValue(ruleGrammar.ruleType)}
                                      onChange={this.handleRuleTypeSelectChange}>
                             <Select.Option value="string">string</Select.Option>
@@ -153,7 +155,7 @@ export default class EditRuleGrammarLine extends Component {
                 <span key={ruleGrammar.key+"filterSpan1"} className="ant-input-group-wrapper">
                     <span className="ant-input-wrapper ant-input-group">
                         <span className="ant-input-group-addon">Operate</span>
-                        <Select style={{ width: 100 }} key={ruleGrammar.key+"Operate"}
+                        <Select style={{ width: 80 }} key={ruleGrammar.key+"Operate"}
                                      defaultValue={ruleGrammar.ruleOperate=defaultEqualValue(ruleGrammar.ruleOperate)}
                                      onChange={this.handleRuleOperateSelectChange}>
                             <Select.Option value="==">include</Select.Option>
@@ -166,7 +168,7 @@ export default class EditRuleGrammarLine extends Component {
                 <span key={ruleGrammar.key+"filterSpan2"} className="ant-input-group-wrapper">
                     <span className="ant-input-wrapper ant-input-group">
                         <span className="ant-input-group-addon">parameterType</span>
-                        <Select style={{ width: 100 }} key={ruleGrammar.key+"parameterType"}
+                        <Select style={{ width: 80 }} key={ruleGrammar.key+"parameterType"}
                                      defaultValue={ruleGrammar.ruleType=defaultRuleTypeValue(ruleGrammar.ruleType)}
                                      onChange={this.handleRuleTypeSelectChange}>
                             <Select.Option value="string">string</Select.Option>
@@ -240,7 +242,7 @@ export default class EditRuleGrammarLine extends Component {
                 <span key={ruleGrammar.key+"subStringSpan1"} className="ant-input-group-wrapper">
                     <span className="ant-input-wrapper ant-input-group">
                         <span className="ant-input-group-addon">startType</span>
-                        <Select style={{ width: 100 }} key={ruleGrammar.key+"startType"}
+                        <Select style={{ width: 80 }} key={ruleGrammar.key+"startType"}
                                      defaultValue={ruleGrammar.subStartType=defaultSubStringType(ruleGrammar.subStartType)}
                                      onChange={this.handleSubStartTypeSelectChange}>
                             <Select.Option value="string">string</Select.Option>
@@ -256,7 +258,7 @@ export default class EditRuleGrammarLine extends Component {
                 <span key={ruleGrammar.key+"trimSpan2"} className="ant-input-group-wrapper">
                     <span className="ant-input-wrapper ant-input-group">
                         <span className="ant-input-group-addon">endType</span>
-                        <Select style={{ width: 100 }} key={ruleGrammar.key+"endType"}
+                        <Select style={{ width: 80 }} key={ruleGrammar.key+"endType"}
                                      defaultValue={ruleGrammar.subEndType=defaultSubStringType(ruleGrammar.subEndType)}
                                      onChange={this.handleSubEndTypeSelectChange}>
                             <Select.Option value="string">string</Select.Option>
@@ -335,10 +337,10 @@ export default class EditRuleGrammarLine extends Component {
                                onClick={this.handleDelete}/>);
         if (ruleType === 'toIndex') {
             line.push(<span key={ruleGrammar.key+"tailSpan3"} className="ant-divider"/>);
-            line.push(<Button key={ruleGrammar.key+"buttonMoveUp"} shape="circle" title="Move up" icon="caret-up"
+            line.push(<Button key={ruleGrammar.key+"buttonMoveUp"} shape="circle" title="Move up" icon="arrow-up"
                                    onClick={this.handleMoveUp}/>);
             line.push(<span key={ruleGrammar.key+"tailSpan4"} className="ant-divider"/>);
-            line.push(<Button key={ruleGrammar.key+"buttonMoveDown"} shape="circle" title="Move down" icon="caret-down"
+            line.push(<Button key={ruleGrammar.key+"buttonMoveDown"} shape="circle" title="Move down" icon="arrow-down"
                                    onClick={this.handleMoveDown}/>);
         }
 

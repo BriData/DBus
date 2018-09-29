@@ -5,7 +5,7 @@
 
 import React, {PropTypes, Component} from 'react'
 import {Row, Col} from 'antd'
-
+import { FormattedMessage } from 'react-intl'
 export default class ProjectTopologyViewTopicContent extends Component {
   constructor(props) {
     super(props)
@@ -17,11 +17,11 @@ export default class ProjectTopologyViewTopicContent extends Component {
     return (
       <div>
         <Row>
-          <Col span={4}>{'Sink名称'}</Col>
+          <Col span={4}>{<FormattedMessage id="app.components.sinkManage.sinkName" defaultMessage="Sink名称" />}</Col>
           <Col span={20}>{sinkName}</Col>
         </Row>
         <Row>
-          <Col span={4}>{'Sink Url'}</Col>
+          <Col span={4}>{<FormattedMessage id="app.components.sinkManage.bootstrapServers" defaultMessage="Kafka服务器" />}</Col>
           <Col span={20}>{url}</Col>
         </Row>
         {topics.split(',').map((topic, index) =>

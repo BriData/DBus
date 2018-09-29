@@ -96,7 +96,7 @@ public class ConfigCenterService {
             }
         }
         //2.Grafana检测
-        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
+        String monitURL = map.get(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS);
         if (!urlTest(monitURL)) {
             return MessageCode.MONITOR_URL_IS_WRONG;
         }
@@ -119,7 +119,7 @@ public class ConfigCenterService {
             return MessageCode.STORM_UI_ERROR;
         }
         //4.Influxdb检测
-        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS);
         String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
         if (!"200".equals(HttpClientUtils.httpGet(url))) {
             return MessageCode.INFLUXDB_URL_ERROR;
@@ -138,7 +138,6 @@ public class ConfigCenterService {
                 return MessageCode.HEARTBEAT_JAR_PATH_ERROR;
             }
         }
-        map.remove("grafanaToken");
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : map.entrySet()) {
             sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
@@ -196,13 +195,6 @@ public class ConfigCenterService {
             return initRes;
         }
 
-        //2.初始化zk节点
-        int zkRes = initZKNodes(map);
-        if (zkRes != 0) {
-            return zkRes;
-        }
-        logger.info("2.zookeeper节点初始化完成。");
-
         //3.初始化心跳
         int heartRes = initHeartBeat(map, initialized);
         if (heartRes != 0) {
@@ -255,9 +247,9 @@ public class ConfigCenterService {
         logger.info("7.storm程序包初始化完成。");
 
         //8.Grafana初始化
-        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
+        String monitURL = map.get(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS);
         String grafanaToken = map.get("grafanaToken");
-        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS);
         initGrafana(monitURL, influxdbUrl, grafanaToken);
         logger.info("8.Grafana初始化完成。");
 
@@ -278,48 +270,55 @@ public class ConfigCenterService {
         //11.初始化报警配置
         initAlarm(map);
         logger.info("11.报警配置初始化完成。");
+
+        //2.初始化zk节点
+        int zkRes = initZKNodes(map);
+        if (zkRes != 0) {
+            return zkRes;
+        }
+        logger.info("2.zookeeper节点初始化完成。");
         return 0;
     }
 
     public int updateBasicConfByOption(LinkedHashMap<String, String> map, String options) throws Exception {
-        Integer res = updateGlobalConf(map);
+        int res = checkInitData(map);
         if (res != 0) {
             return res;
         }
         List<String> optionList = Arrays.asList(options.split("-"));
         if (optionList.contains("grafana")) {
-            String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
+            String monitURL = map.get(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS);
             String grafanaToken = map.get("grafanaToken");
             String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
             initGrafana(monitURL, influxdbUrl, grafanaToken);
-            logger.info("grafana初始化完成。");
+            logger.info("grafana单独初始化完成。");
         }
         if (optionList.contains("influxdb")) {
-            String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+            String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS);
             if (initInfluxdb(influxdbUrl) != 0) {
                 return MessageCode.INFLUXDB_URL_ERROR;
             }
-            logger.info("influxdb初始化完成。");
+            logger.info("influxdb单独初始化完成。");
         }
         if (optionList.contains("storm")) {
             if (initStormJars(map, false) != 0) {
                 return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
             }
-            logger.info("storm程序包初始化完成。");
+            logger.info("storm程序包单独初始化完成。");
         }
         if (optionList.contains("heartBeat")) {
             int heartRes = initHeartBeat(map, false);
             if (heartRes != 0) {
                 return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
             }
-            logger.info("heartbeat程序包初始化完成。");
+            logger.info("heartbeat程序包单独初始化完成。");
         }
-        if(!isInitialized()){
+        if (optionList.contains("zk")) {
             int zkRes = initZKNodes(map);
             if (zkRes != 0) {
                 return zkRes;
             }
-            logger.info("zookeeper节点初始化完成。");
+            logger.info("zookeeper节点单独初始化完成。");
         }
         return 0;
     }
@@ -350,7 +349,7 @@ public class ConfigCenterService {
             logger.info("1.1.bootstrapServers，url：{}测试通过", bootstrapServers);
         }
         //2.Grafana检测
-        String monitURL = map.get(GLOBAL_CONF_KEY_MONITOR_URL);
+        String monitURL = map.get(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS);
         if (!urlTest(monitURL)) {
             return MessageCode.MONITOR_URL_IS_WRONG;
         }
@@ -381,7 +380,7 @@ public class ConfigCenterService {
         }
         logger.info("1.3.storm免密配置测试通过,host:{},port:{},user:{}", host, port, user);
         //4.Influxdb检测
-        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL);
+        String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS);
         String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
         if (!"200".equals(HttpClientUtils.httpGet(url))) {
             return MessageCode.INFLUXDB_URL_ERROR;
@@ -417,13 +416,16 @@ public class ConfigCenterService {
             LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<String, String>();
             linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
             linkedHashMap.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
-            linkedHashMap.put(GLOBAL_CONF_KEY_MONITOR_URL, map.get(GLOBAL_CONF_KEY_MONITOR_URL));
+            linkedHashMap.put(GLOBAL_CONF_KEY_GRAFANA_URL, map.get(GLOBAL_CONF_KEY_GRAFANA_URL));
+            linkedHashMap.put(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS, map.get(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS));
+            linkedHashMap.put("grafanaToken", map.get("grafanaToken"));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT, map.get(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_SSH_USER, map.get(GLOBAL_CONF_KEY_STORM_SSH_USER));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_HOME_PATH, map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH));
             linkedHashMap.put(GLOBAL_CONF_KEY_STORM_REST_API, map.get(GLOBAL_CONF_KEY_STORM_REST_API));
             linkedHashMap.put(GLOBAL_CONF_KEY_INFLUXDB_URL, map.get(GLOBAL_CONF_KEY_INFLUXDB_URL));
+            linkedHashMap.put(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS, map.get(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS));
             linkedHashMap.put("zk.url", env.getProperty("zk.str"));
             linkedHashMap.put("heartbeat.host", map.get("heartbeat.host"));
             linkedHashMap.put("heartbeat.port", map.get("heartbeat.port"));
@@ -654,19 +656,19 @@ public class ConfigCenterService {
         //heartbeat_config.json
         byte[] data = zkService.getData(Constants.HEARTBEAT_CONFIG_JSON);
         JSONObject json = JSONObject.parseObject(new String(data, UTF8));
-        if(StringUtils.isNotBlank(map.get("alarmSendEmail"))){
+        if (StringUtils.isNotBlank(map.get("alarmSendEmail"))) {
             json.put("alarmSendEmail", map.get("alarmSendEmail"));
         }
-        if(StringUtils.isNotBlank(map.get("alarmMailSMTPAddress"))){
+        if (StringUtils.isNotBlank(map.get("alarmMailSMTPAddress"))) {
             json.put("alarmMailSMTPAddress", map.get("alarmMailSMTPAddress"));
         }
-        if(StringUtils.isNotBlank(map.get("alarmMailSMTPPort"))){
+        if (StringUtils.isNotBlank(map.get("alarmMailSMTPPort"))) {
             json.put("alarmMailSMTPPort", map.get("alarmMailSMTPPort"));
         }
-        if(StringUtils.isNotBlank(map.get("alarmMailUser"))){
+        if (StringUtils.isNotBlank(map.get("alarmMailUser"))) {
             json.put("alarmMailUser", map.get("alarmMailUser"));
         }
-        if(StringUtils.isNotBlank(map.get("alarmMailPass"))){
+        if (StringUtils.isNotBlank(map.get("alarmMailPass"))) {
             json.put("alarmMailPass", map.get("alarmMailPass"));
         }
         //格式化jsonjson
@@ -901,5 +903,60 @@ public class ConfigCenterService {
 
     public static void main(String[] args) {
 
+    }
+
+    public int ResetMgrDB(LinkedHashMap<String, String> map) throws Exception{
+        Connection connection = null;
+        try {
+            String content = map.get("content");
+            map.clear();
+            String[] split = content.split("\n");
+            for (String s : split) {
+                String replace = s.replace("\r", "");
+                String[] pro = replace.split("=", 2);
+                if (pro != null && pro.length == 2) {
+                    map.put(pro[0], pro[1]);
+                }
+            }
+            logger.info(map.toString());
+            String driverClassName = map.get("driverClassName");
+            String url = map.get("url");
+            String username = map.get("username");
+            String password = map.get("password");
+            Class.forName(driverClassName);
+            connection = DriverManager.getConnection(url, username, password);
+
+            zkService.setData(MGR_DB_CONF, content.getBytes(UTF8));
+
+            //重置mgr数据库
+            ResponseEntity<ResultEntity> res = sender.get(ServiceNames.KEEPER_SERVICE, "/toolSet/initMgrSql");
+            if (res.getBody().getStatus() != 0) {
+                return MessageCode.DBUS_MGR_INIT_ERROR;
+            }
+            logger.info("重置mgr数据库完成。");
+
+            //超级管理员添加
+            User u = new User();
+            u.setRoleType("admin");
+            u.setStatus("active");
+            u.setUserName("超级管理员");
+            u.setPassword(DBusUtils.md5("12345678"));
+            u.setEmail("admin");
+            u.setPhoneNum("13000000000");
+            u.setUpdateTime(new Date());
+            res = sender.post(ServiceNames.KEEPER_SERVICE, "/users/create", u);
+            if (res.getBody().getStatus() != 0) {
+                return MessageCode.CREATE_SUPER_USER_ERROR;
+            }
+            logger.info("添加超级管理员完成。");
+            return 0;
+        } catch (SQLException e) {
+            logger.error(e.getMessage(), e);
+            return MessageCode.DBUS_MGR_DB_FAIL_WHEN_CONNECT;
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
     }
 }

@@ -70,17 +70,38 @@ export default class DataSourceManageCheckModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={'检查数据线'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataTable.checkDataLine"
+            defaultMessage="检查数据线"
+          />}
           onCancel={onClose}
           footer={[<Button loading={loading} type="primary" onClick={onClose}> 返 回 </Button>]}
         >
           <Steps current={current} status={status}>
-            <Step title="开始" />
-            <Step title="插入心跳" />
-            <Step title="抽取进程" />
-            <Step title="Dispatcher" />
-            <Step title="Appender" />
-            <Step title="结束" />
+            <Step title={<FormattedMessage
+              id="app.components.resourceManage.dataTable.checkStart"
+              defaultMessage="检查开始"
+            />} />
+            <Step title={<FormattedMessage
+              id="app.components.resourceManage.dataTable.insertHeartbeat"
+              defaultMessage="插入心跳"
+            />} />
+            <Step title={<FormattedMessage
+              id="app.components.resourceManage.dataTable.extractorProcess"
+              defaultMessage="抽取进程"
+            />} />
+            <Step title={<FormattedMessage
+              id="app.components.resourceManage.dataTable.dispatcherProcess"
+              defaultMessage="分发进程"
+            />} />
+            <Step title={<FormattedMessage
+              id="app.components.resourceManage.dataTable.appenderProcess"
+              defaultMessage="增量进程"
+            />} />
+            <Step title={<FormattedMessage
+              id="app.components.resourceManage.dataTable.checkEnd"
+              defaultMessage="检查结束"
+            />} />
           </Steps>
         </Modal>
       </div>

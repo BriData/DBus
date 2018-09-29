@@ -256,12 +256,18 @@ export default class RuleEditorGrid extends Component {
 
     const rules = this.props.rules.map((rule, i) => ({...rule, orderId: i}))
     const columns = [{
-      title: "Order",
+      title: <FormattedMessage
+        id="app.common.order"
+        defaultMessage="编号"
+      />,
       key: 'orderId',
       dataIndex: 'orderId',
-      width: 80,
+      width: 50,
     }, {
-      title: "Type",
+      title: <FormattedMessage
+        id="app.components.resourceManage.rule.ruleType"
+        defaultMessage="规则类型"
+      />,
       key: 'ruleTypeName',
       width: 200,
       render: (text) => (
@@ -298,7 +304,10 @@ export default class RuleEditorGrid extends Component {
     </span>
       )
     }, {
-      title: "Args",
+      title: <FormattedMessage
+        id="app.components.resourceManage.rule.ruleArgs"
+        defaultMessage="规则参数"
+      />,
       key: 'ruleGrammar',
       render: (text) => (text.isFold ?
         (<Popover
@@ -310,21 +319,24 @@ export default class RuleEditorGrid extends Component {
         (<EditRuleGrammar onRuleGrammarChange={this.handleRuleGrammarChange} rule={text}/>)
       )
     }, {
-      title: "Operation",
+      title: <FormattedMessage
+        id="app.common.operate"
+        defaultMessage="操作"
+      />,
       key: "operation",
       width: 180,
       render: (text) => (
         <span>
-          <Button shape="circle" title="Move up" icon="caret-up" size="default"
+          <Button shape="circle" title="Move up" icon="arrow-up" size="default"
                        onClick={() => this.moveUp(text.key)}/>
           <span className="ant-divider"/>
-          <Button shape="circle" title="Move down" icon="caret-down" size="default"
+          <Button shape="circle" title="Move down" icon="arrow-down" size="default"
                        onClick={() => this.moveDown(text.key)}/>
           <span className="ant-divider"/>
           <Button shape="circle" title="Run to this rule" icon="caret-right" size="default"
                        onClick={() => this.runToHere(text.key)}/>
           <span className="ant-divider"/>
-          <Button shape="circle" title="Delete" icon="close-circle" size="default"
+          <Button shape="circle" title="Delete" icon="close" size="default"
                        onClick={() => this.onDelete(text.key)}/>
         </span>
       )

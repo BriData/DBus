@@ -365,7 +365,7 @@ export default class ResourceForm extends Component {
         <span className="ant-divider" />
         <a onClick={e => this.handleEncodeSearch(e, record)}>
           <FormattedMessage
-            id="app.components.projectManage.projectHome.tabs.resource.encodesConfig"
+            id="app.components.projectManage.projectTable.encodeConfig"
             defaultMessage="脱敏配置"
           />
         </a>
@@ -400,14 +400,14 @@ export default class ResourceForm extends Component {
     const placeholder = this.handlePlaceholder(localeMessage)
     const columns = [
       {
-        title: 'DsType',
+        title: <FormattedMessage id="app.components.resourceManage.dataSourceType" defaultMessage="数据源类型" />,
         width: this.NomalTableWidth[0],
         dataIndex: 'dsType',
         key: 'dsType',
         render: this.renderComponent(this.renderNomal(this.NomalTableWidth[0]))
       },
       {
-        title: 'DsName',
+        title: <FormattedMessage id="app.components.resourceManage.dataSourceName" defaultMessage="数据源名称" />,
         width: this.NomalTableWidth[1],
         dataIndex: 'dsName',
         key: 'dsName',
@@ -428,7 +428,7 @@ export default class ResourceForm extends Component {
         render: this.renderComponent(this.renderNomal(this.NomalTableWidth[1]))
       },
       {
-        title: 'Schema',
+        title: <FormattedMessage id="app.components.resourceManage.dataSchemaName" defaultMessage="Schema名称" />,
         width: this.NomalTableWidth[2],
         dataIndex: 'schemaName',
         key: 'schemaName',
@@ -449,7 +449,7 @@ export default class ResourceForm extends Component {
         render: this.renderComponent(this.renderNomal(this.NomalTableWidth[2]))
       },
       {
-        title: 'TableName',
+        title: <FormattedMessage id="app.components.resourceManage.dataTableName" defaultMessage="表名" />,
         width: this.NomalTableWidth[3],
         dataIndex: 'tableName',
         key: 'tableName',
@@ -501,7 +501,7 @@ export default class ResourceForm extends Component {
     ]
     const slectColumns = [
       {
-        title: 'Resource',
+        title: <FormattedMessage id="app.common.resource" defaultMessage="资源" />,
         width: this.SelectTableWidth[0],
         key: 'Resource',
         render: this.renderComponent(
@@ -553,7 +553,10 @@ export default class ResourceForm extends Component {
         <Form>
           <FormItem
             {...formItemLayout}
-            label="选择Topology"
+            label={<FormattedMessage
+              id="app.components.projectManage.projectTable.chooseTopology"
+              defaultMessage="选择Topology"
+            />}
             style={{ marginBottom: '8px' }}
           >
             <Select
@@ -603,7 +606,10 @@ export default class ResourceForm extends Component {
               className={`${styles.info} ${errorFlag === 'resourceForm' &&
                 styles.error}`}
             >
-              （项目Resource为必选项，不能为空）
+              （<FormattedMessage
+            id="app.components.projectManage.projectTable.resourceMustNotEmpty"
+            defaultMessage="项目Resource为必选项，不能为空"
+          />）
             </span>
           </h3>
           <Table

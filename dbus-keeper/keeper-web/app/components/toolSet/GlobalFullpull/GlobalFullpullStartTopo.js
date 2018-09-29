@@ -136,13 +136,19 @@ export default class GlobalFullpullStartTopo extends Component {
       <div className={styles.table}>
         <Form autoComplete="off" className={styles.register}
         >
-          <FormItem label="数据源名称" {...formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.resourceManage.dataSourceName"
+            defaultMessage="数据源名称"
+          />} {...formItemLayout}>
             {getFieldDecorator('dsName', {
               initialValue: 'global',
             })(<Input disabled={true} size="large" type="text"/>)}
           </FormItem>
           <FormItem
-            label={"Version"} {...formItemLayout}
+            label={<FormattedMessage
+              id="app.common.version"
+              defaultMessage="版本"
+            />} {...formItemLayout}
           >
             {getFieldDecorator('version', {
               initialValue: null,
@@ -168,7 +174,10 @@ export default class GlobalFullpullStartTopo extends Component {
           </FormItem>
 
           <FormItem
-            label={"Type"} {...formItemLayout}
+            label={<FormattedMessage
+              id="app.common.type"
+              defaultMessage="类型"
+            />} {...formItemLayout}
           >
             {getFieldDecorator('type', {
               initialValue: type,
@@ -195,7 +204,10 @@ export default class GlobalFullpullStartTopo extends Component {
           </FormItem>
 
           <FormItem
-            label={"Minor Version"} {...formItemLayout}
+            label={<FormattedMessage
+              id="app.components.toolset.globalFullPull.minorVersion"
+              defaultMessage="上传时间"
+            />} {...formItemLayout}
           >
             {getFieldDecorator('minorVersion', {
               initialValue: null,
@@ -219,21 +231,49 @@ export default class GlobalFullpullStartTopo extends Component {
             )}
           </FormItem>
 
-          <FormItem label="启动说明" {...formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.toolset.globalFullPull.startDescription"
+            defaultMessage="启动说明"
+          />} {...formItemLayout}>
             {getFieldDecorator('desc', {
               initialValue: null,
             })(<Input size="large" type="text"/>)}
           </FormItem>
-          <FormItem label="Log" {...formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.common.log"
+            defaultMessage="日志"
+          />} {...formItemLayout}>
             {getFieldDecorator('log', {
               initialValue: null,
             })(<TextArea wrap='off' readOnly autosize={{minRows: 10, maxRows: 20}}/>)}
 
           </FormItem>
           <FormItem {...tailItemLayout}>
-            <Button disabled={status} type="primary" loading={loading} onClick={this.handleStart}>启动</Button>
-            <Button style={{marginLeft: 10}} disabled={!status} type="primary" onClick={this.handleKill}>停止</Button>
-            <Button style={{marginLeft: 10}} onClick={this.handleRefreshTopoStatus}>刷新 （{status ? '当前状态：已启动':'当前状态：未启动'}）</Button>
+            <Button disabled={status} type="primary" loading={loading} onClick={this.handleStart}>
+              <FormattedMessage
+                id="app.components.resourceManage.dataTable.start"
+                defaultMessage="启动"
+              />
+            </Button>
+            <Button style={{marginLeft: 10}} disabled={!status} type="primary" onClick={this.handleKill}>
+              <FormattedMessage
+                id="app.components.resourceManage.dataTable.stop"
+                defaultMessage="停止"
+              />
+            </Button>
+            <Button style={{marginLeft: 10}} onClick={this.handleRefreshTopoStatus}>
+              {status ?
+                <FormattedMessage
+                  id="app.components.toolset.globalFullPull.refreshAlreadyStart"
+                  defaultMessage="刷新（当前状态：已启动）"
+                />
+                :
+                <FormattedMessage
+                  id="app.components.toolset.globalFullPull.refreshNotStart"
+                  defaultMessage="刷新（当前状态：未启动）"
+                />
+              }
+            </Button>
           </FormItem>
 
         </Form>

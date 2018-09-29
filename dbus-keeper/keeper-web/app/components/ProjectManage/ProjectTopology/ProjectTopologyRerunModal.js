@@ -139,21 +139,21 @@ export default class ProjectTopologyRerunModal extends Component {
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: 'Partition',
+        title: <FormattedMessage id="app.components.projectManage.projectTable.partition" defaultMessage="分区" />,
         width: this.tableWidth[1],
         dataIndex: 'partition',
         key: 'partition',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: 'LatestOffset',
+        title: <FormattedMessage id="app.components.projectManage.projectTable.latestOffset" defaultMessage="尾部偏移量" />,
         width: this.tableWidth[2],
         dataIndex: 'latestOffset',
         key: 'latestOffset',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: 'Offset',
+        title: <FormattedMessage id="app.common.offset" defaultMessage="偏移量" />,
         width: this.tableWidth[3],
         key: 'Offset',
         render: this.renderComponent(this.renderOffset)

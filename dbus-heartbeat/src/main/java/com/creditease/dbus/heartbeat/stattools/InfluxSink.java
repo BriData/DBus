@@ -22,7 +22,7 @@ package com.creditease.dbus.heartbeat.stattools;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 
 import javax.xml.bind.PropertyException;
@@ -103,14 +103,14 @@ public class InfluxSink {
         return String.format ("%s,%s %s %d", tableName, keys, fields, timestamp);
     }
 
-    public int sendMessage(Long offset, StatMessage msg,  long retryTimes) {
+    public int sendMessage(StatMessage msg,  long retryTimes) {
         String content = null;
         HttpResponse response = null;
         try {
             post.setURI(uri);
 
             // add header
-            content = statMessageToLineProtocol(offset, msg);
+            content = statMessageToLineProtocol(msg.getOffset(), msg);
             post.setEntity(new StringEntity(content));
             post.setConfig(RequestConfig.custom().setConnectionRequestTimeout(CUSTOM_TIME_OUT).setConnectTimeout(CUSTOM_TIME_OUT).setSocketTimeout(CUSTOM_TIME_OUT).build());
             response = client.execute(post);
@@ -134,10 +134,10 @@ public class InfluxSink {
         }
     }
 
-    public int sendBatchMessages(Map<Long, StatMessage> map, long retryTimes) throws IOException {
+    public int sendBatchMessages(List<StatMessage> list, long retryTimes) throws IOException {
         int ret;
-        for (Map.Entry<Long, StatMessage> entry : map.entrySet()) {
-            ret = sendMessage(entry.getKey(), entry.getValue(), retryTimes);
+        for (StatMessage entry : list) {
+            ret = sendMessage(entry, retryTimes);
             if (ret != 0) {
                 return ret;
             }

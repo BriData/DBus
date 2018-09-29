@@ -41,7 +41,10 @@ export default class SinkManageSearch extends Component {
                   icon="search"
                   onClick={() => onShowModal(true)}
                 >
-                  {"添加Sink"}
+                  <FormattedMessage
+                    id="app.components.sinkManage.addSink"
+                    defaultMessage="添加Sink"
+                  />
                 </Button>
               </FormItem>
             </Col>

@@ -44,13 +44,14 @@ public abstract class SourceFetcher {
             fillParameters(statement, params);
             ResultSet resultSet = statement.executeQuery();
             resultSet.next();
-            if(params.get("dsType").toString().equals("oracle")){
+            if (params.get("dsType").toString().equals("oracle")) {
                 return resultSet.getInt("COUNT(SYSDATE)");
-            }else{
-                return  resultSet.getInt("1");
+            } else if (params.get("dsType").toString().equals("mysql")) {
+                return resultSet.getInt("1");
             }
-
-
+            else{
+                return 0;
+            }
         } finally {
             if (!conn.isClosed()) {
                 conn.close();
@@ -60,39 +61,44 @@ public abstract class SourceFetcher {
 
     public List<String> fetchTableStructure(Map<String, Object> params) throws Exception {
         try {
-               if ((params.get("dsType").toString()).equals("oracle")) {
-                   PreparedStatement statementTable = conn.prepareStatement(buildQuery2(params));
-                   fillParameters(statementTable, params);
-                   ResultSet resultSetOracleTable = statementTable.executeQuery();
-                   List<String> list = new ArrayList<>();
-                   while (resultSetOracleTable.next()) {
-                       list.add(resultSetOracleTable.getString("TABLE_NAME") + "/" + resultSetOracleTable.getString("COLUMN_NAME") + "  , " + resultSetOracleTable.getString("DATA_TYPE") + "\n");
-                   }
-                   PreparedStatement statementProcedure = conn.prepareStatement(buildQuery3(""));
-                   ResultSet resultSetOracleProcedure = statementProcedure.executeQuery();
-                   while (resultSetOracleProcedure.next()) {
-                       list.add(resultSetOracleProcedure.getString("OBJECT_NAME") + "/" + "--------");
-                   }
-                   return list;
-               } else {
-                   PreparedStatement statementName = conn.prepareStatement(buildQuery2(params));
-                   fillParameters(statementName, params);
-                   ResultSet resultSetMySqlName = statementName.executeQuery();
-                   List<String> list = new ArrayList<>();
-                   while (resultSetMySqlName.next()) {
-                       PreparedStatement statementColumn = conn.prepareStatement(buildQuery3(resultSetMySqlName.getString("Tables_in_dbus")));
-                       //fillParameters(statementColumn, resultSetMySqlName.getString("Tables_in_dbus"));
-                       ResultSet resultSetMySqlColumn = statementColumn.executeQuery();
-                       while (resultSetMySqlColumn.next()) {
-                           //list.add(resultSetMySqlName.getString("Tables_in_dbus")+"/"+resultSetMySqlColumn.getString("COLUMN_NAME")+"    "+resultSetMySqlColumn.getString("DATA_TYPE"));
-                           list.add(resultSetMySqlName.getString("Tables_in_dbus") + "/" + resultSetMySqlColumn.getString("Field") + "  ,  " + resultSetMySqlColumn.getString("Type") + "\n");
-                       }
-                       //list.add(resultSetMySqlName.getString("Tables_in_dbus"));
-                   }
-                   return list;
-               }
-
-
+            if ((params.get("dsType").toString()).equals("oracle")) {
+                PreparedStatement statementTable = conn.prepareStatement(buildQuery2(params));
+                fillParameters(statementTable, params);
+                ResultSet resultSetOracleTable = statementTable.executeQuery();
+                List<String> list = new ArrayList<>();
+                while (resultSetOracleTable.next()) {
+                    list.add(resultSetOracleTable.getString("TABLE_NAME")
+                            + "/" + resultSetOracleTable.getString("COLUMN_NAME") + "  , "
+                            + resultSetOracleTable.getString("DATA_TYPE") + "\n");
+                }
+                PreparedStatement statementProcedure = conn.prepareStatement(buildQuery3(""));
+                ResultSet resultSetOracleProcedure = statementProcedure.executeQuery();
+                while (resultSetOracleProcedure.next()) {
+                    list.add(resultSetOracleProcedure.getString("OBJECT_NAME") + "/" + "--------");
+                }
+                return list;
+            } else if ((params.get("dsType").toString()).equals("mysql")) {
+                PreparedStatement statementName = conn.prepareStatement(buildQuery2(params));
+                fillParameters(statementName, params);
+                ResultSet resultSetMySqlName = statementName.executeQuery();
+                List<String> list = new ArrayList<>();
+                while (resultSetMySqlName.next()) {
+                    PreparedStatement statementColumn = conn.prepareStatement(buildQuery3(resultSetMySqlName.getString("Tables_in_dbus")));
+                    //fillParameters(statementColumn, resultSetMySqlName.getString("Tables_in_dbus"));
+                    ResultSet resultSetMySqlColumn = statementColumn.executeQuery();
+                    while (resultSetMySqlColumn.next()) {
+                        //list.add(resultSetMySqlName.getString("Tables_in_dbus")+"/"+resultSetMySqlColumn.getString("COLUMN_NAME")+"    "+resultSetMySqlColumn.getString("DATA_TYPE"));
+                        list.add(resultSetMySqlName.getString("Tables_in_dbus") + "/"
+                                + resultSetMySqlColumn.getString("Field") + "  ,  "
+                                + resultSetMySqlColumn.getString("Type") + "\n");
+                    }
+                    //list.add(resultSetMySqlName.getString("Tables_in_dbus"));
+                }
+                return list;
+            }
+            else{
+                return null;
+            }
         } finally {
             if (!conn.isClosed()) {
                 conn.close();

@@ -23,7 +23,7 @@ import styles from '../../../res/styles/index.less'
 export default class EncodeConfig extends Component {
   constructor (props) {
     super(props)
-    this.NomalTableWidth = ['10%', '10%', '10%', '20%', '20%', '20%', '5%', '5%']
+    this.NomalTableWidth = ['10%', '10%', '12%', '18%', '18%', '18%', '8%', '9%']
     this.state = {
       encodeOutputColumns: {},
       encodeSourceSelected: [],
@@ -608,61 +608,80 @@ export default class EncodeConfig extends Component {
         title: (
           <FormattedMessage id="app.common.operate" defaultMessage="操作" />
         ),
+        width: this.NomalTableWidth[7],
         render: this.renderComponent(this.renderOperating)
       }
     ]
     return (
       <div className={styles.encodeForm}>
         <div className={styles.form}>
-          <div className={styles.label}>选择输出类型：</div>
+          {/*<div className={styles.label}>选择输出类型：</div>*/}
           <div className={styles.formItem}>
+            <FormattedMessage
+              id="app.components.projectManage.projectTable.outputType"
+              defaultMessage="选择输出类型"
+            />：
             <RadioGroup
               onChange={this.handleRadioChange}
               value={outputListType}
             >
               <Radio value="0">
-                输出所有列
-                <Tooltip title="与源端的输出列始终保持一致，如果源端发生了表结构变更，输出列也会随之改变">
+                <FormattedMessage
+                  id="app.components.projectManage.projectTable.outputAll"
+                  defaultMessage="输出所有列"
+                />
+                <Tooltip title={
+                  <FormattedMessage
+                    id="app.components.projectManage.projectTable.outputTip"
+                    defaultMessage="与源端的输出列始终保持一致，如果源端发生了表结构变更，输出列也会随之改变"
+                  />
+                }>
                   <Icon
                     style={{ color: 'red', marginLeft: '4px' }}
                     type="question-circle-o"
                   />
                 </Tooltip>
               </Radio>
-              <Radio value="1">输出固定列</Radio>
+              <Radio value="1">
+                <FormattedMessage
+                  id="app.components.projectManage.projectTable.outputFixed"
+                  defaultMessage="输出固定列"
+                />
+              </Radio>
             </RadioGroup>
+            {outputListType === '1' && (
+              <div className={styles.encodeAdd}>
+                <Select
+                  className={styles.select}
+                  mode="multiple"
+                  placeholder={placeholder(
+                    'app.components.projectManage.projectHome.tabs.resource.line'
+                  )}
+                  onChange={this.handleSelectEncodes}
+                  notFoundContent={loading ? <Spin size="small" /> : null}
+                  value={encodeSourceSelected}
+                >
+                  {encodesAsyn.map(item => (
+                    <Option value={`${item.cid}`} key={`${item.cid}`}>
+                      {item.columnName}
+                    </Option>
+                  ))}
+                </Select>
+                <Button
+                  type="primary"
+                  className={styles.button}
+                  onClick={this.handleAddEncode}
+                >
+                  <FormattedMessage
+                    id="app.common.addColumn"
+                    defaultMessage="添加列"
+                  />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-        {outputListType === '1' && (
-          <div className={styles.encodeAdd}>
-            <Select
-              className={styles.select}
-              mode="multiple"
-              placeholder={placeholder(
-                'app.components.projectManage.projectHome.tabs.resource.line'
-              )}
-              onChange={this.handleSelectEncodes}
-              notFoundContent={loading ? <Spin size="small" /> : null}
-              value={encodeSourceSelected}
-            >
-              {encodesAsyn.map(item => (
-                <Option value={`${item.cid}`} key={`${item.cid}`}>
-                  {item.columnName}
-                </Option>
-              ))}
-            </Select>
-            <Button
-              type="primary"
-              className={styles.button}
-              onClick={this.handleAddEncode}
-            >
-              <FormattedMessage
-                id="app.common.addColumn"
-                defaultMessage="添加列"
-              />
-            </Button>
-          </div>
-        )}
+
         <div className={styles.table}>
           <Table
             rowKey={record => record.cid}

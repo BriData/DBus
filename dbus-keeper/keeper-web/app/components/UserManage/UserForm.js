@@ -143,7 +143,13 @@ export default class UserForm extends Component {
         onCancel={() => onCloseModal(false)}
         onOk={this.handleSubmit}
         confirmLoading={loading}
-        title={modalStatus === 'modify' ? '修改用户' : '新增用户'}
+        title={modalStatus === 'modify' ? <FormattedMessage
+          id="app.components.userManage.modifyUser"
+          defaultMessage="修改用户"
+        /> : <FormattedMessage
+          id="app.components.userManage.createUser"
+          defaultMessage="创建用户"
+        />}
       >
         {
           // 姓名 邮箱 用户类型 手机号 登录密码
@@ -206,7 +212,10 @@ export default class UserForm extends Component {
               />
             )}
           </FormItem>
-          <FormItem label="用户类型" {...this.formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.userManage.userType"
+            defaultMessage="用户类型"
+          />} {...this.formItemLayout}>
             {getFieldDecorator('roleType', {
               initialValue: (user && user.roleType) || 'user'
             })(
@@ -241,7 +250,10 @@ export default class UserForm extends Component {
               ]
             })(<Input placeholder={placeholder('app.common.user.phone')} />)}
           </FormItem>
-          <FormItem label="登录密码" {...this.formItemLayout}>
+          <FormItem label={<FormattedMessage
+            id="app.components.userManage.password"
+            defaultMessage="密码"
+          />} {...this.formItemLayout}>
             <Row gutter={10}>
               <Col span={modalStatus === 'modify' ? 18 : 24}>
                 <Input
@@ -262,7 +274,10 @@ export default class UserForm extends Component {
                     className={styles.resetPassword}
                     onClick={this.handleResetPassword}
                   >
-                    重置
+                    <FormattedMessage
+                      id="app.components.userManage.reset"
+                      defaultMessage="重置"
+                    />
                   </Button>
                 </Col>
               )}

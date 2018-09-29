@@ -4,6 +4,7 @@
  */
 import dateFormat from 'dateformat'
 import React, {PropTypes, Component} from 'react'
+import { FormattedMessage } from 'react-intl'
 import {Checkbox, Tabs, Form, Input, Button, Select} from 'antd'
 import JSONTree from 'react-json-tree'
 import {TOPO_JAR_START_API} from "@/app/containers/ResourceManage/api";
@@ -139,13 +140,19 @@ export default class GlobalFullpullForm extends Component {
           defaultActiveKey="global"
         >
           <TabPane
-            tab='Global Full Pull'
+            tab={<FormattedMessage
+              id="app.components.toolset.globalFullPull.globalFullPull"
+              defaultMessage="全局独立拉全量"
+            />}
             key="global"
           >
 
             <Form autoComplete="off" layout="horizontal">
               <FormItem
-                label="Increase Version"
+                label={<FormattedMessage
+                  id="app.components.toolset.globalFullPull.increaseVersion"
+                  defaultMessage="增加版本"
+                />}
                 {...formItemLayout}
               >
                 {getFieldDecorator('INCREASE_VERSION', {
@@ -156,7 +163,10 @@ export default class GlobalFullpullForm extends Component {
                 )}
               </FormItem>
               <FormItem
-                label="Increase Batch No"
+                label={<FormattedMessage
+                  id="app.components.toolset.globalFullPull.increaseBatchNo"
+                  defaultMessage="增加批次号"
+                />}
                 {...formItemLayout}
               >
                 {getFieldDecorator('INCREASE_BATCH_NO', {
@@ -167,7 +177,10 @@ export default class GlobalFullpullForm extends Component {
                 )}
               </FormItem>
               <FormItem
-                label="Data Source"
+                label={<FormattedMessage
+                  id="app.components.toolset.controlMessage.dataSource"
+                  defaultMessage="数据源"
+                />}
                 {...formItemLayout}
               >
                 {getFieldDecorator('dsId', {
@@ -194,7 +207,10 @@ export default class GlobalFullpullForm extends Component {
                 )}
               </FormItem>
               <FormItem
-                label="Data Schema"
+                label={<FormattedMessage
+                  id="app.components.resourceManage.dataSchemaName"
+                  defaultMessage="Schema名称"
+                />}
                 {...formItemLayout}
               >
                 {getFieldDecorator('schemaName', {
@@ -222,7 +238,10 @@ export default class GlobalFullpullForm extends Component {
                 )}
               </FormItem>
               <FormItem
-                label="Data Table"
+                label={<FormattedMessage
+                  id="app.components.resourceManage.dataTableName"
+                  defaultMessage="表名"
+                />}
                 {...formItemLayout}
               >
                 {getFieldDecorator('tableName', {
@@ -298,12 +317,20 @@ export default class GlobalFullpullForm extends Component {
                   sm: {span: 16, offset: 4}
                 }}
               >
-                <Button onClick={this.handleSend} type="primary" htmlType="submit">Send Full Pull Request</Button>
+                <Button onClick={this.handleSend} type="primary" htmlType="submit">
+                  <FormattedMessage
+                    id="app.components.toolset.globalFullPull.sendFullPullRequest"
+                    defaultMessage="发送独立拉全量请求"
+                  />
+                </Button>
               </FormItem>
             </Form>
           </TabPane>
           <TabPane
-            tab='Start Topology'
+            tab={<FormattedMessage
+              id="app.components.toolset.globalFullPull.startTopology"
+              defaultMessage="启动拓扑"
+            />}
             key="start"
           >
             <GlobalFullpullStartTopo

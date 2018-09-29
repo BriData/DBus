@@ -69,7 +69,10 @@ export default class DataSourceManageModifyModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={'修改数据源基本信息'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataSource.modifyDatasource"
+            defaultMessage="修改数据源基本信息"
+          />}
           onCancel={onClose}
           onOk={this.handleSubmit}
         >
@@ -81,18 +84,27 @@ export default class DataSourceManageModifyModal extends Component {
                     initialValue: result.id,
                   })(<Input disabled={true} size="default" type="text" />)}
                 </FormItem>
-                <FormItem label="Name" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataSourceName"
+                  defaultMessage="数据源名称"
+                />} {...formItemLayout}>
                   {getFieldDecorator('dsName', {
                     initialValue: result.dsName,
                   })(<Input disabled={true} size="default" type="text" />)}
                 </FormItem>
-                <FormItem label="Type" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataSourceType"
+                  defaultMessage="数据源类型"
+                />} {...formItemLayout}>
                   {getFieldDecorator('dsType', {
                     initialValue: result.dsType,
                   })(<Input disabled={true} size="default" type="text" />)}
                 </FormItem>
                 <FormItem
-                  label={"Status"} {...formItemLayout}
+                  label={<FormattedMessage
+                    id="app.common.status"
+                    defaultMessage="状态"
+                  />} {...formItemLayout}
                 >
                   {getFieldDecorator('status', {
                     initialValue:result.status
@@ -108,22 +120,34 @@ export default class DataSourceManageModifyModal extends Component {
                     </Select>
                   )}
                 </FormItem>
-                <FormItem label="Desc" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.common.description"
+                  defaultMessage="描述"
+                />} {...formItemLayout}>
                   {getFieldDecorator('dsDesc', {
                     initialValue: result.dsDesc,
                   })(<TextArea autosize={true}/>)}
                 </FormItem>
-                <FormItem label="DB Master URL" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataSource.masterUrl"
+                  defaultMessage="主库地址"
+                />} {...formItemLayout}>
                   {getFieldDecorator('masterUrl', {
                     initialValue: result.masterUrl
                   })(<TextArea autosize={true}/>)}
                 </FormItem>
-                <FormItem label="DB Slave URL" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataSource.slaveUrl"
+                  defaultMessage="从库地址"
+                />} {...formItemLayout}>
                   {getFieldDecorator('slaveUrl', {
                     initialValue: result.slaveUrl
                   })(<TextArea autosize={true}/>)}
                 </FormItem>
-                <FormItem label="DS Partition" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataSource.dsPartition"
+                  defaultMessage="数据源分区"
+                />} {...formItemLayout}>
                   {getFieldDecorator('dsPartition', {
                     initialValue: result.dsPartition
                   })(<Input size="default" type="text" />)}
@@ -153,7 +177,10 @@ export default class DataSourceManageModifyModal extends Component {
                     initialValue: result.dbusUser,
                   })(<Input disabled={true} size="default" type="text" />)}
                 </FormItem>
-                <FormItem label="上次修改时间" {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.common.updateTime"
+                  defaultMessage="更新时间"
+                />} {...formItemLayout}>
                   {getFieldDecorator('updateTime', {
                     initialValue: result.updateTime
                   })(<Input disabled={true} size="default" type="text" />)}

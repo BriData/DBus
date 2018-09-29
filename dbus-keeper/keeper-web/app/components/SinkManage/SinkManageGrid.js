@@ -82,13 +82,18 @@ export default class SinkManageGrid extends Component {
       <OperatingButton onClick={() => this.handleModify(record)} icon="edit">
         <FormattedMessage id="app.common.modify" defaultMessage="修改" />
       </OperatingButton>
-      <Popconfirm placement="bottom" title="确定删除？" onConfirm={() => this.handleDelete(record.id)} okText="Yes" cancelText="No">
+      <Popconfirm placement="bottom" title={<span>
+        <FormattedMessage id="app.common.delete" defaultMessage="删除" />?
+      </span>} onConfirm={() => this.handleDelete(record.id)} okText="Yes" cancelText="No">
         <OperatingButton icon="delete">
           <FormattedMessage id="app.common.delete" defaultMessage="删除" />
         </OperatingButton>
       </Popconfirm>
       <OperatingButton onClick={() => this.props.onMount(record)} icon="fork">
-        {"查看已挂载项目"}
+        <FormattedMessage
+          id="app.components.resourceManage.dataSource.viewMountProject"
+          defaultMessage="查看已挂载项目"
+        />
       </OperatingButton>
     </div>
   );

@@ -170,18 +170,34 @@ export default class DataSourceManageTopologyModal extends Component {
     return (
       <div>
         {record.uptime === 'Not Online.' ? (
-          <OperatingButton icon="caret-right" onClick={() => this.handleOpenStartModal(record)}>Start</OperatingButton>
+          <OperatingButton icon="caret-right" onClick={() => this.handleOpenStartModal(record)}>
+            <FormattedMessage
+              id="app.components.resourceManage.dataTable.start"
+              defaultMessage="启动"
+            />
+          </OperatingButton>
         ) : (
           <Popconfirm placement="bottom" title="确定Kill？" onConfirm={() => this.handleKill(record)} okText="Yes" cancelText="No">
-            <OperatingButton icon="pause">Kill</OperatingButton>
+            <OperatingButton icon="pause">
+              <FormattedMessage
+                id="app.components.resourceManage.dataTable.stop"
+                defaultMessage="停止"
+              />
+            </OperatingButton>
           </Popconfirm>
 
         )}
         <OperatingButton icon="file-text" onClick={() => this.handleOpenLogModal(record)}>
-          View Log
+          <FormattedMessage
+            id="app.components.resourceManage.dataSource.viewLog"
+            defaultMessage="查看日志"
+          />
         </OperatingButton>
         <OperatingButton icon="edit" onClick={this.handleOpenConfigModal}>
-          Config
+          <FormattedMessage
+            id="app.components.resourceManage.dataSource.editConfig"
+            defaultMessage="修改配置"
+          />
         </OperatingButton>
       </div>
     )
@@ -248,7 +264,10 @@ export default class DataSourceManageTopologyModal extends Component {
     const columns = [
       {
         title: (
-          'Name'
+          <FormattedMessage
+            id="app.components.projectManage.projectTable.topoName"
+            defaultMessage="拓扑名称"
+          />
         ),
         width: this.tableWidth[0],
         dataIndex: 'topologyName',
@@ -257,7 +276,10 @@ export default class DataSourceManageTopologyModal extends Component {
       },
       {
         title: (
-          'Status'
+          <FormattedMessage
+            id="app.common.status"
+            defaultMessage="状态"
+          />
         ),
         width: this.tableWidth[1],
         dataIndex: 'uptime',
@@ -266,7 +288,10 @@ export default class DataSourceManageTopologyModal extends Component {
       },
       {
         title: (
-          'Operation'
+          <FormattedMessage
+            id="app.common.operate"
+            defaultMessage="操作"
+          />
         ),
         width: this.tableWidth[2],
         key: 'operation',
@@ -284,16 +309,26 @@ export default class DataSourceManageTopologyModal extends Component {
             <div>
               <Row>
                 <Col span={6}>
-                  <span>Topology管理</span>
+                  <span>
+                    <FormattedMessage
+                      id="app.components.resourceManage.dataSource.topologyManage"
+                      defaultMessage="Topology管理"
+                    />
+                  </span>
                 </Col>
                 <Col offset={18}>
-                <span>Kill等待时间:</span>
+                <span>
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataSource.killWaitTime"
+                    defaultMessage="Kill等待时间"
+                  />:
+                </span>
                 <InputNumber
                   style={{marginLeft: '5px'}}
                   min={1}
                   max={60}
-                  formatter={value => `${value}秒`}
-                  parser={value => value.replace('秒', '')}
+                  formatter={value => `${value}s`}
+                  parser={value => value.replace('s', '')}
                   defaultValue={this.state.killWaitTime}
                   onChange={value => this.setState({killWaitTime: value})}
                 />
@@ -307,9 +342,17 @@ export default class DataSourceManageTopologyModal extends Component {
               type="primary"
               onClick={onRefresh}
               style={{marginLeft: '5px'}}>
-              强制刷新（该页面每5秒自动刷新一次）
+              <FormattedMessage
+                id="app.components.resourceManage.dataSource.forceRefresh"
+                defaultMessage="强制刷新（自动刷新5秒一次）"
+              />
             </Button>,
-            <Button type="primary" onClick={onClose}> 返 回 </Button>]}
+            <Button type="primary" onClick={onClose}>
+              <FormattedMessage
+                id="app.common.back"
+                defaultMessage="返回"
+              />
+            </Button>]}
         >
           <Table
             rowKey='topologyName'

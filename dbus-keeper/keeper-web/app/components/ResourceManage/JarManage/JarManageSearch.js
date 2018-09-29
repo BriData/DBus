@@ -102,7 +102,10 @@ export default class JarManageSearch extends Component {
                     type="primary"
                     size="large"
                   >
-                    {"批量删除"}
+                    <FormattedMessage
+                      id="app.components.resourceManage.jarManager.batchDelete"
+                      defaultMessage="批量删除"
+                    />
                   </Button>
                 </Popconfirm>
               </FormItem>
@@ -112,12 +115,18 @@ export default class JarManageSearch extends Component {
                   size="large"
                   onClick={onUploadJar}
                 >
-                  {"上传Jar包"}
+                  <FormattedMessage
+                    id="app.components.resourceManage.jarManager.uploadJar"
+                    defaultMessage="上传Jar包"
+                  />
                 </Button>
               </FormItem>
             </Col>
             <Col span={7}>
-              <FormItem label={'分类'}>
+              <FormItem label={<FormattedMessage
+                id="app.common.type"
+                defaultMessage="类型"
+              />}>
                 <Select
                   showSearch
                   optionFilterProp='children'

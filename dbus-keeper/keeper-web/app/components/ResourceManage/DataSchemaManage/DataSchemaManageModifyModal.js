@@ -68,7 +68,10 @@ export default class DataSchemaManageModifyModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={'修改Schema基本信息'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataSchema.modifySchema"
+            defaultMessage="修改Schema"
+          />}
           onCancel={onClose}
           onOk={this.handleSubmit}
         >
@@ -78,23 +81,35 @@ export default class DataSchemaManageModifyModal extends Component {
                 initialValue: schemaInfo.id,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="dsId" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataSchema.dsId"
+              defaultMessage="数据源ID"
+            />} {...formItemLayout}>
               {getFieldDecorator('dsId', {
                 initialValue: schemaInfo.ds_id,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="dsName" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataSourceName"
+              defaultMessage="数据源名称"
+            />} {...formItemLayout}>
               {getFieldDecorator('dsName', {
                 initialValue: schemaInfo.ds_name,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
-            <FormItem label="schemaName" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataSchemaName"
+              defaultMessage="Schema名称"
+            />} {...formItemLayout}>
               {getFieldDecorator('schemaName', {
                 initialValue: schemaInfo.schema_name,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
             <FormItem
-              label={"status"} {...formItemLayout}
+              label={<FormattedMessage
+                id="app.common.status"
+                defaultMessage="状态"
+              />} {...formItemLayout}
             >
               {getFieldDecorator('status', {
                 initialValue: schemaInfo.status
@@ -110,12 +125,18 @@ export default class DataSchemaManageModifyModal extends Component {
                 </Select>
               )}
             </FormItem>
-            <FormItem label="Description" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.common.description"
+              defaultMessage="描述"
+            />} {...formItemLayout}>
               {getFieldDecorator('description', {
                 initialValue: schemaInfo.description,
               })(<TextArea autosize={true}/>)}
             </FormItem>
-            <FormItem label="上次修改时间" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.common.updateTime"
+              defaultMessage="更新时间"
+            />} {...formItemLayout}>
               {getFieldDecorator('updateTime', {
                 initialValue: schemaInfo.create_time,
               })(<Input disabled={true} size="large" type="text" />)}

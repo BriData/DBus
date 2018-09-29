@@ -6,7 +6,7 @@ import React, {PropTypes, Component} from 'react'
 import {Form, Input, Button, Select} from 'antd'
 import JSONTree from 'react-json-tree'
 import dateFormat from 'dateformat'
-
+import { FormattedMessage } from 'react-intl'
 const Option = Select.Option
 const FormItem = Form.Item
 @Form.create({warppedComponentRef: true})
@@ -107,11 +107,17 @@ export default class ControlMessageForm extends Component {
     return (
       <div className="form-search">
         <span>
-          <h2>Control message</h2>
+          <h2><FormattedMessage
+            id="app.components.toolset.controlMessage.controlMessage"
+            defaultMessage="控制消息"
+          /></h2>
         </span>
         <Form autoComplete="off" layout="horizontal">
           <FormItem
-            label="Message Type"
+            label={<FormattedMessage
+              id="app.components.toolset.controlMessage.messageType"
+              defaultMessage="消息类型"
+            />}
             {...formItemLayout}
           >
             {getFieldDecorator('messageType', {
@@ -139,7 +145,10 @@ export default class ControlMessageForm extends Component {
           </FormItem>
           {!isHeartBeat && (
             <FormItem
-              label="Data Source"
+              label={<FormattedMessage
+                id="app.components.toolset.controlMessage.dataSource"
+                defaultMessage="数据源"
+              />}
               {...formItemLayout}
             >
               {getFieldDecorator('dsId', {
@@ -199,7 +208,12 @@ export default class ControlMessageForm extends Component {
               sm: {span: 16, offset: 4}
             }}
           >
-            <Button onClick={this.handleSend} type="primary" htmlType="submit">Send Control Message</Button>
+            <Button onClick={this.handleSend} type="primary" htmlType="submit">
+              <FormattedMessage
+                id="app.components.toolset.controlMessage.sendControlMessage"
+                defaultMessage="发送控制消息"
+              />
+            </Button>
           </FormItem>
           <FormItem
             wrapperCol={{
@@ -207,7 +221,12 @@ export default class ControlMessageForm extends Component {
               sm: {span: 16, offset: 4}
             }}
           >
-            <Button onClick={this.handleReadZk} type="primary" htmlType="submit">Read Zk Node</Button>
+            <Button onClick={this.handleReadZk} type="primary" htmlType="submit">
+              <FormattedMessage
+                id="app.components.toolset.controlMessage.readZK"
+                defaultMessage="读取发送结果"
+              />
+            </Button>
           </FormItem>
         </Form>
       </div>

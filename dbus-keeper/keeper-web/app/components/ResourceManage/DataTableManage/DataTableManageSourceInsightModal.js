@@ -76,14 +76,20 @@ export default class DataTableManageSourceInsightModal extends Component {
           visible={visible}
           maskClosable={true}
           width={1000}
-          title={'查看源端表列信息'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataTable.viewSourceColumn"
+            defaultMessage="查看源端表列信息"
+          />}
           onCancel={onClose}
           footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
         >
           <Form autoComplete="off" className={styles.searchForm}>
             <Row>
               <Col span={6}>
-                分片列: {splitColumn}
+                <FormattedMessage
+                  id="app.components.resourceManage.dataTable.splitColumn"
+                  defaultMessage="分片列"
+                />: {splitColumn}
               </Col>
               <Col offset={18}>
                 <Select

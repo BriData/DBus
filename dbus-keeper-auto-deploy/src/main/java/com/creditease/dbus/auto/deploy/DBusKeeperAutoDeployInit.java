@@ -12,12 +12,12 @@ import java.net.Socket;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.text.MessageFormat;
 import java.util.Properties;
 import java.util.Scanner;
 
 public class DBusKeeperAutoDeployInit {
     private static Properties pro;
-
     public static void main(String[] args) throws Exception {
         System.out.println("加载config文件...");
         pro = new Properties();
@@ -33,6 +33,7 @@ public class DBusKeeperAutoDeployInit {
         if (!checInflux()) return;
         if (!checkZK()) return;
 
+
         System.out.println("新建logs目录...");
         executeNormalCmd("mkdir -p logs");
 
@@ -40,6 +41,7 @@ public class DBusKeeperAutoDeployInit {
         initMgr();
         initService();
         initHeartBeat();
+
 
         System.out.println("初始化完成");
     }
@@ -64,7 +66,7 @@ public class DBusKeeperAutoDeployInit {
 
     private static boolean checInflux() {
         try {
-            String influxdbUrl = pro.getProperty("influxdb.url");
+            String influxdbUrl = pro.getProperty("influxdb_url_web");
             String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
             if (!"200".equals(httpGet(url))) {
                 System.out.println("influxdb地址不正确");
@@ -101,7 +103,6 @@ public class DBusKeeperAutoDeployInit {
             return false;
         }
     }
-
     private static boolean checkSSH() {
         System.out.println("验证密钥是否存在...");
         String homePath = System.getProperty("user.home");

@@ -126,7 +126,10 @@ export default class DataTableManageEncodeModal extends Component {
   renderEncodeJar = (text, record, index) => {
     let {encodeTypeList} = this.props
     encodeTypeList = Object.values(encodeTypeList.result)
-    encodeTypeList = [{id: null, name: '不脱敏'}, ...encodeTypeList]
+    encodeTypeList = [{id: null, name: <FormattedMessage
+        id="app.components.resourceManage.dataTable.notEncode"
+        defaultMessage="不脱敏"
+      />}, ...encodeTypeList]
     return (
       <div title={text} className={styles.ellipsis}>
         <Select
@@ -182,7 +185,7 @@ export default class DataTableManageEncodeModal extends Component {
 
   renderEncodeParam = (text, record, index) => (
     <div title={text} className={styles.ellipsis}>
-      <Input disabled={!record.pluginId} onChange={e => this.handleParamChange(e.target.value, record)} value={text} placeholder="请输入参数" type="text" />
+      <Input disabled={!record.pluginId} onChange={e => this.handleParamChange(e.target.value, record)} value={text} type="text" />
     </div>
   )
 
@@ -277,42 +280,60 @@ export default class DataTableManageEncodeModal extends Component {
     const {dataSource} = this.state
     const columns = [
       {
-        title: '列名',
+        title: <FormattedMessage
+          id="app.components.projectManage.encodeManager.field_name"
+          defaultMessage="列名"
+        />,
         width: this.tableWidth[0],
         dataIndex: 'COLUMN_NAME',
         key: 'COLUMN_NAME',
         render: this.renderComponent(this.renderColumnName)
       },
       {
-        title: '类型',
+        title: <FormattedMessage
+          id="app.common.type"
+          defaultMessage="类型"
+        />,
         width: this.tableWidth[1],
         dataIndex: 'DATA_TYPE',
         key: 'DATA_TYPE',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: '脱敏包',
+        title: <FormattedMessage
+          id="app.components.projectManage.encodeManager.encode_plugin_id"
+          defaultMessage="脱敏插件ID"
+        />,
         width: this.tableWidth[2],
         dataIndex: 'pluginId',
         key: 'pluginId',
         render: this.renderComponent(this.renderEncodeJar)
       },
       {
-        title: '脱敏类型',
+        title: <FormattedMessage
+          id="app.components.projectManage.encodeManager.encode_type"
+          defaultMessage="脱敏类型"
+        />,
         width: this.tableWidth[3],
         dataIndex: 'encodeType',
         key: 'encodeType',
         render: this.renderComponent(this.renderEncodeType)
       },
       {
-        title: '脱敏参数',
+        title: <FormattedMessage
+          id="app.components.projectManage.encodeManager.encode_param"
+          defaultMessage="脱敏参数"
+        />,
         width: this.tableWidth[4],
         dataIndex: 'encodeParam',
         key: 'encodeParam',
         render: this.renderComponent(this.renderEncodeParam)
       },
       {
-        title: '是否截断',
+        title: <FormattedMessage
+          id="app.components.projectManage.projectHome.tabs.resource.truncate"
+          defaultMessage="截取"
+        />,
         width: this.tableWidth[5],
         dataIndex: 'truncate',
         key: 'truncate',
@@ -324,7 +345,10 @@ export default class DataTableManageEncodeModal extends Component {
       <Modal
         className="top-modal"
         key={key}
-        title={'脱敏配置'}
+        title={<FormattedMessage
+          id="app.components.projectManage.projectHome.tabs.resource.encodesConfig"
+          defaultMessage="脱敏配置"
+        />}
         width={1000}
         visible = {visible}
         onCancel={onClose}

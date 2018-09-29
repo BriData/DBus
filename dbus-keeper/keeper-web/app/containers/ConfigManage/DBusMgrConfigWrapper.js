@@ -12,7 +12,8 @@ import {
 import Request from "@/app/utils/request";
 import {
   READ_ZK_DATA_API,
-  UPDATE_MGR_DB_API
+  UPDATE_MGR_DB_API,
+  RESET_MGR_DB_API
 } from "./api";
 
 import {LOGIN_API} from "@/app/containers/Login/api";
@@ -46,6 +47,31 @@ export default class DBusMgrConfigWrapper extends Component {
       .then(res => {
         if (res && res.status === 0) {
           this.setState({zkData: res.payload.content})
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+  }
+
+  handleReset = data => {
+    this.setState({
+      zkData: data
+    })
+
+    Request(RESET_MGR_DB_API, {
+      data: {
+        content: data
+      },
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
         } else {
           message.warn(res.message)
         }
@@ -137,6 +163,7 @@ export default class DBusMgrConfigWrapper extends Component {
           data={zkData}
           isLogin={isLogin}
           onSave={this.handleSave}
+          onReset={this.handleReset}
           onLogin={this.handleLogin}
         />
       </div>

@@ -29,7 +29,8 @@ import java.util.Set;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.commons.*;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.router.base.DBusRouterBase;
 import com.creditease.dbus.router.bean.Ack;
 import com.creditease.dbus.router.bean.EmitWarp;
@@ -39,6 +40,7 @@ import com.creditease.dbus.router.spout.ack.AckCallBack;
 import com.creditease.dbus.router.spout.ack.AckWindows;
 import com.creditease.dbus.router.util.DBusRouterConstants;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -258,7 +260,12 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
     }
 
     private EmitWarp<ConsumerRecord<String, byte[]>> obtainEmitWarp(ConsumerRecord<String, byte[]> record, String key, String namespace) {
-        EmitWarp<ConsumerRecord<String, byte[]>> data = new EmitWarp<>(key);
+        // eg. data_increment_heartbeat.oracle.db4_3.AMQUE.T_CONTACT_INFO.3.0.0.1531709399507|1531709398879|ok.wh_placeholder
+        //     data_increment_data.oracle.db4_3.AMQUE.T_CONTACT_INFO.3.0.0.1531709399889.wh_placeholder
+        String[] arr = ArrayUtils.insert(5, StringUtils.split(key, "."), inner.topologyId);
+        String tempKey = StringUtils.joinWith(".", arr);
+
+        EmitWarp<ConsumerRecord<String, byte[]>> data = new EmitWarp<>(tempKey);
         data.setData(record);
         data.setTableId(readSpoutConfig.getNamespaceTableIdPair().get(namespace));
         return data;

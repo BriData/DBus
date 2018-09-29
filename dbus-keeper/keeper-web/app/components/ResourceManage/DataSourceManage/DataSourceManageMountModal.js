@@ -46,7 +46,10 @@ export default class DataSourceManageMountModal extends Component {
     const columns = [
       {
         title: (
-          '项目ID'
+          <FormattedMessage
+            id="app.components.projectManage.encodePlugin.projectId"
+            defaultMessage="项目ID"
+          />
         ),
         width: this.tableWidth[0],
         dataIndex: 'id',
@@ -55,7 +58,10 @@ export default class DataSourceManageMountModal extends Component {
       },
       {
         title: (
-          '项目名称'
+          <FormattedMessage
+            id="app.components.projectManage.projectHome.tabs.basic.name"
+            defaultMessage="项目名称"
+          />
         ),
         width: this.tableWidth[1],
         dataIndex: 'projectDisplayName',
@@ -64,7 +70,10 @@ export default class DataSourceManageMountModal extends Component {
       },
       {
         title: (
-          '项目负责人'
+          <FormattedMessage
+            id="app.components.projectManage.projectHome.tabs.basic.principal"
+            defaultMessage="负责人"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'projectOwner',
@@ -79,9 +88,17 @@ export default class DataSourceManageMountModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={'已挂载项目'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataSource.mountedProject"
+            defaultMessage="已挂载项目"
+          />}
           onCancel={onClose}
-          footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
+          footer={[<Button type="primary" onClick={onClose}>
+            <FormattedMessage
+              id="app.common.back"
+              defaultMessage="返回"
+            />
+          </Button>]}
         >
           <Table
             rowKey={record => record.id}

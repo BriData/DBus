@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,6 @@ import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.DataSource;
-import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.utils.DelZookeeperNodesTemplate;
 import com.creditease.dbus.utils.StormToplogyOpHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -72,85 +71,114 @@ public class DataSourceService {
 
     /**
      * datasource首页的搜索
+     *
      * @param queryString param:dsName,if ds=null get all
      */
-    public ResultEntity search(String queryString) throws Exception{
+    public ResultEntity search(String queryString) throws Exception {
         ResponseEntity<ResultEntity> result;
-        if(queryString==null || queryString.isEmpty()){
-            result= sender.get(KEEPER_SERVICE, "/datasource/search");
-        }else {
-            queryString = URLDecoder.decode(queryString,"UTF-8");
+        if (queryString == null || queryString.isEmpty()) {
+            result = sender.get(KEEPER_SERVICE, "/datasource/search");
+        } else {
+            queryString = URLDecoder.decode(queryString, "UTF-8");
             result = sender.get(KEEPER_SERVICE, "/datasource/search", queryString);
         }
         return result.getBody();
     }
 
-    public ResultEntity getById(Integer id){
-        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE,"/datasource/{id}",id);
+    public ResultEntity getById(Integer id) {
+        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/{id}", id);
         return result.getBody();
     }
 
-    public ResultEntity insertOne(DataSource dataSource){
-        ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE,"/datasource",dataSource);
+    public ResultEntity insertOne(DataSource dataSource) {
+        ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE, "/datasource", dataSource);
         return result.getBody();
     }
 
-    public ResultEntity update(DataSource dataSource){
-        ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE,"/datasource/update",dataSource);
+    public ResultEntity update(DataSource dataSource) {
+        ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE, "/datasource/update", dataSource);
         return result.getBody();
     }
 
-    public int countByDsId(Integer id){
-		//是否还有项目在使用
-		return sender.get(KEEPER_SERVICE, "/projectTable/count-by-ds-id/{id}", id)
-				.getBody().getPayload(Integer.class);
-	}
+    public int countByDsId(Integer id) {
+        //是否还有项目在使用
+        return sender.get(KEEPER_SERVICE, "/projectTable/count-by-ds-id/{id}", id)
+                .getBody().getPayload(Integer.class);
+    }
 
-    public ResultEntity delete(Integer id){
+    public ResultEntity delete(Integer id) {
         DataSource dataSource = this.getById(id).getPayload(DataSource.class);
         String dsName = dataSource.getDsName();
-		//删除zk节点
-		try {
+        //删除zk节点
+        try {
             delDsZkConf(DelZookeeperNodesTemplate.ZK_CLEAR_NODES_PATHS, dsName);
             delDsZkConf(DelZookeeperNodesTemplate.ZK_CLEAR_NODES_PATHS_OF_DSNAME_TO_UPPERCASE, dsName.toUpperCase());
         } catch (Exception e) {
-			logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
         }
         //级联删除相关表数据
-		return sender.get(KEEPER_SERVICE, "/datasource/delete/{id}", id).getBody();
+        return sender.get(KEEPER_SERVICE, "/datasource/delete/{id}", id).getBody();
     }
 
-    public ResultEntity getDataSourceByName(String name){
-        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE,"/datasource/getDataSourceByName",name);
+    public ResultEntity getDataSourceByName(String name) {
+        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/getDataSourceByName", name);
         return result.getBody();
     }
 
-    public ResultEntity searchFromSource(Integer dsId){
-        ResultEntity result =getById(dsId);
-        if(!result.success()){
+    public ResultEntity searchFromSource(Integer dsId) {
+        ResultEntity result = getById(dsId);
+        if (!result.success()) {
             return result;
         }
         //根据dsId获取需要的参数信息
-        DataSource dataSource =result.getPayload(new TypeReference<DataSource>() {});
-        Map<String,Object> params = new HashedMap(5);
-        params.put("dsId",dsId);
-        params.put("dsType",dataSource.getDsType());
-        params.put("URL",dataSource.getMasterUrl());
-        params.put("user",dataSource.getDbusUser());
-        params.put("password",dataSource.getDbusPwd());
+        DataSource dataSource = result.getPayload(new TypeReference<DataSource>() {
+        });
+        Map<String, Object> params = new HashedMap(5);
+        params.put("dsId", dsId);
+        params.put("dsType", dataSource.getDsType());
+        params.put("URL", dataSource.getMasterUrl());
+        params.put("user", dataSource.getDbusUser());
+        params.put("password", dataSource.getDbusPwd());
         //调用接口查询
-        ResponseEntity<ResultEntity> responseEntity = sender.post(KEEPER_SERVICE,"/datasource/searchFromSource",params);
-        if(!responseEntity.getStatusCode().is2xxSuccessful() || !responseEntity.getBody().success()){
+        ResponseEntity<ResultEntity> responseEntity = sender.post(KEEPER_SERVICE, "/datasource/searchFromSource", params);
+        if (!responseEntity.getStatusCode().is2xxSuccessful() || !responseEntity.getBody().success()) {
             return responseEntity.getBody();
         }
-        List<String> resultList = responseEntity.getBody().getPayload(new TypeReference<List<String>>() {});
+        List<String> resultList = responseEntity.getBody().getPayload(new TypeReference<List<String>>() {
+        });
         //将结果数据格式化成前端需要的数据
-        List<String> structureList = new ArrayList<>();//格式化完的结果
-
+        List<String> structureList = new ArrayList<>();
+        HashSet<String> tableNames = new HashSet<>();
+        JSONObject tableMsg = null;
+        for (int i = 0; i < resultList.size(); i++) {
+            String[] columnInfo = resultList.get(i).split("/");// "tablename/columnname, type"
+            if (!tableNames.contains(columnInfo[0])) {
+                if (tableMsg != null) {
+                    structureList.add(tableMsg.toJSONString());
+                }
+                tableMsg = new JSONObject();
+                if (StringUtils.equals(columnInfo[1], OBEJCT_COLUMN)) {
+                    tableMsg.put("type", "存储过程");
+                    tableMsg.put("name", columnInfo[0]);
+                    tableMsg.put("exist", "是");
+                    tableMsg.put("column", columnInfo[1]);
+                } else {
+                    tableMsg.put("type", "表");
+                    tableMsg.put("name", columnInfo[0]);
+                    tableMsg.put("exist", "是");
+                    tableMsg.put("column", columnInfo[1]);
+                }
+                tableNames.add(columnInfo[0]);
+            } else {
+                String column = tableMsg.getString("column");
+                tableMsg.put("column", column + "   " + columnInfo[1]);
+            }
+        }
+        structureList.add(tableMsg.toJSONString());
+        /*
         String tableName ="";//当前table的name
         StringBuffer columnsInfo =new StringBuffer();//某个table中需要添加的column信息
         boolean tableTail = false; //标识：最后一次添加表或存储过程
-
         for(int i=0;i<resultList.size();i++){
             String[] columnInfo = resultList.get(i).split("/");// "tablename/columnname, type"
             if(i==0){
@@ -194,7 +222,7 @@ public class DataSourceService {
             structureList.add(tableMsg.toJSONString());
         }else if(DbusDatasourceType.parse(dataSource.getDsType()) == DbusDatasourceType.MYSQL){
             structureList.add(tableMsg.toJSONString());
-        }
+        }*/
 
         //result.setPayload(structureList);
         result = new ResultEntity();
@@ -202,32 +230,32 @@ public class DataSourceService {
         return result;
     }
 
-    public ResultEntity validateDataSources(Map<String,Object> map){
-        ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE,"/datasource/validate",map);
+    public ResultEntity validateDataSources(Map<String, Object> map) {
+        ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE, "/datasource/validate", map);
         return result.getBody();
     }
 
     public ResultEntity modifyDataSourceStatus(Long id, String status) {
-        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE,"/datasource/{id}/{status}",id, status);
+        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/{id}/{status}", id, status);
         return result.getBody();
     }
 
     public ResultEntity getDSNames() {
-        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE,"/datasource/getDSNames");
+        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/getDSNames");
         return result.getBody();
     }
 
     public String startTopology(String dsName, String jarPath, String jarName, String topologyType) throws Exception {
         Properties globalConf = zkService.getProperties(KeeperConstants.GLOBAL_CONF);
 
-        String hostIp =  globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        String port =  globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
-        String stormBaseDir =  globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_HOME_PATH);
-		String stormSshUser = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String hostIp = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
+        String stormBaseDir = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_HOME_PATH);
+        String stormSshUser = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
 
-        String cmd = "cd "+ stormBaseDir + "/" + KeeperConstants.STORM_JAR_DIR +";";
-        cmd +=  " ./dbus_startTopology.sh " + stormBaseDir + " " + topologyType + " " + env.getProperty("zk.str");
-        cmd +=  " " + dsName + " " + jarPath + " " + jarName;
+        String cmd = "cd " + stormBaseDir + "/" + KeeperConstants.STORM_JAR_DIR + ";";
+        cmd += " ./dbus_startTopology.sh " + stormBaseDir + " " + topologyType + " " + env.getProperty("zk.str");
+        cmd += " " + dsName + " " + jarPath + " " + jarName;
         // String sshCmd = "ssh -p " + port + " " + stormSshUser + "@" + hostIp + " " + "'" + cmd + "'";
 
         logger.info("Topology Start Command:{}", cmd);
@@ -250,12 +278,12 @@ public class DataSourceService {
         }
     }
 
-    public ResultEntity getPath(String queryString){
-        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE,"/datasource/topologies-jars",queryString);
+    public ResultEntity getPath(String queryString) {
+        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/topologies-jars", queryString);
         return result.getBody();
     }
 
-    public Map viewLog(String topologyId) throws Exception{
+    public Map viewLog(String topologyId) throws Exception {
         // 获取Topology运行所在worker及port
         if (!StormToplogyOpHelper.inited) {
             StormToplogyOpHelper.init(zkService);
@@ -263,22 +291,22 @@ public class DataSourceService {
         String runningInfo = StormToplogyOpHelper.getTopoRunningInfoById(topologyId);
         Properties globalConf = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
         String stormHomePath = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_HOME_PATH);
-        String host =  globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        String port =  globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
+        //String host = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
         String user = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
 
-        String command = "tail -200 " + stormHomePath + "logs/workers-artifacts/" +
-                runningInfo.substring(runningInfo.indexOf(":", 1) + 1, runningInfo.length()) + "/worker.log.creditease";
+        String[] split = runningInfo.split(":");
+        String command = "tail -200 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log.creditease";
 
-        String execResult = executeCommand(user, host, Integer.parseInt(port), env.getProperty("pubKeyPath"), command);
+        String execResult = executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command);
         Map resultMap = new HashMap<>();
-        resultMap.put("runningInfo",runningInfo);
-        resultMap.put("execResult",execResult);
+        resultMap.put("runningInfo", runningInfo);
+        resultMap.put("execResult", execResult);
         return resultMap;
     }
 
     private String executeCommand(String username, String host, int port, String pubKeyPath, String command) {
-        String  result = "";
+        String result = "";
         Session session = null;
         ChannelExec channel = null;
         try {
@@ -300,7 +328,7 @@ public class DataSourceService {
             }
             return sb.toString();
         } catch (Exception e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             return result;
         } finally {
             if (channel != null) {

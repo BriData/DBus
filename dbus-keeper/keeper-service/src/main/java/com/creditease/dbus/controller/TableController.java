@@ -326,8 +326,13 @@ public class TableController extends BaseController {
     }
 
     @GetMapping("/findAllTables")
-    public ResultEntity findAllTables(){
+    public ResultEntity findAllTables( ){
         return resultEntityBuilder().payload(tableService.findAllTables()).build();
+    }
+
+    @GetMapping("/findTablesByUserId/{userId}")
+    public ResultEntity findTablesByUserId(@PathVariable Integer userId){
+        return resultEntityBuilder().payload(tableService.findTablesByUserId(userId)).build();
     }
 }
 

@@ -1,6 +1,7 @@
 import React, { PropTypes, Component } from 'react'
 import {Input, Form, Select,Icon,Button, Row, Col, Modal,Upload ,message} from 'antd'
 const Dragger = Upload.Dragger;
+import { FormattedMessage } from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 
@@ -69,16 +70,24 @@ export default class EncodePluginUploadModal extends Component {
     return (
       <Modal
         key={key}
-        title="上传脱敏插件"
+        title={<FormattedMessage
+          id="app.components.projectManage.encodePlugin.uploadEncodePlugin"
+          defaultMessage="上传脱敏插件"
+        />}
         width={600}
         visible={visible}
         maskClosable={false}
-        footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
+        footer={[<Button type="primary" onClick={onClose}>
+          <FormattedMessage
+            id="app.common.back"
+            defaultMessage="返回"
+          />
+        </Button>]}
         onCancel={onClose}>
         <div className={styles.searchForm}>
           <Row className={styles.rowSpacing}>
             <Col span={2} className={styles.formRight}>
-              Name:
+              <FormattedMessage id="app.common.name" defaultMessage="名称" />:
             </Col>
             <Col span={8} offset={1}>
               <Input
@@ -91,7 +100,7 @@ export default class EncodePluginUploadModal extends Component {
           </Row>
           <Row className={styles.rowSpacing}>
             <Col span={2} className={styles.formRight}>
-              Type:
+              <FormattedMessage id="app.common.table.project" defaultMessage="项目" />:
             </Col>
             <Col span={8} offset={1}>
               <Select

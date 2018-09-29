@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,17 +116,16 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
 
             // 检查是否有遗留未决的拉取任务。如果有，resolve（发resume消息通知给appender，并在zk上记录，且将监测到的pending任务写日志，方便排查问题）。
             // 对于已经resolve的pending任务，将其移出pending队列，以免造成无限重复处理。
-            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, null,DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY);
+            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, null, DataPullConstants.FULLPULL_PENDING_TASKS_OP_CRASHED_NOTIFY);
 
-            FullPullHelper.updatePendingTasksToHistoryTable(null, dsName,
-                    DataPullConstants.FULLPULL_PENDING_TASKS_OP_SPLIT_TOPOLOGY_RESTART,
-                    consumer, commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC),null);
+            FullPullHelper.updatePendingTasksToHistoryTable(dsName, DataPullConstants.FULLPULL_PENDING_TASKS_OP_SPLIT_TOPOLOGY_RESTART,
+                    consumer, commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC));
 
         } catch (Exception e) {
             e.printStackTrace();
             throw new InitializationException();
         }
-         LOG.info("Splitting Spout {} is started!", topologyId);
+        LOG.info("Splitting Spout {} is started!", topologyId);
     }
 
     /**
@@ -239,7 +238,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
 
                         // 每次拉取都要进行批次号加1处理。这条语句的位置不要变动。
                         dataSourceInfo = increseBatchNo(dataSourceInfo);
-                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_ADD_WATCHING);
                         //创建zk节点并在zk节点上输出拉取信息
                         FullPullHelper.startSplitReport(zkService, dataSourceInfo);
                         collector.emit(new Values(dataSourceInfo), record);
@@ -255,9 +254,9 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
 
                     if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
                             || key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)) {
-                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo,DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
-                        FullPullHelper.finishPullReport(zkService, dataSourceInfo,FullPullHelper.getCurrentTimeStampString(),
-                                Constants.DataTableStatus.DATA_STATUS_ABORT,errorMsg);
+                        FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
+                        FullPullHelper.finishPullReport(zkService, dataSourceInfo, FullPullHelper.getCurrentTimeStampString(),
+                                Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
                     }
                     throw e;
                 }
@@ -337,6 +336,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
     /**
      * 只能有一个任务处于splitting,puliing的状态
      * 阻断增量的拉全量暂时没有好的处理办法,可能会有normal和indepent的任务同时处于splitting和pulling
+     *
      * @param dataSourceInfo
      */
     private void waitForLastTaskEnd(String dataSourceInfo) {
@@ -350,9 +350,9 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             conn = DBHelper.getDBusMgrConnection();
             StringBuilder sql = new StringBuilder();
             sql.append(" SELECT  h.id ,h.state FROM t_fullpull_history h ");
-            if(isGlobal){
+            if (isGlobal) {
                 sql.append(" WHERE h.type = 'global'");
-            }else{
+            } else {
                 sql.append(" WHERE h.type = 'indepent' and h.dsName = '").append(dsName).append("'");
             }
             sql.append(" and h.id < ").append(id);

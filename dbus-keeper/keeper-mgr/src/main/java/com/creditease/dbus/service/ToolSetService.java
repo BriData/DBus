@@ -170,7 +170,8 @@ public class ToolSetService {
         }
         //判断表类型是否支持拉全量操作
         DbusDatasourceType dsType = DbusDatasourceType.parse(dataTable.getDsType());
-        if (DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
+        if (
+            DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
             logger.error("Illegal datasource type:" + dataTable.getDsType());
             ResultEntity resultEntity = new ResultEntity();
             return MessageCode.TYPE_OF_TABLE_CAN_NOT_FULLPULL;
@@ -434,8 +435,7 @@ public class ToolSetService {
         String stormNimbusHost = global.getProperty(GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
         int stormNimbusPort = Integer.parseInt(global.getProperty(GLOBAL_CONF_KEY_STORM_NIMBUS_PORT));
         String user = global.getProperty(GLOBAL_CONF_KEY_STORM_SSH_USER);
-        String grafanaUrl = global.getProperty(GLOBAL_CONF_KEY_MONITOR_URL);
-        String influxdbUrl = global.getProperty(GLOBAL_CONF_KEY_INFLUXDB_URL);
+
         String pubKeyPath = env.getProperty("pubKeyPath");
         //测试storm免密配置是否可用
         String res = configCenterService.exeCmd(user, stormNimbusHost, stormNimbusPort, pubKeyPath, "ls");
@@ -453,7 +453,7 @@ public class ToolSetService {
         result.put("nimbuses", nimbuses);
         result.put("supervisors", supervisors);
 
-        //心跳节点
+        //心跳节点状态
         String[] heartbeatList = global.getProperty("heartbeat.host").split(",");
         int heartbeatport = Integer.parseInt(global.getProperty("heartbeat.port"));
         String heartbeatuser = global.getProperty("heartbeat.user");
@@ -473,7 +473,7 @@ public class ToolSetService {
             heartBeatLeader.add(heartbeatStat);
         }
         result.put("heartBeatLeader", heartBeatLeader);
-        //kafka信息
+        //kafka节点状态
         String[] bootstrapList = global.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS).split(",");
         ArrayList<Map<String, String>> kafkaBrokers = new ArrayList<>();
         for (String bootstrap : bootstrapList) {
@@ -511,11 +511,15 @@ public class ToolSetService {
             zkStats.add(zkStat);
         }
         result.put("zkStats", zkStats);
+        //grafana状态
+        String grafanaUrl = global.getProperty(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS);
         if (configCenterService.urlTest(grafanaUrl)) {
             result.put("grafanaUrl", "ok");
         } else {
             result.put("grafanaUrl", "error");
         }
+        //influxdb状态
+        String influxdbUrl = global.getProperty(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS);
         String url = influxdbUrl + "/query?q=show+databases" + "&db=_internal";
         if ("200".equals(HttpClientUtils.httpGet(url))) {
             result.put("influxdbUrl", "ok");

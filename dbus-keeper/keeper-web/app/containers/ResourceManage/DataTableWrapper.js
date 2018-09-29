@@ -25,6 +25,7 @@ import {ZKManageModel} from "@/app/containers/ConfigManage/selectors";
 import {
   searchDataSourceIdTypeName,
   setDataTableParams,
+  clearVersionDetail,
   searchDataTableList,
   getEncodeConfig,
   getTableColumn,
@@ -57,7 +58,7 @@ import {GET_MOUNT_PROJECT_API} from "@/app/containers/ProjectManage/api";
   }),
   dispatch => ({
     searchDataSourceIdTypeName: param => dispatch(searchDataSourceIdTypeName.request(param)),
-
+    clearVersionDetail: param => dispatch(clearVersionDetail(param)),
     setDataTableParams: param => dispatch(setDataTableParams(param)),
     searchDataTableList: param => dispatch(searchDataTableList.request(param)),
     getEncodeConfig: param => dispatch(getEncodeConfig.request(param)),
@@ -234,6 +235,8 @@ export default class DataTableWrapper extends Component {
   }
 
   handleCloseVersionModal = () => {
+    const {clearVersionDetail} = this.props
+    clearVersionDetail()
     this.setState({
       versionModalKey: this.handleRandom('version'),
       versionModalVisible: false

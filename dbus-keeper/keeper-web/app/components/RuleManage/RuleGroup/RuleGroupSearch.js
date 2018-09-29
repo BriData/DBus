@@ -31,7 +31,7 @@ export default class RuleGroupSearch extends Component {
                     loading={upgradeLoading}
                   >
                     <FormattedMessage
-                      id="app.common.upgradeVersion"
+                      id="app.components.resourceManage.ruleGroup.upgradeVersion"
                       defaultMessage="升级版本"
                     />
                   </Button>
@@ -43,7 +43,7 @@ export default class RuleGroupSearch extends Component {
                   onClick={onDiff}
                 >
                   <FormattedMessage
-                    id="app.common.diff"
+                    id="app.components.resourceManage.ruleGroup.diff"
                     defaultMessage="对比"
                   />
                 </Button>
@@ -54,7 +54,7 @@ export default class RuleGroupSearch extends Component {
                   onClick={onOpenNewModal}
                 >
                   <FormattedMessage
-                    id="app.common.addGroup"
+                    id="app.components.resourceManage.ruleGroup.addGroup"
                     defaultMessage="添加规则组"
                   />
                 </Button>

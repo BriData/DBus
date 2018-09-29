@@ -101,28 +101,28 @@ export default class ProjectTableStartModal extends Component {
     const affectTable = affectTableList.result ? Object.values(affectTableList.result) : []
     const columns = [
       {
-        title: '输入Topic',
+        title: <FormattedMessage id="app.components.projectManage.projectTable.inputTopic" defaultMessage="输入Topic" />,
         width: this.tableWidth[0],
         dataIndex: 'topic',
         key: 'topic',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: 'Partion',
+        title: <FormattedMessage id="app.components.projectManage.projectTable.partition" defaultMessage="分区" />,
         width: this.tableWidth[1],
         dataIndex: 'partition',
         key: 'partition',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: 'Offset',
+        title: <FormattedMessage id="app.common.offset" defaultMessage="偏移量" />,
         width: this.tableWidth[2],
         dataIndex: 'latesdOffset',
         key: 'offset',
         render: this.renderComponent(this.renderOffset)
       },
       {
-        title: 'Head Kafka Offset',
+        title: <FormattedMessage id="app.components.projectManage.projectTable.headOffset" defaultMessage="头部偏移量" />,
         width: this.tableWidth[3],
         key: 'headOffset',
         render: this.renderComponent(this.renderHead)
@@ -135,7 +135,7 @@ export default class ProjectTableStartModal extends Component {
       //   render: this.renderComponent(this.renderNomal)
       // },
       {
-        title: 'Latest Kafka Offset',
+        title: <FormattedMessage id="app.components.projectManage.projectTable.latestOffset" defaultMessage="尾部偏移量" />,
         width: this.tableWidth[4],
         key: 'latestOffset',
         render: this.renderComponent(this.renderLatest)
@@ -145,7 +145,10 @@ export default class ProjectTableStartModal extends Component {
     return (
       <Modal
         key={modalKey}
-        title={'启动'}
+        title={<FormattedMessage
+          id="app.components.resourceManage.dataTable.start"
+          defaultMessage="启动"
+        />}
         width={1000}
         visible = {visible}
         onCancel={() => onCancel(false)}
@@ -161,7 +164,10 @@ export default class ProjectTableStartModal extends Component {
           />
         </Form>
         <h3 className={styles.titleNomal} >
-          <FormattedMessage id="app.components.affectTable" defaultMessage="受影响的表" />
+          <FormattedMessage
+            id="app.components.projectManage.projectTable.affectTable"
+            defaultMessage="受影响的表"
+          />
         </h3>
         <Row>
           {affectTable.map(affect => (<Col key={affect} span={4}>{affect}</Col>))}

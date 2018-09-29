@@ -32,7 +32,7 @@ public class OracleSchemaFetcher extends SchemaFetcher{
 
     @Override
     public String buildQuery() {
-        String sql ="select username from sys.dba_users order by username";
+        String sql ="select username schemaname from sys.dba_users order by username";
         return sql;
     }
 

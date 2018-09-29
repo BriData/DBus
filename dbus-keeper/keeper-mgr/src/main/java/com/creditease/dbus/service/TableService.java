@@ -56,9 +56,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS;
+
 
 /**
  * Created by xiancangao on 2018/05/16.
@@ -107,7 +109,8 @@ public class TableService {
                 logger.info("Activate mysql table");
                 // 处理mysql拉全量
                 ilService.mysqlInitialLoadBySql(table, table, date.getTime());
-            } else {
+            }
+            else {
                 logger.error("Illegal datasource type:" + table.getDsType());
                 return MessageCode.TYPE_OF_TABLE_CAN_NOT_FULLPULL;
                 // throw new IllegalArgumentException("Illegal datasource type:" + table.getDsType());
@@ -677,37 +680,65 @@ public class TableService {
                 .getBody().getPayload(Integer.class);
     }
 
-    public List<RiderTable> riderSearch() throws Exception{
-        List<DataTable> list = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findAllTables")
-                .getBody().getPayload(new TypeReference<List<DataTable>>() {
-                });
+    public List<RiderTable> riderSearch(Integer userId, String userRole) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<RiderTable> listRider = new ArrayList<RiderTable>();
-        for (DataTable table : list) {
-            boolean flag = false;
-            if (table.getTableName().equals(table.getPhysicalTableRegex())) {
-                flag = true;
+        //获取非多租户namespace
+        if ("admin".equalsIgnoreCase(userRole)) {
+            List<DataTable> tables = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findAllTables")
+                    .getBody().getPayload(new TypeReference<List<DataTable>>() {
+                    });
+            for (DataTable table : tables) {
+                boolean flag = false;
+                if (table.getTableName().equals(table.getPhysicalTableRegex())) {
+                    flag = true;
+                }
+                String dsType = table.getDsType();
+                String namespace;
+                if (flag) {
+                    namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
+                            "." + table.getVersion() + "." + "0" + "." + "0";
+                } else {
+                    namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
+                            "." + table.getVersion() + "." + "0" + "." + table.getPhysicalTableRegex();
+                }
+                RiderTable rTable = new RiderTable();
+                rTable.setNamespace(namespace);
+                rTable.setTopic(table.getOutputTopic());
+                rTable.setId(table.getId());
+                rTable.setCreateTime(table.getCreateTime());
+                Properties globalConf = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+                rTable.setKafka(globalConf.getProperty("bootstrap.servers"));
+                listRider.add(rTable);
             }
-            String dsType = table.getDsType();
-            String namespace;
-            if (flag) {
-                namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
-                        "." + table.getVersion() + "." + "0" + "." + "0";
-            } else {
-                namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
-                        "." + table.getVersion() + "." + "0" + "." + table.getPhysicalTableRegex();
+        } else {
+            List<HashMap<String, Object>> list = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findTablesByUserId/{0}", userId)
+                    .getBody().getPayload(new TypeReference<List<HashMap<String, Object>>>() {
+                    });
+            for (HashMap<String, Object> table : list) {
+                boolean flag = false;
+                if (table.get("table_name").equals(table.get("physical_table_regex"))) {
+                    flag = true;
+                }
+                String dsType = (String) table.get("ds_type");
+                String namespace;
+                if (flag) {
+                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("schema_name"),
+                            table.get("table_name"), table.get("topo_name"), table.get("version"), "0", "0");
+                } else {
+                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("schema_name"),
+                            table.get("table_name"), table.get("topo_name"), table.get("version"), "0", table.get("physical_table_regex"));
+                }
+                RiderTable rTable = new RiderTable();
+                rTable.setNamespace(namespace);
+                rTable.setTopic((String) table.get("output_topic"));
+                rTable.setId((Integer) table.get("id"));
+                rTable.setCreateTime(sdf.parse(table.get("create_time").toString()));
+                rTable.setKafka((String) table.get("url"));
+                listRider.add(rTable);
             }
-            RiderTable rTable = new RiderTable();
-            rTable.setNamespace(namespace);
-            rTable.setTopic(table.getOutputTopic());
-            rTable.setId(table.getId());
-            rTable.setCreateTime(table.getCreateTime());
-
-            Properties globalConf = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
-            rTable.setKafka(globalConf.getProperty("bootstrap.servers"));
-            listRider.add(rTable);
         }
         return listRider;
-
     }
 
     public static class InitialLoadStatus {
@@ -804,6 +835,5 @@ public class TableService {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/tables-to-add", queryString);
         return result.getBody();
     }
-
 
 }

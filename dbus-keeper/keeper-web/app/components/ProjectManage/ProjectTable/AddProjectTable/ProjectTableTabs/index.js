@@ -150,7 +150,10 @@ export default class ProjectTableTabs extends Component {
             tab={
               <span>
                 <Icon type="appstore-o" />
-                资源选择
+                <FormattedMessage
+                  id="app.components.projectManage.projectTable.resourceChoice"
+                  defaultMessage="资源选择"
+                />
               </span>
             }
             key="resource"
@@ -192,7 +195,10 @@ export default class ProjectTableTabs extends Component {
             tab={
               <span>
                 <Icon type="schedule" />
-                Sink选择
+                <FormattedMessage
+                  id="app.components.projectManage.projectTable.sinkChoice"
+                  defaultMessage="Sink选择"
+                />
               </span>
             }
             key="sink"

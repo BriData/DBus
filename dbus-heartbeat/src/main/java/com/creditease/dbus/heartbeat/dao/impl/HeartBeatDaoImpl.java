@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,10 +32,13 @@ import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.dao.IHeartBeatDao;
 import com.creditease.dbus.heartbeat.exception.SQLTimeOutException;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DBUtil;
 import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.vo.HeartBeatMonitorVo;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+
+import org.apache.commons.lang.StringUtils;
 
 public class HeartBeatDaoImpl implements IHeartBeatDao {
 
@@ -56,6 +59,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
     }
 
 
+
     private String getMaxID() {
         return "select max(id) as maxID from db_heartbeat_monitor";
     }
@@ -66,7 +70,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
     }
 
     @Override
-    public int sendPacket(String key, String dsName, String schemaName, String tableName, String packet, boolean isMysql) {
+    public int sendPacket(String key, String dsName, String schemaName, String tableName, String packet, String dsType) {
         Connection conn = null;
         PreparedStatement ps = null;
         int cnt = 0;
@@ -75,7 +79,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             beginConn = System.currentTimeMillis();
             conn = DataSourceContainer.getInstance().getConn(key);
             endConn = System.currentTimeMillis();
-            if (isMysql) {
+            if (StringUtils.equals(Constants.CONFIG_DB_TYPE_MYSQL, dsType)) {
                 ps = conn.prepareStatement(getSendPacketSql2Mysql());
                 ps.setString(1, dsName);
                 ps.setString(2, schemaName);
@@ -83,7 +87,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
                 ps.setString(4, packet);
                 ps.setString(5, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
                 ps.setString(6, DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
-            } else {
+            } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_ORA, dsType)) {
                 ps = conn.prepareStatement(getSendPacketSql2Oracle());
                 ps.setString(1, dsName);
                 ps.setString(2, schemaName);
@@ -128,7 +132,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return cnt;
     }
     @Override
-    public int deleteOldHeartBeat(String key, boolean isMysql) {
+    public int deleteOldHeartBeat(String key, String dsType) {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -248,6 +252,23 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return sql.toString();
     }
 
+    private String getQueryHeartbeatSql2DB2() {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" select ");
+        sql.append("     DS_NAME,");
+        sql.append("     SCHEMA_NAME,");
+        sql.append("     CREATE_TIME");
+        sql.append(" from");
+        sql.append("     db_heartbeat_monitor");
+        sql.append(" where");
+        sql.append("     DS_NAME = ? and");
+        sql.append("     SCHEMA_NAME = ?");
+        sql.append(" order by");
+        sql.append("     CREATE_TIME desc");
+        sql.append(" fetch first 1 rows only");
+        return sql.toString();
+    }
+
     private String getQueryHeartbeatSql2Oracle() {
         StringBuilder sql = new StringBuilder();
         sql.append(" select");
@@ -271,16 +292,16 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
     }
 
     @Override
-    public HeartBeatMonitorVo queryLatestHeartbeat(String key, String dsName, String schemaName, boolean isMysql) {
+    public HeartBeatMonitorVo queryLatestHeartbeat(String key, String dsName, String schemaName, String dsType) {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         HeartBeatMonitorVo hbmVo = null;
         try {
             conn = DataSourceContainer.getInstance().getConn(key);
-            if (isMysql) {
+            if (StringUtils.equals(Constants.CONFIG_DB_TYPE_MYSQL, dsType)) {
                 ps = conn.prepareStatement(getQueryHeartbeatSql2Mysql());
-            } else {
+            } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_ORA, dsType)) {
                 ps = conn.prepareStatement(getQueryHeartbeatSql2Oracle());
             }
             ps.setString(1, dsName);

@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import com.creditease.dbus.common.FullPullHelper;
 import com.creditease.dbus.commons.Constants;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -556,7 +557,13 @@ public class DBConfiguration {
           // 如果seriesTableName和输出表名一致，表明是本表，而非系列表，partition部分需置为"0"。
           seriesTableName = "0";
       }
-      return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", seriesTableName);
+
+      if (FullPullHelper.isDbusKeeper(dataSourceInfo)) {
+          String topoName = FullPullHelper.getTopoName(dataSourceInfo);
+          return String.format("%s.%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, topoName, version, "0", seriesTableName);
+      } else {
+          return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", seriesTableName);
+      }
   }
 
   public String buildSlashedNameSpace(String dataSourceInfo, String outputVersion) {
@@ -614,8 +621,15 @@ public class DBConfiguration {
       String version = payload.getString(DataPullConstants.FullPullInterfaceJson.VERSION_KEY);
       // 应EDP要求，kafka key格式调整为：类型+ namespace+ dbus占位符 + wh_占位符     
       // 例子：data_initial_data.mysql.db1.schema1.table1.5.0.0.1481245701166.wh_placeholder
-      // dbus占位符目前我们只需要放timestamp。wh_placeholder是预留备用。目前EDP team还没用。由于这个占位符只有这里用到，暂时定义常量。 
-      return String.format("%s.%s.%s.%s.%s.%s.%s.%s.%s.%s", DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbType, dbName, dbSchema, tableName, version, '0', tablePartition, System.currentTimeMillis(), "wh_placeholder");
+      // dbus占位符目前我们只需要放timestamp。wh_placeholder是预留备用。目前EDP team还没用。由于这个占位符只有这里用到，暂时定义常量。
+      if (FullPullHelper.isDbusKeeper(dataSourceInfo)) {
+          String topoName = FullPullHelper.getTopoName(dataSourceInfo);
+          return String.format("%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s", DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbType, dbName,
+                  dbSchema, tableName, topoName, version, '0', tablePartition, System.currentTimeMillis(), "wh_placeholder");
+      } else {
+          return String.format("%s.%s.%s.%s.%s.%s.%s.%s.%s.%s", DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbType, dbName,
+                  dbSchema, tableName, version, '0', tablePartition, System.currentTimeMillis(), "wh_placeholder");
+      }
   }
 
 

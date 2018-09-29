@@ -1,6 +1,7 @@
 import React, {PropTypes, Component} from 'react'
 import {Form, Select, Input, Button, Checkbox, Row, Col} from 'antd'
 const Textarea = Input.TextArea
+import { FormattedMessage } from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
@@ -38,7 +39,10 @@ export default class BasicConfigForm extends Component {
         <Form>
           <Row>
             <Col span={15}>
-              <FormItem label='Admin邮箱' {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.components.configCenter.heartbeatConfig.adminEmail"
+                defaultMessage="管理员邮箱"
+              />} {...formItemLayout}>
                 {getFieldDecorator('adminEmail', {
                   initialValue: config['adminEmail'],
                   rules: [
@@ -52,8 +56,11 @@ export default class BasicConfigForm extends Component {
                 )}
               </FormItem>
             </Col>
-            <Col span={6}>
-              <FormItem label='启用' {...formItemLayout}>
+            <Col span={7}>
+              <FormItem label={<FormattedMessage
+                id="app.components.configCenter.heartbeatConfig.enable"
+                defaultMessage="启用"
+              />} {...formItemLayout}>
                 {getFieldDecorator('adminUseEmail', {
                   initialValue: config['adminUseEmail'] === 'Y',
                   rules: [
@@ -71,7 +78,10 @@ export default class BasicConfigForm extends Component {
           </Row>
           <Row>
             <Col span={15}>
-              <FormItem label='Admin短信手机号' {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.components.configCenter.heartbeatConfig.adminSMSNo"
+                defaultMessage="管理员手机号"
+              />} {...formItemLayout}>
                 {getFieldDecorator('adminSMSNo', {
                   initialValue: config['adminSMSNo'],
                   rules: [
@@ -85,8 +95,12 @@ export default class BasicConfigForm extends Component {
                 )}
               </FormItem>
             </Col>
-            <Col span={6}>
-              <FormItem label='启用' {...formItemLayout}>
+            <Col span={7}>
+              <FormItem label={<FormattedMessage
+                id="app.components.configCenter.heartbeatConfig.enable"
+                defaultMessage="启用"
+              />
+              } {...formItemLayout}>
                 {getFieldDecorator('adminUseSMS', {
                   initialValue: config['adminUseSMS'] === 'Y',
                   rules: [
@@ -105,7 +119,10 @@ export default class BasicConfigForm extends Component {
 
           <Row>
             <Col span={15}>
-              <FormItem label='Schema变更通知邮箱' {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.components.configCenter.heartbeatConfig.schemaChangeEmail"
+                defaultMessage="Schema变更通知邮箱"
+              />} {...formItemLayout}>
                 {getFieldDecorator('schemaChangeEmail', {
                   initialValue: config['schemaChangeEmail'],
                   rules: [
@@ -119,8 +136,11 @@ export default class BasicConfigForm extends Component {
                 )}
               </FormItem>
             </Col>
-            <Col span={6}>
-              <FormItem label='启用' {...formItemLayout}>
+            <Col span={7}>
+              <FormItem label={<FormattedMessage
+                id="app.components.configCenter.heartbeatConfig.enable"
+                defaultMessage="启用"
+              />} {...formItemLayout}>
                 {getFieldDecorator('schemaChangeUseEmail', {
                   initialValue: config['schemaChangeUseEmail'] === 'Y',
                   rules: [
@@ -137,9 +157,14 @@ export default class BasicConfigForm extends Component {
             </Col>
           </Row>
           <Row>
-            <Col span={12}>
+            <Col span={15}>
               <FormItem {...tailFormItemLayout}>
-                <Button type="primary" onClick={onSave}>保存</Button>
+                <Button type="primary" onClick={onSave}>
+                  <FormattedMessage
+                    id="app.common.save"
+                    defaultMessage="保存"
+                  />
+                </Button>
               </FormItem>
             </Col>
           </Row>

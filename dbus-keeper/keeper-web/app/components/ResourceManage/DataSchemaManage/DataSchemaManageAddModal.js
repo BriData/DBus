@@ -104,7 +104,10 @@ export default class DataSchemaManageAddModal extends Component {
     const columns = [
       {
         title: (
-          'tableName'
+          <FormattedMessage
+            id="app.components.resourceManage.dataTableName"
+            defaultMessage="表名"
+          />
         ),
         width: this.tableWidth[0],
         dataIndex: 'tableName',
@@ -113,7 +116,10 @@ export default class DataSchemaManageAddModal extends Component {
       },
       {
         title: (
-          'physicalTableRegex'
+          <FormattedMessage
+            id="app.components.resourceManage.dataTableNameRegex"
+            defaultMessage="表名正则"
+          />
         ),
         width: this.tableWidth[1],
         dataIndex: 'physicalTableRegex',
@@ -122,7 +128,10 @@ export default class DataSchemaManageAddModal extends Component {
       },
       {
         title: (
-          'outputTopic'
+          <FormattedMessage
+            id="app.components.projectManage.projectTable.outputTopic"
+            defaultMessage="输出Topic"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'outputTopic',
@@ -131,7 +140,10 @@ export default class DataSchemaManageAddModal extends Component {
       },
       {
         title: (
-          'incompatibleColumn'
+          <FormattedMessage
+            id="app.components.resourceManage.dataSource.incompatibleColumn"
+            defaultMessage="不兼容的列"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'incompatibleColumn',
@@ -140,7 +152,10 @@ export default class DataSchemaManageAddModal extends Component {
       },
       {
         title: (
-          'ignoreColumn'
+          <FormattedMessage
+            id="app.components.resourceManage.dataSource.ignoreColumn"
+            defaultMessage="忽略的列"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'columnName',
@@ -180,12 +195,18 @@ export default class DataSchemaManageAddModal extends Component {
         onCancel={onClose}
         onOk={this.handleSubmit}
         width={1000}
-        title={'添加Table'}
+        title={<FormattedMessage
+          id="app.components.resourceManage.dataSchema.addTable"
+          defaultMessage="添加表"
+        />}
       >
         <Form>
           <Row>
             <Col span={8}>
-              <FormItem  label={'dataSource'} {...formItemLayout}>
+              <FormItem  label={<FormattedMessage
+                id="app.components.resourceManage.dataSourceName"
+                defaultMessage="数据源名称"
+              />} {...formItemLayout}>
                 <Input
                   readOnly
                   size="small"
@@ -195,7 +216,10 @@ export default class DataSchemaManageAddModal extends Component {
               </FormItem>
             </Col>
             <Col span={8}>
-              <FormItem label={'Schema'} {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.components.resourceManage.dataSchemaName"
+                defaultMessage="Schema名称"
+              />} {...formItemLayout}>
                 <Input
                   readOnly
                   size="small"
@@ -205,7 +229,10 @@ export default class DataSchemaManageAddModal extends Component {
               </FormItem>
             </Col>
             <Col span={8}>
-              <FormItem label={'Description'} {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.common.description"
+                defaultMessage="描述"
+              />} {...formItemLayout}>
                 <Input
                   readOnly
                   size="small"
@@ -217,7 +244,10 @@ export default class DataSchemaManageAddModal extends Component {
           </Row>
           <Row style={{marginTop: -5}}>
             <Col span={8}>
-              <FormItem label={'status'} {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.common.status"
+                defaultMessage="状态"
+              />} {...formItemLayout}>
                 <Input
                   readOnly
                   size="small"
@@ -227,7 +257,10 @@ export default class DataSchemaManageAddModal extends Component {
               </FormItem>
             </Col>
             <Col span={8}>
-              <FormItem label={'src_topic'} {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.components.resourceManage.sourceTopic"
+                defaultMessage="源Topic"
+              />} {...formItemLayout}>
                 <Input
                   readOnly
                   size="small"
@@ -237,7 +270,10 @@ export default class DataSchemaManageAddModal extends Component {
               </FormItem>
             </Col>
             <Col span={8}>
-              <FormItem label={'target_topic'} {...formItemLayout}>
+              <FormItem label={<FormattedMessage
+                id="app.components.resourceManage.targetTopic"
+                defaultMessage="目标Topic"
+              />} {...formItemLayout}>
                 <Input
                   readOnly
                   size="small"

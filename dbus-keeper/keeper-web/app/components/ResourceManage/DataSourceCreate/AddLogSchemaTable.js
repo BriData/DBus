@@ -143,6 +143,11 @@ export default class AddLogSchemaTable extends Component {
 
   handleAddLogTableModalOk = (values) => {
     const {tableList} = this.state
+    const exist = tableList.some(table => table.tableName === values.tableName)
+    if (exist) {
+      message.warn('列表中已存在相同表名')
+      return
+    }
     tableList.push({
       ...values,
       createTime: dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss.l'),

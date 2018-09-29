@@ -60,6 +60,7 @@ public class Constants {
         public static final String META_FETCHER_BOLT_PARALLELISM = "metafetcher.bolt.parallelism";
         public static final String KAFKA_WRITTER_BOLT_PARALLELISM = "kafkawritter.bolt.parallelism";
         public static final String WRAPPER_BOLT_PARALLELISM = "wrapper.bolt.parallelism";
+        public static final String MAX_SPOUT_PENDING = "max.spout.pending";
         public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
 
         /**

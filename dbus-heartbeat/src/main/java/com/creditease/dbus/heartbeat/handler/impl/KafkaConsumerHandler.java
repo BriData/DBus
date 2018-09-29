@@ -25,14 +25,10 @@ package com.creditease.dbus.heartbeat.handler.impl;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.creditease.dbus.heartbeat.container.EventContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
-import com.creditease.dbus.heartbeat.event.IEvent;
 import com.creditease.dbus.heartbeat.event.impl.GlobalControlKafkaConsumerEvent;
 import com.creditease.dbus.heartbeat.event.impl.KafkaConsumerEvent;
-import com.creditease.dbus.heartbeat.event.impl.MaasAppenderEvent;
-import com.creditease.dbus.heartbeat.event.impl.MaasEvent;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.Constants;

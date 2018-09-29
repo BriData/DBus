@@ -12,7 +12,8 @@ import Request from "@/app/utils/request";
 import {ZKManageModel, GlobalConfigModel} from './selectors'
 import {
   readZkProperties,
-  updateGlobalConf
+  updateGlobalConf,
+  initGlobalConf
 } from "./redux";
 
 const ZK_PATH = '/DBus/Commons/global.properties'
@@ -27,6 +28,7 @@ const ZK_PATH = '/DBus/Commons/global.properties'
   dispatch => ({
     readZkProperties: param => dispatch(readZkProperties.request(param)),
     updateGlobalConf: param => dispatch(updateGlobalConf.request(param)),
+    initGlobalConf: param => dispatch(initGlobalConf.request(param)),
   })
 )
 export default class GlobalConfigWrapper extends Component {
@@ -44,6 +46,14 @@ export default class GlobalConfigWrapper extends Component {
   handleSave = content => {
     const {updateGlobalConf} = this.props
     updateGlobalConf(content)
+  }
+
+  handleInit = (options, content) => {
+    const {initGlobalConf} = this.props
+    initGlobalConf({
+      options,
+      content
+    })
   }
 
   render() {
@@ -75,6 +85,7 @@ export default class GlobalConfigWrapper extends Component {
         <GlobalConfigForm
           config={config || {}}
           onSave={this.handleSave}
+          onInit={this.handleInit}
         />
       </div>
     )

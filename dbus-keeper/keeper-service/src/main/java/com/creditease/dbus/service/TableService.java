@@ -27,13 +27,11 @@ import com.creditease.dbus.bean.SourceTablesBean;
 import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
 import com.creditease.dbus.commons.log.processor.rule.impl.Rules;
 import com.creditease.dbus.constant.MessageCode;
-import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.mapper.*;
 import com.creditease.dbus.domain.model.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.service.table.MongoTableFetcher;
 import com.creditease.dbus.service.table.TableFetcher;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.apache.commons.collections.map.HashedMap;
@@ -467,7 +465,8 @@ public class TableService {
             List<DataTable> list;
 
             if(DbusDatasourceType.stringEqual(dataSource.getDsType(),DbusDatasourceType.MYSQL)
-                    || DbusDatasourceType.stringEqual(dataSource.getDsType(),DbusDatasourceType.ORACLE))
+                    || DbusDatasourceType.stringEqual(dataSource.getDsType(),DbusDatasourceType.ORACLE)
+                    )
             {
                 TableFetcher fetcher = TableFetcher.getFetcher(dataSource);
                 Map<String, Object> map = new HashMap<>();
@@ -501,14 +500,15 @@ public class TableService {
                 String dsName = String.valueOf(params.get("dsName"));
 
                 List<DataSource> dataSourceList = dataSourceService.getDataSourceByName(dsName);
-                if(dataSourceList.size() <0){
+                if(dataSourceList.size() == 0){
                     // return
                     logger.error("[Fetch table field] table not found. dsName:{}",dsName);
                 }
                 DataSource dataSource = dataSourceList.get(0);
                 //根据不同类型的dataSource，来选择不同的TableFetcher
                 if(DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.MYSQL)
-                        || DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.ORACLE)) {
+                        || DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.ORACLE)
+                        ) {
                     TableFetcher fetcher = TableFetcher.getFetcher(dataSource);
                     ret = fetcher.fetchTableField(params, paramsList);
 
@@ -642,7 +642,7 @@ public class TableService {
             DataSource ds =dataSourceService.getById(dsId);
             String dsType = ds.getDsType();
 
-            if(tableInfos.size() >0 && !StringUtils.equals(dsType,"mysql")){
+            if(tableInfos.size() >0 && StringUtils.equals(dsType,"oracle")){
                 //获取已添加列表
                 List<DataTable> sourceTableList = getSourceTableList(dsId);
 
@@ -662,15 +662,20 @@ public class TableService {
                     String schemaName = tableInfos.get(i).getSchemaName();
                     String tableName = tableInfos.get(i).getTableName();
 
+                    boolean newFlag = true;
                     for(DataTable oldTable: sourceTableList){
                         //已存在的不添加
                         if(StringUtils.equals(schemaName,oldTable.getSchemaName())
                                 && StringUtils.equals(tableName,oldTable.getTableName())){
-                            continue;
+                            newFlag = false;
+                            break;
                         }else {
                         //源表没有，添加
-                            int insertResult =insertSourceTable(dsId,schemaName,tableName);
+                            continue;
                         }
+                    }
+                    if(newFlag){
+                        insertSourceTable(dsId,schemaName,tableName);
                     }
 
                 }
@@ -697,7 +702,8 @@ public class TableService {
             String dsType = ds.getDsType();
             if("mysql".equals(dsType))
                 return new ArrayList<>(0);
-            TableFetcher fetcher = TableFetcher.getFetcher(ds);
+            com.creditease.dbus.service.tableSource.TableFetcher fetcher
+                    = com.creditease.dbus.service.tableSource.TableFetcher.getFetcher(ds);
             List<DataTable> list = fetcher.listTable();
             return list;
         } catch (Exception e) {
@@ -718,7 +724,8 @@ public class TableService {
             if("mysql".equals(dsType))
                 return 0;
 
-            TableFetcher fetcher = TableFetcher.getFetcher(ds);
+            com.creditease.dbus.service.tableSource.TableFetcher fetcher
+                    = com.creditease.dbus.service.tableSource.TableFetcher.getFetcher(ds);
             Map<String, Object> map = new HashMap<>();
             map.put("schemaName",schemaName);
             map.put("tableName",tableName);
@@ -763,7 +770,8 @@ public class TableService {
         newTable = getById(newTable.getId());
         DbusDatasourceType dsType = DbusDatasourceType.parse(newTable.getDsType());
         //此处默认，非MySQL和Oracle的则为log类型，需要处理version信息;MySQL和Oracle的meta和version信息由增量处理
-        if(DbusDatasourceType.MYSQL != dsType && DbusDatasourceType.ORACLE != dsType){
+        if(DbusDatasourceType.MYSQL != dsType && DbusDatasourceType.ORACLE != dsType
+                ){
             //插入table后，将table的version放入t_meta_verion中
             TableVersion tableVersion = new TableVersion();
             tableVersion.setTableId(newTable.getId());
@@ -860,6 +868,9 @@ public class TableService {
         return flag;
     }
 
+    public List<HashMap<String,Object>> findTablesByUserId(Integer userId) {
+        return tableMapper.findTablesByUserId(userId);
+    }
 
     public List<DataTable> findAllTables() {
         return tableMapper.findAllTables();

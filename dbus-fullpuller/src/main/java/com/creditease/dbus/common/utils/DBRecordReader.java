@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,24 +37,18 @@
  */
 package com.creditease.dbus.common.utils;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-
+import com.creditease.dbus.common.DataPullConstants;
+import com.creditease.dbus.common.splitters.DateSplitter;
+import com.creditease.dbus.common.utils.DataDrivenDBInputFormat.DataDrivenDBInputSplit;
 import com.creditease.dbus.manager.GenericJdbcManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.creditease.dbus.common.DataPullConstants;
-import com.creditease.dbus.common.splitters.DateSplitter;
-import com.creditease.dbus.common.utils.DataDrivenDBInputFormat.DataDrivenDBInputSplit;
-import com.creditease.dbus.enums.DbusDatasourceType;
+import java.io.IOException;
+import java.sql.*;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * A RecordReader that reads records from a SQL table.
@@ -69,45 +63,45 @@ public class DBRecordReader<T extends DBWritable> {
 
 //  private Class<T> inputClass;
 
-  private DataDrivenDBInputFormat.DataDrivenDBInputSplit split;
+    private DataDrivenDBInputFormat.DataDrivenDBInputSplit split;
 
-  private long pos = 0;
+    private long pos = 0;
 
 //  private LongWritable key = null;
 
-  private T value = null;
-  
-  private GenericJdbcManager manager;
+    private T value = null;
 
-  //private Connection connection;
+    private GenericJdbcManager manager;
 
-  //protected PreparedStatement statement;
+    //private Connection connection;
 
-  private DBConfiguration dbConf;
+    //protected PreparedStatement statement;
 
-  private String [] fieldNames;
+    private DBConfiguration dbConf;
 
-  private String tableName;
+    private String[] fieldNames;
 
-  /**
-   * @throws SQLException
-   */
-  // CHECKSTYLE:OFF
-  // TODO (aaron): Refactor constructor to take fewer arguments
-  public DBRecordReader(GenericJdbcManager manager,
-      DBConfiguration dbConfig, DataDrivenDBInputSplit split, String [] fields,
-      String table)
-      throws SQLException {
+    private String tableName;
+
+    /**
+     * @throws SQLException
+     */
+    // CHECKSTYLE:OFF
+    // TODO (aaron): Refactor constructor to take fewer arguments
+    public DBRecordReader(GenericJdbcManager manager,
+                          DBConfiguration dbConfig, DataDrivenDBInputSplit split, String[] fields,
+                          String table)
+            throws SQLException {
         this.manager = manager;
         this.dbConf = dbConfig;
-        this.split=split;
+        this.split = split;
         if (fields != null) {
-          this.fieldNames = Arrays.copyOf(fields, fields.length);
+            this.fieldNames = Arrays.copyOf(fields, fields.length);
         }
         this.tableName = table;
-  }
-  // CHECKSTYLE:ON
-  
+    }
+    // CHECKSTYLE:ON
+
 //	public static String convert2Nchar(String originString,int length) {
 //	  StringBuffer stringBuffer=  new StringBuffer(originString);
 //	  int size= originString.length();
@@ -120,39 +114,78 @@ public class DBRecordReader<T extends DBWritable> {
 //	  return originString;
 //	}
 
+    public HashMap<String, HashMap<String, Object>> queryMetaData() throws Exception {
+        //COLUMNNAME,COLUMNTYPENAME,PRECISION,SCALE ,ISNULLABLE
+        Connection conn = null;
+        PreparedStatement stat = null;
+        ResultSet res = null;
+        try {
+            String query = getMetaSql();
+            conn = manager.getConnection();
+            stat = conn.prepareStatement(query);
+            res = stat.executeQuery();
+            HashMap<String, HashMap<String, Object>> result = new HashMap<>();
+            ResultSetMetaData metaData = res.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            while (res.next()) {
+                HashMap<String, Object> meta = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    meta.put(metaData.getColumnName(i), res.getObject(i));
+                }
+                result.put(res.getString("columnName"), meta);
+            }
+            return result;
+        } catch (Exception e) {
+            LOG.error("query oracle tabel meta error !", e);
+            return null;
+        } finally {
+            manager.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (res != null) {
+                res.close();
+            }
+        }
+    }
+
+    public String getMetaSql() {
+        return null;
+    }
+
     public ResultSet queryData(String datasourceType, String splitIndex) throws Exception {
 
         ResultSet rset = null;
         try {
-             Object lowBound = this.split.getLowerValue();
-             Object upperBound = this.split.getUpperValue();
-             
-             if(lowBound instanceof String && upperBound instanceof String ){
-                  String lower = (String)lowBound;
-                  String upper = (String)upperBound;
-                  for(int i = 0; i < lower.length(); i++ ) {
-                      if (lower.charAt(i) > (int)0xffff) {
-                          throw new Exception("Exception:lower char is wrong" + lower.charAt(i));
-                      }
-                  }
-                  for(int i = 0; i < upper.length(); i++ ) {
-                      if (upper.charAt(i) > (int)0xffff) {
-                          throw new Exception("Exception:upper char is wrong" + upper.charAt(i));
-                      }
-                  }
-              }
-               
+            Object lowBound = this.split.getLowerValue();
+            Object upperBound = this.split.getUpperValue();
+
+            if (lowBound instanceof String && upperBound instanceof String) {
+                String lower = (String) lowBound;
+                String upper = (String) upperBound;
+                for (int i = 0; i < lower.length(); i++) {
+                    if (lower.charAt(i) > (int) 0xffff) {
+                        throw new Exception("Exception:lower char is wrong" + lower.charAt(i));
+                    }
+                }
+                for (int i = 0; i < upper.length(); i++) {
+                    if (upper.charAt(i) > (int) 0xffff) {
+                        throw new Exception("Exception:upper char is wrong" + upper.charAt(i));
+                    }
+                }
+            }
+
             String query = getSelectQuery();
 
             PreparedStatement statement = manager.prepareStatement(query);
             // cond 不为 is null的时候，才用set 条件值。另：lower is null, upper一定也is null.所以不用两个都判断。
-            if(!DataPullConstants.QUERY_COND_IS_NULL.equals(this.split.getLowerOperator())){
-                if(this.split.getSqlType() == Types.DATE || this.split.getSqlType() == Types.TIME || this.split.getSqlType() == Types.TIMESTAMP) {
-                 // Mysql：Time类型，TIMESTAMP类型，Date类型：都可以用这种方式处理.
-                 // Oracle:沒有Time類型。TIMESTAMP类型可用这种方式处理，Date类型，不能用这种方式处理（会丢失其所含的时分秒毫秒信息），下面会单独处理。
-                 lowBound = DateSplitter.longToDate((long)this.split.getLowerValue(),this.split.getSqlType());
-                 upperBound = DateSplitter.longToDate((long)this.split.getUpperValue(),this.split.getSqlType());
-               }
+            if (!DataPullConstants.QUERY_COND_IS_NULL.equals(this.split.getLowerOperator())) {
+                if (this.split.getSqlType() == Types.DATE || this.split.getSqlType() == Types.TIME || this.split.getSqlType() == Types.TIMESTAMP) {
+                    // Mysql：Time类型，TIMESTAMP类型，Date类型：都可以用这种方式处理.
+                    // Oracle:沒有Time類型。TIMESTAMP类型可用这种方式处理，Date类型，不能用这种方式处理（会丢失其所含的时分秒毫秒信息），下面会单独处理。
+                    lowBound = DateSplitter.longToDate((long) this.split.getLowerValue(), this.split.getSqlType());
+                    upperBound = DateSplitter.longToDate((long) this.split.getUpperValue(), this.split.getSqlType());
+                }
                 /*这段代码已经不会走到了。对于Oracle Types.DATE，DateSplitter类中已经将其强制转换成Types.TIMESTAMP。暂时保留便于了解相关细节。
                 // Date类型，oracle需特殊处理下。Oracle的Date类型不仅保存年月日，还能保存时分秒甚至毫秒信息。
                 // 但Oracle通过resultSet.getObject获取时间时，可能遭到截断，丢失时分秒（http://www.myexception.cn/database/1044846.html）
@@ -166,12 +199,12 @@ public class DBRecordReader<T extends DBWritable> {
                     upperBound = dfs.format(new java.util.Date((long)this.split.getUpperValue()));
                     LOG.info("lower: {} and upper: {}.",lowBound,upperBound);
                 }*/
-               statement.setObject(1, lowBound, this.split.getSqlType());
-               statement.setObject(2, upperBound, this.split.getSqlType());
+                statement.setObject(1, lowBound, this.split.getSqlType());
+                statement.setObject(2, upperBound, this.split.getSqlType());
             }
 
             LOG.info("pull_index{}: Query Begin: {}, with cond lower: {} and upper: {}.", splitIndex, query, lowBound, upperBound);
-            
+
             int fetchSize = dbConf.getPrepareStatementFetchSize();
             statement.setFetchSize(fetchSize);
             LOG.info("pull_index{}: Using fetchSize for next query: {}", splitIndex, fetchSize);
@@ -184,7 +217,7 @@ public class DBRecordReader<T extends DBWritable> {
             return rset;
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
-            LoggingUtils.logAll(LOG, "pull_index" + splitIndex +  " Failed to list columns", e);
+            LoggingUtils.logAll(LOG, "pull_index" + splitIndex + " Failed to list columns", e);
             return null;
         }
 //        finally {
@@ -214,49 +247,52 @@ public class DBRecordReader<T extends DBWritable> {
 //        }
     }
 
-  /** Returns the query for selecting the records,
-   * subclasses can override this for custom behaviour.
- * @throws Exception */
-  protected String getSelectQuery() throws Exception {          
-    StringBuilder query = new StringBuilder();
-    query.append("SELECT ");
-    if (null != fieldNames && fieldNames.length != 0) {
-      for (int i = 0; i < fieldNames.length; i++) {
-        query.append(fieldNames[i]);
-        if (i != fieldNames.length -1) {
-          query.append(", ");
+    /**
+     * Returns the query for selecting the records,
+     * subclasses can override this for custom behaviour.
+     *
+     * @throws Exception
+     */
+    protected String getSelectQuery() throws Exception {
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT ");
+        if (null != fieldNames && fieldNames.length != 0) {
+            for (int i = 0; i < fieldNames.length; i++) {
+                query.append(fieldNames[i]);
+                if (i != fieldNames.length - 1) {
+                    query.append(", ");
+                }
+            }
+        } else {
+            throw new Exception("None supported columns found on current pulling target table");
         }
-      }
-    } else {
-        throw new Exception("None supported columns found on current pulling target table");
-    }
-      query.append(" FROM ").append(getSplit().getTargetTableName());
-      //      query.append(" AS ").append(getSplit().getTargetTableName()); //in hsqldb this is necessary
-      if(StringUtils.isNotBlank(getSplit().getTablePartitionInfo())){
-          query.append(" PARTITION (").append(getSplit().getTablePartitionInfo()).append(") ");
-      }
-      if (split != null) {    	  
-          String condWithPlaceholder=split.getCondWithPlaceholder();
-        query.append(" WHERE (").append(condWithPlaceholder).append(")");
-      }
+        query.append(" FROM ").append(getSplit().getTargetTableName());
+        //      query.append(" AS ").append(getSplit().getTargetTableName()); //in hsqldb this is necessary
+        if (StringUtils.isNotBlank(getSplit().getTablePartitionInfo())) {
+            query.append(" PARTITION (").append(getSplit().getTablePartitionInfo()).append(") ");
+        }
+        if (split != null) {
+            String condWithPlaceholder = split.getCondWithPlaceholder();
+            query.append(" WHERE (").append(condWithPlaceholder).append(")");
+        }
 
-      String orderBy = dbConf.getInputOrderBy();
-      if (orderBy != null && orderBy.length() > 0) {
-        query.append(" ORDER BY ").append(orderBy);
-      }
-      
-//      query.append(" LIMIT 50");
-    if (split.getLength() > 0 && split.getStart() > 0) {
-        try {
-          query.append(" LIMIT ").append(split.getLength());
-          query.append(" OFFSET ").append(split.getStart());
-        } catch (IOException ex) {
-          // Ignore, will not throw.
+        String orderBy = dbConf.getInputOrderBy();
+        if (orderBy != null && orderBy.length() > 0) {
+            query.append(" ORDER BY ").append(orderBy);
         }
+
+//      query.append(" LIMIT 50");
+        if (split.getLength() > 0 && split.getStart() > 0) {
+            try {
+                query.append(" LIMIT ").append(split.getLength());
+                query.append(" OFFSET ").append(split.getStart());
+            } catch (IOException ex) {
+                // Ignore, will not throw.
+            }
+        }
+        return query.toString();
     }
-    return query.toString();
-  }
-  
+
 //  @Override
 //    @Deprecated
 //  public void close() throws IOException {
@@ -264,9 +300,9 @@ public class DBRecordReader<T extends DBWritable> {
 //      if (null != results) {
 //        results.close();
 //      }
-      // Statement.isClosed() is only available from JDBC 4
-      // Some older drivers (like mysql 5.0.x and earlier fail with
-      // the check for statement.isClosed()
+    // Statement.isClosed() is only available from JDBC 4
+    // Some older drivers (like mysql 5.0.x and earlier fail with
+    // the check for statement.isClosed()
 //      if (null != statement) {
 //        statement.close();
 //      }
@@ -280,40 +316,40 @@ public class DBRecordReader<T extends DBWritable> {
 //    }
 //}
 
-  public void initialize(InputSplit inputSplit)
-      throws IOException, InterruptedException {
-    //do nothing
-  }
+    public void initialize(InputSplit inputSplit)
+            throws IOException, InterruptedException {
+        //do nothing
+    }
 
 //  @Override
 //  public LongWritable getCurrentKey() {
 //    return key;
 //  }
 
-//  @Override
-  public T getCurrentValue() {
-    return value;
-  }
+    //  @Override
+    public T getCurrentValue() {
+        return value;
+    }
 
-  /**
-   * @deprecated
-   */
+    /**
+     * @deprecated
+     */
 //  @Deprecated
 //  public T createValue() {
 //    return ReflectionUtils.newInstance(inputClass, conf);
 //  }
 
-  /**
-   * @deprecated
-   */
-  @Deprecated
-  public long getPos() throws IOException {
-    return pos;
-  }
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public long getPos() throws IOException {
+        return pos;
+    }
 
-  /**
-   * @deprecated Use {@link #nextKeyValue()}
-   */
+    /**
+     * @deprecated Use {@link #nextKeyValue()}
+     */
 //  @Deprecated
 //  public boolean next(LongWritable k, T v) throws IOException {
 //    this.key = k;
@@ -390,9 +426,9 @@ public class DBRecordReader<T extends DBWritable> {
 //    return true;
 //  }
 
-  /**
-   * @return true if nextKeyValue() would return false.
-   */
+    /**
+     * @return true if nextKeyValue() would return false.
+     */
 //  @Deprecated
 //  protected boolean isDone() {
 //    try {
@@ -401,22 +437,21 @@ public class DBRecordReader<T extends DBWritable> {
 //      return true;
 //    }
 //  }
+    protected DataDrivenDBInputFormat.DataDrivenDBInputSplit getSplit() {
+        return split;
+    }
 
-  protected DataDrivenDBInputFormat.DataDrivenDBInputSplit getSplit() {
-    return split;
-  }
+    protected String[] getFieldNames() {
+        return fieldNames;
+    }
 
-  protected String [] getFieldNames() {
-    return fieldNames;
-  }
+    protected String getTableName() {
+        return tableName;
+    }
 
-  protected String getTableName() {
-    return tableName;
-  }
-
-  protected DBConfiguration getDBConf() {
-    return dbConf;
-  }
+    protected DBConfiguration getDBConf() {
+        return dbConf;
+    }
 //    @Deprecated
 //  protected Connection getConnection() {
 //    return connection;
@@ -436,13 +471,13 @@ public class DBRecordReader<T extends DBWritable> {
 //    this.statement = stmt;
 //  }
 
-  public void setSplit(DataDrivenDBInputFormat.DataDrivenDBInputSplit split) {
-      this.split = split;
-  }
-   
-  /**
-   * @return the configuration. Allows subclasses to access the configuration
-   */
+    public void setSplit(DataDrivenDBInputFormat.DataDrivenDBInputSplit split) {
+        this.split = split;
+    }
+
+    /**
+     * @return the configuration. Allows subclasses to access the configuration
+     */
 //  protected Configuration getConf(){
 //    return conf;
 //  }

@@ -239,7 +239,7 @@ public class ProjectTableService {
 
     /**
      * {
-     *     sink:{"sinkId":1,"ouputType":json/ums1.1","outputTopic":"db2test"},
+     *     sink:{"sinkId":1,"ouputType":json/ums1.1","outputTopic":"test2test"},
      *     resource:{"schemaName":"xx",..,"topoId":1},
      *     "encodes":{
      *                "2066":{"outputListType":"1","encodeOutputColumns":[

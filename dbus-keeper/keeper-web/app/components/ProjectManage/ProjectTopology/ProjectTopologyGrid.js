@@ -97,19 +97,31 @@ export default class ProjectTopologyGrid extends Component {
         />,
         icon: 'delete',
         onClick: () => onDelete(record),
-        confirmText: '确认删除？'
+        confirmText: <span>
+          <FormattedMessage
+            id="app.common.delete"
+            defaultMessage="删除"
+          />?
+        </span>
       }
     ]
     record.status === 'changed' && menus.push({
       text: <FormattedMessage id="app.components.projectManage.projectTable.active" defaultMessage="生效" />,
       icon: 'check',
       onClick: () => onEffect(record),
-      confirmText: '确认生效？'
+      confirmText: <span>
+        <FormattedMessage id="app.components.projectManage.projectTable.active" defaultMessage="生效" />?
+      </span>
     })
     return (
       <div>
         {record.status === 'stopped' || record.status === 'new' ? (
-          <Popconfirm title={'确定启动？'} onConfirm={() => onStartOrStopTopo('start',record)} okText="Yes" cancelText="No">
+          <Popconfirm title={<span>
+            <FormattedMessage
+              id="app.components.resourceManage.dataTable.start"
+              defaultMessage="启动"
+            />?
+          </span>} onConfirm={() => onStartOrStopTopo('start',record)} okText="Yes" cancelText="No">
             <OperatingButton icon="caret-right">
               <FormattedMessage
                 id="app.components.resourceManage.dataTable.start"
@@ -118,7 +130,12 @@ export default class ProjectTopologyGrid extends Component {
             </OperatingButton>
           </Popconfirm>
         ) : (
-          <Popconfirm title={'确定停止？'} onConfirm={() => onStartOrStopTopo('stop',record)} okText="Yes" cancelText="No">
+          <Popconfirm title={<span>
+            <FormattedMessage
+              id="app.components.resourceManage.dataTable.stop"
+              defaultMessage="停止"
+            />?
+          </span>} onConfirm={() => onStartOrStopTopo('stop',record)} okText="Yes" cancelText="No">
             <OperatingButton icon="pause">
               <FormattedMessage
                 id="app.components.resourceManage.dataTable.stop"

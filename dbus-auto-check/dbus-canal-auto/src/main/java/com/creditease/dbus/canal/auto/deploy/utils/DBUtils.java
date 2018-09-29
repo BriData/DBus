@@ -140,6 +140,8 @@ public class DBUtils {
         String driver = "com.mysql.jdbc.Driver";
         try{
             Class.forName(driver);
+            //设置超时时间10s
+            DriverManager.setLoginTimeout(10);
             Connection conn = DriverManager.getConnection(url,user,pwd);
             return conn;
         }catch (ClassNotFoundException e){

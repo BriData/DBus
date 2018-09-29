@@ -63,14 +63,22 @@ export default class DataTableManageReadZkModal extends Component {
           visible={visible}
           maskClosable={true}
           width={1000}
-          title={'查看全量拉取状态'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataTable.readZk"
+            defaultMessage="查看全量拉取状态"
+          />}
           onCancel={onClose}
-          footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
+          footer={[<Button type="primary" onClick={onClose}>
+            <FormattedMessage
+              id="app.common.back"
+              defaultMessage="返回"
+            />
+          </Button>]}
         >
 
           <Form>
             <FormItem
-              label={"zkNode"} {...formItemLayout}
+              label={"ZK Node"} {...formItemLayout}
             >
               <Row>
                 <Col style={{marginTop: 3}} span={20}>
@@ -94,13 +102,16 @@ export default class DataTableManageReadZkModal extends Component {
                 </Col>
                 <Col span={4}>
                   <Button style={{marginLeft:10}} onClick={() => this.handleRefresh()}>
-                    刷新
+                    <FormattedMessage
+                      id="app.common.refresh"
+                      defaultMessage="刷新"
+                    />
                   </Button>
                 </Col>
               </Row>
             </FormItem>
             <FormItem
-              label={"内容"} {...formItemLayout}
+              label={"Content"} {...formItemLayout}
             >
               <TextArea value={zkContent} autosize={{minRows:10,maxRows:20}}/>
             </FormItem>

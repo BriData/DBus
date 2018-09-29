@@ -194,7 +194,7 @@ export class App extends Component {
               className={styles.slider}
               collapsed={navCollapsed}
               onCollapse={this.handleCollapse}
-              width={160}
+              width={130}
               collapsedWidth={50}
               trigger={
                 <Icon type={navCollapsed ? 'menu-unfold' : 'menu-fold'} />

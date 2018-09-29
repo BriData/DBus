@@ -116,7 +116,10 @@ export default class ProjectTableSearch extends Component {
                 </FormItem>
               )}
               {!isCreate && (
-                <FormItem label="Topology">
+                <FormItem label={<FormattedMessage
+                  id="app.common.topo"
+                  defaultMessage="拓扑"
+                />}>
                   {getFieldDecorator('topoId', {
                     initialValue:
                       topology && topology[0].topoId

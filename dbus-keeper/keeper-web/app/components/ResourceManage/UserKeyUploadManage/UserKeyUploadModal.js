@@ -1,6 +1,7 @@
 import React, { PropTypes, Component } from 'react'
 import {Input, Form, Select,Icon,Button, Row, Col, Modal,Upload ,message} from 'antd'
 const Dragger = Upload.Dragger;
+import { FormattedMessage } from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 
@@ -91,7 +92,7 @@ export default class UserKeyUploadModal extends Component {
           </Row>
           <Row className={styles.rowSpacing}>
             <Col span={2} className={styles.formRight}>
-              Project:
+              <FormattedMessage id="app.common.table.project" defaultMessage="项目" />:
             </Col>
             <Col span={8} offset={1}>
               <Select

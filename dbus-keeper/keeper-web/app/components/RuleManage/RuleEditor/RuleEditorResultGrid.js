@@ -4,6 +4,7 @@
 import React, {PropTypes, Component} from 'react'
 import ReactDOM from 'react-dom'
 import {Affix, Slider, Table} from 'antd'
+import styles from './res/styles/index.less'
 
 export default class RuleEditorResultGrid extends Component {
 
@@ -32,7 +33,7 @@ export default class RuleEditorResultGrid extends Component {
       <div>
         <div className="col-xs-12">
           <Affix>
-            <Slider ref="antdSlider" max={10000} onChange={this.onSliderChange} tipFormatter={null}/>
+            <Slider className={styles.ruleResultSlider} ref="antdSlider" max={10000} onChange={this.onSliderChange} tipFormatter={null}/>
           </Affix>
         </div>
         <div className="col-xs-12">

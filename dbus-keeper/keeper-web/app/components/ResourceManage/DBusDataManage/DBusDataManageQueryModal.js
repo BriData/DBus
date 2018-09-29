@@ -90,9 +90,17 @@ export default class DBusDataManageQueryModal extends Component {
         maskClosable={false}
         key={key}
         onCancel={onClose}
-        footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
+        footer={[<Button type="primary" onClick={onClose}>
+          <FormattedMessage
+            id="app.common.back"
+            defaultMessage="返回"
+          />
+        </Button>]}
         width={1000}
-        title='查询源库信息'
+        title={<FormattedMessage
+          id="app.components.resourceManage.dbusData.sourceDataInsight"
+          defaultMessage="查询源端数据"
+        />}
       >
         <Form autoComplete="off" className={styles.searchForm}>
           <Row>
@@ -110,9 +118,15 @@ export default class DBusDataManageQueryModal extends Component {
                   autosize={{minRows:2}}
                 />)}
               </FormItem>
-              <FormItem style={{marginTop: -20, marginBottom: 5}} wrapperCol={{offset: 19, span: 5}}>
-                <Button style={{marginLeft: 10}} onClick={() => this.handleExecuteSql('master')}>查询主库</Button>
-                <Button style={{marginLeft: 10}} onClick={() => this.handleExecuteSql('slave')}>查询备库</Button>
+              <FormItem style={{marginTop: -20, marginBottom: 5}} wrapperCol={{offset: 17, span: 7}}>
+                <Button style={{marginLeft: 10}} onClick={() => this.handleExecuteSql('master')}><FormattedMessage
+                  id="app.components.resourceManage.dbusData.queryMaster"
+                  defaultMessage="查询主库"
+                /></Button>
+                <Button style={{marginLeft: 10}} onClick={() => this.handleExecuteSql('slave')}><FormattedMessage
+                  id="app.components.resourceManage.dbusData.querySlave"
+                  defaultMessage="查询备库"
+                /></Button>
               </FormItem>
             </Col>
           </Row>

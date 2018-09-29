@@ -101,7 +101,6 @@ public class DataDrivenDBRecordReader<T extends DBWritable>
           query.append(" PARTITION (").append(getSplit().getTablePartitionInfo()).append(") ");
       }
       if (!dbProductName.startsWith("ORACLE")
-          && !dbProductName.startsWith("DB2")
           && !dbProductName.startsWith("MICROSOFT SQL SERVER")
           && !dbProductName.startsWith("POSTGRESQL")) {
         // The AS clause is required for hsqldb. Some other databases might have

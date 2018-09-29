@@ -30,7 +30,7 @@ import {GET_MOUNT_PROJECT_API} from "@/app/containers/ProjectManage/api";
     setSearchSinkParam: param => dispatch(setSearchSinkParam(param))
   })
 )
-export default class ProjectHomeWrapper extends Component {
+export default class SinkHomeWrapper extends Component {
   constructor (props) {
     super(props)
     this.state = {
@@ -200,7 +200,7 @@ export default class ProjectHomeWrapper extends Component {
     )
   }
 }
-ProjectHomeWrapper.propTypes = {
+SinkHomeWrapper.propTypes = {
   locale: PropTypes.any,
   searchSinkList: PropTypes.func,
   setSearchSinkParam: PropTypes.func

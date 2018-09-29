@@ -68,7 +68,6 @@ public class DataSchemaService {
 
     public static final String MYSQL = "mysql";
     public static final String ORACLE = "oracle";
-
     /**
      * schema索
      * @return
@@ -236,7 +235,8 @@ public class DataSchemaService {
                 defaultTables = dataTableService.getDefaultTableForMySQL(dsId,dsName,dbusSchemaId);
             }else if(StringUtils.equals(ORACLE,dsType)){
                 defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId,dsName,dbusSchemaId);
-            }else {
+            }
+            else {
                 defaultTables = new ArrayList<>();
             }
             //构造需要插入的表列表，然后将需要插入的表加入
@@ -366,7 +366,8 @@ public class DataSchemaService {
         DataSource ds =dataSourceService.getById(dsId);
         List<DataSchema> list;
         if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MYSQL)
-                || DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.ORACLE))
+                || DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.ORACLE)
+                )
         {
             SchemaFetcher fetcher = SchemaFetcher.getFetcher(ds);
             list = fetcher.fetchSchema();

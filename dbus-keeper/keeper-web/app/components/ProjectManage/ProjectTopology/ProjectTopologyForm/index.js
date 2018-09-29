@@ -2,7 +2,7 @@
  * @author 戎晓伟
  * @description  基本信息设置
  */
-
+import { FormattedMessage } from 'react-intl'
 import React, { PropTypes, Component } from 'react'
 import { Modal, message, Spin } from 'antd'
 import Request, {setToken} from '@/app/utils/request'
@@ -95,7 +95,13 @@ export default class ProjectTopologyForm extends Component {
         onCancel={() => onCloseModal(false)}
         onOk={this.handleSubmit}
         confirmLoading={loading}
-        title={modalStatus === 'modify' ? '修改Topology' : '新增Topology'}
+        title={modalStatus === 'modify' ? <FormattedMessage
+          id="app.components.projectManage.projectTopology.table.modify"
+          defaultMessage="修改Topology"
+        /> : <FormattedMessage
+          id="app.components.projectManage.projectTopology.table.create"
+          defaultMessage="新建Topology"
+        />}
       >
         {
           <Spin spinning={topologyInfo.loading} tip="正在加载数据中...">

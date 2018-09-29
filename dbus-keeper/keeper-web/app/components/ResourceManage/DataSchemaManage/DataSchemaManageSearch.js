@@ -27,7 +27,10 @@ export default class DataSchemaManageSearch extends Component {
   render () {
     const {dataSourceIdTypeName} = this.props
     const { getFieldDecorator } = this.props.form
-    const dataSource = [{dsId: null, dsTypeName: '请选择DataSource'}, ...Object.values(dataSourceIdTypeName.result)]
+    const dataSource = [{dsId: null, dsTypeName: <FormattedMessage
+        id="app.components.resourceManage.dataSchema.selectDatasource"
+        defaultMessage="请选择数据源"
+      />}, ...Object.values(dataSourceIdTypeName.result)]
     return (
       <div className="form-search">
         <Form autoComplete="off" layout="inline" className={styles.searchForm} onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>

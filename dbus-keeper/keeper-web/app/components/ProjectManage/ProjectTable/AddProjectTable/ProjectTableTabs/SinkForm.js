@@ -130,7 +130,10 @@ export default class SinkForm extends Component {
 
     return (
       <Form autoComplete="off" layout="horizontal">
-        <FormItem label="输出数据格式" {...formItemLayout}>
+        <FormItem label={<FormattedMessage
+          id="app.components.projectManage.projectTable.dataOutputFormat"
+          defaultMessage="数据输出格式"
+        />} {...formItemLayout}>
           <RadioGroup
             defaultValue={sink && ((sink.outputType === 'json') ? 'json' : 'ums1.3')}
             onChange={this.handleRadioChange}
@@ -141,7 +144,10 @@ export default class SinkForm extends Component {
         </FormItem>
         {sink && sink.outputType &&
           sink.outputType !== 'json' && (
-            <FormItem label="UMS输出版本" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.projectManage.projectTable.umsOutputVersion"
+              defaultMessage="UMS输出版本"
+            />} {...formItemLayout}>
               {getFieldDecorator('outputType', {
                 initialValue: sink.outputType && 'ums1.3',
                 rules: [

@@ -8,7 +8,7 @@ echo "************ starting ************"
 #GC_OPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -Xloggc:/data/dbus-canal-auto/logs/gc/gc.log"
 LOG_CONF="-Dlogs.base.path=$basepath -Duser.dir=$basepath"
 OOM_OPTS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$basepath/logs/oom"
-JVM_OPTS="-server -Xmx4096m -Xms4096m -XX:NewRatio=1"
+JVM_OPTS="-server -Xmx4096m -Xms100m -XX:NewRatio=1"
 CLASS_PATH=""
 MAIN=" com.creditease.dbus.canal.auto.deploy.AutoDeployStart"
 if [ "x$1" = "xcheck" ]
@@ -25,7 +25,8 @@ export CLASS_PATH=.:$CLASS_PATH
 
 java $JVM_OPTS $LOG_CONF $OOM_OPTS -classpath $CLASS_PATH $MAIN
 sleep 1
-filename=`ls -l |grep canal_| tail -n 1 | awk '{print $9}'`
+cd reports
+filename=`ls -ltr |grep canal_| tail -n 1 | awk '{print $9}'`
 if [ "x$filename" != "x" ]; then
          cat $filename
          echo "report文件： $filename"

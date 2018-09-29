@@ -1,6 +1,7 @@
 import React, { PropTypes, Component } from 'react'
 import { Form, Select,Icon,Button, Row, Col, Modal,Upload ,message} from 'antd'
 const Dragger = Upload.Dragger;
+import { FormattedMessage } from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 import {setToken} from "@/app/utils/request";
@@ -108,7 +109,10 @@ export default class JarManageUploadModal extends Component {
 
     return (
       <Modal
-        title="上传Jar包"
+        title={<FormattedMessage
+          id="app.components.resourceManage.jarManager.uploadJar"
+          defaultMessage="上传Jar包"
+        />}
         width={600}
         visible={visible}
         maskClosable={false}

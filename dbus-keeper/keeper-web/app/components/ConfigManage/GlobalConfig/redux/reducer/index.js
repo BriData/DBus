@@ -7,7 +7,8 @@ import { fromJS } from 'immutable'
 
 // 导入types
 import {
-  UPDATE_GLOBAL_CONF
+  UPDATE_GLOBAL_CONF,
+  INIT_GLOBAL_CONF
 } from '../action/types'
 
 const initialState = fromJS({
@@ -15,7 +16,12 @@ const initialState = fromJS({
     loading: false,
     loaded: false,
     result: {}
-  }
+  },
+  initGlobalConfResult: {
+    loading: false,
+    loaded: false,
+    result: {}
+  },
 })
 
 export default (state = initialState, action) => {
@@ -32,6 +38,18 @@ export default (state = initialState, action) => {
         .setIn(['updateGlobalConfResult', 'loading'], false)
         .setIn(['updateGlobalConfResult', 'loaded'], true)
         .setIn(['updateGlobalConfResult', 'result'], action.result)
+    case INIT_GLOBAL_CONF.LOAD:
+      return state.setIn(['initGlobalConfResult','loading'],true)
+    case INIT_GLOBAL_CONF.SUCCESS:
+      return state
+        .setIn(['initGlobalConfResult', 'loading'], false)
+        .setIn(['initGlobalConfResult', 'loaded'], true)
+        .setIn(['initGlobalConfResult', 'result'], action.result)
+    case INIT_GLOBAL_CONF.FAIL:
+      return state
+        .setIn(['initGlobalConfResult', 'loading'], false)
+        .setIn(['initGlobalConfResult', 'loaded'], true)
+        .setIn(['initGlobalConfResult', 'result'], action.result)
     default:
       return state
   }

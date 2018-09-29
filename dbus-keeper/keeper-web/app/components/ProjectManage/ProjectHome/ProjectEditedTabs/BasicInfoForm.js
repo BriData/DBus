@@ -37,12 +37,16 @@ export default class BasicInfoForm extends Component {
   }
 
   componentWillMount = () => {
-    // 如果没有到期时间，则自动填进去
-    const {setBasicInfo, basicInfo} = this.props
-    if (!basicInfo || !basicInfo.projectExpire) {
+    /**
+     * 在新建的情况下，自动填写到期时间，设置到Redux里
+     * 否则，如果用户不修改这一项，提交数据中将会没有
+      */
+    const {modalStatus} = this.props
+    if (modalStatus === 'create') {
+      const {setBasicInfo} = this.props
       const date = new Date()
       date.setFullYear(date.getFullYear() + 1)
-      setBasicInfo({...basicInfo, projectExpire: dateFormat(date, 'yyyy-mm-dd HH:MM:ss')})
+      setBasicInfo({projectExpire: dateFormat(date, 'yyyy-mm-dd HH:MM:ss')})
     }
   }
 

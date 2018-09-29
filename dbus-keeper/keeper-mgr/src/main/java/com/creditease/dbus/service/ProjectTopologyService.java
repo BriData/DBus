@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -481,18 +481,18 @@ public class ProjectTopologyService {
         }
     }
 
-    private String httpGet(String serverUrl) {
-        StringBuilder responseBuilder = null;
+    private String httpGet(String serverUrl) throws Exception {
+        StringBuilder responseBuilder = new StringBuilder();;
         BufferedReader reader = null;
+        URL url = null;
 
-        URL url;
+
         try {
             url = new URL(serverUrl);
             URLConnection conn = url.openConnection();
             conn.setDoOutput(true);
             conn.setConnectTimeout(1000 * 5);
             reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            responseBuilder = new StringBuilder();
             String line = null;
             while ((line = reader.readLine()) != null) {
                 responseBuilder.append(line).append("\n");
@@ -508,7 +508,6 @@ public class ProjectTopologyService {
                 }
             }
         }
-
         return responseBuilder.toString();
     }
 

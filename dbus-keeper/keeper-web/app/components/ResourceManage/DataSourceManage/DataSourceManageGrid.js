@@ -118,11 +118,15 @@ export default class DataSourceManageGrid extends Component {
       />,
       icon: 'delete',
       onClick: () => this.handleDelete(record),
-      confirmText: '确认删除？'
+      confirmText: <div><FormattedMessage
+        id="app.common.delete"
+        defaultMessage="删除"
+      />？</div>
     })
     return (
       <div>
-        <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle'} icon="plus" onClick={() => onAdd(record)}>
+        <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle'
+        } icon="plus" onClick={() => onAdd(record)}>
           <FormattedMessage id="app.common.addSchema" defaultMessage="添加Schema" />
         </OperatingButton>
         <OperatingButton icon="share-alt" onClick={() => onTopo(record.id)}>
@@ -131,7 +135,8 @@ export default class DataSourceManageGrid extends Component {
             defaultMessage="拓扑管理"
           />
         </OperatingButton>
-        <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle'} icon="bars" onClick={() => onDBusData(record)}>
+        <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle'
+        } icon="bars" onClick={() => onDBusData(record)}>
           <FormattedMessage
             id="app.components.resourceManage.dataSource.viewDBusData"
             defaultMessage="查看DBus数据"

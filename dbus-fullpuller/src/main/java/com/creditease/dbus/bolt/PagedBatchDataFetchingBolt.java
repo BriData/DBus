@@ -186,6 +186,11 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             long startTime = System.currentTimeMillis();
 
             dbRecordReader = DBHelper.getRecordReader(dbManager, dbConf, inputSplit, logicalTableName);
+            //oracle表的meta信息单独获取
+            HashMap<String, HashMap<String, Object>> metaData = null;
+            if (datasourceType.toUpperCase().equals(DbusDatasourceType.ORACLE.name())) {
+                metaData = dbRecordReader.queryMetaData();
+            }
             rs = dbRecordReader.queryData(datasourceType, splitIndex);
             ResultSetMetaData rsmd = rs.getMetaData();
             int columnCount = rsmd.getColumnCount();
@@ -324,7 +329,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 if (isKafkaSend(dealRowMemSize, sendRowsCnt)) {
                     dealRowMemSize = 0;
                     sendRowsCnt = 0;
-                    DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, inputSplit.getTargetTableName(), tablePartition, batchNo);
+                    DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd,
+                            metaData, inputSplit.getTargetTableName(), tablePartition, batchNo);
                     //将数据写入kafka
                     sendMessageToKafka(resultKey, dbusMessage, sendCnt, recvCnt, isError);
                     tuples.clear();
@@ -361,7 +367,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
 
 
             if (tuples.size() > 0) {
-                DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd, inputSplit.getTargetTableName(), tablePartition, batchNo);
+                DbusMessage dbusMessage = buildResultMessage(outputVersion, tuples, dataSourceInfo, dbConf, rsmd,
+                        metaData, inputSplit.getTargetTableName(), tablePartition, batchNo);
                 tuples.clear();
                 tuples = null;
 
@@ -444,17 +451,37 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     }
 
     private DbusMessage buildResultMessage(String outputVersion, List<List<Object>> tuples, String dataSourceInfo,
-                                           DBConfiguration dbConf, ResultSetMetaData rsmd, String seriesTableName, String tablePartition, int batchNo) throws SQLException {
+                                           DBConfiguration dbConf, ResultSetMetaData rsmd, HashMap<String, HashMap<String, Object>> metaData,
+                                           String seriesTableName, String tablePartition, int batchNo) throws SQLException {
 
 
         DbusMessageBuilder builder = new DbusMessageBuilder(outputVersion);
         builder.build(DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbConf.getDbTypeAndNameSpace(dataSourceInfo, seriesTableName, tablePartition), batchNo);
         String dsType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
         int columnCount = rsmd.getColumnCount();
-        for (int i = 1; i <= columnCount; i++) {
-            builder.appendSchema(rsmd.getColumnName(i),
-                    DataType.convertDataType(dsType, rsmd.getColumnTypeName(i), rsmd.getPrecision(i), rsmd.getScale(i)),
-                    rsmd.isNullable(i) == 1 ? true : false);
+        if (dsType.equalsIgnoreCase(DbusDatasourceType.ORACLE.name())) {
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rsmd.getColumnName(i);
+                HashMap<String, Object> value = metaData.get(columnName);
+                Object precisionObj = value.get("PRECISION");
+                Object scaleObj = value.get("SCALE");
+                int precision = 0;
+                int scale = 0;
+                if (precisionObj != null) {
+                    precision = Integer.parseInt(precisionObj.toString());
+                }
+                if (scaleObj != null) {
+                    scale = Integer.parseInt(scaleObj.toString());
+                }
+                DataType dataType = DataType.convertDataType(dsType, (String) value.get("COLUMNTYPENAME"), precision, scale);
+                builder.appendSchema(columnName, dataType, value.get("ISNULLABLE").equals("Y") ? true : false);
+            }
+        } else {
+            for (int i = 1; i <= columnCount; i++) {
+                builder.appendSchema(rsmd.getColumnName(i),
+                        DataType.convertDataType(dsType, rsmd.getColumnTypeName(i), rsmd.getPrecision(i), rsmd.getScale(i)),
+                        rsmd.isNullable(i) == 1 ? true : false);
+            }
         }
         for (List<Object> tuple : tuples) {
             builder.appendPayload(tuple.toArray());

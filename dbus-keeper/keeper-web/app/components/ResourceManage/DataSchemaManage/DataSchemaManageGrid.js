@@ -78,7 +78,7 @@ export default class DataSchemaManageGrid extends Component {
         <OperatingButton icon="edit" onClick={() => onModify(record)}>
           <FormattedMessage id="app.common.modify" defaultMessage="修改" />
         </OperatingButton>
-        <Popconfirm title="确定删除？" onConfirm={() => this.handleDelete(record)} okText="Yes" cancelText="No">
+        <Popconfirm title={<div><FormattedMessage id="app.common.delete" defaultMessage="删除" />？</div>} onConfirm={() => this.handleDelete(record)} okText="Yes" cancelText="No">
           <OperatingButton icon="delete">
             <FormattedMessage id="app.common.delete" defaultMessage="删除" />
           </OperatingButton>

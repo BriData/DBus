@@ -48,8 +48,10 @@ public class KeeperConstants {
     public static final String GLOBAL_CONF_KEY_STORM_NIMBUS_HOST = "storm.nimbus.host";
     public static final String GLOBAL_CONF_KEY_STORM_NIMBUS_PORT = "storm.nimbus.port";
     public static final String GLOBAL_CONF_KEY_STORM_HOME_PATH = "storm.home.path";
-    public static final String GLOBAL_CONF_KEY_MONITOR_URL = "monitor_url";
-    public static final String GLOBAL_CONF_KEY_INFLUXDB_URL = "influxdb_url";
+    public static final String GLOBAL_CONF_KEY_GRAFANA_URL = "grafana_url_web";
+    public static final String GLOBAL_CONF_KEY_GRAFANA_URL_DBUS = "grafana_url_dbus";
+    public static final String GLOBAL_CONF_KEY_INFLUXDB_URL = "influxdb_url_web";
+    public static final String GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS = "influxdb_url_dbus";
     public static final String GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS = "bootstrap.servers";
     public static final String GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION = "bootstrap.servers.version";
     public static final String CONF_KEY_GLOBAL_EVENT_TOPIC = "global.event.topic"; // 全局事件topic

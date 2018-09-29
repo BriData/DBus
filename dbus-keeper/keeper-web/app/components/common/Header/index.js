@@ -7,11 +7,25 @@ import styles from './Header.less'
 import logo from '../../../logo.png'
 
 export function Header (props) {
+  /**
+   * 由于locale存在Redux中，当切换页面时，就会恢复为默认值，
+   * 因此，将locale存储在localStorage中，每次都和Redux比较，并始终以localStorage为准
+   */
+  if (!localStorage.getItem('locale')) {
+    localStorage.setItem('locale', props.locale)
+  }
+  if (localStorage.getItem('locale') !== props.locale) {
+    changeLocale(props)
+  }
+  const logoStyle = {minWidth: 130}
   return (
     <div className={`${props.className} ${styles.header}`}>
       <div className={styles.left}>
-        <div className={styles.logo}>
-          <h2><img style={{verticalAlign: 'middle'}} height={36} width={36} src={logo}/> KEEPER</h2>
+        <div className={styles.logo} style={props.navCollapsed ? {} : logoStyle}>
+          <h2>
+            <img style={{verticalAlign: 'middle'}} height={36} width={36} src={logo}/>
+            {props.navCollapsed ? "" : "dbus"}
+          </h2>
         </div>
         <ul>
           {props.topMenu &&
@@ -60,8 +74,10 @@ export function Header (props) {
 // 切换语言
 const changeLocale = props => {
   if (props.locale === 'zh') {
+    localStorage.setItem('locale', 'en')
     props.onChangeLocale('en')
   } else if (props.locale === 'en') {
+    localStorage.setItem('locale', 'zh')
     props.onChangeLocale('zh')
   }
 }

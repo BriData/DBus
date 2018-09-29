@@ -104,14 +104,31 @@ export default class DataSchemaManageAddLogModal extends Component {
     })
   }
 
+  handleAddLogTable = () => {
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.handleAddLogTableModalOk({
+          tableName: values.tableName,
+          outputTopic: values.outputTopic
+        })
+        this.props.form.setFieldsValue({tableName:null})
+      }
+    })
+  }
+
   handleAddLogTableModalOk = (values) => {
     const {tableList} = this.state
+    const exist = tableList.some(table => table.tableName === values.tableName)
+    if (exist) {
+      message.warn('列表中已存在相同表名')
+      return
+    }
     tableList.push({
       ...values,
       createTime: dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss.l'),
     })
     this.setState({tableList})
-    this.handleCloseAddLogTableModal()
+    // this.handleCloseAddLogTableModal()
   }
 
   handleCloseAddLogTableModal = () => {
@@ -132,7 +149,10 @@ export default class DataSchemaManageAddLogModal extends Component {
     const columns = [
       {
         title: (
-          'TableName'
+          <FormattedMessage
+            id="app.components.resourceManage.dataTableName"
+            defaultMessage="表名"
+          />
         ),
         width: this.tableWidth[0],
         dataIndex: 'tableName',
@@ -141,7 +161,10 @@ export default class DataSchemaManageAddLogModal extends Component {
       },
       {
         title: (
-          'OutputTopic'
+          <FormattedMessage
+            id="app.components.projectManage.projectTable.outputTopic"
+            defaultMessage="输出Topic"
+          />
         ),
         width: this.tableWidth[1],
         dataIndex: 'outputTopic',
@@ -150,7 +173,10 @@ export default class DataSchemaManageAddLogModal extends Component {
       },
       {
         title: (
-          'CreateTime'
+          <FormattedMessage
+            id="app.common.createTime"
+            defaultMessage="创建时间"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'createTime',
@@ -177,6 +203,28 @@ export default class DataSchemaManageAddLogModal extends Component {
       }
     }
 
+    const addTableFormItemLayout = {
+      labelCol: {
+        span: 8
+      },
+      wrapperCol: {
+        span: 16
+      },
+      style: {
+        marginBottom: 3
+      }
+    }
+
+    const addTableFormButtonItemLayout = {
+      wrapperCol: {
+        offset: 2,
+        span: 12
+      },
+      style: {
+        marginBottom: 3
+      }
+    }
+
     const {addLogTableModalKey, addLogTableModalVisible, addLogTableModalDefaultOutputTopic} = this.state
     const {tableList} = this.state
 
@@ -190,15 +238,20 @@ export default class DataSchemaManageAddLogModal extends Component {
         onCancel={onClose}
         onOk={this.handleOk}
         title={<span>
-          添加Table
-          <Button style={{marginLeft: 10}} onClick={this.handleOpenAddLogTableModal}>添加表</Button>
+          <FormattedMessage
+            id="app.components.resourceManage.dataSchema.addTable"
+            defaultMessage="添加表"
+          />
         </span>}
       >
         <div>
           <Form>
             <Row>
               <Col span={8}>
-                <FormItem  label={'dataSource'} {...formItemLayout}>
+                <FormItem  label={<FormattedMessage
+                  id="app.components.resourceManage.dataSourceName"
+                  defaultMessage="数据源名称"
+                />} {...formItemLayout}>
                   <Input
                     size="small"
                     type="text"
@@ -207,7 +260,10 @@ export default class DataSchemaManageAddLogModal extends Component {
                 </FormItem>
               </Col>
               <Col span={8}>
-                <FormItem label={'Schema'} {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataSchemaName"
+                  defaultMessage="Schema名称"
+                />} {...formItemLayout}>
                   {getFieldDecorator('schemaName', {
                     initialValue: `${record.ds_name}_schema`,
                     rules: [
@@ -223,7 +279,10 @@ export default class DataSchemaManageAddLogModal extends Component {
                 </FormItem>
               </Col>
               <Col span={8}>
-                <FormItem label={'Description'} {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.common.description"
+                  defaultMessage="描述"
+                />} {...formItemLayout}>
                   {getFieldDecorator('description', {
                   })(<Input
                     size="small"
@@ -234,7 +293,10 @@ export default class DataSchemaManageAddLogModal extends Component {
             </Row>
             <Row style={{marginTop: -5}}>
               <Col span={8}>
-                <FormItem label={'status'} {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.common.status"
+                  defaultMessage="状态"
+                />} {...formItemLayout}>
                   {getFieldDecorator('status', {
                     initialValue: `active`,
                     rules: [
@@ -250,7 +312,10 @@ export default class DataSchemaManageAddLogModal extends Component {
                 </FormItem>
               </Col>
               <Col span={8}>
-                <FormItem label={'src_topic'} {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.sourceTopic"
+                  defaultMessage="源Topic"
+                />} {...formItemLayout}>
                   {getFieldDecorator('srcTopic', {
                     initialValue: `${record.ds_name}.${record.ds_name}_schema`,
                     rules: [
@@ -266,7 +331,10 @@ export default class DataSchemaManageAddLogModal extends Component {
                 </FormItem>
               </Col>
               <Col span={8}>
-                <FormItem label={'target_topic'} {...formItemLayout}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.targetTopic"
+                  defaultMessage="目标Topic"
+                />} {...formItemLayout}>
                   {getFieldDecorator('targetTopic', {
                     initialValue: `${record.ds_name}.${record.ds_name}_schema.result`,
                     rules: [
@@ -283,6 +351,61 @@ export default class DataSchemaManageAddLogModal extends Component {
               </Col>
             </Row>
           </Form>
+          <Form autoComplete="off">
+            <Row style={{border: "1px solid #e9e9e9"}}>
+              <Col span={10}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.resourceManage.dataTableName"
+                  defaultMessage="表名"
+                />} {...addTableFormItemLayout}>
+                  {getFieldDecorator('tableName', {
+                    initialValue: null,
+                    rules: [
+                      {
+                        required: true,
+                        message: 'TableName不能为空',
+                        whitespace: true
+                      }
+                    ]
+                  })(<Input
+                    type="text"
+                    size="small"
+                  />)}
+                </FormItem>
+              </Col>
+              <Col span={10}>
+                <FormItem label={<FormattedMessage
+                  id="app.components.projectManage.projectTable.outputTopic"
+                  defaultMessage="输出Topic"
+                />} {...addTableFormItemLayout}>
+                  {getFieldDecorator('outputTopic', {
+                    initialValue: `${record.ds_name}.${record.ds_name}_schema.result`,
+                    rules: [
+                      {
+                        required: true,
+                        message: 'OutputTopic不能为空',
+                        whitespace: true
+                      }
+                    ]
+                  })(<Input
+                    type="text"
+                    size="small"
+                  />)}
+                </FormItem>
+              </Col>
+              <Col span={2}>
+                <FormItem {...addTableFormButtonItemLayout}>
+                  <Button onClick={this.handleAddLogTable} type="primary" size="small">
+                    <FormattedMessage
+                      id="app.common.add"
+                      defaultMessage="添加"
+                    />
+                  </Button>
+                </FormItem>
+              </Col>
+            </Row>
+          </Form>
+
           <Table
             rowKey={record => `${record.tableName}`}
             columns={columns}
@@ -290,13 +413,13 @@ export default class DataSchemaManageAddLogModal extends Component {
             pagination={false}
             scroll={{x:800, y: 350}}
           />
-          <DataSchemaAddLogSchemaTableModal
+          {/*<DataSchemaAddLogSchemaTableModal
             visible={addLogTableModalVisible}
             key={addLogTableModalKey}
             defaultOutputTopic={addLogTableModalDefaultOutputTopic}
             onClose={this.handleCloseAddLogTableModal}
             onOk={this.handleAddLogTableModalOk}
-          />
+          />*/}
         </div>
       </Modal>
     )

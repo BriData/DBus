@@ -15,6 +15,7 @@ import {
   DATA_TABLE_GET_ENCODE_TYPE,
   DATA_TABLE_GET_VERSION_LIST,
   DATA_TABLE_GET_VERSION_DETAIL,
+  DATA_TABLE_CLEAR_VERSION_DETAIL,
   DATA_TABLE_SOURCE_INSIGHT
 } from '../action/types'
 
@@ -98,6 +99,9 @@ export default (state = initialState, action) => {
     // 管理查询参数
     case DATA_TABLE_ALL_PARAMS:
       return state.setIn(['dataTableParams'], action.params)
+    case DATA_TABLE_CLEAR_VERSION_DETAIL:
+      return state.setIn(['versionDetail','result'], {})
+        .setIn(['versionList','result'], {})
     // 查询该表脱敏配置
     case DATA_TABLE_GET_ENCODE_CONFIG.LOAD:
       return state.setIn(['encodeConfigList', 'loading'], true)

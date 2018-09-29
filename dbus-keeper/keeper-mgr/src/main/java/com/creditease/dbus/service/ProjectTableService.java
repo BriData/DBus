@@ -36,14 +36,12 @@ import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
-import kafka.utils.ZkUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import scala.collection.JavaConversions;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -859,7 +857,8 @@ public class ProjectTableService {
         DataTable dataTable =tableService.findTableById(tableId);
         //判断表类型是否支持拉全量操作
         DbusDatasourceType dsType = DbusDatasourceType.parse(dataTable.getDsType());
-        if (DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
+        if (
+                DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
             logger.error("Illegal datasource type:" + dataTable.getDsType());
 			ResultEntity resultEntity = new ResultEntity();
 			resultEntity.setStatus(MessageCode.TYPE_OF_TABLE_CAN_NOT_FULLPULL);

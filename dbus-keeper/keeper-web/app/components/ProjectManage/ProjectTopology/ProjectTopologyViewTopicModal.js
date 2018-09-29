@@ -2,7 +2,7 @@
  * @author 戎晓伟
  * @description  Sink信息设置
  */
-
+import { FormattedMessage } from 'react-intl'
 import React, {PropTypes, Component} from 'react'
 import {Modal, Card} from 'antd'
 import ProjectTopologyViewInTopic from './ProjectTopologyViewTopicContent/ProjectTopologyViewInTopic'
@@ -18,7 +18,19 @@ export default class ProjectTopologyViewTopicModal extends Component {
 
   render() {
     const {visible, topoName, type} = this.props
-    const title = type === 'source' ? `${topoName}订阅的源Topic列表` : `${topoName}输出的Topic列表`
+    const title = type === 'source' ? <span>
+      {topoName}
+      <FormattedMessage
+        id="app.components.projectManage.projectTopology.table.sourceTopicList"
+        defaultMessage="订阅的源Topic列表"
+      />
+    </span> : <span>
+      {topoName}
+      <FormattedMessage
+        id="app.components.projectManage.projectTopology.table.outputTopicList"
+        defaultMessage="输出的Topic列表"
+      />
+    </span>
 
     const {inTopic, outTopic} = this.props
     const content = type === 'source' ? Object.values(inTopic.result) : Object.values(outTopic.result)

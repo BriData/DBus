@@ -60,42 +60,60 @@ export default class UserProject extends Component {
     const dataSource = Object.values(result) || []
     const columns = [
       {
-        title: '项目',
+        title: <FormattedMessage
+          id="app.common.table.project"
+          defaultMessage="项目"
+        />,
         width: this.tableWidth[0],
         dataIndex: 'projectName',
         key: 'projectName',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: '项目角色类型',
+        title: <FormattedMessage
+          id="app.common.user.role"
+          defaultMessage="用户角色"
+        />,
         width: this.tableWidth[1],
         dataIndex: 'userLevel',
         key: 'userLevel',
         render: this.renderComponent(this.renderNomal)
       },
       {
-        title: '接收表结构变更报警',
+        title: <FormattedMessage
+          id="app.components.userManage.receiveSchemaChange"
+          defaultMessage="接受表结构变更通知"
+        />,
         width: this.tableWidth[2],
         dataIndex: 'schemaChangeNotifyFlag',
         key: 'schemaChangeNotifyFlag',
         render: this.renderComponent(this.renderFlag)
       },
       {
-        title: '接收主备同步报警',
+        title: <FormattedMessage
+          id="app.components.userManage.receiveMasterSlaveSync"
+          defaultMessage="接受主备不同步报警通知"
+        />,
         width: this.tableWidth[3],
         dataIndex: 'slaveSyncDelayNotifyFlag',
         key: 'slaveSyncDelayNotifyFlag',
         render: this.renderComponent(this.renderFlag)
       },
       {
-        title: '接收拉全量报警',
+        title: <FormattedMessage
+          id="app.components.userManage.receiveFullPull"
+          defaultMessage="接受拉全量报警通知"
+        />,
         width: this.tableWidth[4],
         dataIndex: 'fullpullNotifyFlag',
         key: 'fullpullNotifyFlag',
         render: this.renderComponent(this.renderFlag)
       },
       {
-        title: '接收Topo延时报警',
+        title: <FormattedMessage
+          id="app.components.userManage.receiveTopologyDelay"
+          defaultMessage="接受拓扑延时报警通知"
+        />,
         width: this.tableWidth[5],
         dataIndex: 'dataDelayNotifyFlag',
         key: 'dataDelayNotifyFlag',
@@ -116,7 +134,10 @@ export default class UserProject extends Component {
         maskClosable
         width={'1000px'}
         style={{ top: 60 }}
-        title={'用户拥有的项目'}
+        title={<FormattedMessage
+          id="app.components.userManage.viewAllocationProject"
+          defaultMessage="查看已分配项目"
+        />}
         onCancel={() => onCloseModal(false)}
         footer={null}
       >

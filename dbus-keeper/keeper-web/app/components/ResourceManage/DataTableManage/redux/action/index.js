@@ -16,6 +16,7 @@ import {
   DATA_TABLE_GET_ENCODE_TYPE,
   DATA_TABLE_GET_VERSION_LIST,
   DATA_TABLE_GET_VERSION_DETAIL,
+  DATA_TABLE_CLEAR_VERSION_DETAIL,
   DATA_TABLE_SOURCE_INSIGHT
 } from './types'
 
@@ -60,6 +61,13 @@ export const getVersionList = {
   request: params => createAction(DATA_TABLE_GET_VERSION_LIST.LOAD, { ...params }),
   success: data => createAction(DATA_TABLE_GET_VERSION_LIST.SUCCESS, { ...data }),
   fail: error => createAction(DATA_TABLE_GET_VERSION_LIST.FAIL, { ...error })
+}
+
+export function clearVersionDetail (params) {
+  return {
+    type: DATA_TABLE_CLEAR_VERSION_DETAIL,
+    params: params
+  }
 }
 
 export const getVersionDetail = {

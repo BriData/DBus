@@ -90,7 +90,10 @@ export default class DataTableManageIndependentModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={'独立拉全量'}
+          title={<FormattedMessage
+            id="app.components.resourceManage.dataTable.independentFullPull"
+            defaultMessage="独立拉全量"
+          />}
           onCancel={onClose}
           confirmLoading={loading}
           onOk={this.handleSubmit}

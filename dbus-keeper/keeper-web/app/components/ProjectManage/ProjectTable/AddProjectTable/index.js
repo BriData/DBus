@@ -2,7 +2,7 @@
  * @author 戎晓伟
  * @description  项目管理
  */
-
+import { FormattedMessage } from 'react-intl'
 import React, { PropTypes, Component } from 'react'
 import { Modal, message, Spin } from 'antd'
 import Request from '@/app/utils/request'
@@ -186,7 +186,13 @@ export default class AddProjectTable extends Component {
         confirmLoading={modalLoading}
         width={this.modalWidth}
         style={{ top: 60 }}
-        title={modalStatus === 'modify' ? '修改Table' : '新增Table'}
+        title={modalStatus === 'modify' ? <FormattedMessage
+          id="app.common.modify"
+          defaultMessage="修改"
+        /> : <FormattedMessage
+          id="app.common.added"
+          defaultMessage="新增"
+        />}
         onCancel={() => this.stateModalVisibal(false)}
         onOk={() => this.handleSubmit(projectTableStorage, modalStatus)}
       >

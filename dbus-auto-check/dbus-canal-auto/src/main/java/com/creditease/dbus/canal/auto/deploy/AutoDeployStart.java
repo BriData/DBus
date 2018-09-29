@@ -28,15 +28,23 @@ public class AutoDeployStart {
         try {
             //获得当前目录
             String currentPath =System.getProperty("user.dir");
+            DeployPropsBean deployProps = FileUtils.readProps(currentPath+"/conf/"+DEPLOY_PROS_NAME,bw);
+            //String canalPath =currentPath+"/"+"canal";
+            String dsName = deployProps.getDsName();
+            //创建report目录
+            File reportDir = new File(currentPath,"reports");
+            if(!reportDir.exists()) reportDir.mkdirs();
+
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String strTime = sdf.format(new Date());
-            File reportFile = new File(currentPath, "canal_deploy_report" + strTime + ".txt");
+            File reportFile = new File(reportDir, "canal_deploy_"+dsName+"_"+ strTime + ".txt");
+
             fos = new FileOutputStream(reportFile);
             osw = new OutputStreamWriter(fos);
             bw = new BufferedWriter(osw);
 
-            DeployPropsBean deployProps = FileUtils.readProps(currentPath+"/conf/"+DEPLOY_PROS_NAME,bw);
-            String basePath =currentPath+"/"+"canal";
+//            DeployPropsBean deployProps = FileUtils.readProps(currentPath+"/conf/"+DEPLOY_PROS_NAME,bw);
+//            String canalPath =currentPath+"/"+"canal";
 
             bw.write("************ CANAL DEPLOY BEGIN! ************");
             bw.newLine();
@@ -50,21 +58,31 @@ public class AutoDeployStart {
 
             /* 验证通过，开始部署和启动*/
 
+            //2.5  将canal复制一份到当前目录下，并重命名作为部署目录
+            String destPath = "canal-"+dsName;
+            String cpCanalCmd = "cp -r canal "+destPath;
+            bw.write("cp canal files:  "+cpCanalCmd);
+            bw.newLine();
+            CanalUtils.exec(cpCanalCmd);
+
+            //canal目录
+            String canalPath =currentPath+"/"+destPath;
+
             //3.修改canal.properties文件
             String canalProperties = "canal.properties";
             bw.write("------------ update canal.properties begin ------------ ");
             bw.newLine();
-            WriteProperties(basePath+"/conf/"+canalProperties,
+            WriteProperties(canalPath+"/conf/"+canalProperties,
                     "canal.port",String.valueOf(getAvailablePort()),bw);
-            WriteProperties(basePath+"/conf/"+canalProperties,
+            WriteProperties(canalPath+"/conf/"+canalProperties,
                     "canal.zkServers", deployProps.getZkPath()+"/DBus/Canal/canal-"+deployProps.getDsName(),bw);
             bw.write("------------ update canal.properties end ------------ ");
             bw.newLine();
 
             //4.创建canal目录下dsName文件夹
-            checkExist(basePath,deployProps.getDsName(),bw);
+            checkExist(canalPath,deployProps.getDsName(),bw);
             //5.instance文件修改
-            String instancePropsPath = basePath+"/conf/"+deployProps.getDsName()+"/"+"instance.properties";
+            String instancePropsPath = canalPath+"/conf/"+deployProps.getDsName()+"/"+"instance.properties";
             bw.write("------------ update instance.properties begin ------------ ");
             bw.newLine();
             bw.write("instance file path "+instancePropsPath);
@@ -79,11 +97,11 @@ public class AutoDeployStart {
             //ZKUtils.checkZKNode(deployProps,bw);
 
             //启动canal
-            CanalUtils.start(currentPath,bw);
-            CanalUtils.copyLogfiles(currentPath,deployProps.getDsName(),bw);
+            CanalUtils.start(canalPath,bw);
+            CanalUtils.copyLogfiles(canalPath,deployProps.getDsName(),bw);
 
             //无论怎么canal都会启动起来，如果出错，可以看日志;成功的话，echo pid
-            String cmd = "ps aux | grep \""+basePath+"/bin\" | grep -v \"grep\" | awk '{print $2}'";
+            String cmd = "ps aux | grep \""+canalPath+"/bin\" | grep -v \"grep\" | awk '{print $2}'";
             bw.write("exec: " + cmd);
             bw.newLine();
             try {

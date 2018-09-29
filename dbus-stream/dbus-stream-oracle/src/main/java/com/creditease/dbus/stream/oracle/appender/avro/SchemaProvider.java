@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,7 @@ public class SchemaProvider {
 
     /**
      * 删除缓存的avro schema
+     *
      * @param schemaName
      */
     public void remove(String schemaName) {
@@ -116,21 +117,22 @@ public class SchemaProvider {
                 } catch (Exception e) {
                     logger.warn("Initialize avro schema[{}] error!", schemaName, e);
                 }
-                if (schemaStr == null) {
-                    schemaStr = generateAvroSchema(schemaName);
-                    if(!schemaName.endsWith("."+schemaStr.hashCode())) {
-                        logger.warn("Hash code[{}] of Generated avro schema is not equal with the given value{}.\n{}", schemaStr.hashCode(), schemaName, schemaStr);
-                    }
-                    ThreadLocalCache.put(Constants.CacheNames.AVRO_SCHEMA_CACHE, schemaName, schemaStr);
-                }
 
                 logger.debug("[" + (++i) + "]waiting for Avro Schema:" + schemaName);
                 if (i > 100) break;
-                TimeUnit.MILLISECONDS.sleep(200);
+                TimeUnit.MILLISECONDS.sleep(100);
             } catch (Exception e) {
                 logger.error("Get avro schema string error", e);
                 throw new IllegalStateException(e);
             }
+        }
+        // 如果等待
+        if (schemaStr == null) {
+            schemaStr = generateAvroSchema(schemaName);
+            if (!schemaName.endsWith("." + schemaStr.hashCode())) {
+                logger.warn("Hash code[{}] of Generated avro schema is not equal with the given value{}.\n{}", schemaStr.hashCode(), schemaName, schemaStr);
+            }
+            ThreadLocalCache.put(Constants.CacheNames.AVRO_SCHEMA_CACHE, schemaName, schemaStr);
         }
         return schemaStr;
     }

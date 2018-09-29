@@ -60,7 +60,12 @@ export default class ZKManageContent extends Component {
                   <Textarea autosize={{minRows: 20, maxRows: 20}}/>
                 )}
               </FormItem>
-              <Button onClick={this.handleSave}>Save</Button>
+              <Button onClick={this.handleSave}>
+                <FormattedMessage
+                  id="app.common.save"
+                  defaultMessage="保存"
+                />
+              </Button>
             </Form>
           </TabPane>
           <TabPane tab="Node Meta Data" key="nodeMeta">

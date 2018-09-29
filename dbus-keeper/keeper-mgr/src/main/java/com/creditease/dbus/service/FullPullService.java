@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,6 +95,13 @@ public class FullPullService {
                 String physicalTables = ilService.getMysqlTables(conn, table);
                 conn.close();
                 payload.put("PHYSICAL_TABLES", physicalTables);
+            } else if (StringUtils.equalsIgnoreCase(table.getDsType(), "oracle")) {
+                Class.forName("oracle.jdbc.driver.OracleDriver");
+                Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
+                InitialLoadService ilService = InitialLoadService.getService();
+                String physicalTables = ilService.getOracleTables(conn, table);
+                conn.close();
+                payload.put("PHYSICAL_TABLES", physicalTables);
             }
             String key;
             String value;
@@ -117,12 +124,12 @@ public class FullPullService {
             long offset = consumer.position(dataTopicPartition);
             final String OP_TS = "OP_TS";
             long step = Integer.valueOf(consumerProps.getProperty("max.poll.records"));
-            boolean  runing = controlMessage.getPayload().get("POS") == null || controlMessage.getPayload().get(OP_TS) == null;
-            while(runing) {
+            boolean runing = controlMessage.getPayload().get("POS") == null || controlMessage.getPayload().get(OP_TS) == null;
+            while (runing) {
                 ConsumerRecords<String, byte[]> results = consumer.poll(100);
                 while (results.isEmpty()) {
-                    offset = offset - step ;
-                    if(offset < beginOffset) {
+                    offset = offset - step;
+                    if (offset < beginOffset) {
                         logger.info("没有找到 op_ts .");
                         payload.put("POS", 0);
                         payload.put(OP_TS, DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss.SSS"));
@@ -139,7 +146,7 @@ public class FullPullService {
                     JSONObject jsonDbusMessage = JSON.parseObject(value);
                     int iPos = findDbusMessageFieldIndex(jsonDbusMessage, DbusMessage.Field._UMS_ID_);
                     int iOpTs = findDbusMessageFieldIndex(jsonDbusMessage, DbusMessage.Field._UMS_TS_);
-                    if(iPos == -1 || iOpTs == -1) continue;
+                    if (iPos == -1 || iOpTs == -1) continue;
                     if (key.indexOf("data_increment_heartbeat") != -1 || key.indexOf("data_increment_data") != -1) {
                         String pos = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple").getString(iPos);
                         String op_ts = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple").getString(iOpTs);

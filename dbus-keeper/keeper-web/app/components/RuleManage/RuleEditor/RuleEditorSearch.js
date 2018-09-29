@@ -21,6 +21,10 @@ export default class RuleEditorSearch extends Component {
     onExecuteRule([])
   }
 
+  handleBack = () => {
+    window.history.back()
+  }
+
   render () {
     const { getFieldDecorator } = this.props.form
     const {kafkaOffset, kafkaCount, kafkaTopic} = this.props
@@ -29,7 +33,7 @@ export default class RuleEditorSearch extends Component {
       <div className="form-search">
         <Form autoComplete="off" layout="inline" className={styles.searchForm}>
           <Row>
-            <Col span={16}>
+            <Col span={15}>
               <FormItem label='Topic'>
                 {getFieldDecorator('kafkaTopic', {
                   initialValue: kafkaTopic,
@@ -63,11 +67,14 @@ export default class RuleEditorSearch extends Component {
                   <Input
                     placeholder="请输入offset"
                     type="text"
-                    style={{width: 120}}
+                    style={{width: 80}}
                   />
                 )}
               </FormItem>
-              <FormItem label='Count'>
+              <FormItem label={<FormattedMessage
+                id="app.common.count"
+                defaultMessage="数量"
+              />}>
                 {getFieldDecorator('kafkaCount', {
                   initialValue: kafkaCount,
                   rules: [
@@ -94,13 +101,24 @@ export default class RuleEditorSearch extends Component {
                   onClick={this.handleShowData}
                 >
                   <FormattedMessage
-                    id="app.common.rule.showData"
+                    id="app.components.resourceManage.rule.showData"
                     defaultMessage="展示数据"
                   />
                 </Button>
               </FormItem>
             </Col>
-            <Col span={8} className={styles.formRight}>
+            <Col span={9} className={styles.formRight}>
+              <FormItem>
+                <Button
+                  icon="plus-circle"
+                  onClick={onAddRule}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.rule.addRule"
+                    defaultMessage="添加规则"
+                  />
+                </Button>
+              </FormItem>
               <FormItem>
                   <Button
                     type="primary"
@@ -108,19 +126,19 @@ export default class RuleEditorSearch extends Component {
                     onClick={onSaveAllRules}
                   >
                     <FormattedMessage
-                      id="app.common.rule.saveAllRules"
+                      id="app.components.resourceManage.rule.saveAllRules"
                       defaultMessage="保存所有规则"
                     />
                   </Button>
               </FormItem>
               <FormItem>
                 <Button
-                  icon="plus-circle"
-                  onClick={onAddRule}
+                  icon="rollback"
+                  onClick={this.handleBack}
                 >
                   <FormattedMessage
-                    id="app.common.rule.addRule"
-                    defaultMessage="添加规则"
+                    id="app.common.back"
+                    defaultMessage="返回"
                   />
                 </Button>
               </FormItem>

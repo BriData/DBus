@@ -1,6 +1,7 @@
 import React, {PropTypes, Component} from 'react'
 import {Form, Select, Table, Row, Col, Button} from 'antd'
 import {FormattedMessage} from 'react-intl'
+
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
@@ -116,31 +117,46 @@ export default class TimeoutConfigForm extends Component {
   render() {
     const columns = [
       {
-        title: 'schema',
+        title: <FormattedMessage
+          id="app.components.resourceManage.dataSchemaName"
+          defaultMessage="Schema名称"
+        />,
         dataIndex: 'schema',
         key: 'schema',
         render: this.renderComponent(this.renderNomal('schema'))
       },
       {
-        title: 'startTime',
+        title: <FormattedMessage
+          id="app.components.configCenter.heartbeatConfig.startTime"
+          defaultMessage="起始时间"
+        />,
         dataIndex: 'startTime',
         key: 'startTime',
         render: this.renderComponent(this.renderNomal('startTime'))
       },
       {
-        title: 'endTime',
+        title: <FormattedMessage
+          id="app.components.configCenter.heartbeatConfig.endTime"
+          defaultMessage="截止时间"
+        />,
         dataIndex: 'endTime',
         key: 'endTime',
         render: this.renderComponent(this.renderNomal('endTime'))
       },
       {
-        title: 'heartBeatTimeout',
+        title: <FormattedMessage
+          id="app.components.configCenter.heartbeatConfig.heartBeatTimeout"
+          defaultMessage="超时时间"
+        />,
         dataIndex: 'heartBeatTimeout',
         key: 'heartBeatTimeout',
         render: this.renderComponent(this.renderNomal('heartBeatTimeout'))
       },
       {
-        title: 'operation',
+        title: <FormattedMessage
+          id="app.common.operate"
+          defaultMessage="操作"
+        />,
         width: 100,
         dataIndex: 'operation',
         key: 'operation',
@@ -159,7 +175,12 @@ export default class TimeoutConfigForm extends Component {
         />
         <Row style={{marginTop: 10}}>
           <Col span={24} style={{textAlign: 'right'}}>
-            <Button onClick={this.handleAdd}>添加</Button>
+            <Button onClick={this.handleAdd}>
+              <FormattedMessage
+                id="app.common.add"
+                defaultMessage="添加"
+              />
+            </Button>
           </Col>
         </Row>
       </div>

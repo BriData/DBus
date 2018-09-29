@@ -3,9 +3,12 @@
  * @description  基本信息设置
  */
 import React, {PropTypes, Component} from 'react'
-import {Form, Input, Button, Select} from 'antd'
+import {Form, message, Input, Button, Select} from 'antd'
 import JSONTree from 'react-json-tree'
+import { FormattedMessage } from 'react-intl'
 import dateFormat from 'dateformat'
+import {KAFKA_READER_GET_OFFSET_RANGE_API} from '@/app/containers/toolSet/api'
+import Request from "@/app/utils/request";
 const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
@@ -14,6 +17,9 @@ export default class KafkaReaderForm extends Component {
   constructor (props) {
     super(props)
     this.state = {
+      beginOffset: 0,
+      endOffset: 0,
+      maxReadCount: 0
     }
   }
 
@@ -31,8 +37,30 @@ export default class KafkaReaderForm extends Component {
     if (!topicList.some(t => t === topic)) {
       return
     }
-    const {onGetOffsetRange} = this.props
-    onGetOffsetRange(topic)
+    Request(KAFKA_READER_GET_OFFSET_RANGE_API, {
+      params: {topic},
+      method: 'get' })
+      .then(res => {
+        if (res && res.status === 0) {
+          const {beginOffset, endOffset} = res.payload
+          this.setState({
+            beginOffset,
+            endOffset,
+            maxReadCount: endOffset - beginOffset
+          })
+          this.props.form.setFieldsValue({
+            from: beginOffset,
+            length: Math.min(20, endOffset - beginOffset)
+          })
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
   }
 
   render () {
@@ -41,7 +69,8 @@ export default class KafkaReaderForm extends Component {
       labelCol: {span: 4},
       wrapperCol: {span: 10}
     }
-    const {topicList, kafkaData, offsetRange} = this.props
+    const {topicList, kafkaData} = this.props
+    const {beginOffset, endOffset, maxReadCount} = this.state
     const {loading} = kafkaData
     const payload = kafkaData.result.payload || []
     const content = "".concat(...payload)
@@ -79,7 +108,10 @@ export default class KafkaReaderForm extends Component {
             )}
           </FormItem>
           <FormItem
-            label="读取位置"
+            label={<FormattedMessage
+              id="app.components.toolset.kafkaReader.from"
+              defaultMessage="读取位置"
+            />}
             {...formItemLayout}
           >
             {getFieldDecorator('from', {
@@ -98,13 +130,16 @@ export default class KafkaReaderForm extends Component {
               />
             )}
             <font style={{marginLeft: 10}} color="gray">
-              起始Offset：{offsetRange.beginOffset || 0}，
-              末尾Offset（不包含）：{offsetRange.endOffset || 0}，
-              最大读取条数：{(offsetRange.endOffset - offsetRange.beginOffset) || 0}
+              起始Offset：{beginOffset}，
+              末尾Offset（不包含）：{endOffset}，
+              最大读取条数：{maxReadCount}
             </font>
           </FormItem>
           <FormItem
-            label="读取条数"
+            label={<FormattedMessage
+              id="app.components.toolset.kafkaReader.length"
+              defaultMessage="读取条数"
+            />}
             {...formItemLayout}
           >
             {getFieldDecorator('length', {
@@ -124,7 +159,10 @@ export default class KafkaReaderForm extends Component {
             )}
           </FormItem>
           <FormItem
-            label="过滤参数"
+            label={<FormattedMessage
+              id="app.components.toolset.kafkaReader.params"
+              defaultMessage="过滤参数"
+            />}
             {...formItemLayout}
           >
             {getFieldDecorator('params', {
@@ -141,7 +179,12 @@ export default class KafkaReaderForm extends Component {
               sm: {span: 16, offset: 4}
             }}
           >
-            <Button loading={loading} onClick={this.handleRead} type="primary" htmlType="submit">Read Kafka</Button>
+            <Button loading={loading} onClick={this.handleRead} type="primary" htmlType="submit">
+              <FormattedMessage
+                id="app.components.toolset.kafkaReader.readKafka"
+                defaultMessage="读取"
+              />
+            </Button>
           </FormItem>
         </Form>
         <TextArea value={content} wrap='off' autosize={{minRows:10, maxRows: 24}}/>

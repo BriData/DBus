@@ -47,14 +47,23 @@ export default class RuleGroupGrid extends Component {
     return (
       <div>
         <OperatingButton icon="edit" onClick={() => this.handleRename(record)}>
-          <FormattedMessage id="app.common.rename" defaultMessage="重命名"/>
+          <FormattedMessage
+            id="app.components.resourceManage.ruleGroup.rename"
+            defaultMessage="重命名"
+          />
         </OperatingButton>
         <OperatingButton icon="copy" onClick={() => this.handleClone(record)}>
-          <FormattedMessage id="app.common.clone" defaultMessage="克隆"/>
+          <FormattedMessage
+            id="app.components.resourceManage.ruleGroup.clone"
+            defaultMessage="克隆"
+          />
         </OperatingButton>
         <Popconfirm placement="bottom" title="确定删除？" onConfirm={() => this.handleDelete(record)} okText="Yes" cancelText="No">
           <OperatingButton icon="delete">
-            <FormattedMessage id="app.common.delete" defaultMessage="删除" />
+            <FormattedMessage
+              id="app.common.delete"
+              defaultMessage="删除"
+            />
           </OperatingButton>
         </Popconfirm>
       </div>
@@ -148,7 +157,10 @@ export default class RuleGroupGrid extends Component {
       },
       {
         title: (
-          'Name'
+          <FormattedMessage
+            id="app.components.resourceManage.ruleGroup.groupName"
+            defaultMessage="规则组名"
+          />
         ),
         width: this.tableWidth[1],
         dataIndex: 'groupName',
@@ -157,7 +169,10 @@ export default class RuleGroupGrid extends Component {
       },
       {
         title: (
-          'Status'
+          <FormattedMessage
+            id="app.common.status"
+            defaultMessage="状态"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'status',
@@ -166,7 +181,10 @@ export default class RuleGroupGrid extends Component {
       },
       {
         title: (
-          'Schema'
+          <FormattedMessage
+            id="app.components.resourceManage.ruleGroup.schema"
+            defaultMessage="输出Schema"
+          />
         ),
         width: this.tableWidth[3],
         dataIndex: 'schema',
@@ -175,7 +193,10 @@ export default class RuleGroupGrid extends Component {
       },
       {
         title: (
-          'Update Time'
+          <FormattedMessage
+            id="app.common.updateTime"
+            defaultMessage="更新时间"
+          />
         ),
         width: this.tableWidth[4],
         dataIndex: 'updateTime',
@@ -184,7 +205,10 @@ export default class RuleGroupGrid extends Component {
       },
       {
         title: (
-          'Operation'
+          <FormattedMessage
+            id="app.common.operate"
+            defaultMessage="操作"
+          />
         ),
         width: this.tableWidth[5],
         dataIndex: 'operation',

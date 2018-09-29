@@ -3,7 +3,7 @@
      { "name": "data-source", "id": "app.components.resourceManage.dataSource","text":"数据源管理", "icon": "hdd" },
      { "name": "data-schema", "id": "app.components.resourceManage.dataSchema","text":"Schema管理", "icon": "database" },
      { "name": "data-table", "id": "app.components.resourceManage.dataTable","text":"表管理", "icon": "layout" },
-     { "name": "dbus-data", "id": "app.components.resourceManage.dbusData","text":"DBus源端数据", "icon": "bars" },
+     { "name": "dbus-data", "id": "app.components.resourceManage.dbusData","text":"源端数据", "icon": "bars" },
      { "name": "jar-manager", "id": "app.components.resourceManage.jarUpload","text":"Jar包管理", "icon": "coffee" }
       ],
     "project-manage": [

@@ -67,7 +67,10 @@ export default class DBusDataManageGrid extends Component {
     } = this.props
     const columns = [
       {
-        title: '类型',
+        title: <FormattedMessage
+          id="app.common.type"
+          defaultMessage="类型"
+        />,
         width: this.tableWidth[0],
         dataIndex: 'type',
         key: 'type',
@@ -75,7 +78,10 @@ export default class DBusDataManageGrid extends Component {
       },
       {
         title: (
-          '名称'
+          <FormattedMessage
+            id="app.common.name"
+            defaultMessage="名称"
+          />
         ),
         width: this.tableWidth[1],
         dataIndex: 'name',
@@ -84,7 +90,10 @@ export default class DBusDataManageGrid extends Component {
       },
       {
         title: (
-          '是否存在'
+          <FormattedMessage
+            id="app.components.resourceManage.dbusData.isExist"
+            defaultMessage="是否存在"
+          />
         ),
         width: this.tableWidth[2],
         dataIndex: 'exist',
@@ -93,7 +102,10 @@ export default class DBusDataManageGrid extends Component {
       },
       {
         title: (
-          '列信息'
+          <FormattedMessage
+            id="app.components.resourceManage.dbusData.columnInfo"
+            defaultMessage="列信息"
+          />
         ),
         width: this.tableWidth[3],
         dataIndex: 'column',
@@ -102,7 +114,10 @@ export default class DBusDataManageGrid extends Component {
       },
       {
         title: (
-          '操作'
+          <FormattedMessage
+            id="app.common.operate"
+            defaultMessage="操作"
+          />
         ),
         width: this.tableWidth[4],
         key: 'operate',

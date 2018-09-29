@@ -58,10 +58,18 @@ export default class DataSourceManageZkConfigModal extends Component {
         visible={visible}
         maskClosable={false}
         width={1000}
-        title={'数据源ZK配置'}
+        title={<FormattedMessage
+          id="app.components.resourceManage.dataSource.dsZkConfig"
+          defaultMessage="数据源ZK配置"
+        />}
         onCancel={onClose}
         footer={[
-          <Button type="primary" onClick={onClose}> 返 回</Button>]}
+          <Button type="primary" onClick={onClose}>
+            <FormattedMessage
+              id="app.common.back"
+              defaultMessage="返回"
+            />
+          </Button>]}
       >
         <Row>
           <Col span={12}>
@@ -72,8 +80,16 @@ export default class DataSourceManageZkConfigModal extends Component {
               onAdd={() => {}}
               onDelete={() => {}}
             />
-            <Popconfirm title={'确定恢复初始化配置？这将会覆盖此数据线的自定义配置！！！'} onConfirm={onReset} okText="Yes" cancelText="No">
-              <Button style={{marginTop: 10}} type="danger"> 恢复初始化配置</Button>
+            <Popconfirm title={<FormattedMessage
+              id="app.components.resourceManage.dataSource.confirmRestoreDefault"
+              defaultMessage="确定恢复初始化配置？"
+            />} onConfirm={onReset} okText="Yes" cancelText="No">
+              <Button style={{marginTop: 10}} type="danger">
+                <FormattedMessage
+                  id="app.components.resourceManage.dataSource.restoreDefault"
+                  defaultMessage="恢复初始化配置"
+                />
+              </Button>
             </Popconfirm>
           </Col>
           <Col span={12}>

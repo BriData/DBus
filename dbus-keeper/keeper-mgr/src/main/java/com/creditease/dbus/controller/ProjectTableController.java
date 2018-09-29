@@ -143,7 +143,7 @@ public class ProjectTableController extends BaseController {
             "cdc_target_test_01.T.commitstream"
         ],
         "25": [
-            "db2.test.test_rule"
+            "testdb.test.test_rule"
         ]
      }
      }

@@ -53,11 +53,12 @@ public abstract class TableFetcher {
             PreparedStatement statement = conn.prepareStatement(buildQuery(params));
             fillParameters(statement, params);
             ResultSet resultSet = statement.executeQuery();
-            if(ds.getDsType().equals("mysql")){
+            if (ds.getDsType().equals("mysql")) {
                 return buildResultMySQL(resultSet);
-            }else{
+            } else if (ds.getDsType().equals("oracle")) {
                 return buildResultOracle(resultSet);
             }
+            return null;
         } finally {
             if (!conn.isClosed()) {
                 conn.close();
@@ -79,10 +80,10 @@ public abstract class TableFetcher {
         for (Map<String, Object> map : paramsList) {
             tableNames.add(String.valueOf(map.get("tableName")));
         }
-        List<List<TableMeta>> ret;
+        List<List<TableMeta>> ret = null;
         if(ds.getDsType().equals("mysql")){
             ret = tableFieldMysql(tableNames, resultSet);
-        }else{
+        }else if(ds.getDsType().equals("oracle")){
             ret = tableFieldOracle(tableNames, resultSet);
         }
         resultSet.close();
@@ -130,6 +131,7 @@ public abstract class TableFetcher {
         return list;
     }
 
+
     /**
      * @param tableNames
      * @param rs
@@ -155,6 +157,7 @@ public abstract class TableFetcher {
         }
         return ret;
     }
+
 
 
     /**

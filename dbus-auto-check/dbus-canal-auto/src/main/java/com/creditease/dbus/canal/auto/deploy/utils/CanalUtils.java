@@ -11,13 +11,13 @@ import java.io.InputStreamReader;
  */
 public class CanalUtils {
 
-    public static void start(String currentPath,BufferedWriter bw) throws Exception{
+    public static void start(String canalPath,BufferedWriter bw) throws Exception{
 
         bw.write("------------ starting canal.....");
         bw.newLine();
         try {
-            String startPath = currentPath+"/canal/bin/"+"startup.sh";
-            String stopPath = currentPath+"/canal/bin/"+"stop.sh";
+            String startPath = canalPath+"/bin/"+"startup.sh";
+            String stopPath = canalPath+"/bin/"+"stop.sh";
             String cmd = "sh "+stopPath;
             bw.write("exec: "+cmd);
             bw.newLine();
@@ -35,7 +35,7 @@ public class CanalUtils {
         }
     }
 
-    public static void copyLogfiles(String currentPath,String dsName,BufferedWriter bw){
+    public static void copyLogfiles(String canalPath,String dsName,BufferedWriter bw){
         try {
             //copy log file
             String cmd = "rm -f canal.log";
@@ -43,7 +43,7 @@ public class CanalUtils {
             bw.newLine();
             exec(cmd);
 
-            cmd = "ln -s " + currentPath + "/canal/logs/canal/canal.log canal.log";
+            cmd = "ln -s " + canalPath+"/logs/canal/canal.log canal.log";
             bw.write("exec: " + cmd);
             bw.newLine();
             exec(cmd);
@@ -53,7 +53,7 @@ public class CanalUtils {
             bw.newLine();
             exec(cmd);
 
-            cmd = "ln -s " + currentPath + "/canal/logs/"+dsName+"/"+dsName+".log "+ dsName+".log";
+            cmd = "ln -s " + canalPath+"/logs/"+dsName+"/"+dsName+".log "+ dsName+".log";
             bw.write("exec: " + cmd);
             bw.newLine();
             exec(cmd);

@@ -133,39 +133,57 @@ export default class NotifyConfigForm extends Component {
   render() {
     const columns = [
       {
-        title: 'schema',
+        title: <FormattedMessage
+          id="app.components.resourceManage.dataSchemaName"
+          defaultMessage="Schema名称"
+        />,
         dataIndex: 'schema',
         key: 'schema',
         render: this.renderComponent(this.renderNomal('schema'))
       },
       {
-        title: 'SMSNo',
+        title: <FormattedMessage
+          id="app.common.user.phone"
+          defaultMessage="手机号"
+        />,
         dataIndex: 'SMSNo',
         key: 'SMSNo',
         render: this.renderComponent(this.renderNomal('SMSNo'))
       },
       {
-        title: 'UseSMS',
-        width: 80,
+        title: <FormattedMessage
+          id="app.components.configCenter.heartbeatConfig.enableSMS"
+          defaultMessage="启用短信"
+        />,
+        width: 100,
         dataIndex: 'UseSMS',
         key: 'UseSMS',
         render: this.renderComponent(this.renderCheckbox('UseSMS'))
       },
       {
-        title: 'Email',
+        title: <FormattedMessage
+          id="app.common.user.email"
+          defaultMessage="邮箱"
+        />,
         dataIndex: 'Email',
         key: 'Email',
         render: this.renderComponent(this.renderNomal('Email'))
       },
       {
-        title: 'UseEmail',
-        width: 80,
+        title: <FormattedMessage
+          id="app.components.configCenter.heartbeatConfig.enableEmail"
+          defaultMessage="启用邮箱"
+        />,
+        width: 100,
         dataIndex: 'UseEmail',
         key: 'UseEmail',
         render: this.renderComponent(this.renderCheckbox('UseEmail'))
       },
       {
-        title: 'operation',
+        title: <FormattedMessage
+          id="app.common.operate"
+          defaultMessage="操作"
+        />,
         width: 100,
         dataIndex: 'operation',
         key: 'operation',
@@ -184,7 +202,12 @@ export default class NotifyConfigForm extends Component {
         />
         <Row style={{marginTop: 10}}>
           <Col span={24} style={{textAlign: 'right'}}>
-            <Button onClick={this.handleAdd}>添加</Button>
+            <Button onClick={this.handleAdd}>
+              <FormattedMessage
+                id="app.common.add"
+                defaultMessage="添加"
+              />
+            </Button>
           </Col>
         </Row>
       </div>

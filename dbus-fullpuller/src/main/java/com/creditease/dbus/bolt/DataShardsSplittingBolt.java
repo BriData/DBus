@@ -168,13 +168,6 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
         GenericJdbcManager dbManager = null;
 
         try {
-            //更新状态为splitting
-            JSONObject fullpullUpdateParams = new JSONObject();
-            fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
-            fullpullUpdateParams.put("status","splitting");
-            fullpullUpdateParams.put("start_split_time",FullPullHelper.getCurrentTimeStampString());
-            FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
-
             dbManager = FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY));
             //获取分片列
             String splitByCol = DBHelper.getSplitColumn(dbManager, dbConf);
@@ -228,7 +221,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
                         ((DataDrivenDBInputFormat.DataDrivenDBInputSplit)inputSplit).getLowerValue(),
                         ((DataDrivenDBInputFormat.DataDrivenDBInputSplit)inputSplit).getUpperValue());
             }
-            fullpullUpdateParams.clear();
+            JSONObject fullpullUpdateParams = new JSONObject();
             fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
             fullpullUpdateParams.put("version",version);
             fullpullUpdateParams.put("batch_id",batchNo);

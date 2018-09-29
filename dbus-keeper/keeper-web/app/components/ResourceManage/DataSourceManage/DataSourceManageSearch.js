@@ -36,6 +36,7 @@ export default class DataSourceManageSearch extends Component {
       'log_ums',
       'log_flume',
       'log_filebeat',
+      'jsonlog',
     ]
     return (
       <div className="form-search">
@@ -72,7 +73,10 @@ export default class DataSourceManageSearch extends Component {
                         value={dsType}
                         key={dsType}
                       >
-                        {dsType ? dsType : '请选择数据源类型'}
+                        {dsType ? dsType : <FormattedMessage
+                          id="app.components.resourceManage.dataSource.selectDatasourceType"
+                          defaultMessage="请选择数据源类型"
+                        />}
                       </Option>
                     ))}
                   </Select>

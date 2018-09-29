@@ -41,24 +41,24 @@ export default class KafkaReaderWrapper extends Component {
     readKafkaData(values)
   }
 
-  handleGetOffsetRange = topic => {
-    const {getOffsetRange} = this.props
-    getOffsetRange({topic})
-  }
+  // handleGetOffsetRange = topic => {
+  //   const {getOffsetRange} = this.props
+  //   getOffsetRange({topic})
+  // }
 
   render() {
     const topicList = (this.props.KafkaReaderData.topicList.result.payload || []).sort()
     const kafkaData = this.props.KafkaReaderData.kafkaData
-    const offsetRange = this.props.KafkaReaderData.offsetRange.result.payload || {}
+    // const offsetRange = this.props.KafkaReaderData.offsetRange.result.payload || {}
     console.info(this.props)
     return (
       <div>
         <KafkaReaderForm
           topicList={topicList}
           kafkaData={kafkaData}
-          offsetRange={offsetRange}
+          // offsetRange={offsetRange}
           onRead={this.handleRead}
-          onGetOffsetRange={this.handleGetOffsetRange}
+          // onGetOffsetRange={this.handleGetOffsetRange}
         />
       </div>
     )

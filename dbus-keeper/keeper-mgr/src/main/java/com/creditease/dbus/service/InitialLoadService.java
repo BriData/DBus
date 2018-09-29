@@ -225,6 +225,7 @@ public class InitialLoadService {
         }
     }
 
+
     public String getMysqlTables(Connection conn, DataTable tab) throws Exception {
         String sql = "select table_name from information_schema.tables t where t.table_schema = ?";
         PreparedStatement statement = null;
@@ -240,6 +241,41 @@ public class InitialLoadService {
                 name = rs.getString("table_name");
                 Matcher matcher = p.matcher(name);
                 if (matcher.matches()) {
+                    buf.append(name).append(";");
+                }
+            }
+            if (buf.length() > 0) {
+                buf.deleteCharAt(buf.length() - 1);
+            }
+            return buf.toString();
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (statement != null) {
+                statement.close();
+            }
+        }
+    }
+
+    public String getOracleTables(Connection conn, DataTable table) throws Exception {
+        String sql = "SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER= ?";
+        PreparedStatement statement = null;
+        ResultSet rs = null;
+        try {
+            statement = conn.prepareStatement(sql);
+            statement.setString(1, table.getSchemaName());
+            rs = statement.executeQuery();
+            StringBuilder buf = new StringBuilder();
+            String name = "";
+            Pattern p = Pattern.compile(table.getPhysicalTableRegex());
+            logger.info("正则表达式为：{}", table.getPhysicalTableRegex());
+            while (rs.next()) {
+                name = rs.getString("TABLE_NAME");
+                logger.info("查询到表名：{}",name);
+                Matcher matcher = p.matcher(name);
+                if (matcher.matches()) {
+                    logger.info("匹配到表名：{}",name);
                     buf.append(name).append(";");
                 }
             }

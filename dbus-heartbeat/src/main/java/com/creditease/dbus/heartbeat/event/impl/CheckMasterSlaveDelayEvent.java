@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,17 +79,17 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
 
                             if (!StringUtils.equals(dsNameWk, node.getDsName()) ||
                                 !StringUtils.equals(schemaNameWk, node.getSchema())) {
-                                boolean isMysql = DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MYSQL);
+                                // boolean isMysql = DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MYSQL);
                                 MasterSlaveDelayVo msdVo = new MasterSlaveDelayVo();
-                                HeartBeatMonitorVo masterHbmVo = dao.queryLatestHeartbeat(ds.getKey(), node.getDsName(), node.getSchema(), isMysql);
+                                HeartBeatMonitorVo masterHbmVo = dao.queryLatestHeartbeat(ds.getKey(), node.getDsName(), node.getSchema(), ds.getType());
                                 LOG.info("[check-master-slave-delay-event] key: {}, ds:{}, schema:{}, query result:{}",
                                         ds.getKey(), node.getDsName(), node.getSchema(), JsonUtil.toJson(masterHbmVo));
                                 long masterLatestTime = -1l;
                                 if (masterHbmVo != null) {
                                     msdVo.setMasterLatestTime(masterHbmVo.getCreateTime());
-                                    if (isMysql) {
+                                    if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MYSQL)) {
                                         masterLatestTime = DateUtil.convertStrToLong4Date(masterHbmVo.getCreateTime());
-                                    } else {
+                                    } else if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.ORACLE)) {
                                         masterLatestTime = DateUtil.convertStrToLong4Date(masterHbmVo.getCreateTime(), "yyyyMMdd HH:mm:ss.SSS");
                                     }
                                 } else {
@@ -98,15 +98,15 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
 
                                 if (StringUtils.isNotBlank(ds.getSlvaeUrl())) {
                                     String key = StringUtils.join(new String[] {ds.getKey(), "slave"}, "_");
-                                    HeartBeatMonitorVo slaveHbmVo = dao.queryLatestHeartbeat(key, node.getDsName(), node.getSchema(), isMysql);
+                                    HeartBeatMonitorVo slaveHbmVo = dao.queryLatestHeartbeat(key, node.getDsName(), node.getSchema(), ds.getType());
                                     LOG.info("[check-master-slave-delay-event] key: {}, ds:{}, schema:{}, query result:{}",
                                             key, node.getDsName(), node.getSchema(), JsonUtil.toJson(slaveHbmVo));
                                     long slaveLatestTime = -1l;
                                     if (slaveHbmVo != null) {
                                         msdVo.setSlaveLatestTime(slaveHbmVo.getCreateTime());
-                                        if (isMysql) {
+                                        if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MYSQL)) {
                                             slaveLatestTime = DateUtil.convertStrToLong4Date(slaveHbmVo.getCreateTime());
-                                        } else {
+                                        } else if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.ORACLE)) {
                                             slaveLatestTime = DateUtil.convertStrToLong4Date(slaveHbmVo.getCreateTime(), "yyyyMMdd HH:mm:ss.SSS");
                                         }
                                         msdVo.setDiff(masterLatestTime - slaveLatestTime);

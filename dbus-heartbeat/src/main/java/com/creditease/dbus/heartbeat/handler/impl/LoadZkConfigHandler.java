@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,8 @@ import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.resource.IResource;
 import com.creditease.dbus.heartbeat.resource.remote.HeartBeatConfigResource;
-import com.creditease.dbus.heartbeat.resource.remote.MaasConfigResource;
 import com.creditease.dbus.heartbeat.type.WatcherType;
 import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
-import com.creditease.dbus.heartbeat.vo.MaasVo;
-
 
 import org.apache.curator.framework.CuratorFramework;
 

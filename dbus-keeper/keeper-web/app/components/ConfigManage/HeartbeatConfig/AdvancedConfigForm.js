@@ -1,3 +1,4 @@
+import { FormattedMessage } from 'react-intl'
 import React, {PropTypes, Component} from 'react'
 import {Form, Select, Input, Row, Col, Button, Tabs} from 'antd'
 const TabPane = Tabs.TabPane;
@@ -5,7 +6,6 @@ const Textarea = Input.TextArea
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
-
 const FormItem = Form.Item
 const Option = Select.Option
 
@@ -93,7 +93,12 @@ export default class AdvancedConfigForm extends Component {
         <Form autoComplete="off" className="heartbeat-advance-config-form">
           {this.renderFormItems(config)}
           <FormItem {...tailFormItemLayout}>
-            <Button type="primary" onClick={onSave}>保存</Button>
+            <Button type="primary" onClick={onSave}>
+              <FormattedMessage
+                id="app.common.save"
+                defaultMessage="保存"
+              />
+            </Button>
           </FormItem>
         </Form>
       </div>

@@ -30,17 +30,23 @@ public class AutoCheckStart {
 
         try {
             String currentPath =System.getProperty("user.dir");
+
+
+            DeployPropsBean deployProps = FileUtils.readProps(currentPath+"/conf/"+DEPLOY_PROS_NAME,bw);
+            String dsName = deployProps.getDsName();
+
+            String basePath = currentPath+"/"+"canal";
+            File outdir = new File(currentPath,"reports");
+            if(!outdir.exists()) outdir.mkdirs();
             //init report file
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String strTime = sdf.format(new Date());
-            File reportFile = new File(currentPath, "canal_check_report" + strTime + ".txt");
+            File reportFile = new File(outdir, "canal_check_"+dsName+"_"+ strTime + ".txt");
             fos = new FileOutputStream(reportFile);
             osw = new OutputStreamWriter(fos);
             bw = new BufferedWriter(osw);
 
 
-            DeployPropsBean deployProps = FileUtils.readProps(currentPath+"/conf/"+DEPLOY_PROS_NAME,bw);
-            String basePath = currentPath+"/"+"canal";
 
             bw.write("************ CANAL CHECK BEGIN! ************");
             bw.newLine();

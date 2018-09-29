@@ -41,7 +41,7 @@ public abstract class SchemaFetcher {
         try {
             PreparedStatement statement = conn.prepareStatement(buildQuery());
             ResultSet resultSet = statement.executeQuery();
-            return buildResultMySQLAndOracle(resultSet);
+            return buildResult(resultSet);
         } finally {
             if (!conn.isClosed()) {
                 conn.close();
@@ -73,27 +73,28 @@ public abstract class SchemaFetcher {
         this.conn = conn;
     }
 
-    protected List<DataSchema> buildResultMySQLAndOracle(ResultSet rs) throws SQLException {
+    protected List<DataSchema> buildResult(ResultSet rs) throws SQLException {
         List<DataSchema> list = new ArrayList<>();
         DataSchema schema;
-        ResultSetMetaData rsm = rs.getMetaData();
-        int col = rsm.getColumnCount();
-        String colName = "";
-        for(int i = 0;i<col;i++)
-        {
-            colName = rsm.getColumnName(i + 1);
-        }
+        //ResultSetMetaData rsm = rs.getMetaData();
+        //int col = rsm.getColumnCount();
+        //String colName = "";
+        //for(int i = 0;i<col;i++)
+        //{
+        //    colName = rsm.getColumnName(i + 1);
+        //}
        // System.out.println(colName);
         while (rs.next()) {
             schema = new DataSchema();
-            if("USERNAME".equals(colName))
-            {
-                schema.setSchemaName(rs.getString("USERNAME"));
-            }
-            else //if("TABLE_SCHEMA".equals(colName))
-            {
-                schema.setSchemaName(rs.getString("TABLE_SCHEMA"));
-            }
+            //if("USERNAME".equals(colName))
+            //{
+            //    schema.setSchemaName(rs.getString("USERNAME"));
+            //}
+            //else //if("TABLE_SCHEMA".equals(colName))
+            //{
+            //    schema.setSchemaName(rs.getString("TABLE_SCHEMA"));
+            //}
+            schema.setSchemaName(rs.getString("SCHEMANAME"));
             schema.setStatus("active");
             list.add(schema);
         }

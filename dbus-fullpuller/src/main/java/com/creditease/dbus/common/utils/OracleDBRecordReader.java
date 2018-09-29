@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,38 +37,52 @@
  */
 package com.creditease.dbus.common.utils;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
+import com.creditease.dbus.common.utils.DataDrivenDBInputFormat.DataDrivenDBInputSplit;
 import com.creditease.dbus.manager.GenericJdbcManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.creditease.dbus.common.utils.DataDrivenDBInputFormat.DataDrivenDBInputSplit;
+import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * A RecordReader that reads records from an Oracle SQL table.
  */
 public class OracleDBRecordReader<T extends DBWritable>
-extends DBRecordReader<T>  {
+        extends DBRecordReader<T> {
 
-  /** Configuration key to set to a timezone string. */
-  public static final String SESSION_TIMEZONE_KEY = "oracle.sessionTimeZone";
+    /**
+     * Configuration key to set to a timezone string.
+     */
+    public static final String SESSION_TIMEZONE_KEY = "oracle.sessionTimeZone";
 
-  private Logger LOG = LoggerFactory.getLogger(getClass());
+    private Logger LOG = LoggerFactory.getLogger(getClass());
 
-  // CHECKSTYLE:OFF
-  public OracleDBRecordReader(GenericJdbcManager manager,
-      DBConfiguration dbConfig, DataDrivenDBInputSplit inputSplit,String [] fields, String table) throws SQLException {
-    super(manager, dbConfig, inputSplit, fields, table);
+    // CHECKSTYLE:OFF
+    public OracleDBRecordReader(GenericJdbcManager manager,
+                                DBConfiguration dbConfig, DataDrivenDBInputSplit inputSplit, String[] fields, String table) throws SQLException {
+        super(manager, dbConfig, inputSplit, fields, table);
 //    setSessionTimeZone(conf, conn);
-  }
-  // CHECKSTYLE:ON
+    }
+    // CHECKSTYLE:ON
 
+    public String getMetaSql() {
+        String tableName = getSplit().getTargetTableName();
+        String tableOwner = null;
+        String shortTableName = null;
+        int qualifierIndex = tableName.indexOf('.');
+        tableOwner = tableName.substring(0, qualifierIndex);
+        shortTableName = tableName.substring(qualifierIndex + 1);
 
-  /** Returns the query for selecting the records from an Oracle DB. */
-  @Override
+        return "SELECT COLUMN_NAME columnName, DATA_TYPE columnTypeName, DATA_PRECISION PRECISION, DATA_SCALE SCALE, " +
+                "NULLABLE isNullable FROM ALL_TAB_COLUMNS WHERE  OWNER='" + tableOwner + "' AND TABLE_NAME = '" + shortTableName + "'";
+    }
+
+    /**
+     * Returns the query for selecting the records from an Oracle DB.
+     */
+    @Override
     public String getSelectQuery() throws Exception {
         StringBuilder query = new StringBuilder();
         DBConfiguration dbConf = getDBConf();

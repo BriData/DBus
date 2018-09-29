@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,12 @@
 
 package com.creditease.dbus.commons;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.annotation.JSONField;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 
 
 /**
@@ -55,6 +55,8 @@ public class StatMessage {
     private long count;
     private long errorCount;
     private long warningCount;
+
+    private long offset;
 
     @JSONField(format="yyyy-MM-dd HH:mm:ss.SSS")
     private Date checkpointTime;
@@ -134,6 +136,7 @@ public class StatMessage {
         msg.setCheckpointMS(System.currentTimeMillis());
         msg.setLocalMS(System.currentTimeMillis());
         msg.setCount(123);
+        msg.setOffset(6666666);
         msg.addPayload("key1", "value1");
 
         String jsonString = msg.toJSONString();
@@ -273,5 +276,13 @@ public class StatMessage {
 
     public void setPayload(Map<String, Object> payload) {
         this.payload = payload;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(long offset) {
+        this.offset = offset;
     }
 }

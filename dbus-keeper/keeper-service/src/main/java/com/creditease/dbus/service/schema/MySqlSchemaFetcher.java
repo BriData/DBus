@@ -32,7 +32,7 @@ public class MySqlSchemaFetcher extends SchemaFetcher{
 
     @Override
     public String buildQuery() {
-        String sql ="select distinct(TABLE_SCHEMA) from information_schema.TABLES";
+        String sql ="select distinct(TABLE_SCHEMA) schemaname from information_schema.TABLES";
         return sql;
     }
 

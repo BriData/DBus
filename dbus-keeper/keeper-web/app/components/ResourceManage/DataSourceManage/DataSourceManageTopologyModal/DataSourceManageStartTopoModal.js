@@ -40,7 +40,7 @@ export default class DataSourceManageStartTopoModal extends Component {
 
   handleTypeChange = value => {
     this.setState({type: value})
-    this.props.form.setFieldsValue({minorVersion: null})
+    this.props.form.setFieldsValue({version: null, minorVersion: null})
   }
 
   handleStart = () => {
@@ -86,8 +86,8 @@ export default class DataSourceManageStartTopoModal extends Component {
     const {jarInfos} = this.props
     const { getFieldDecorator } = this.props.form
     const {version, type} = this.state
-    const versionList = Array.from(new Set(jarInfos.map(jar => jar.version)))
-    const typeList = Array.from(new Set(jarInfos.filter(jar => jar.version === version).map(jar => jar.type)))
+    const typeList = Array.from(new Set(jarInfos.map(jar => jar.type)))
+    const versionList = Array.from(new Set(jarInfos.filter(jar => jar.type === type).map(jar => jar.version)))
     const minorVersionList = Array.from(new Set(jarInfos.filter(jar => jar.version === version && jar.type === type).map(jar => jar.minorVersion)))
     const formItemLayout = {
       labelCol: {
@@ -114,21 +114,37 @@ export default class DataSourceManageStartTopoModal extends Component {
           visible={visible}
           maskClosable={false}
           width={1000}
-          title={`Start Topology --- ${record.topologyName}`}
+          title={<div>
+            <FormattedMessage
+              id="app.components.toolset.globalFullPull.startTopology"
+              defaultMessage="启动拓扑"
+            /> --- {record.topologyName}
+          </div>}
           onCancel={onClose}
-          footer={[<Button type="primary" onClick={onClose}> 返 回 </Button>]}
+          footer={[<Button type="primary" onClick={onClose}>
+            <FormattedMessage
+              id="app.common.back"
+              defaultMessage="返回"
+            />
+          </Button>]}
         >
           <Form autoComplete="off"
             className="data-source-start-topo-form"
           >
-            <FormItem label="数据源名称" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.resourceManage.dataSourceName"
+              defaultMessage="数据源名称"
+            />} {...formItemLayout}>
               {getFieldDecorator('dsName', {
                 initialValue: dataSource.name,
               })(<Input disabled={true} size="large" type="text" />)}
             </FormItem>
 
             <FormItem
-              label={"Type"} {...formItemLayout}
+              label={<FormattedMessage
+                id="app.components.resourceManage.dataSourceType"
+                defaultMessage="数据源类型"
+              />} {...formItemLayout}
             >
               {getFieldDecorator('type', {
                 initialValue: type,
@@ -141,7 +157,6 @@ export default class DataSourceManageStartTopoModal extends Component {
               })(
                 <Select
                   showSearch
-                  disabled={true}
                   optionFilterProp='children'
                   className={styles.select}
                   placeholder="Select type"
@@ -155,7 +170,10 @@ export default class DataSourceManageStartTopoModal extends Component {
             </FormItem>
 
             <FormItem
-              label={"Version"} {...formItemLayout}
+              label={<FormattedMessage
+                id="app.common.version"
+                defaultMessage="版本"
+              />} {...formItemLayout}
             >
               {getFieldDecorator('version', {
                 initialValue:null,
@@ -181,7 +199,10 @@ export default class DataSourceManageStartTopoModal extends Component {
             </FormItem>
 
             <FormItem
-              label={"Minor Version"} {...formItemLayout}
+              label={<FormattedMessage
+                id="app.components.resourceManage.minorVersion"
+                defaultMessage="小版本"
+              />} {...formItemLayout}
             >
               {getFieldDecorator('minorVersion', {
                 initialValue: null,
@@ -205,19 +226,30 @@ export default class DataSourceManageStartTopoModal extends Component {
               )}
             </FormItem>
 
-            <FormItem label="启动说明" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.components.toolset.globalFullPull.startDescription"
+              defaultMessage="启动说明"
+            />} {...formItemLayout}>
               {getFieldDecorator('desc', {
                 initialValue: null,
               })(<Input size="large" type="text" />)}
             </FormItem>
-            <FormItem label="Log" {...formItemLayout}>
+            <FormItem label={<FormattedMessage
+              id="app.common.log"
+              defaultMessage="日志"
+            />} {...formItemLayout}>
               {getFieldDecorator('log', {
                 initialValue: null,
               })(<TextArea wrap='off' readOnly autosize={{minRows:10,maxRows:20}}/>)}
 
             </FormItem>
             <FormItem {...tailItemLayout}>
-              <Button type="primary" loading={loading} onClick={this.handleStart}>启动</Button>
+              <Button type="primary" loading={loading} onClick={this.handleStart}>
+                <FormattedMessage
+                  id="app.components.resourceManage.dataTable.start"
+                  defaultMessage="启动"
+                />
+              </Button>
             </FormItem>
 
           </Form>

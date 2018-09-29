@@ -2,7 +2,7 @@
  * @author 戎晓伟
  * @description  Sink信息设置
  */
-
+import { FormattedMessage } from 'react-intl'
 import React, { PropTypes, Component } from 'react'
 import { Modal,Button, Input} from 'antd'
 const TextArea = Input.TextArea
@@ -33,9 +33,17 @@ export default class ProjectTopologyStartModal extends Component {
       <Modal
         closable={false}
         width={1000}
-        title={'日志'}
+        title={<FormattedMessage
+          id="app.common.log"
+          defaultMessage="日志"
+        />}
         visible={visible}
-        footer={[<Button loading={loading} type="primary" onClick={onClose}> 返 回 </Button>]}
+        footer={[<Button loading={loading} type="primary" onClick={onClose}>
+          <FormattedMessage
+            id="app.common.back"
+            defaultMessage="返回"
+          />
+        </Button>]}
         maskClosable={false}
       >
         <TextArea ref={ref => (this.textarea = ref)} rows={12} value={startTopoModalLog} wrap='off'/>

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,19 +30,23 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.dao.ILoadDbusConfigDao;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
-import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DBUtil;
-import com.creditease.dbus.heartbeat.vo.*;
+import com.creditease.dbus.heartbeat.vo.DsVo;
+import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
+import com.creditease.dbus.heartbeat.vo.ProjectMonitorNodeVo;
+import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
+import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
 
 import org.apache.commons.lang.StringUtils;
 
 public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
 
-    private String getQuerySidConfigSql() {
+    private String getQuerySidConfigSql(String dsName) {
         StringBuilder sql = new StringBuilder();
         sql.append(" select ");
         sql.append("     ds_name,");
@@ -58,6 +62,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append("     t_dbus_datasource ");
         sql.append(" where ");
         sql.append("     status = 'active' ");
+        sql.append("     and ds_name not in (" + dsName + ")");
         return sql.toString();
     }
 
@@ -69,7 +74,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         List<DsVo> list = new ArrayList<DsVo>();
         try {
             conn = DataSourceContainer.getInstance().getConn(key);
-            ps = conn.prepareStatement(getQuerySidConfigSql());
+            ps = conn.prepareStatement(getQuerySidConfigSql(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema()));
+            // ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             rs = ps.executeQuery();
             while (rs.next()) {
                 DsVo vo = new DsVo();
@@ -81,10 +87,10 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
                 vo.setKey(rs.getString("ds_name"));
                 vo.setDsPartition(rs.getString("ds_partition"));
                 vo.setCtrlTopic(rs.getString("ctrl_topic"));
-                if (StringUtils.equals(Constants.CONFIG_DB_TYPE_ORA, vo.getType())) {
-                    vo.setDriverClass(Constants.DB_DRIVER_CLASS_ORA);
-                } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_MYSQL, vo.getType())) {
-                    vo.setDriverClass(Constants.DB_DRIVER_CLASS_MYSQL);
+                if (DbusDatasourceType.stringEqual(vo.getType(), DbusDatasourceType.ORACLE)) {
+                    vo.setDriverClass(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.ORACLE));
+                } else if (DbusDatasourceType.stringEqual(vo.getType(), DbusDatasourceType.MYSQL)) {
+                    vo.setDriverClass(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.MYSQL));
                 }
                 list.add(vo);
             }
@@ -99,7 +105,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         return list;
     }
 
-    private String getQueryMonitorNodeSql() {
+    private String getQueryMonitorNodeSql(String dsName) {
         StringBuilder sql = new StringBuilder();
         sql.append(" select ");
         sql.append("     dbus.ds_name,");
@@ -113,7 +119,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append(" where ");
         sql.append("     dbus.id = tds.ds_id");
         sql.append("     and dbus.status = 'active'");
-        sql.append("     and tds.schema_name not in (?)");
+//        sql.append("     and tds.schema_name not in (?)");
+        sql.append("     and dbus.ds_name not in (" + dsName + ")");
         sql.append("     and tds.status = 'active'");
         sql.append("     and tds.id = tdt.schema_id");
         sql.append("     and tdt.status <> 'inactive'");
@@ -345,8 +352,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         Set<MonitorNodeVo> list = new LinkedHashSet<>();
         try {
             conn = DataSourceContainer.getInstance().getConn(key);
-            ps = conn.prepareStatement(getQueryMonitorNodeSql());
-            ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+            ps = conn.prepareStatement(getQueryMonitorNodeSql(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema()));
+            // ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             Set<String> excludeSchema = getExcludeDbSchema(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -369,7 +376,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         return list;
     }
 
-    private String queryTargetTopicSql() {
+    private String queryTargetTopicSql(String dsName) {
         StringBuilder sql = new StringBuilder();
         sql.append(" select ");
         sql.append("     dbus.ds_name,");
@@ -383,7 +390,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append(" where ");
         sql.append("     dbus.id = tds.ds_id");
         sql.append("     and dbus.status = 'active'");
-        sql.append("     and tds.schema_name not in (?)");
+//        sql.append("     and tds.schema_name not in (?)");
+        sql.append("     and dbus.ds_name not in (" + dsName + ")");
         sql.append("     and tds.status = 'active'");
         sql.append("     and tds.id = tdt.schema_id");
         sql.append("     and tdt.status <> 'inactive'");
@@ -400,8 +408,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         Set<TargetTopicVo> list = new HashSet<TargetTopicVo>();
         try {
             conn = DataSourceContainer.getInstance().getConn(key);
-            ps = conn.prepareStatement(queryTargetTopicSql());
-            ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+            ps = conn.prepareStatement(queryTargetTopicSql(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema()));
+            // ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             rs = ps.executeQuery();
             Set<String> excludeSchema = getExcludeDbSchema(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             while (rs.next()) {

@@ -27,6 +27,7 @@ public class InitZooKeeperNodesTemplate {
 			"ConfTemplates/Topology/dbus-fulldata-splitter/common-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-splitter/consumer-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-splitter/oracle-config.properties",
+			"ConfTemplates/Topology/dbus-fulldata-splitter/mysql-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-splitter/string-producer-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-splitter/placeholder-fullsplitter/common-config.properties",
 
@@ -34,6 +35,7 @@ public class InitZooKeeperNodesTemplate {
 			"ConfTemplates/Topology/dbus-fulldata-puller/common-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-puller/consumer-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-puller/oracle-config.properties",
+			"ConfTemplates/Topology/dbus-fulldata-puller/mysql-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-puller/string-producer-config.properties",
 			"ConfTemplates/Topology/dbus-fulldata-puller/placeholder-fullpuller/common-config.properties",
 
@@ -85,14 +87,16 @@ public class InitZooKeeperNodesTemplate {
 			"Extractor",
 			"Topology",
 			"Router",
-			"HeartBeat/ProjectMonitor"
+			"HeartBeat/ProjectMonitor",
+			"Commons/global.properties"
 	};
 
 	public static String[] ZK_PROTECT_NODES_PATHS = {
-			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/byte-producer-config.properties",
+			/*"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/byte-producer-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/common-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/consumer-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/oracle-config.properties",
+			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/mysql-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/string-producer-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-splitter/placeholder-fullsplitter/common-config.properties",
 
@@ -100,6 +104,7 @@ public class InitZooKeeperNodesTemplate {
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-puller/common-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-puller/consumer-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-puller/oracle-config.properties",
+			"/DBus/ConfTemplates/Topology/dbus-fulldata-puller/mysql-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-puller/string-producer-config.properties",
 			"/DBus/ConfTemplates/Topology/dbus-fulldata-puller/placeholder-fullpuller/common-config.properties",
 
@@ -147,6 +152,6 @@ public class InitZooKeeperNodesTemplate {
 			"/DBus/Extractor",
 			"/DBus/Topology",
 			"/DBus/Router",
-			"/DBus/HeartBeat/ProjectMonitor"
+			"/DBus/HeartBeat/ProjectMonitor"*/
 	};
 }

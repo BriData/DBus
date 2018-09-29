@@ -154,7 +154,8 @@ public class DataSchemaService {
             return result.getBody();
 
         /* 插入table的信息到源端库: LOG_XX 类型不需要*/
-        if(DbusDatasourceType.ORACLE == datasourceType || DbusDatasourceType.MYSQL == datasourceType){
+        if(
+            DbusDatasourceType.ORACLE == datasourceType || DbusDatasourceType.MYSQL == datasourceType){
             //构造sourceTablesBean的参数
             SourceTablesBean sourceTablesBean = new SourceTablesBean();
             List<DataTable> sourceTables = new ArrayList<>();

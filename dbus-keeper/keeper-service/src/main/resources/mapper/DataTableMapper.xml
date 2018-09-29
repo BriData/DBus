@@ -197,4 +197,30 @@
     left join t_meta_version t3 on t1.ver_id = t3.id
     order by t1.create_time desc
   </select>
+  <select id="findTablesByUserId" resultType="java.util.Map" parameterType="java.lang.Integer">
+    SELECT
+      tt.id,
+      pt.topo_name,
+      dt.table_name,
+      dt.physical_table_regex,
+      tt.output_topic,
+      dt.schema_name,
+      dd.ds_name,
+      dd.ds_type,
+      dd.ctrl_topic,
+      mv.version,
+      dt.create_time,
+      s.url
+    FROM
+        t_project_topo_table tt
+    JOIN t_project_topo pt ON tt.topo_id = pt.id
+    JOIN t_sink s ON tt.sink_id = s.id
+    JOIN t_project_user pu ON tt.project_id = pu.project_id
+    AND pu.user_id = #{userId}
+    JOIN t_data_tables dt ON tt.table_id = dt.id
+    LEFT JOIN t_dbus_datasource dd ON dt.ds_id = dd.id
+    LEFT JOIN t_meta_version mv ON dt.ver_id = mv.id
+    ORDER BY
+        dt.create_time DESC
+  </select>
 </mapper>

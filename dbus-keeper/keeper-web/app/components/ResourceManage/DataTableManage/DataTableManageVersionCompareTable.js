@@ -79,6 +79,7 @@ export default class DataTableManageVersionCompareTable extends Component {
     const {content} = this.props
     return (
       <div style={{
+        maxHeight: 420,
         overflowX: "auto",
         overflowY: "auto",
         width: "100%"

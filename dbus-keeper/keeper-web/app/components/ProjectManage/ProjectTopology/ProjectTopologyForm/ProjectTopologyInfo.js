@@ -130,7 +130,7 @@ export default class ProjectTopologyInfo extends Component {
     const packagesMap = Object.values(packages.result)
     return (
       <Form autoComplete="off" layout="horizontal">
-        <FormItem label="Topo名称" {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.common.topo" defaultMessage="拓扑" />} {...this.formItemLayout}>
           {getFieldDecorator('topoName', {
             initialValue: (topology && topology.topoName) || '',
             rules: [
@@ -153,12 +153,12 @@ export default class ProjectTopologyInfo extends Component {
           )}
         </FormItem>
         {/* topoName,topoName,jarVersion,jarFilePath,status,topoComment,projectId */}
-        <FormItem label="配置项" {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.config" defaultMessage="配置项" />} {...this.formItemLayout}>
           {getFieldDecorator('topoConfig', {
             initialValue: (topology && topology.topoConfig) || ''
           })(<Input type="textarea" wrap='off' autosize={{minRows: 5, maxRows: 10}} placeholder={'请输入配置项'} />)}
         </FormItem>
-        <FormItem label="Jar版本" {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.jarVersion" defaultMessage="Jar版本" />} {...this.formItemLayout}>
           {getFieldDecorator('jarVersion', {
             initialValue: topology && topology.jarVersion || versionsMap[0] || '暂无数据可选'
           })(
@@ -175,7 +175,7 @@ export default class ProjectTopologyInfo extends Component {
             </Select>
           )}
         </FormItem>
-        <FormItem label="Jar包" {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.jarName" defaultMessage="Jar包" />} {...this.formItemLayout}>
           {getFieldDecorator('jarFilePath', {
             initialValue: topology && topology.jarFilePath || packagesMap[0] || '暂无数据可选'
           })(
@@ -196,7 +196,7 @@ export default class ProjectTopologyInfo extends Component {
             </Select>
           )}
         </FormItem>
-        <FormItem label="备注" {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.common.user.backup" defaultMessage="备注" />} {...this.formItemLayout}>
           {getFieldDecorator('topoComment', {
             initialValue: (topology && topology.topoComment) || ''
           })(<Input type="textarea" rows="4" placeholder={'请输入备注信息'} />)}

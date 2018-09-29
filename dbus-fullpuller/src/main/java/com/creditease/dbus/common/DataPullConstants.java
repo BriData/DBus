@@ -22,6 +22,7 @@ package com.creditease.dbus.common;
 
 public class DataPullConstants {
     public static final String ZK_NODE_NAME_ORACLE_CONF = "oracle-config";
+    public static final String ZK_NODE_NAME_MYSQL_CONF = "mysql-config";
 
     public static final String DATA_SOURCE_INFO = "data.source.param";
     public static final String DATA_SOURCE_NAME_SPACE = "dsNameSpace";
