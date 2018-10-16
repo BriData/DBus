@@ -160,7 +160,7 @@ FLUSH PRIVILEGES;
 - canal目录是自带的canal，该文件夹不能重命名，否则脚本会运行失败。
 - conf 目录下的canal-auto.properties是需要用户配置的
 - lib 目录不用关心
-- start.sh 自动化脚本
+- deploy.sh 自动化脚本
 
 
 **2) 脚本使用：canal自动部署和检查：**
@@ -185,7 +185,7 @@ canal.pwd=Canal&*(789
 
 
 
-替换完毕后，执行sh start.sh。 它会自动检查你填写的canal-auto.properties文件中内容。包括canal账户可用性，zk的连通性等。如果检查通过，会自动启动canal。
+替换完毕后，执行sh deploy.sh。 它会自动检查你填写的canal-auto.properties文件中内容。包括canal账户可用性，zk的连通性等。如果检查通过，会自动启动canal。
 如果启动成功，会打印出“canal 进程启动成功 ”字样，如下图所示。**但是canal进程在配置出错的情况下也能启动起来，所以最后需要检查下日志文件中是否有异常 **（脚本会在当前文件下创建日志文件的链接，可以直接查看）。同时，这些报告信息会在“canal_deploy _report”打头的日志文件中保留一份，方便查看。
 ![canal-auto-deploy-success](img/install-mysql/canal-auto-deploy-success.png)
 
@@ -195,7 +195,7 @@ canal.pwd=Canal&*(789
 
   **b.自动check：**
 
-  直接执行脚本执行sh start.sh，会执行配置的检测、自动替换和启动着几个动作。该脚本同时还提供单独的检测功能。执行sh start.sh check.即加上check参数，输出结果与自动部署类似。提醒：此处检查的是canal进行，还需要查看当前文件夹下日志文件中有无异常。同时，报告信息会在“canal_check _report”打头的日志文件中保留一份，方便查看。
+  直接执行脚本执行sh deploy.sh，会执行配置的检测、自动替换和启动着几个动作。该脚本同时还提供单独的检测功能。执行sh deploy.sh check.即加上check参数，输出结果与自动部署类似。提醒：此处检查的是canal进行，还需要查看当前文件夹下日志文件中有无异常。同时，报告信息会在“canal_check _report”打头的日志文件中保留一份，方便查看。
 
   ```properties
   
@@ -260,6 +260,11 @@ report文件： canal_deploy_report20180816152937.txt
 Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，而此文件打包在canal.parse-1.0.22.jar包中，因此在canal server包解压之后，需要按照替换解压后的canal目录中lib下的canal.parse-1.0.22.jar文件。
 
 可用https://github.com/BriData/DBus/blob/master/third-party-packages/canal/canal.parse-1.0.22.jar替换上述原始jar包。
+
+
+**如何部署多个canal实例？**
+
+脚本提供多次部署的能力。重复执行：修改conf/canal-auto.properties文件-->sh deplogy.sh，可以部署多个canal实例。每次执行会根据canal-auto.properties中配置的“dsname”作为后缀，生成相应的文件，如：配置“dsname=testdb”，执行脚本后，在当前目录下生成canal-testdb目录，即为一个canal部署实例；再次修改配置文件，设置“dsname=testdb2”，运行后会生成另外一个实例目录：canal-testdb2。
 
 ## 3 Dbus一键加线
 
