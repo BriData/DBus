@@ -104,3 +104,12 @@ grant select on db1.table to dbus;
 ```sql
 在/apache-storm-1.0.1/bin/storm脚本最上面增加java环境变量export JAVA_HOME=/opt/programs/jdk1.8.0_152export JRE_HOME=/opt/programs/jdk1.8.0_152/jreexport CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/libexport PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
 ```
+## Q9:关系型数据库，拉全量卡死，Topo重启
+
+关系型数据库数据类型多种多样。当类型为char/varchar的列被作为分片列，里面存储的是普通字符串，或md5/uuid编码后的字符串，拉全量会遇到困难，因为分片的上下界不是列式数字那样的简单的比较了。对于这样的列，如不做特殊配置，dbus按片拉取的时候可能会出现长时间卡死，导致全量拉取topology重启。具体原因可参考：https://mp.weixin.qq.com/s?__biz=MzU4MTUwMTI4Mw==&mid=2247483749&idx=1&sn=e03d8c9a1e7db56c2615a8cebc289a73&chksm=fd47e969ca30607f5d42d0e5f5b227481526a56e0814ef6242d0046786bbac58241b01aa2d07&scene=0#rd
+
+所以，当分片列为md5、uuid或普通字符串时，建议进行拆片风格的特殊配置，以保证dbus顺利拉取全量数据。
+
+具体配置步骤如下：
+
+![encode-project-user](img/manual/md5conf_1.png)![encode-project-user](img/manual/md5conf_2.png)
