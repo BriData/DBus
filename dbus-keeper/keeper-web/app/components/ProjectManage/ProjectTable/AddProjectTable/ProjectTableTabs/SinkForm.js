@@ -225,7 +225,7 @@ export default class SinkForm extends Component {
                   .toLowerCase()
                   .indexOf(input.toLowerCase()) >= 0
               }
-              placeholder="Please select favourite colors"
+              placeholder="Please select topic"
               onChange={value => this.handleSelectBlur(value, 'outputTopic')}
             >
               {topicListArray.length > 0 &&

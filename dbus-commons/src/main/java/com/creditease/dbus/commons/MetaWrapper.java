@@ -294,7 +294,6 @@ public class MetaWrapper implements Serializable {
         public boolean isSupported() {
             return SupportedOraDataType.isSupported(getDataType()) && !isHidden() && !isVirtual();
         }
-
         public boolean isHidden() {
             return hiddenColumn != null && "YES".equals(hiddenColumn);
         }

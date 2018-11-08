@@ -27,16 +27,16 @@
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
       SELECT LAST_INSERT_ID()
     </selectKey>
-    insert into t_project_topo_table_encode_output_columns (project_topo_table_id, field_name, encode_plugin_id, 
-      field_type, data_length, encode_type, 
-      encode_param, desc_, truncate, 
-      encode_source, update_time, schema_change_flag, 
+    insert into t_project_topo_table_encode_output_columns (project_topo_table_id, field_name, encode_plugin_id,
+      field_type, data_length, encode_type,
+      encode_param, desc_, truncate,
+      encode_source, update_time, schema_change_flag,
       data_scale, data_precision, schema_change_comment
       )
-    values (#{projectTopoTableId,jdbcType=INTEGER}, #{fieldName,jdbcType=VARCHAR}, #{encodePluginId,jdbcType=INTEGER}, 
-      #{fieldType,jdbcType=VARCHAR}, #{dataLength,jdbcType=INTEGER}, #{encodeType,jdbcType=VARCHAR}, 
-      #{encodeParam,jdbcType=VARCHAR}, #{desc,jdbcType=VARCHAR}, #{truncate,jdbcType=INTEGER}, 
-      #{encodeSource,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT}, 
+    values (#{projectTopoTableId,jdbcType=INTEGER}, #{fieldName,jdbcType=VARCHAR}, #{encodePluginId,jdbcType=INTEGER},
+      #{fieldType,jdbcType=VARCHAR}, #{dataLength,jdbcType=INTEGER}, #{encodeType,jdbcType=VARCHAR},
+      #{encodeParam,jdbcType=VARCHAR}, #{desc,jdbcType=VARCHAR}, #{truncate,jdbcType=INTEGER},
+      #{encodeSource,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT},
       #{dataScale,jdbcType=INTEGER}, #{dataPrecision,jdbcType=INTEGER}, #{schemaChangeComment,jdbcType=VARCHAR}
       )
   </insert>
@@ -262,5 +262,14 @@
         <if test="schemaName != null">AND dt.schema_name like "%"#{schemaName}"%"</if>
         <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
     </where>
+  </select>
+  <select id="selectByTopoTableId" resultMap="BaseResultMap">
+    SELECT
+      *
+    FROM
+      t_project_topo_table_encode_output_columns columns
+    WHERE
+      columns.project_topo_table_id = #{topoTableId,jdbcType=INTEGER}
+      AND columns.encode_source = 0
   </select>
 </mapper>

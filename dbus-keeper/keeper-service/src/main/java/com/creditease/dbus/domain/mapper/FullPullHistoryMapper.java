@@ -45,5 +45,4 @@ public interface FullPullHistoryMapper {
 
     List<Map<String,Object>> getProjectNames(Map<String, Object> param);
 
-    void updateReqMsgOffset(FullPullHistory history);
 }

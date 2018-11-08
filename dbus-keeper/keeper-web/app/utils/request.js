@@ -35,6 +35,8 @@ export function setToken (token) {
 
 export function removeToken () {
   delete axios.defaults.headers.common['Authorization']
+  document.cookie = `token=`
+  document.cookie = `TOKEN=`
 }
 
 export function getUserInfo () {

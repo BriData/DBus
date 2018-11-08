@@ -125,7 +125,7 @@ public class ToolSetController extends BaseController {
     @PostMapping(path = "kafkaReader", consumes = "application/json")
     public ResultEntity kafkaReader(@RequestBody Map<String, String> map) {
         try {
-            return toolSetService.kafkaReader(map);
+            return toolSetService.kafkaReader(map, currentUserId(), currentUserRole());
         } catch (Exception e) {
             logger.error("Exception encountered while request kafkaReader", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
@@ -141,6 +141,21 @@ public class ToolSetController extends BaseController {
     public ResultEntity getTopics(String bootstrapServers, String param) {
         try {
             return resultEntityBuilder().payload(toolSetService.getTopics(bootstrapServers, param)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request getTopics", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    /**
+     * @param bootstrapServers 暂时不需要,预留
+     * @param param            topic名称过滤参数
+     * @return
+     */
+    @GetMapping("getTopicsByUser")
+    public ResultEntity getTopicsByUserId(String bootstrapServers, String param) {
+        try {
+            return resultEntityBuilder().payload(toolSetService.getTopicsByUserId(bootstrapServers, param, currentUserId(), currentUserRole())).build();
         } catch (Exception e) {
             logger.error("Exception encountered while request getTopics", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
@@ -164,7 +179,7 @@ public class ToolSetController extends BaseController {
         }
     }
 
-    @GetMapping("sendCtrlMessageEasy")
+    @GetMapping("/sendCtrlMessageEasy")
     public ResultEntity sendCtrlMessageEasy(Integer dsId, String dsName, String dsType) {
         try {
             toolSetService.sendCtrlMessageEasy(dsId, dsName, dsType);

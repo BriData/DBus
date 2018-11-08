@@ -23,13 +23,16 @@ package com.creditease.dbus.stream.dispatcher.helper;
 import com.creditease.dbus.commons.ConnectionProvider;
 import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.google.common.base.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Created by dongwang47 on 2016/8/17.
@@ -140,6 +143,8 @@ public class DBHelper {
 
         return schemaTopicProps;
     }
+
+
 
     public void close() {
         try {

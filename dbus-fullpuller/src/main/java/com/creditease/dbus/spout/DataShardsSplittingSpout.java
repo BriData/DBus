@@ -122,7 +122,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                     consumer, commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_SRC_TOPIC));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             throw new InitializationException();
         }
         LOG.info("Splitting Spout {} is started!", topologyId);
@@ -316,20 +316,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             LOG.error("Exception Info:{}", e);
             return false;
         } finally {
-            try {
-                if (ret != null) {
-                    ret.close();
-                }
-                if (pst != null) {
-                    pst.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                LOG.error("Exception Info:{}", e);
-            }
-
+            DBHelper.close(conn, pst, ret);
         }
     }
 
@@ -376,22 +363,8 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         } catch (Exception e) {
             LOG.error("Exception Info:{}", e);
         } finally {
-            try {
-                if (ret != null) {
-                    ret.close();
-                }
-                if (pst != null) {
-                    pst.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                LOG.error("Exception Info:{}", e);
-            }
+            DBHelper.close(conn, pst, ret);
         }
-
-
     }
 
     /**
@@ -536,19 +509,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
         } catch (Exception e) {
             LOG.error("Exception happened when try to get newest version from mysql db. Exception Info:", e);
         } finally {
-            try {
-                if (ret != null) {
-                    ret.close();
-                }
-                if (pst != null) {
-                    pst.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                LOG.error("Exception Info:", e);
-            }
+            DBHelper.close(conn, pst, ret);
         }
 
         try {

@@ -31,6 +31,7 @@ export default class DataSourceManageSearch extends Component {
       null,
       'mysql',
       'oracle',
+      'mongo',
       'log_logstash',
       'log_logstash_json',
       'log_ums',

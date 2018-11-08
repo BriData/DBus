@@ -127,8 +127,9 @@ export default class ProjectResourceWrapper extends Component {
   }
 
   handleSearchProject = () => {
-    const { searchProject } = this.props
-    searchProject({ __user_id: 88, __role_type: 'admin' })
+    const { projectResourceData } = this.props
+    const { resourceParams } = projectResourceData
+    this.handleSearch(resourceParams)
   };
 
   /**

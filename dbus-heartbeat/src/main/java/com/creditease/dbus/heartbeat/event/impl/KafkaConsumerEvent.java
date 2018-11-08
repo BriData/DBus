@@ -237,7 +237,8 @@ public class KafkaConsumerEvent extends AbstractEvent {
                         if (isTableOK) {
                             //更新zk表状态时间
                             String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-                            path = StringUtils.join(new String[]{path, dsName, schemaName, tableName, dsPartition}, "/");
+                                path = StringUtils.join(new String[]{path, dsName, schemaName, tableName, dsPartition}, "/");
+
                             // 反序列化packet信息
                             PacketVo packet = deserialize(path, PacketVo.class);
                             if (packet == null &&

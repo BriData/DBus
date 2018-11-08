@@ -74,12 +74,7 @@
             <artifactId>json-path</artifactId>
             <version>2.3.0</version>
         </dependency>
-
-
         <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
-
-
-
 
         <!-- 你需要添加 oracle 依赖在这里 ojdbc14 -->
 

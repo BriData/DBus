@@ -4,7 +4,7 @@
  */
 
 import React, { PropTypes, Component } from 'react'
-import { Table, Button, Input, Switch, Icon, Modal, message } from 'antd'
+import {Tooltip, Table, Button, Input, Switch, Icon, Modal, message } from 'antd'
 import { FormattedMessage } from 'react-intl'
 import { intlMessage } from '@/app/i18n'
 import { fromJS } from 'immutable'
@@ -12,6 +12,8 @@ import { fromJS } from 'immutable'
 import styles from '../res/styles/index.less'
 
 import EncodeConfig from './Resource/EncodeConfig'
+import Request from "@/app/utils/request";
+import {GET_ALL_RESOURCE} from '@/app/containers/ProjectManage/api'
 
 export default class ResourceForm extends Component {
   constructor (props) {
@@ -164,6 +166,22 @@ export default class ResourceForm extends Component {
       true
     )
   };
+
+  handleResourceNameSearch = params => {
+    const { resourceParams } = this.props
+    const value = Object.values(params)[0]
+    const key = Object.keys(params)[0]
+    const newparams = fromJS(resourceParams).delete(key)
+    // 关闭过滤框
+    let filterDropdownVisible = {}
+    filterDropdownVisible[`${key}Visible`] = false
+    this.setState(filterDropdownVisible)
+    const {onSetParams} = this.props
+    onSetParams(params)
+    value || value !== ''
+      ? onSetParams({...resourceParams, ...params})
+      : onSetParams({...newparams.toJS()})
+  }
   /**
    * @deprecated input placeholder
    */
@@ -229,6 +247,33 @@ export default class ResourceForm extends Component {
   handleEncodeChange = encodeSourceList => {
     this.setState({ encodeSourceList })
   };
+
+  handleAddAllResource = () => {
+    const {resourceParams} = this.props
+    Request(GET_ALL_RESOURCE, { param: resourceParams, method: 'get' })
+      .then(res => {
+        if (res && res.status === 0) {
+          let newDataSource = {}
+          const {setResource, resource} = this.props
+          // 添加 _ 防止浏览器自动排序
+          const newTables = res.payload
+          newTables.forEach(table => {
+            newDataSource[`_${table.id}`] = {...table}
+          })
+          // 将生成的数据存储到redux中
+          resource
+            ? setResource({...newDataSource, ...resource})
+            : setResource(newDataSource)
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+  }
   // table render
   /**
    * @param render 传入一个render
@@ -283,13 +328,13 @@ export default class ResourceForm extends Component {
    */
   renderSelectOperating = (text, record, index) => (
     <div>
-      {this.props.isUserRole ? (<FormattedMessage id="app.common.delete" defaultMessage="删除" />) : (
+      {this.props.isUserRole || record.tptt_id_cnt ? (<FormattedMessage id="app.common.delete" defaultMessage="删除" />) : (
       <a onClick={e => this.handleDelResource(e, record.id)}>
         <FormattedMessage id="app.common.delete" defaultMessage="删除" />
       </a>
       )}
       <span className="ant-divider" />
-      {this.props.isUserRole ? (<FormattedMessage
+      {this.props.isUserRole || record.tptt_id_cnt ? (<FormattedMessage
         id="app.components.projectManage.projectHome.tabs.resource.projectEncodesConfig"
         defaultMessage="项目级脱敏"
       />) : (
@@ -456,7 +501,21 @@ export default class ResourceForm extends Component {
         key: 'Resource',
         render: this.renderComponent(
           this.renderResource(this.SelectTableWidth[0])
-        )
+        ),
+        // 自定义过滤显隐
+        ...this.filterVisible('resourceName'),
+        filterDropdown: (
+          <div className={styles.filterDropdown}>
+            <Input
+              placeholder={placeholder('Resource')}
+              onPressEnter={e =>
+                this.handleResourceNameSearch({
+                  resourceName: e.target.value
+                })
+              }
+            />
+          </div>
+        ),
       },
       {
         title: (
@@ -520,7 +579,14 @@ export default class ResourceForm extends Component {
     ]
     const { loading, result } = resourceList
     const dataSource = result && result.list
-    const selectDataSource = resource ? Object.values(resource) : []
+    const { resourceParams } = this.props
+    const resourceName = resourceParams && resourceParams.resourceName
+    let selectDataSource = resource ? Object.values(resource) : []
+    selectDataSource = selectDataSource.filter(ds => {
+      const resource = `${ds.ds_type} / ${ds.ds_name} / ${ds.schema_name} / ${ds.table_name}`
+      if(resourceName) return resource.indexOf(resourceName) !== -1
+      return true
+    })
     const pagination = {
       showQuickJumper: true,
       current: (result && result.pageNum) || 1,
@@ -559,6 +625,9 @@ export default class ResourceForm extends Component {
             >
               （项目Resource为必选项，不能为空）
             </span>
+            <Tooltip placement="top" title="添加以上过滤条件下所有Resource">
+              <Button type="primary" onClick={this.handleAddAllResource}>一键添加</Button>
+            </Tooltip>
           </h3>
           <Table
             size="small"

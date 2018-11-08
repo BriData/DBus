@@ -99,7 +99,8 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
         topics.addAll(controlTopics);
         topics.addAll(dataTopics);
 
-        if(DbusDatasourceType.ORACLE == GlobalCache.getDatasourceType()) {
+        if(DbusDatasourceType.ORACLE == GlobalCache.getDatasourceType()
+                ) {
         	this.schemaTopics = schemaTopicProvider.provideTopics();
 	        topics.addAll(schemaTopics);
         }

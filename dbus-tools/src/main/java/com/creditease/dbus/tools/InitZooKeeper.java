@@ -91,7 +91,7 @@ public class InitZooKeeper {
             return;
         }
 
-        // Connect to ZooKeeper securely with auth info
+        // Connect to ZooKeeper securely with Auth info
         this.myZk = new ZkService(zkServer);
     }
 

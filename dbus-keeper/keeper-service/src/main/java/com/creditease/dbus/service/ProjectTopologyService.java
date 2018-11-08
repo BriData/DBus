@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -235,7 +235,26 @@ public class ProjectTopologyService {
     }
 
     public int delete(Integer projectId) {
+        ProjectTopology pt = this.select(projectId);
+        if (pt != null) {
+            Project project = projectMapper.selectByPrimaryKey(pt.getProjectId());
+            if (project != null) {
+                deleteZkConf(project.getProjectName(), pt.getTopoName());
+            }
+        }
         return mapper.deleteByPrimaryKey(projectId);
+    }
+
+    private void deleteZkConf(String projectCode, String topologyName) {
+        try {
+            String destPath = StringUtils.joinWith("/", Constants.ROUTER_ROOT, projectCode, topologyName + "-" + Constants.ROUTER);
+            if (zkService.isExists(destPath)) {
+                zkService.rmr(destPath);
+                logger.info("delete router config:{}", destPath);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public List<String> queryJarVersions() throws Exception {

@@ -62,6 +62,8 @@ public class Constants {
         public static final String WRAPPER_BOLT_PARALLELISM = "wrapper.bolt.parallelism";
         public static final String MAX_SPOUT_PENDING = "max.spout.pending";
         public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
+        public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url"; 
+        public static final String DATASOURCE_TYPE = "dbus.dispatcher.datasource.type";
 
         /**
          * oracle for bigdata 12.3.1.1.1版本解决了函数索引的问题，在生成avro schema时需要过滤掉虚拟列和隐藏列
@@ -104,6 +106,10 @@ public class Constants {
         }
     }
 
+
+
+
+
     public static class UmsMessage {
         public static final String BEFORE_UPDATE_OPERATION = "b";
         public static final String NAMESPACE_INDISTINCTIVE_SCHEMA = "schema";
@@ -129,6 +135,10 @@ public class Constants {
         public static final String TAB_CENCODE_PLUGINS = "tab_encode_plugins";
         /** 输出版本号缓存 */
         public static final String OUTPUT_VERSION_CACHE = "output_meta_version_cache";
+
+        public static final String TABLE_SCHEMA_VERSION_CACHE = "table_schema_version_cache";
+
+        public static final String TABLE_CURRENT_SCHEMA_CACHE = "table_current_schema_cache";
     }
 
     /**
@@ -207,9 +217,12 @@ public class Constants {
      * 解析后消息的通用schema名
      */
     public static final String GENERIC_SCHEMA = "generic_wrapper";
+    public static final int MAGIC_BYTE = 0x0;
     public static final String END = "end";
     public static final String BEGIN = "begin";
     public static final String NONE = "none";
+
+
 
     /**
      * mysql partition table default name

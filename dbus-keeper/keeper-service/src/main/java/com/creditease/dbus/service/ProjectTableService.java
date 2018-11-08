@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,34 @@
 package com.creditease.dbus.service;
 
 
-import com.creditease.dbus.commons.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
-import com.creditease.dbus.domain.mapper.*;
-import com.creditease.dbus.domain.model.*;
+import com.creditease.dbus.domain.mapper.ProjectEncodeHintMapper;
+import com.creditease.dbus.domain.mapper.ProjectMapper;
+import com.creditease.dbus.domain.mapper.ProjectResourceMapper;
+import com.creditease.dbus.domain.mapper.ProjectTopoTableEncodeOutputColumnsMapper;
+import com.creditease.dbus.domain.mapper.ProjectTopoTableMapper;
+import com.creditease.dbus.domain.mapper.ProjectTopoTableMetaVersionMapper;
+import com.creditease.dbus.domain.model.ProjectTopoTable;
+import com.creditease.dbus.domain.model.ProjectTopoTableEncodeOutputColumns;
+import com.creditease.dbus.domain.model.ProjectTopoTableMetaVersion;
+import com.creditease.dbus.domain.model.TableStatus;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -39,9 +60,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-
 import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS;
+
 
 /**
  * Created with IntelliJ IDEA
@@ -179,7 +199,7 @@ public class ProjectTableService {
         return projectTopoTableMapper.getDSNames(projectId);
     }
 
-    public int deleteByTableId(int topoTableId){
+    public int deleteByTableId(int topoTableId,String topoStatus){
         ProjectTopoTable table2Del =projectTopoTableMapper.selectByPrimaryKey(topoTableId);
         if(table2Del == null) {
             return TABLE_NOT_FOUND;
@@ -187,8 +207,10 @@ public class ProjectTableService {
             int projectId = table2Del.getProjectId();
             int topoId = table2Del.getTopoId();
             int sourceTableId = table2Del.getTableId();
-            if (!StringUtils.equalsIgnoreCase(table2Del.getStatus(), TableStatus.STOPPED.getValue())) {
-                return TABLE_IS_RUNNING;
+            if(StringUtils.equalsIgnoreCase(topoStatus, TableStatus.RUNNING.getValue()) || StringUtils.equalsIgnoreCase(topoStatus, TableStatus.CHANGED.getValue())) {
+                if (!StringUtils.equalsIgnoreCase(table2Del.getStatus(), TableStatus.STOPPED.getValue())) {
+                    return TABLE_IS_RUNNING;
+                }
             }
             //删除table信息
             projectTopoTableMapper.deleteByPrimaryKey(topoTableId);
@@ -617,4 +639,24 @@ public class ProjectTableService {
     public int countBySchemaId(Integer schemaId) {
         return projectTopoTableMapper.countBySchemaId(schemaId);
     }
+
+    public List<ProjectTopoTable> getTopoTablesByUserId(Integer userId) {
+        return projectTopoTableMapper.getTopoTablesByUserId(userId);
+    }
+
+    public List<Map<String, Object>> getAllResourcesByQuery(String dsName, String schemaName, String tableName,
+                                                            Integer projectId, Integer topoId) {
+        Map<String,Object> param = new HashedMap();
+        param.put("dsName",dsName == null? dsName : dsName.trim());
+        param.put("schemaName",schemaName == null? schemaName: schemaName.trim());
+        param.put("tableName",tableName == null ? tableName : tableName.trim());
+        param.put("projectId",projectId);
+        param.put("topoId",topoId);
+        return resourceMapper.searchTableResource(param);
+    }
+
+    public int underOtherTopologyTableCountInSameProject(Integer projectId, Integer tableId, Integer topoId) {
+        return projectTopoTableMapper.underOtherTopologyTableCountInSameProject(projectId, tableId, topoId);
+    }
+
 }

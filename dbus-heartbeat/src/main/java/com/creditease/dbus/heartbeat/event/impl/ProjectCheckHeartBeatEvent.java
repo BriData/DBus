@@ -179,16 +179,18 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
             String databaseSchemaName = node.getDsName() + "/" + node.getSchema();
 
 
-          if (notBlankAndEqual(projectNameWk,node,AttributeType.PROJECT_NAME)) {
+          if (notBlankAndEqual(projectNameWk,node,AttributeType.PROJECT_NAME)
+                  && notBlankAndEqual(dsNameWk,node,AttributeType.DS_NAME)
+                  && notBlankAndEqual(schemaNameWk,node,AttributeType.SCHEMA_NAME)) {
 
                 /* 判断是超时还是主备，主备的略过 */
 
                 long masterSlaveDelayTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getMasterSlaveDelayTimeout();
                 String masterSlaveDealyPath = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-               //tableNameWk = testdb.test.actor;
-               String[] dsSchemaName = tableNameWk.split("\\.");
+               //node生产策略改变，该字段抛弃
+               //String[] dsSchemaName = tableNameWk.split("\\.");
 
-                masterSlaveDealyPath = StringUtils.join(new String[] {masterSlaveDealyPath, dsSchemaName[0], dsSchemaName[1]}, "/");
+                masterSlaveDealyPath = StringUtils.join(new String[] {masterSlaveDealyPath, dsNameWk, schemaNameWk}, "/");
                 MasterSlaveDelayVo msdVo = deserialize(masterSlaveDealyPath, MasterSlaveDelayVo.class);
                 long delayTime = 0l;
                 long synTime = 0l;

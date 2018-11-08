@@ -138,7 +138,7 @@ public class TableController extends BaseController {
     @GetMapping("/delete/{tableId}")
     public ResultEntity deleteTable(@PathVariable Integer tableId) {
         try {
-            int size = tableService.countByTableId(tableId);
+            int size = tableService.countActiveTables(tableId);
             if (size != 0) {
                 return resultEntityBuilder().status(MessageCode.TABLE_ALREADY_BE_USING).build();
             }
@@ -357,6 +357,25 @@ public class TableController extends BaseController {
             return resultEntityBuilder().payload(tableService.riderSearch(userId, userRole)).build();
         } catch (Exception e) {
             logger.error("Exception encountered while request riderSearch .", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    /**
+     * table 级别拖回重跑
+     * @param dsId
+     * @param dsName
+     * @param schemaName
+     * @param offset
+     * @return
+     */
+    @GetMapping("/rerun")
+    public ResultEntity rerun(Integer dsId, String dsName, String schemaName, String tableName, Long offset) {
+        try {
+            int result = tableService.rerun(dsId, dsName, schemaName, tableName, offset);
+            return resultEntityBuilder().status(result).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while rerun table ({})", dsName + "." + schemaName + "." + tableName, e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

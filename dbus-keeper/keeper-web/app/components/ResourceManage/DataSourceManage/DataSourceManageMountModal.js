@@ -71,8 +71,8 @@ export default class DataSourceManageMountModal extends Component {
       {
         title: (
           <FormattedMessage
-            id="app.components.projectManage.projectHome.tabs.basic.principal"
-            defaultMessage="负责人"
+            id="app.components.projectManage.projectHome.tabs.basic.owner"
+            defaultMessage="项目负责人"
           />
         ),
         width: this.tableWidth[2],

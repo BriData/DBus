@@ -13,7 +13,7 @@ import { LOGIN_API } from './api'
 // 导入样式
 import styles from './res/styles/login.less'
 // 导入自定义组件
-import { LoginForm } from '@/app/components'
+import { LoginForm,LoginCanvas } from '@/app/components'
 // selectors
 import {LoginModel} from './selectors'
 // action
@@ -44,16 +44,30 @@ export default class Login extends Component {
     Request(CHECK_INIT_API, {
     })
       .then(res => {
-        if (res && res.status === 0 && res.payload) {
+        if (res && res.status === 0) {
+          if (!res.payload) {
+            message.error('Keeper未初始化')
+            this.props.router.push('/init')
+          }
         } else {
-          message.error('Zookeeper无法访问或Keeper未初始化，您可以点击下方初始化链接进入初始化页面')
+          message.error('Zookeeper无法访问')
           // this.props.router.push('/init')
         }
       })
       .catch(error => {
-        message.error('Zookeeper无法访问或Keeper未初始化，您可以点击下方初始化链接进入初始化页面')
+        message.error('Zookeeper无法访问')
         // this.props.router.push('/init')
       })
+  }
+  /**
+   * @description 判断浏览器内容
+   */
+  handleNavigator=(agent) => {
+    if (window) {
+      const userAgent = window.navigator.userAgent
+      return userAgent.indexOf(agent) > -1
+    }
+    return false
   }
   render () {
     const {getLoginList} = this.props
@@ -64,12 +78,16 @@ export default class Login extends Component {
           meta={[{ name: 'description', content: 'Description of Login' }]}
         />
         <div
+          id="loginContainer"
           className={styles.loginContainer}
           style={{
-            background: `url(${require('./res/images/bg.jpg')})`,
-            backgroundSize: 'cover'
+            background: `url(${require('./res/images/background.jpg')})`,
+            backgroundSize: 'cover',
           }}
         >
+          {
+            !this.handleNavigator('Firefox') && <LoginCanvas />
+          }
           <LoginForm
             router={this.props.router}
             loginApi={LOGIN_API}

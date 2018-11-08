@@ -87,6 +87,11 @@ public final class Utils {
         return join(".", schema, table);
     }
 
+    public static String buildDataTableSchemaCacheKey(String schema, String table, String schemaId) {
+        return join(".", schema, table, schemaId);
+    }
+
+
     /**
      * 生成默认的输出topic,即dbus-ora-dispatcher的输出topic,实际上是dbus-ora-appender的输入topic
      *

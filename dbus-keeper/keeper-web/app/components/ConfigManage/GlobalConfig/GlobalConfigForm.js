@@ -152,11 +152,11 @@ export default class GlobalConfigForm extends Component {
             )}
           </FormItem>
           <FormItem {...tailFormItemLayout}>
-            <Popconfirm title={'确认初始化Grafana？'} onConfirm={this.handleInitGrafana} okText="Yes" cancelText="No">
+            <Popconfirm title={'确认初始化Grafana？将检验整个表单数据正确性,新建data source,导入Grafana Dashboard模板！'} onConfirm={this.handleInitGrafana} okText="Yes" cancelText="No">
               <Button type="danger">
                 <FormattedMessage
                   id="app.components.configCenter.globalConfig.initGrafana"
-                  defaultMessage="初始化Grafana"
+                  defaultMessage="保存全局配置并初始化Grafana"
                 />
               </Button>
             </Popconfirm>
@@ -188,11 +188,11 @@ export default class GlobalConfigForm extends Component {
             )}
           </FormItem>
           <FormItem {...tailFormItemLayout}>
-            <Popconfirm title={'确认初始化Influxdb？'} onConfirm={this.handleInitInfluxdb} okText="Yes" cancelText="No">
+            <Popconfirm title={'确认初始化Influxdb？将检验整个表单数据正确性,新建数据库和用户,修改延时策略！'} onConfirm={this.handleInitInfluxdb} okText="Yes" cancelText="No">
               <Button type="danger">
                 <FormattedMessage
                   id="app.components.configCenter.globalConfig.initInfluxdb"
-                  defaultMessage="初始化Influxdb"
+                  defaultMessage="保存全局配置并初始化Influxdb"
                 />
               </Button>
             </Popconfirm>
@@ -275,11 +275,11 @@ export default class GlobalConfigForm extends Component {
             )}
           </FormItem>
           <FormItem {...tailFormItemLayout}>
-            <Popconfirm title={'确认初始化Storm？'} onConfirm={this.handleInitStorm} okText="Yes" cancelText="No">
+            <Popconfirm title={'确认初始化Storm？将检验整个表单数据正确性,如果初始化过,首先删除已上传的基础jar包,然后重新上传基础jar包并解压到配置的storm根目录！'} onConfirm={this.handleInitStorm} okText="Yes" cancelText="No">
               <Button type="danger">
                 <FormattedMessage
                   id="app.components.configCenter.globalConfig.initStorm"
-                  defaultMessage="初始化Storm"
+                  defaultMessage="保存全局配置并初始化Storm"
                 />
               </Button>
             </Popconfirm>
@@ -301,11 +301,11 @@ export default class GlobalConfigForm extends Component {
             )}
           </FormItem>
           <FormItem {...tailFormItemLayout}>
-            <Popconfirm title={'确认初始化ZK？'} onConfirm={this.handleInitZk} okText="Yes" cancelText="No">
+            <Popconfirm title={'确认初始化ZK？将检验整个表单数据正确性,根据zk模板补全不存在的zookeeper节点,已有节点不作处理！'} onConfirm={this.handleInitZk} okText="Yes" cancelText="No">
               <Button type="danger">
                 <FormattedMessage
                   id="app.components.configCenter.globalConfig.initZk"
-                  defaultMessage="初始化ZK"
+                  defaultMessage="保存全局配置并初始化ZK"
                 />
               </Button>
             </Popconfirm>
@@ -423,22 +423,24 @@ export default class GlobalConfigForm extends Component {
             )}
           </FormItem>
           <FormItem {...tailFormItemLayout}>
-            <Popconfirm title={'确认初始化心跳？'} onConfirm={this.handleInitHeartbeat} okText="Yes" cancelText="No">
+            <Popconfirm title={'确认初始化心跳？将检验整个表单数据正确性,如果初始化过,首先删除已上传的心跳包,然后重新上传心跳包并解压到配置的心跳根目录！'} onConfirm={this.handleInitHeartbeat} okText="Yes" cancelText="No">
               <Button type="danger">
                 <FormattedMessage
                   id="app.components.configCenter.globalConfig.initHeartbeat"
-                  defaultMessage="初始化Heartbeat"
+                  defaultMessage="保存全局配置并初始化Heartbeat"
                 />
               </Button>
             </Popconfirm>
           </FormItem>
           <FormItem {...tailFormItemLayout}>
-            <Button type="primary" onClick={this.handleSave}>
-              <FormattedMessage
-                id="app.components.configCenter.globalConfig.saveConfig"
-                defaultMessage="保存配置"
-              />
-            </Button>
+            <Popconfirm title={'确认保存？将检验整个表单数据正确性并保存！'} onConfirm={this.handleSave} okText="Yes" cancelText="No">
+              <Button type="primary">
+                <FormattedMessage
+                  id="app.components.configCenter.globalConfig.saveConfig"
+                  defaultMessage="保存全局配置"
+                />
+              </Button>
+            </Popconfirm>
           </FormItem>
         </Form>
       </div>

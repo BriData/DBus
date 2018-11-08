@@ -23,8 +23,11 @@ package com.creditease.dbus.common.utils;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonUtil {
+    private static Logger LOG = LoggerFactory.getLogger(JsonUtil.class);
     public static ObjectMapper getObjectMapper(){
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
@@ -39,7 +42,7 @@ public class JsonUtil {
                 obj = mapper.readValue(info, clazz);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             } 
         }
         return obj;

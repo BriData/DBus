@@ -11,7 +11,8 @@ import {
   DataSourceManageModifyModal,
   DataSourceManageTopologyModal,
   DataSourceManageMountModal,
-  DataSourceManageAddModal
+  DataSourceManageAddModal,
+  DataSourceManageRerunModal
 } from '@/app/components'
 // selectors
 import {DataSourceModel,JarManageModel} from './selectors'
@@ -26,7 +27,8 @@ import {
   getSchemaListByDsId,
   getSchemaTableList,
   cleanSchemaTable,
-  searchJarInfos
+  searchJarInfos,
+  clearFullPullAlarm
 } from './redux'
 import {
   readZkData,
@@ -41,7 +43,6 @@ import {
 import {
   GET_MOUNT_PROJECT_API
 } from '../ProjectManage/api'
-import {setToken} from "@/app/utils/request";
 import Request from "@/app/utils/request";
 
 // 链接reducer和action
@@ -53,6 +54,7 @@ import Request from "@/app/utils/request";
     locale: makeSelectLocale()
   }),
   dispatch => ({
+    clearFullPullAlarm: param => dispatch(clearFullPullAlarm.request(param)),
     setDataSourceParams: param => dispatch(setDataSourceParams(param)),
     searchDataSourceList: param => dispatch(searchDataSourceList.request(param)),
     getDataSourceById: param => dispatch(getDataSourceById.request(param)),
@@ -87,6 +89,10 @@ export default class DataSourceWrapper extends Component {
       mountModalKey: 'mountModalKey',
       mountModalVisible: false,
       mountModalContent: [],
+
+      rerunModalKey: 'rerunModalKey',
+      rerunModalVisible: false,
+      rerunModalRecord: {},
     }
   }
 
@@ -136,6 +142,13 @@ export default class DataSourceWrapper extends Component {
 
   handleCreateDataSource = () => {
     window.location.href='/resource-manage/datasource-create'
+  }
+
+  handleClearFullPullAlarm = record => {
+    const {clearFullPullAlarm} = this.props
+    clearFullPullAlarm({
+      dsName: record.name
+    })
   }
 
   handleOpenModifyModal = record => {
@@ -243,6 +256,20 @@ export default class DataSourceWrapper extends Component {
     this.handleSearch({...dataSourceParams})
   }
 
+  handleOpenRerunModal = record => {
+    this.setState({
+      rerunModalKey: this.handleRandom('rerunModalKey'),
+      rerunModalRecord: record,
+      rerunModalVisible: true
+    })
+  }
+
+  handleCloseRerunModal = () => {
+    this.setState({
+      rerunModalVisible: false
+    })
+  }
+
   render() {
     console.info(this.props)
     const {locale, dataSourceData} = this.props
@@ -265,6 +292,7 @@ export default class DataSourceWrapper extends Component {
     const zkData = this.props.ZKManageData.zkData.result.payload || {}
 
     const {mountModalContent, mountModalVisible, mountModalKey} = this.state
+    const {rerunModalVisible, rerunModalRecord, rerunModalKey} = this.state
     const breadSource = [
       {
         path: '/resource-manage',
@@ -302,8 +330,10 @@ export default class DataSourceWrapper extends Component {
           onAdd={this.handleOpenAddModal}
           onMount={this.handleMount}
           onDBusData={this.handleDBusData}
+          onClearFullPullAlarm={this.handleClearFullPullAlarm}
           deleteApi={DATA_SOURCE_DELETE_API}
           onRefresh={this.handleRefresh}
+          onRerun={this.handleOpenRerunModal}
         />
         <DataSourceManageModifyModal
           key={modifyModalKey}
@@ -342,6 +372,12 @@ export default class DataSourceWrapper extends Component {
           schemaTableResult={schemaTableResult}
           getSchemaTableList={getSchemaTableList}
           addApi={DATA_SOURCE_ADD_SCHEMA_TABLE_LIST_API}
+        />
+        <DataSourceManageRerunModal
+          key={rerunModalKey}
+          visible={rerunModalVisible}
+          record={rerunModalRecord}
+          onClose={this.handleCloseRerunModal}
         />
       </div>
     )

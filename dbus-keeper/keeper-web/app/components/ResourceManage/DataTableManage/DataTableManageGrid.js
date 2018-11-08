@@ -5,10 +5,10 @@ import OperatingButton from '@/app/components/common/OperatingButton'
 
 // 导入样式
 import styles from './res/styles/index.less'
-import Request from "@/app/utils/request";
-
+import dateFormat from 'dateformat'
 const FormItem = Form.Item
 const Option = Select.Option
+
 
 export default class DataTableManageGrid extends Component {
   constructor (props) {
@@ -58,7 +58,7 @@ export default class DataTableManageGrid extends Component {
         "." + record.version + "." + "0" + "." + record.physicalTableRegex;
     }
     const title = <div>tableName：{record.tableName}<br/>
-      tableNameAlias：{record.tableName}<br/>
+      tableNameAlias：{record.tableNameAlias}<br/>
       physicalTableRegex: {record.physicalTableRegex}<br/>
       outputTopic：{record.outputTopic}<br/>
       namespace: {namespace}<br/>
@@ -125,9 +125,9 @@ export default class DataTableManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal} = this.props
+    const {onRerun, onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal} = this.props
     const dsType = record.dsType
-    const notLog = dsType === 'mysql' || dsType === 'oracle'
+    const notLog = dsType === 'mysql' || dsType === 'oracle' || dsType === 'mongo'
     let menus
     if (notLog) {
       menus = [
@@ -203,6 +203,7 @@ export default class DataTableManageGrid extends Component {
           />,
           icon: 'delete',
           onClick: () => this.handleDelete(record),
+          disabled: record.status === 'ok',
           confirmText: <div>
             <FormattedMessage
               id="app.common.delete"
@@ -220,6 +221,15 @@ export default class DataTableManageGrid extends Component {
         },
         {
           isDivider: true
+        },
+        {
+          text: <FormattedMessage
+            id="app.components.projectManage.projectTopology.table.rerun"
+            defaultMessage="拖回重跑"
+          />,
+          icon: 'reload',
+          disabled: record.dsType !== 'db2',
+          onClick: () => onRerun(record),
         },
         {
           text: <FormattedMessage
@@ -349,6 +359,7 @@ export default class DataTableManageGrid extends Component {
           />,
           icon: 'delete',
           onClick: () => this.handleDelete(record),
+          disabled: record.status === 'ok',
           confirmText: <div>
             <FormattedMessage
               id="app.common.delete"
@@ -394,7 +405,8 @@ export default class DataTableManageGrid extends Component {
       api: updateApi,
       data: {
         id: record.id,
-        verChangeNoticeFlg: 0
+        verChangeNoticeFlg: 0,
+        verChangeHistory: '',
       },
       method: 'post'
     })
@@ -439,6 +451,29 @@ export default class DataTableManageGrid extends Component {
       },
       method: 'post'
     })
+    if (record.dsType === 'mysql') {
+      this.handleReloadExtractor(record)
+    }
+  }
+
+  handleReloadExtractor = record => {
+    const {onSendControlMessage} = this.props
+    const date = new Date()
+    const json = {
+      from: 'dbus-web',
+      id: date.getTime(),
+      payload: {
+        dsName: record.dsName,
+        dsType: record.dsType
+      },
+      timestamp: dateFormat(date, 'yyyy-mm-dd HH:MM:ss.l'),
+      type: 'EXTRACTOR_RELOAD_CONF'
+    }
+    const data = {
+      topic: record.ctrlTopic,
+      message: JSON.stringify(json)
+    }
+    onSendControlMessage(data)
   }
 
   handleStop = record => {
@@ -516,7 +551,7 @@ export default class DataTableManageGrid extends Component {
         title: (
           <FormattedMessage
             id="app.components.resourceManage.dataTableNameAlias"
-            defaultMessage="表别名"
+            defaultMessage="模板表"
           />
         ),
         width: this.tableWidth[2],

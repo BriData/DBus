@@ -12,6 +12,7 @@ export FileTree from './common/FileTree'
 
 // 登录表单
 export LoginForm from './Login/LoginForm'
+export LoginCanvas from './Login/LoginCanvas'
 
 // 注册
 export RegisterForm from './Register/RegisterForm'
@@ -34,6 +35,7 @@ export ProjectTableSearch from './ProjectManage/ProjectTable/ProjectTableSearch'
 export AddProjectTable from './ProjectManage/ProjectTable/AddProjectTable'
 export ProjectTableStartModal from './ProjectManage/ProjectTable/ProjectTableStartModal'
 export ProjectTableInitialLoadModal from './ProjectManage/ProjectTable/ProjectTableInitialLoadModal'
+export ProjectTableKafkaReaderModal from './ProjectManage/ProjectTable/ProjectTableKafkaReaderModal'
 
 // 项目管理-Topology
 export ProjectTopologyGrid from './ProjectManage/ProjectTopology/ProjectTopologyGrid'
@@ -46,6 +48,7 @@ export ProjectTopologyRerunModal from './ProjectManage/ProjectTopology/ProjectTo
 // 项目管理-Fullpull History
 export ProjectFullpullGrid from './ProjectManage/ProjectFullpull/ProjectFullpullGrid'
 export ProjectFullpullSearch from './ProjectManage/ProjectFullpull/ProjectFullpullSearch'
+export ProjectFullpullModifyModal from './ProjectManage/ProjectFullpull/ProjectFullpullModifyModal'
 
 // Sink管理
 export SinkManageGrid from './SinkManage/SinkManageGrid'
@@ -85,6 +88,7 @@ export DataSourceManageStartTopoModal from './ResourceManage/DataSourceManage/Da
 export DataSourceManageMountModal from './ResourceManage/DataSourceManage/DataSourceManageMountModal'
 export DataSourceManageAddModal from './ResourceManage/DataSourceManage/DataSourceManageAddModal'
 export DataSourceManageCheckModal from './ResourceManage/DataSourceManage/DataSourceManageCheckModal'
+export DataSourceManageRerunModal from './ResourceManage/DataSourceManage/DataSourceManageRerunModal'
 
 // 数据源 添加
 export DataSourceCreateTabs from './ResourceManage/DataSourceCreate/DataSourceCreateTabs'
@@ -95,6 +99,7 @@ export DataSchemaManageGrid from './ResourceManage/DataSchemaManage/DataSchemaMa
 export DataSchemaManageModifyModal from './ResourceManage/DataSchemaManage/DataSchemaManageModifyModal'
 export DataSchemaManageAddModal from './ResourceManage/DataSchemaManage/DataSchemaManageAddModal'
 export DataSchemaManageAddLogModal from './ResourceManage/DataSchemaManage/DataSchemaManageAddLogModal'
+export DataSchemaManageRerunModal from './ResourceManage/DataSchemaManage/DataSchemaManageRerunModal'
 
 // 数据源管理-data table
 export DataTableManageSearch from './ResourceManage/DataTableManage/DataTableManageSearch'
@@ -105,6 +110,7 @@ export DataTableManageModifyModal from './ResourceManage/DataTableManage/DataTab
 export DataTableManageVersionModal from './ResourceManage/DataTableManage/DataTableManageVersionModal'
 export DataTableManageSourceInsightModal from './ResourceManage/DataTableManage/DataTableManageSourceInsightModal'
 export DataTableManageIndependentModal from './ResourceManage/DataTableManage/DataTableManageIndependentModal'
+export DataTableManageRerunModal from './ResourceManage/DataTableManage/DataTableManageRerunModal'
 
 // dbus data
 export DBusDataManageSearch from './ResourceManage/DBusDataManage/DBusDataManageSearch'

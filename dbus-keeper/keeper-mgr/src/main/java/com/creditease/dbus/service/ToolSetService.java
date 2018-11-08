@@ -30,8 +30,10 @@ import com.creditease.dbus.commons.ControlMessage;
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
+import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.FullPullHistory;
+import com.creditease.dbus.domain.model.ProjectTopoTable;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -90,6 +92,9 @@ public class ToolSetService {
     public static final String APPENDER_RELOAD_CONFIG = "APPENDER_RELOAD_CONFIG";
     public static final String FULL_DATA_PULL_RELOAD_CONF = "FULL_DATA_PULL_RELOAD_CONF";
     public static final String HEARTBEAT_RELOAD_CONFIG = "HEARTBEAT_RELOAD_CONFIG";
+
+    private static Map<Integer,DataSource> dataSourceMap = new HashMap<>();
+    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     public Integer sendCtrlMessage(Map<String, String> map) {
         if (!validate(map)) {
@@ -170,8 +175,8 @@ public class ToolSetService {
         }
         //判断表类型是否支持拉全量操作
         DbusDatasourceType dsType = DbusDatasourceType.parse(dataTable.getDsType());
-        if (
-            DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
+        if (DbusDatasourceType.MONGO != dsType &&
+                DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
             logger.error("Illegal datasource type:" + dataTable.getDsType());
             ResultEntity resultEntity = new ResultEntity();
             return MessageCode.TYPE_OF_TABLE_CAN_NOT_FULLPULL;
@@ -224,11 +229,17 @@ public class ToolSetService {
         return result.getBody().getPayload(DataTable.class);
     }
 
-    public ResultEntity kafkaReader(Map<String, String> map) throws Exception {
+    public ResultEntity kafkaReader(Map<String, String> map, Integer userId, String userRole) throws Exception {
         ResultEntity resultEntity = new ResultEntity();
         //TODO
-        // String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
+         String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
         String topic = map.get("topic");
+        Set<String> topicsByUserId = getTopicsByUserId(bootstrapServers, null, userId, userRole);
+        if (!userRole.equals("admin") && !topicsByUserId.contains(topic)) {
+            resultEntity.setStatus(MessageCode.NO_AUTHORITY_FOR_THIS_TOPIC);
+            resultEntity.setMessage("该用户没有该topic(" + topic + ")的读取的权限!");
+            return resultEntity;
+        }
         Long from = Long.parseLong(map.get("from"));
         Integer length = Integer.parseInt(map.get("length"));
         String params = map.get("params");
@@ -236,6 +247,13 @@ public class ToolSetService {
         //过滤参数
         if (StringUtils.isNotBlank(params)) {
             paramArr = params.split(",");
+        }
+
+        String negParams = map.get("negParams");
+        String[] negParamsArr = null;
+        //不包含过滤参数
+        if (StringUtils.isNotBlank(negParams)) {
+            negParamsArr = negParams.split(",");
         }
 
         TopicPartition dataTopicPartition = new TopicPartition(topic, 0);
@@ -278,22 +296,27 @@ public class ToolSetService {
                     boolean b = true;
                     if (paramArr != null && paramArr.length > 0) {
                         for (String param : paramArr) {
-                            b = b && value.indexOf(param) != -1;
+                            b = b && value.contains(param);
+                        }
+                    }
+                    if (negParamsArr != null && negParamsArr.length > 0) {
+                        for (String negParam : negParamsArr) {
+                            b = b && !value.contains(negParam);
                         }
                     }
                     if (b) {
                         StringBuilder sb = new StringBuilder();
-                        sb.append("key:").append(record.key()).append("            ");
+                        sb.append("key:").append(record.key()).append("\n");
                         sb.append("offset:").append(record.offset()).append("\n");
                         sb.append(value).append("\n\n");
                         result.add(sb.toString());
                         totalMemSize += sb.toString().getBytes().length;
                     }
-                    //返回值大小控制
-                    if (totalMemSize > 1000000) {
-                        running = false;
-                        break;
-                    }
+                    ////返回值大小控制
+                    //if (totalMemSize > 10000) {
+                    //    running = false;
+                    //    break;
+                    //}
                 }
                 if (consumer.position(dataTopicPartition) == endOffset) {
                     break;
@@ -330,6 +353,20 @@ public class ToolSetService {
         }
     }
 
+    public Set<String> getTopicsByUserId(String bootstrapServers, String param, Integer userId, String userRole) throws Exception {
+        if (userRole.equals("admin")) {
+            return getTopics(bootstrapServers, param);
+        }
+        List<ProjectTopoTable> tables = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/getTopoTablesByUserId/{0}", userId)
+                .getBody().getPayload(new TypeReference<List<ProjectTopoTable>>() {
+        });
+        HashSet<String> topics = new HashSet<>();
+        for (ProjectTopoTable table : tables) {
+            topics.add(table.getOutputTopic());
+        }
+        return topics;
+    }
+
     public Map<String, Long> getOffset(String bootstrapServers, String topic) throws Exception {
         TopicPartition dataTopicPartition = new TopicPartition(topic, 0);
         List<TopicPartition> topics = Arrays.asList(dataTopicPartition);
@@ -359,50 +396,52 @@ public class ToolSetService {
     }
 
     public void sendCtrlMessageEasy(Integer dsId, String dsName, String dsType) {
-        String appender = "APPENDER_RELOAD_CONFIG";
-        String extractor = "EXTRACTOR_RELOAD_CONF";
-
-        String ctrlTopic = dsName + "_ctrl";
-        HashMap<String, String> map = new HashMap<>();
-        map.put("ds", dsId.toString());
-        map.put("topic", ctrlTopic);
-        JSONObject message = null;
-        if ("mysql" == dsType) {
-            message = this.bulidMessage(appender);
-            map.put("message", message.toString());
-            this.sendCtrlMessage(map);
-
+        if ("mysql".equals(dsType)) {
+            reloadConfig(dsId,dsName,APPENDER_RELOAD_CONFIG);
             this.reloadHeartBeat();
-
-            message = this.bulidMessage(extractor);
-            map.put("message", message.toString());
-            this.sendCtrlMessage(map);
-        } else {
-            message = this.bulidMessage(appender);
-            map.put("message", message.toString());
-            this.sendCtrlMessage(map);
-
+            reloadConfig(dsId,dsName,EXTRACTOR_RELOAD_CONF);
+        }
+        else {
+            reloadConfig(dsId,dsName,APPENDER_RELOAD_CONFIG);
             this.reloadHeartBeat();
         }
     }
 
-    public void sendProjectTableMessage(String topic, String type, JSONObject payload) {
-        JSONObject message = bulidMessage(type);
-        message.put("payload", payload);
+    /**
+     * 不reload心跳
+     */
+    public void reloadMongoCatch(Integer dsId, String dsName, String dsType){
+        if (DbusDatasourceType.MONGO == DbusDatasourceType.parse(dsType)) {
+            reloadConfig(dsId,dsName,APPENDER_RELOAD_CONFIG);
+            reloadConfig(dsId,dsName,EXTRACTOR_RELOAD_CONF);
+        }
+    }
 
-        HashMap<String, String> map = new HashMap<>();
-        map.put("message", message.toJSONString());
-        map.put("topic", topic);
-
+    public void reloadConfig(Integer dsId, String dsName, String reloadType) {
+        HashMap<String, String> map = makeCtrlMessageParam(dsId, dsName);
+        JSONObject message = this.bulidMessage(reloadType, dsId);
+        map.put("message", message.toString());
         this.sendCtrlMessage(map);
     }
 
-    private JSONObject bulidMessage(String type) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private HashMap<String, String> makeCtrlMessageParam(Integer dsId, String dsName) {
+        HashMap<String, String> map = new HashMap<>();
+        String ctrlTopic = dsName + "_ctrl";
+        map.put("ds", dsId.toString());
+        map.put("topic", ctrlTopic);
+        return map;
+    }
+
+    private JSONObject bulidMessage(String type,Integer dsId) {
+        DataSource dataSource = getDataSourceById(dsId);
+        JSONObject payload = new JSONObject();
+        payload.put("dsName",dataSource.getDsName());
+        payload.put("dsType",dataSource.getDsType());
+
         JSONObject json = new JSONObject();
         json.put("from", "dbus-web");
         json.put("id", System.currentTimeMillis());
-        json.put("payload", null);
+        json.put("payload", payload);
         json.put("timestamp", sdf.format(new Date()));
         json.put("type", type);
         return json;
@@ -734,5 +773,15 @@ public class ToolSetService {
         } else {
             return MessageCode.DATASOURCE_KILL_TOPO_FAILED;
         }
+    }
+
+    public DataSource getDataSourceById(Integer id) {
+        DataSource dataSource = null;
+        dataSource = dataSourceMap.get(id);
+        if(dataSource == null){
+            dataSource = sender.get(ServiceNames.KEEPER_SERVICE, "/datasource/{id}", id).getBody().getPayload(DataSource.class);
+            dataSourceMap.put(id, dataSource);
+        }
+        return dataSource;
     }
 }

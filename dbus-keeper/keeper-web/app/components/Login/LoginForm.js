@@ -74,7 +74,7 @@ export default class LoginForm extends Component {
               <Input
                 prefix={<Icon type="user" style={{ color: '#fff' }} />}
                 className={styles.antInput}
-                placeholder="请输入账户名"
+                placeholder="请输入邮箱"
                 type="text"
               />
             )}
@@ -103,7 +103,7 @@ export default class LoginForm extends Component {
         </Button>
         <br/>
         <a href="/register">注册</a>
-        <a style={{marginLeft: 10}} href="/init">初始化</a>
+        {/*<a style={{float: 'right'}} href="/init">初始化</a>*/}
       </div>
     )
   }

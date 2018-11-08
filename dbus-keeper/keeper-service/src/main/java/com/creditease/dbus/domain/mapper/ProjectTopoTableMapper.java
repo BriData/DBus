@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,12 @@
 
 package com.creditease.dbus.domain.mapper;
 
-import com.creditease.dbus.domain.model.ProjectTopoTable;
-import com.creditease.dbus.domain.model.ProjectTopology;
-import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
 import java.util.Map;
+
+import com.creditease.dbus.domain.model.ProjectTopoTable;
+
+import org.apache.ibatis.annotations.Param;
 
 public interface ProjectTopoTableMapper {
     int deleteByPrimaryKey(Integer id);
@@ -64,7 +64,16 @@ public interface ProjectTopoTableMapper {
 
     int countByTableId(Integer tableId);
 
-	int deleteByProjectId(Integer projectId);
+    int deleteByProjectId(Integer projectId);
 
     List<ProjectTopoTable>  selectBySourceTableId(@Param("tableId") Integer tableId);
+
+    List<ProjectTopoTable>  selectRunningByProjectId(@Param("projectId") Integer tableId);
+
+    List<ProjectTopoTable> getTopoTablesByUserId(Integer userId);
+
+    int underOtherTopologyTableCountInSameProject(@Param("projectId") Integer projectId,
+                                                  @Param("tableId") Integer tableId,
+                                                  @Param("topoId") Integer topoId);
+
 }

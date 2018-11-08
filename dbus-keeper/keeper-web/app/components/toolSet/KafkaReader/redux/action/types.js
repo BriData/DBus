@@ -10,6 +10,12 @@ export const KAFKA_READER_GET_TOPIC_LIST = createActionTypes('toolSet/KafkaReade
   'FAIL'
 ])
 
+export const KAFKA_READER_GET_TOPICS_BY_USER_ID = createActionTypes('toolSet/KafkaReader/KAFKA_READER_GET_TOPICS_BY_USER_ID', [
+  'LOAD',
+  'SUCCESS',
+  'FAIL'
+])
+
 export const KAFKA_READER_READ_DATA = createActionTypes('toolSet/KafkaReader/KAFKA_READER_READ_DATA', [
   'LOAD',
   'SUCCESS',

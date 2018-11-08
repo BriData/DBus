@@ -132,4 +132,14 @@ public class ProjectController extends BaseController {
         return resultEntityBuilder().payload(page).build();
     }
 
+    @GetMapping("/getRunningTopoTables/{id}")
+    public ResultEntity getRunningTopoTables(@PathVariable Integer id) {
+        return resultEntityBuilder().payload(service.getRunningTopoTables(id)).build();
+    }
+
+    @GetMapping("/getAllResourcesByQuery")
+    public ResultEntity getAllResourcesByQuery(String dsName,String schemaName,String tableName){
+        return resultEntityBuilder().payload(service.getAllResourcesByQuery(dsName, schemaName, tableName)).build();
+    }
+
 }

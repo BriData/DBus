@@ -61,7 +61,7 @@
         </if>
     </select>
     <select id="selectByEmail" resultMap="BaseResultMap" parameterType="java.lang.String">
-        select * from t_user where email like "%"#{email}"%"
+        select * from t_user where email=#{email}
     </select>
     <update id="modifyPassword">
         update t_user set password = #{password} where id = #{id}

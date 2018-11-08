@@ -32,6 +32,8 @@ public interface IGenericMessage  {
 
     public int getSchemaHash();
 
+    public int getSchemaId();
+
     public int getRowCount();
 
     public boolean isDML();

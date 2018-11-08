@@ -63,14 +63,11 @@
 
   <select id="getProjectNames" resultType="java.util.Map">
     SELECT DISTINCT
-      topotable.project_id projectId,
+      project.id projectId,
       project.project_name projectName,
       project.project_display_name projectDisplayName
     FROM
-     t_project_topo_table topotable,
      t_project project
-    WHERE
-     topotable.project_id = project.id
   </select>
   <select id="getTopologyNames" parameterType="java.lang.Integer" resultType="java.util.Map">
     SELECT DISTINCT
@@ -107,6 +104,9 @@
     dsource.ds_name dsName,
     dschema.schema_name schemaName,
     dtable.table_name tableName,
+    dtable.table_name_alias tableNameAlias,
+    dtable.physical_table_regex physicalTableRegex,
+    metaversion.version version,
     topology.topo_name topoName,
     topology.status topoStatus,
     dtable.output_topic inputTopic,
@@ -123,7 +123,8 @@
     t_project project,
     t_project_topo_table topotable,
     t_project_topo topology,
-    t_project_resource resource
+    t_project_resource resource,
+    t_meta_version metaversion
     <where>
       resource.project_id=topotable.project_id AND
       resource.table_id=topotable.table_id AND
@@ -131,7 +132,8 @@
       topotable.project_id=project.id AND
       dtable.ds_id = dsource.id AND
       dtable.schema_id = dschema.id AND
-      topology.id = topotable.topo_id
+      topology.id = topotable.topo_id AND
+      dtable.ver_id = metaversion.id
       <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
       <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
       <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
@@ -227,5 +229,23 @@
     t_project_topo_table
     WHERE
     table_id = #{tableId}
+  </select>
+  <select id="selectRunningByProjectId"  resultMap="BaseResultMap">
+    select * from t_project_topo_table t
+    where t.project_id = #{projectId} and t.status <![CDATA[!= ]]> 'stopped'
+  </select>
+  <select id="getTopoTablesByUserId"  resultMap="BaseResultMap">
+    select t.* from t_project_user u,t_project_topo_table t
+    where u.project_id = t.project_id and u.user_id = #{userId};
+  </select>
+  <select id="underOtherTopologyTableCountInSameProject" resultType="java.lang.Integer">
+    select
+      count(1) cnt
+    from
+      t_project_topo_table t
+    where
+      t.project_id = #{projectId,jdbcType=INTEGER} AND
+      t.table_id = #{tableId,jdbcType=INTEGER} AND
+      t.topo_id <![CDATA[!= ]]> #{topoId,jdbcType=INTEGER}
   </select>
 </mapper>

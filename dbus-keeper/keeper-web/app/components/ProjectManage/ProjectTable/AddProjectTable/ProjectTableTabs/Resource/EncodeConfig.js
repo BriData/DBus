@@ -9,7 +9,8 @@ import {
   Switch,
   Icon,
   Spin,
-  Tooltip
+  Tooltip,
+  message
 } from 'antd'
 import { FormattedMessage } from 'react-intl'
 import { intlMessage } from '@/app/i18n'
@@ -19,6 +20,8 @@ const RadioGroup = Radio.Group
 const Option = Select.Option
 // 导入样式
 import styles from '../../../res/styles/index.less'
+import {SEARCH_TABLE_RESOURCES_COLUMNS_LIST_API} from '@/app/containers/ProjectManage/api/index.js'
+import Request, {setToken} from "@/app/utils/request";
 
 export default class EncodeConfig extends Component {
   constructor (props) {
@@ -27,28 +30,61 @@ export default class EncodeConfig extends Component {
     this.state = {
       encodeOutputColumns: {},
       encodeSourceSelected: [],
-      outputListType: '1'
+      outputListType: '0'
     }
   }
   componentWillMount () {
-    // 初始化赋值
-    const { encodes, tid } = this.props
-    const encodeOutputColumns =
-      encodes && encodes[tid] && encodes[tid].encodeOutputColumns
-        ? fromJS(encodes[tid].encodeOutputColumns)
-        : fromJS({})
-    const outputListType =
-      (encodes && encodes[tid] && encodes[tid].outputListType.toString()) ||
-      '1'
-    this.setState({
-      encodeOutputColumns: encodeOutputColumns.toJS(),
-      outputListType: outputListType
-    })
-    // 向父层传递数据
-    this.handleSaveToReudx(tid, {
-      encodeOutputColumns: encodeOutputColumns.toJS(),
-      outputListType
-    })
+    const {tid, projectId} = this.props
+    Request(SEARCH_TABLE_RESOURCES_COLUMNS_LIST_API, {
+      params: {
+        tableId: tid,
+        projectId: projectId
+      },
+      method: 'get' })
+      .then(res => {
+        if (res && res.status === 0) {
+          // 初始化赋值
+          const { encodes } = this.props
+          let encodeOutputColumns
+          if(encodes && encodes[tid] && encodes[tid].encodeOutputColumns) {
+            encodeOutputColumns = fromJS(encodes[tid].encodeOutputColumns)
+          } else {
+            const { payload } = res
+            let temporaryEncodeSource = {}
+            Object.values(payload).map(item => {
+              const es = item.encodeSource
+              temporaryEncodeSource[`_${item.cid}`] = {
+                ...item,
+                tableId: item.tid,
+                fieldName: item.columnName,
+                encodeSource: es === 0 || es ? String(es) : '3'
+              }
+            })
+            encodeOutputColumns = fromJS({
+              ...temporaryEncodeSource,
+            })
+          }
+          const outputListType =
+            (encodes && encodes[tid] && encodes[tid].outputListType.toString()) ||
+            '0'
+          this.setState({
+            encodeOutputColumns: encodeOutputColumns.toJS(),
+            outputListType: outputListType
+          })
+          // 向父层传递数据
+          this.handleSaveToReudx(tid, {
+            encodeOutputColumns: encodeOutputColumns.toJS(),
+            outputListType
+          })
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
   }
   /**
    * @description 将选中的encodeID过滤并添加到临时encodeOutputColumns中
@@ -234,7 +270,7 @@ export default class EncodeConfig extends Component {
    */
   renderNomal = width => (text, record, index) => {
     let style = {}
-    let hoverText = ""
+    let hoverText = text
     // 1代表源端删除了该列，此处给出提示，不需要用户自己删除
     if (record.schemaChangeFlag === 1) {
       style = {color : "#FF0000"}
@@ -313,7 +349,7 @@ export default class EncodeConfig extends Component {
           <Select
             showSearch
             optionFilterProp='children'
-            style={{ width: 170 }}
+            style={{ width: 150 }}
             notFoundContent={loading ? <Spin size="small" /> : null}
             placeholder={placeholder(
               'app.components.projectManage.projectHome.tabs.resource.encodePlugin'
@@ -382,7 +418,7 @@ export default class EncodeConfig extends Component {
           <Select
             showSearch
             optionFilterProp='children'
-            style={{ width: 170 }}
+            style={{ width: 150 }}
             notFoundContent={loading ? <Spin size="small" /> : null}
             placeholder={placeholder(
               'app.components.projectManage.projectHome.tabs.resource.encodeType'
@@ -504,6 +540,22 @@ export default class EncodeConfig extends Component {
       encodeSourceSelected,
       outputListType
     } = this.state
+    let isChanged = false
+    for (let cid in encodeOutputColumns) {
+      if(encodeOutputColumns[cid].encodeSource === undefined) {
+        encodeOutputColumns[cid].encodeSource = '3'
+        isChanged = true
+      }
+    }
+    if(isChanged) {
+      const { tid } = this.props
+      this.setState({ encodeOutputColumns })
+      // 向父层传递数据
+      this.handleSaveToReudx(tid, {
+        encodeOutputColumns,
+        outputListType
+      })
+    }
     const { loading, result } = encodeList
     const encodesAsyn = result && Object.values(result)
     const dataSource = Object.values(encodeOutputColumns)
@@ -690,6 +742,7 @@ export default class EncodeConfig extends Component {
             columns={columns}
             loading={loading}
             pagination={false}
+            scroll={{ y: 370 }}
           />
         </div>
       </div>

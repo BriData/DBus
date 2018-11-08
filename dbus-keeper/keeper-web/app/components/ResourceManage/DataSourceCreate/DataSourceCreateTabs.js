@@ -115,7 +115,7 @@ export default class DataSourceCreateTabs extends Component {
             />
           </TabPane>
           <TabPane tab="2.添加Schema和Table" key={this.tabKeyList[1]} disabled={currentStep !== 1}>
-            {dataSource.dsType === 'oracle' || dataSource.dsType === 'mysql'
+            {dataSource.dsType === 'oracle' || dataSource.dsType === 'mysql' || dataSource.dsType === 'mongo'
               ? (
               <AddSchemaTable
                 addSchemaTableApi={addSchemaTableApi}

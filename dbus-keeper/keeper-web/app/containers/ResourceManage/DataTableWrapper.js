@@ -16,7 +16,8 @@ import {
   DataTableManageSourceInsightModal,
   DataTableManageIndependentModal,
   DataSourceManageMountModal,
-  DataSourceManageCheckModal
+  DataSourceManageCheckModal,
+  DataTableManageRerunModal
 } from '@/app/components'
 import { makeSelectLocale } from '../LanguageProvider/selectors'
 import {DataTableModel, DataSourceModel} from './selectors'
@@ -34,7 +35,9 @@ import {
   getVersionDetail,
   getSourceInsight
 } from './redux'
-
+import {
+  sendControlMessage,
+} from '@/app/containers/toolSet/redux'
 import {loadLevelOfPath, readZkData} from "@/app/components/ConfigManage/ZKManage/redux/action";
 
 import {
@@ -70,6 +73,8 @@ import {GET_MOUNT_PROJECT_API} from "@/app/containers/ProjectManage/api";
 
     loadLevelOfPath: param => dispatch(loadLevelOfPath.request(param)),
     readZkData: param => dispatch(readZkData.request(param)),
+
+    sendControlMessage: param => dispatch(sendControlMessage.request(param)),
   })
 )
 export default class DataTableWrapper extends Component {
@@ -112,7 +117,11 @@ export default class DataTableWrapper extends Component {
       checkModalLoading: false,
 
       selectedRowKeys: [],
-      selectedRows: []
+      selectedRows: [],
+
+      rerunModalKey: 'rerunModalKey',
+      rerunModalRecord: {},
+      rerunModalVisible: false
     }
   }
   componentWillMount() {
@@ -120,6 +129,11 @@ export default class DataTableWrapper extends Component {
     const {searchDataSourceIdTypeName} = this.props
     searchDataSourceIdTypeName()
     this.handleSearch(this.initParams)
+  }
+
+  handleSendControlMessage = data => {
+    const {sendControlMessage} = this.props
+    sendControlMessage(data)
   }
 
   handleRandom = key =>
@@ -366,6 +380,20 @@ export default class DataTableWrapper extends Component {
     })
   }
 
+  handleOpenRerunModal = record => {
+    this.setState({
+      rerunModalKey: this.handleRandom('rerunModalKey'),
+      rerunModalRecord: record,
+      rerunModalVisible: true
+    })
+  }
+
+  handleCloseRerunModal = () => {
+    this.setState({
+      rerunModalVisible: false
+    })
+  }
+
   handleRefresh = () => {
     const {dataTableData} = this.props
     const {dataTableParams} = dataTableData
@@ -436,7 +464,7 @@ export default class DataTableWrapper extends Component {
     const {selectedRowKeys, selectedRows} = this.state
 
     const {checkModalKey, checkModalLoading, checkModalResult, checkModalVisible} = this.state
-
+    const {rerunModalVisible, rerunModalRecord, rerunModalKey} = this.state
     const breadSource = [
       {
         path: '/resource-manage',
@@ -465,7 +493,9 @@ export default class DataTableWrapper extends Component {
           params={dataTableParams}
           onSearch={this.handleSearch}
           startApi={DATA_TABLE_START_API}
+          stopApi={DATA_TABLE_STOP_API}
           selectedRows={selectedRows}
+          onSendControlMessage={this.handleSendControlMessage}
         />
         <DataTableManageGrid
           selectedRowKeys={selectedRowKeys}
@@ -487,6 +517,8 @@ export default class DataTableWrapper extends Component {
           deleteApi={DATA_TABLE_DELETE_API}
           startApi={DATA_TABLE_START_API}
           stopApi={DATA_TABLE_STOP_API}
+          onSendControlMessage={this.handleSendControlMessage}
+          onRerun={this.handleOpenRerunModal}
         />
         <DataTableManageReadZkModal
           key={zkModalKey}
@@ -555,6 +587,12 @@ export default class DataTableWrapper extends Component {
           result={checkModalResult}
           visible={checkModalVisible}
           onClose={this.handleCloseCheckDataLineModal}
+        />
+        <DataTableManageRerunModal
+          key={rerunModalKey}
+          visible={rerunModalVisible}
+          record={rerunModalRecord}
+          onClose={this.handleCloseRerunModal}
         />
       </div>
     )

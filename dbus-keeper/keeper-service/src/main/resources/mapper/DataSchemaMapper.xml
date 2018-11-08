@@ -88,4 +88,7 @@
       and s.schema_name = #{schemaName}
     order by s.create_time desc
   </select>
+  <update id="inactiveSchemaByDsId" parameterType="java.lang.Integer">
+    update t_data_schema s set s.status='inactive' where s.ds_id = #{dsId}
+  </update>
 </mapper>

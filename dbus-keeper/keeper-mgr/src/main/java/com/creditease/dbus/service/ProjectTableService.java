@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,17 @@
  */
 
 package com.creditease.dbus.service;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -36,15 +47,16 @@ import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.fasterxml.jackson.core.type.TypeReference;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.text.MessageFormat;
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA
@@ -77,7 +89,7 @@ public class ProjectTableService {
     private IZkService zkService;
 
     /*
-     * 0，源端脱敏；
+     0，源端脱敏；
      1，admin脱敏；
      2，自定义脱敏，用户添加的列的脱敏信息； //前端判断
      3，无，表示没有脱敏信息。   //前端判断
@@ -322,6 +334,47 @@ public class ProjectTableService {
             topoTable.setOutputType(outputType);
             topoTable.setSinkId(sinkId);
             ProjectTopoTableEncodeOutputColumnsBean columnsBean = encode.getValue();
+            //脱敏不选择的话，表示默认是选择贴源输出，需要去获取贴源的encodes信息
+            if(columnsBean == null){
+                columnsBean = new ProjectTopoTableEncodeOutputColumnsBean();
+                columnsBean.setOutputListType(FOLLOW_SOURCE);
+                String queryString ="projectId="+projectId+"&tableId="+topoTable.getTableId();
+                ResultEntity encodeColumnsResult = getEncodeColumns(queryString);
+                List<Map<String, Object>> rowColumns =
+                        encodeColumnsResult.getPayload(new TypeReference<List<Map<String, Object>>>() {});
+
+                encodeOutputColumns = new ArrayList<>(rowColumns.size());
+
+                for(Map<String, Object> rowColumn : rowColumns){
+
+                    ProjectTopoTableEncodeOutputColumns encodeOutputColumn = new ProjectTopoTableEncodeOutputColumns();
+                    encodeOutputColumn.setDataLength(Integer.parseInt(String.valueOf(rowColumn.get("dataLength"))));
+                    encodeOutputColumn.setDataScale(Integer.parseInt(String.valueOf(rowColumn.get("dataScale"))));
+                    encodeOutputColumn.setDataPrecision(Integer.parseInt(String.valueOf(rowColumn.get("dataPrecision"))));
+                    encodeOutputColumn.setFieldName(String.valueOf(rowColumn.get("columnName")));
+                    encodeOutputColumn.setFieldType(String.valueOf(rowColumn.get("dataType")));
+                    encodeOutputColumn.setSchemaChangeFlag(SHCEMA_CHANGE_FLAG_FALSE);//默认未变更
+                    encodeOutputColumn.setSchemaChangeComment("");
+                    Integer encodeSource =rowColumn.get("encodeSource") == null ?
+                            ENCODESOURCE_TYPE_NONE : Integer.valueOf(String.valueOf(rowColumn.get("encodeSource")));
+                    encodeOutputColumn.setEncodeSource(encodeSource);
+
+                    if(rowColumn.get("encodePluginId") != null)
+                        encodeOutputColumn.setEncodePluginId(Integer.parseInt(rowColumn.get("encodePluginId").toString()));
+                    if( rowColumn.get("encodeType")!= null)
+                        encodeOutputColumn.setEncodeType(rowColumn.get("encodeType").toString());
+                    if(rowColumn.get("encodeParam") != null)
+                        encodeOutputColumn.setEncodeParam(rowColumn.get("encodeParam").toString());
+                    if(rowColumn.get("truncate") != null)
+                        encodeOutputColumn.setTruncate(Integer.parseInt(rowColumn.get("truncate").toString()));
+
+
+                    encodeOutputColumns.add(encodeOutputColumn);
+                }
+
+                columnsBean.setEncodeOutputColumns(encodeOutputColumns);
+            }
+
             topoTable.setOutputListType(columnsBean.getOutputListType());
             topoTable.setMetaVer(META_VERTION_INIT);
 
@@ -345,48 +398,55 @@ public class ProjectTableService {
             //获取topo_table_id
             int topoTableId =result.getBody().getPayload(Integer.class);
 
-            Iterator<ProjectTopoTableEncodeOutputColumns> iterator=encodeOutputColumns.iterator();
-            //修改TopoTableEncodeOutputColumns 信息
-            while(iterator.hasNext()){
-                ProjectTopoTableEncodeOutputColumns column  = iterator.next();
-                column.setProjectTopoTableId(topoTableId);
-                column.setUpdateTime(new Date());
-                //固定列的时候，才需要对meta_version进行操作。源端脱敏的也需要存储
-                if(columnsBean.getOutputListType() == FIX_COLUMN) {
-                    ProjectTopoTableMetaVersion metaVersion = new ProjectTopoTableMetaVersion();
-                    metaVersion.setProjectId(projectId);
-                    metaVersion.setTopoId(topoId);
-                    metaVersion.setTableId(topoTable.getTableId());
-                    metaVersion.setVersion(META_VERTION_INIT); //第一次添加，默认值
-                    metaVersion.setColumnName(column.getFieldName());
-                    metaVersion.setDataType(column.getFieldType());
-                    metaVersion.setDataLength(column.getDataLength());
-                    metaVersion.setUpdateTime(column.getUpdateTime());
-                    metaVersion.setDataPrecision(column.getDataPrecision());
-                    metaVersion.setDataScale(column.getDataScale());
-                    metaVersions.add(metaVersion);
+            try {
+                Iterator<ProjectTopoTableEncodeOutputColumns> iterator = encodeOutputColumns.iterator();
+                //修改TopoTableEncodeOutputColumns 信息
+                while (iterator.hasNext()) {
+                    ProjectTopoTableEncodeOutputColumns column = iterator.next();
+                    column.setProjectTopoTableId(topoTableId);
+                    column.setUpdateTime(new Date());
+                    //固定列的时候，才需要对meta_version进行操作。源端脱敏的也需要存储
+                    if (columnsBean.getOutputListType() == FIX_COLUMN) {
+                        ProjectTopoTableMetaVersion metaVersion = new ProjectTopoTableMetaVersion();
+                        metaVersion.setProjectId(projectId);
+                        metaVersion.setTopoId(topoId);
+                        metaVersion.setTableId(topoTable.getTableId());
+                        metaVersion.setVersion(META_VERTION_INIT); //第一次添加，默认值
+                        metaVersion.setColumnName(column.getFieldName());
+                        metaVersion.setDataType(column.getFieldType());
+                        metaVersion.setDataLength(column.getDataLength());
+                        metaVersion.setUpdateTime(column.getUpdateTime());
+                        metaVersion.setDataPrecision(column.getDataPrecision());
+                        metaVersion.setDataScale(column.getDataScale());
+                        metaVersions.add(metaVersion);
+                    }
+
+
+                    //encode_column只存储admin和user定义的脱敏信息
+                    if (column.getEncodeSource() == ENCODESOURCE_TYPE_SOURCE ||
+                            column.getEncodeSource() == ENCODESOURCE_TYPE_NONE) {
+                        iterator.remove();
+                    }
                 }
 
-
-                //encode_column只存储admin和user定义的脱敏信息
-                if(column.getEncodeSource() ==ENCODESOURCE_TYPE_SOURCE ||
-                        column.getEncodeSource() ==ENCODESOURCE_TYPE_NONE){
-                    iterator.remove();
-                }
-            }
-
-            //插入或更新column信息
-            result = sender.post(ServiceNames.KEEPER_SERVICE, "/projectTable/insertColumns",encodeOutputColumns);
-            if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
-                return result.getBody();
-
-            //选择固定列输出时，需要插入或更新和 meta_ver信息
-            if(columnsBean.getOutputListType() == FIX_COLUMN) {
-                result = sender.post(ServiceNames.KEEPER_SERVICE, "/projectTable/meta-versions", metaVersions);
+                //插入或更新column信息
+                result = sender.post(ServiceNames.KEEPER_SERVICE, "/projectTable/insertColumns", encodeOutputColumns);
                 if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
                     return result.getBody();
-            }
 
+                //选择固定列输出时，需要插入或更新和 meta_ver信息
+                if (columnsBean.getOutputListType() == FIX_COLUMN) {
+                    result = sender.post(ServiceNames.KEEPER_SERVICE, "/projectTable/meta-versions", metaVersions);
+                    if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+                        return result.getBody();
+                }
+
+            }catch (Exception e){
+                logger.error("[add table] insert columns error. delete inserted topotable,topoTableId :"+topoTableId);
+                //手动回滚
+                sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/delete-by-table-id/{id}",topoTableId);
+                return null;
+            }
         }
 
         return result.getBody();
@@ -627,6 +687,12 @@ public class ProjectTableService {
         //发送完信息，需要根据projectTopoTableId进行更新
         int projectTopoTableId = -1;
 
+        String dsName = StringUtils.EMPTY;
+        String schemaName = StringUtils.EMPTY;
+        String tableName = StringUtils.EMPTY;
+        String topologyName = StringUtils.EMPTY;
+        String projectName = StringUtils.EMPTY;
+
         //其实循环中只有一个元素
         for(int i=0; i<offsetBeans.size(); i++){
             ProjectTableOffsetBean offsetBean = offsetBeans.get(i);
@@ -666,6 +732,13 @@ public class ProjectTableService {
                 // offset
                 offsetParis.append(partition).append("->").append(offsetNum).append(",");
             }
+
+            dsName = offsetBean.getDsName();
+            schemaName = offsetBean.getSchemaName();
+            tableName = offsetBean.getTableName();
+            projectName = offsetBean.getProjectName();
+            topologyName = offsetBean.getTopoName();
+
         }
 
         //如果offsetParis是空，说明没有partition更改，即需要发送的信息为空，所以不发消息，直接返回。
@@ -681,7 +754,7 @@ public class ProjectTableService {
         payload.put("offset",payloadOffsetArray);
 
         //send
-        toolSetService.sendProjectTableMessage(messageTopic,type,payload);
+        this.sendProjectTableMessage(messageTopic,type,payload);
 
        /* 不更新table状态，只发送消息，让router去更新table状态
        //update table status
@@ -694,7 +767,140 @@ public class ProjectTableService {
             return result.getBody();
         return result.getBody();
         */
+
+        Properties props = null;
+        try {
+            props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+
+            String host = props.getProperty("grafana_url_dbus");
+            if (StringUtils.endsWith(host, "/"))
+                host = StringUtils.substringBeforeLast(host, "/");
+
+            String token = props.getProperty("grafanaToken");
+
+            String api = "/api/dashboards/db/";
+            String url = host + api + projectName;
+
+            List<Object> ret = this.send(url, "GET", "", token);
+            if ((int) ret.get(0) == 404) {
+                url = host + api;
+                String param = "{\"meta\":{\"type\":\"db\",\"canSave\":true,\"canEdit\":true,\"canStar\":true,\"slug\":\"dbus_placeholder_slug\",\"expires\":\"0001-01-01T00:00:00Z\",\"created\":\"2018-10-10T14:36:55+08:00\",\"updated\":\"2018-10-17T11:36:46+08:00\",\"updatedBy\":\"admin\",\"createdBy\":\"admin\",\"version\":30},\"dashboard\":{\"annotations\":{\"list\":[]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"hideControls\":false,\"links\":[],\"refresh\":false,\"rows\":[{\"collapse\":false,\"height\":\"250px\",\"panels\":[{\"aliasColors\":{},\"bars\":false,\"datasource\":\"inDB\",\"fill\":1,\"id\":1,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":true,\"linewidth\":1,\"links\":[],\"nullPointMode\":\"null\",\"percentage\":false,\"pointradius\":5,\"points\":false,\"renderer\":\"flot\",\"seriesOverrides\":[],\"span\":12,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"alias\":\"分发器计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"A\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"DISPATCH_TYPE\"}]},{\"alias\":\"增量计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'APPENDER_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"B\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"APPENDER_TYPE\"}]},{\"alias\":\"router计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'ROUTER_TYPE_testRouterSec' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"C\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=~\",\"value\":\"/^$rounter_type$/\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeShift\":null,\"title\":\"表统计计数\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true}]}],\"repeat\":null,\"repeatIteration\":null,\"repeatRowId\":null,\"showTitle\":false,\"title\":\"Dashboard Row\",\"titleSize\":\"h6\"},{\"collapse\":false,\"height\":250,\"panels\":[{\"aliasColors\":{},\"bars\":false,\"datasource\":\"inDB\",\"fill\":1,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":true,\"linewidth\":1,\"links\":[],\"nullPointMode\":\"null\",\"percentage\":false,\"pointradius\":5,\"points\":false,\"renderer\":\"flot\",\"seriesOverrides\":[],\"span\":12,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"alias\":\"分发器延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"refId\":\"A\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"DISPATCH_TYPE\"}]},{\"alias\":\"增量延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"latency\\\" FROM \\\"dbus_statistic\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"B\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"APPENDER_TYPE\"}]},{\"alias\":\"router延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"latency\\\" FROM \\\"dbus_statistic\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"C\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=~\",\"value\":\"/^$rounter_type$/\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeShift\":null,\"title\":\"延时\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true}]}],\"repeat\":null,\"repeatIteration\":null,\"repeatRowId\":null,\"showTitle\":false,\"title\":\"Dashboard Row\",\"titleSize\":\"h6\"}],\"schemaVersion\":14,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"datasource\":\"inDB\",\"hide\":0,\"includeAll\":false,\"label\":null,\"multi\":false,\"name\":\"table\",\"options\":[],\"query\":\"SHOW TAG VALUES WITH KEY = \\\"table\\\"\",\"refresh\":1,\"regex\":\"dbus_placeholder_table_regex\",\"sort\":0,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false},{\"allValue\":null,\"datasource\":\"inDB\",\"hide\":0,\"includeAll\":false,\"label\":null,\"multi\":false,\"name\":\"rounter_type\",\"options\":[],\"query\":\"SHOW TAG VALUES WITH KEY = \\\"type\\\"\",\"refresh\":1,\"regex\":\"dbus_placeholder_type_regex\",\"sort\":0,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-30m\",\"to\":\"now\"},\"timepicker\":{\"refresh_intervals\":[\"5s\",\"10s\",\"30s\",\"1m\",\"5m\",\"15m\",\"30m\",\"1h\",\"2h\",\"1d\"],\"time_options\":[\"5m\",\"15m\",\"1h\",\"6h\",\"12h\",\"24h\",\"2d\",\"7d\",\"30d\"]},\"timezone\":\"browser\",\"title\":\"dbus_placeholder_slug\",\"version\":30}}";
+                param = StringUtils.replace(param, "dbus_placeholder_slug", projectName);
+                param = StringUtils.replace(param, "dbus_placeholder_table_regex", StringUtils.join(new String[] {dsName, schemaName, tableName}, "."));
+                param = StringUtils.replace(param, "dbus_placeholder_type_regex", "ROUTER_TYPE_" + topologyName);
+                logger.info("create dashboard param: {}", param);
+                ret = this.send(url, "POST", param, token);
+                if ((int) ret.get(0) == 200) {
+                    logger.info("create dashboard success, {}", (String) ret.get(1));
+                } else if (((int) ret.get(0) == -1)) {
+                    logger.error("call url:{} fail", url);
+                    return;
+                } else {
+                    logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                }
+            } else if ((int) ret.get(0) == 200) {
+                boolean isFind = false;
+                String strJson = (String) ret.get(1);
+                JSONObject json = JSONObject.parseObject(strJson);
+                JSONObject dashboard = json.getJSONObject("dashboard");
+                JSONObject templating = dashboard.getJSONObject("templating");
+                JSONArray list = templating.getJSONArray("list");
+                if (list != null && list.size() > 0) {
+                    for (int i=0; i<list.size(); i++) {
+                        JSONObject item = list.getJSONObject(i);
+                        if (StringUtils.equalsIgnoreCase(item.getString("name"), "table")) {
+                            String regex = item.getString("regex");
+                            StringBuilder regexSb = new StringBuilder();
+                            for (String str : regex.split("\\|")) {
+                                if (StringUtils.isNotBlank(str) &&
+                                    !StringUtils.equalsIgnoreCase(str, "none")) {
+                                    regexSb.append(str);
+                                    regexSb.append("|");
+                                }
+                            }
+                            if (StringUtils.endsWith(regexSb.toString(), "|")) {
+                                regex = StringUtils.substringBeforeLast(regexSb.toString(), "|");
+                            } else {
+                                regex = regexSb.toString();
+                            }
+                            String wkTable = StringUtils.join(new String[] {dsName, schemaName, tableName}, ".");
+                            if (StringUtils.isNotBlank(regex)) {
+                                if (!StringUtils.contains(regex, wkTable))
+                                    item.put("regex", StringUtils.join(new String[] {regex, wkTable}, "|"));
+                            } else {
+                                item.put("regex", wkTable);
+                            }
+                            isFind = true;
+                        }
+                        if (StringUtils.equalsIgnoreCase(item.getString("name"), "rounter_type")) {
+                            String regex = item.getString("regex");
+                            StringBuilder regexSb = new StringBuilder();
+                            for (String str : regex.split("\\|")) {
+                                if (StringUtils.isNotBlank(str) &&
+                                    !StringUtils.equalsIgnoreCase(str, "none")) {
+                                    regexSb.append(str);
+                                    regexSb.append("|");
+                                }
+                            }
+                            if (StringUtils.endsWith(regexSb.toString(), "|")) {
+                                regex = StringUtils.substringBeforeLast(regexSb.toString(), "|");
+                            } else {
+                                regex = regexSb.toString();
+                            }
+                            String wkType = "ROUTER_TYPE_" + topologyName;
+                            if (StringUtils.isNotBlank(regex)) {
+                                if (!StringUtils.contains(regex, wkType))
+                                    item.put("regex", StringUtils.join(new String[] {regex, wkType}, "|"));
+                            } else {
+                                item.put("regex", wkType);
+                            }
+                            isFind = true;
+                        }
+                    }
+                    if (isFind) {
+                        url = host + api;
+                        String param = json.toJSONString();
+                        logger.info("update dashboard param: {}", param);
+                        ret = this.send(url, "POST", param, token);
+                        if ((int) ret.get(0) == 200) {
+                            logger.info("update dashboard success, {}", (String) ret.get(1));
+                        } else if (((int) ret.get(0) == -1)) {
+                            logger.error("call url:{} fail", url);
+                            return;
+                        } else {
+                            logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                        }
+                    }
+                }
+            } else if (((int) ret.get(0) == -1)) {
+                logger.error("call url:{} fail", url);
+                return;
+            } else {
+                logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+            }
+
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+
     }
+
+    public void sendProjectTableMessage(String topic, String type, JSONObject payload) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        JSONObject json = new JSONObject();
+        json.put("from", "dbus-web");
+        json.put("id", System.currentTimeMillis());
+        json.put("payload", payload);
+        json.put("timestamp", sdf.format(new Date()));
+        json.put("type", type);
+
+        HashMap<String, String> map = new HashMap<>();
+        map.put("message", json.toJSONString());
+        map.put("topic", topic);
+
+        toolSetService.sendCtrlMessage(map);
+    }
+
 
     /**
      *
@@ -734,7 +940,7 @@ public class ProjectTableService {
         String topic = topoName +"_"+"ctrl";
 
         //send message
-        toolSetService.sendProjectTableMessage(topic,type,payload);
+        this.sendProjectTableMessage(topic,type,payload);
 
         /* 不更新table状态，只发送消息，让router去更新table状态
         //update table status
@@ -804,15 +1010,156 @@ public class ProjectTableService {
         //message的topic = projectTopoTable.inputTopic = dataTable.outputToic
         String topic = topoName+"_"+"ctrl";
 
-        toolSetService.sendProjectTableMessage(topic,type,payload);
+        this.sendProjectTableMessage(topic,type,payload);
     }
 
-    public ResultEntity deleteById(int tableId){
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/delete-by-table-id/{id}",tableId);
+    public ResultEntity deleteById(int projectTableId){
+
+        //根据Id获取projectTableId 信息
+        ProjectTopoTable projectTopoTable = getTableById(projectTableId);
+        if(projectTopoTable == null){
+            ResultEntity resultEntity = new ResultEntity();
+            resultEntity.setStatus(MessageCode.TABLE_NOT_FOUND_BY_ID);
+            resultEntity.setMessage(null); //根据message为空，需要读取i18n中的message信息
+            return resultEntity;
+        }
+        int tableId = projectTopoTable.getTableId();
+        int projectId = projectTopoTable.getProjectId();
+        int topoId = projectTopoTable.getTopoId();
+
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/uottcisp/{projectId}/{tableId}/{topoId}", projectId, tableId, topoId);
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+            return result.getBody();
+
+        String dsName = "";
+        String schemaName = "";
+        String tableName = "";
+        String projectName = "";
+
+        int cnt = result.getBody().getPayload(Integer.class);
+        if (cnt == 0) {
+            DataTable dataTable =tableService.findTableById(tableId);
+            if (dataTable != null) {
+                dsName = dataTable.getDsName();
+                schemaName = dataTable.getSchemaName();
+                tableName = dataTable.getTableNameAlias();
+            }
+            result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/select/{id}", projectId);
+            if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+                return result.getBody();
+            Project projectMsg = result.getBody().getPayload(Project.class);
+            if (projectMsg != null) {
+                projectName = projectMsg.getProjectName();
+            }
+            logger.info("dsName:{}", dsName);
+            logger.info("schemaName:{}", schemaName);
+            logger.info("tableName:{}", tableName);
+            logger.info("projectName:{}", projectName);
+        } else {
+            logger.info("don't delete grafana table regex. project:{}, table:{}, topo:{}", projectId, tableId, topoId);
+        }
+
+        ResultEntity res = projectTopologyService.select(topoId);
+        if (!res.success()) return res;
+        ProjectTopology projectTopology = res.getPayload(ProjectTopology.class);
+
+        String newStatus;
+        try {
+            newStatus = projectTopologyService.correctStatus(projectTopology.getStatus(), projectTopology.getTopoName());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/delete-by-table-id/{id}/{topoStatus}", projectTableId, newStatus);
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+            return result.getBody();
+
+        if (StringUtils.isNotBlank(dsName) &&
+            StringUtils.isNotBlank(schemaName) &&
+            StringUtils.isNotBlank(tableName) &&
+            StringUtils.isNotBlank(projectName)) {
+            // 删除grafana dashboard template table regex
+            Properties props = null;
+            try {
+                props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+
+                String host = props.getProperty("grafana_url_dbus");
+                if (StringUtils.endsWith(host, "/"))
+                    host = StringUtils.substringBeforeLast(host, "/");
+
+                String token = props.getProperty("grafanaToken");
+
+                String api = "/api/dashboards/db/";
+                String url = host + api + projectName;
+
+                List<Object> ret = this.send(url, "GET", "", token);
+                if ((int) ret.get(0) == 200) {
+                    boolean isFind = false;
+                    String strJson = (String) ret.get(1);
+                    JSONObject json = JSONObject.parseObject(strJson);
+                    JSONObject dashboard = json.getJSONObject("dashboard");
+                    JSONObject templating = dashboard.getJSONObject("templating");
+                    JSONArray list = templating.getJSONArray("list");
+                    if (list != null && list.size() > 0) {
+                        for (int i=0; i<list.size(); i++) {
+                            JSONObject item = list.getJSONObject(i);
+                            if (StringUtils.equalsIgnoreCase(item.getString("name"), "table")) {
+                                String regex = item.getString("regex");
+                                String wkTable = StringUtils.join(new String[] {dsName, schemaName, tableName}, ".");
+                                if (StringUtils.contains(regex, wkTable)) {
+                                    regex = StringUtils.replace(regex, wkTable, "");
+                                    StringBuilder regexSb = new StringBuilder();
+                                    for (String str : regex.split("\\|")) {
+                                        if (StringUtils.isNotBlank(str) &&
+                                            !StringUtils.equalsIgnoreCase(str, "none")) {
+                                            regexSb.append(str);
+                                            regexSb.append("|");
+                                        }
+                                    }
+                                    if (StringUtils.endsWith(regexSb.toString(), "|")) {
+                                        regex = StringUtils.substringBeforeLast(regexSb.toString(), "|");
+                                    } else {
+                                        regex = regexSb.toString();
+                                    }
+                                    if (StringUtils.isBlank(regexSb.toString())) {
+                                        item.put("regex", "none");
+                                    } else {
+                                        item.put("regex", regex);
+                                    }
+                                }
+                                isFind = true;
+                            }
+                        }
+                        if (isFind) {
+                            url = host + api;
+                            String param = json.toJSONString();
+                            logger.info("update dashboard param: {}", param);
+                            ret = this.send(url, "POST", param, token);
+                            if ((int) ret.get(0) == 200) {
+                                logger.info("update dashboard success, {}", (String) ret.get(1));
+                            } else if (((int) ret.get(0) == -1)) {
+                                logger.error("call url:{} fail", url);
+                            } else {
+                                logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                            }
+                        }
+                    }
+                } else if (((int) ret.get(0) == -1)) {
+                    logger.error("call url:{} fail", url);
+                } else {
+                    logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                }
+
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+
+        /* 上面接口已经包含删除column的动作
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
         //删除column信息
-        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/delete-column-by-table-id/{id}",tableId);
+        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/delete-column-by-table-id/{id}",tableId);*/
         return result.getBody();
     }
 
@@ -857,7 +1204,7 @@ public class ProjectTableService {
         DataTable dataTable =tableService.findTableById(tableId);
         //判断表类型是否支持拉全量操作
         DbusDatasourceType dsType = DbusDatasourceType.parse(dataTable.getDsType());
-        if (
+        if ( DbusDatasourceType.MONGO != dsType &&
                 DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
             logger.error("Illegal datasource type:" + dataTable.getDsType());
 			ResultEntity resultEntity = new ResultEntity();
@@ -944,5 +1291,196 @@ public class ProjectTableService {
 
         return responseEntity.getBody();
     }
+
+    public static void main(String[] args) {
+        ProjectTableService pts = new ProjectTableService();
+        /*String url = "http://dbus-grafana-ui.creditease.corp/api/dashboards/db/dbus_placeholder_slug";
+
+        List<Object> ret = pts.send(url, "GET", "");
+        if ((int) ret.get(0) == 404) {
+            url = "http://dbus-grafana-ui.creditease.corp/api/dashboards/db/";
+            String param = "{\"meta\":{\"type\":\"db\",\"canSave\":true,\"canEdit\":true,\"canStar\":true,\"slug\":\"dbus_placeholder_slug\",\"expires\":\"0001-01-01T00:00:00Z\",\"created\":\"2018-10-10T14:36:55+08:00\",\"updated\":\"2018-10-17T11:36:46+08:00\",\"updatedBy\":\"admin\",\"createdBy\":\"admin\",\"version\":30},\"dashboard\":{\"annotations\":{\"list\":[]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"hideControls\":false,\"links\":[],\"refresh\":false,\"rows\":[{\"collapse\":false,\"height\":\"250px\",\"panels\":[{\"aliasColors\":{},\"bars\":false,\"datasource\":\"inDB\",\"fill\":1,\"id\":1,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":true,\"linewidth\":1,\"links\":[],\"nullPointMode\":\"null\",\"percentage\":false,\"pointradius\":5,\"points\":false,\"renderer\":\"flot\",\"seriesOverrides\":[],\"span\":12,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"alias\":\"分发器计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"A\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"DISPATCH_TYPE\"}]},{\"alias\":\"增量计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'APPENDER_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"B\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"APPENDER_TYPE\"}]},{\"alias\":\"router计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'ROUTER_TYPE_testRouterSec' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"C\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=~\",\"value\":\"/^$rounter_type$/\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeShift\":null,\"title\":\"表统计计数\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true}]}],\"repeat\":null,\"repeatIteration\":null,\"repeatRowId\":null,\"showTitle\":false,\"title\":\"Dashboard Row\",\"titleSize\":\"h6\"},{\"collapse\":false,\"height\":250,\"panels\":[{\"aliasColors\":{},\"bars\":false,\"datasource\":\"inDB\",\"fill\":1,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":true,\"linewidth\":1,\"links\":[],\"nullPointMode\":\"null\",\"percentage\":false,\"pointradius\":5,\"points\":false,\"renderer\":\"flot\",\"seriesOverrides\":[],\"span\":12,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"alias\":\"分发器延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"refId\":\"A\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"DISPATCH_TYPE\"}]},{\"alias\":\"增量延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"latency\\\" FROM \\\"dbus_statistic\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"B\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"APPENDER_TYPE\"}]},{\"alias\":\"router延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"latency\\\" FROM \\\"dbus_statistic\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"C\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=~\",\"value\":\"/^$rounter_type$/\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeShift\":null,\"title\":\"延时\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true}]}],\"repeat\":null,\"repeatIteration\":null,\"repeatRowId\":null,\"showTitle\":false,\"title\":\"Dashboard Row\",\"titleSize\":\"h6\"}],\"schemaVersion\":14,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"tags\":[],\"text\":\"mydb.cbm.t1\",\"value\":\"mydb.cbm.t1\"},\"datasource\":\"inDB\",\"hide\":0,\"includeAll\":false,\"label\":null,\"multi\":false,\"name\":\"table\",\"options\":[],\"query\":\"SHOW TAG VALUES WITH KEY = \\\"table\\\"\",\"refresh\":1,\"regex\":\"dbus_placeholder_table_regex\",\"sort\":0,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false},{\"allValue\":null,\"current\":{\"tags\":[],\"text\":\"ROUTER_TYPE_router1\",\"value\":\"ROUTER_TYPE_router1\"},\"datasource\":\"inDB\",\"hide\":0,\"includeAll\":false,\"label\":null,\"multi\":false,\"name\":\"rounter_type\",\"options\":[],\"query\":\"SHOW TAG VALUES WITH KEY = \\\"type\\\"\",\"refresh\":1,\"regex\":\"dbus_placeholder_type_regex\",\"sort\":0,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-30m\",\"to\":\"now\"},\"timepicker\":{\"refresh_intervals\":[\"5s\",\"10s\",\"30s\",\"1m\",\"5m\",\"15m\",\"30m\",\"1h\",\"2h\",\"1d\"],\"time_options\":[\"5m\",\"15m\",\"1h\",\"6h\",\"12h\",\"24h\",\"2d\",\"7d\",\"30d\"]},\"timezone\":\"browser\",\"title\":\"dbus_placeholder_slug\",\"version\":30}}";
+            ret = pts.send(url, "POST", param);
+            if ((int) ret.get(0) == 200) {
+                logger.info("create dashboard success, {}", (String) ret.get(1));
+            }
+        } else if ((int) ret.get(0) == 200) {
+            boolean isFind = false;
+            String strJson = (String) ret.get(1);
+            JSONObject json = JSONObject.parseObject(strJson);
+            JSONObject dashboard = json.getJSONObject("dashboard");
+            JSONObject templating = dashboard.getJSONObject("templating");
+            JSONArray list = templating.getJSONArray("list");
+            if (list != null && list.size() > 0) {
+                for (int i=0; i<list.size(); i++) {
+                    JSONObject item = list.getJSONObject(i);
+                    if (StringUtils.equalsIgnoreCase(item.getString("name"), "table")) {
+                        String regex = item.getString("regex");
+                        item.put("regex", StringUtils.join(new String[] {regex, "aaa"}, "|"));
+                        isFind = true;
+                        break;
+                    }
+                }
+                if (isFind) {
+                    url = "http://dbus-grafana-ui.creditease.corp/api/dashboards/db/";
+                    String param = json.toJSONString();
+                    ret = pts.send(url, "POST", param);
+                    if ((int) ret.get(0) == 200) {
+                        logger.info("update dashboard success, {}", (String) ret.get(1));
+                    }
+                }
+            }
+        } else if (((int) ret.get(0) == -1)) {
+            logger.error("call url:{} fail", url);
+            return;
+        } else {
+            logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+        }*/
+
+        /*String dsName = "mydb";
+        String schemaName = "cbm";
+        String tableName = "tbale_2";
+        String topologyName = "router1";
+        String projectName = "project_dashboard_test";
+
+        String token = "";
+        String host = "http://dbus-grafana-ui.creditease.corp";
+        String api = "/api/dashboards/db/";
+        String url = host + api + projectName;
+
+        List<Object> ret = pts.send(url, "GET", "", token);
+        if ((int) ret.get(0) == 404) {
+            url = host + api;
+            String param = "{\"meta\":{\"type\":\"db\",\"canSave\":true,\"canEdit\":true,\"canStar\":true,\"slug\":\"dbus_placeholder_slug\",\"expires\":\"0001-01-01T00:00:00Z\",\"created\":\"2018-10-10T14:36:55+08:00\",\"updated\":\"2018-10-17T11:36:46+08:00\",\"updatedBy\":\"admin\",\"createdBy\":\"admin\",\"version\":30},\"dashboard\":{\"annotations\":{\"list\":[]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"hideControls\":false,\"links\":[],\"refresh\":false,\"rows\":[{\"collapse\":false,\"height\":\"250px\",\"panels\":[{\"aliasColors\":{},\"bars\":false,\"datasource\":\"inDB\",\"fill\":1,\"id\":1,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":true,\"linewidth\":1,\"links\":[],\"nullPointMode\":\"null\",\"percentage\":false,\"pointradius\":5,\"points\":false,\"renderer\":\"flot\",\"seriesOverrides\":[],\"span\":12,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"alias\":\"分发器计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"A\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"DISPATCH_TYPE\"}]},{\"alias\":\"增量计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'APPENDER_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"B\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"APPENDER_TYPE\"}]},{\"alias\":\"router计数\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"count\\\" FROM \\\"measurement\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'ROUTER_TYPE_testRouterSec' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"C\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"count\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=~\",\"value\":\"/^$rounter_type$/\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeShift\":null,\"title\":\"表统计计数\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true}]}],\"repeat\":null,\"repeatIteration\":null,\"repeatRowId\":null,\"showTitle\":false,\"title\":\"Dashboard Row\",\"titleSize\":\"h6\"},{\"collapse\":false,\"height\":250,\"panels\":[{\"aliasColors\":{},\"bars\":false,\"datasource\":\"inDB\",\"fill\":1,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":true,\"linewidth\":1,\"links\":[],\"nullPointMode\":\"null\",\"percentage\":false,\"pointradius\":5,\"points\":false,\"renderer\":\"flot\",\"seriesOverrides\":[],\"span\":12,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"alias\":\"分发器延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"refId\":\"A\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"DISPATCH_TYPE\"}]},{\"alias\":\"增量延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"latency\\\" FROM \\\"dbus_statistic\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"B\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=\",\"value\":\"APPENDER_TYPE\"}]},{\"alias\":\"router延时\",\"dsType\":\"influxdb\",\"groupBy\":[],\"measurement\":\"dbus_statistic\",\"policy\":\"default\",\"query\":\"SELECT \\\"latency\\\" FROM \\\"dbus_statistic\\\" WHERE \\\"table\\\" =~ /^$table$/ AND \\\"type\\\" = 'DISPATCH_TYPE' AND $timeFilter\",\"rawQuery\":false,\"refId\":\"C\",\"resultFormat\":\"time_series\",\"select\":[[{\"params\":[\"latency\"],\"type\":\"field\"}]],\"tags\":[{\"key\":\"table\",\"operator\":\"=~\",\"value\":\"/^$table$/\"},{\"condition\":\"AND\",\"key\":\"type\",\"operator\":\"=~\",\"value\":\"/^$rounter_type$/\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeShift\":null,\"title\":\"延时\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true}]}],\"repeat\":null,\"repeatIteration\":null,\"repeatRowId\":null,\"showTitle\":false,\"title\":\"Dashboard Row\",\"titleSize\":\"h6\"}],\"schemaVersion\":14,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"datasource\":\"inDB\",\"hide\":0,\"includeAll\":false,\"label\":null,\"multi\":false,\"name\":\"table\",\"options\":[],\"query\":\"SHOW TAG VALUES WITH KEY = \\\"table\\\"\",\"refresh\":1,\"regex\":\"dbus_placeholder_table_regex\",\"sort\":0,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false},{\"allValue\":null,\"datasource\":\"inDB\",\"hide\":0,\"includeAll\":false,\"label\":null,\"multi\":false,\"name\":\"rounter_type\",\"options\":[],\"query\":\"SHOW TAG VALUES WITH KEY = \\\"type\\\"\",\"refresh\":1,\"regex\":\"dbus_placeholder_type_regex\",\"sort\":0,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-30m\",\"to\":\"now\"},\"timepicker\":{\"refresh_intervals\":[\"5s\",\"10s\",\"30s\",\"1m\",\"5m\",\"15m\",\"30m\",\"1h\",\"2h\",\"1d\"],\"time_options\":[\"5m\",\"15m\",\"1h\",\"6h\",\"12h\",\"24h\",\"2d\",\"7d\",\"30d\"]},\"timezone\":\"browser\",\"title\":\"dbus_placeholder_slug\",\"version\":30}}";
+            param = StringUtils.replace(param, "dbus_placeholder_slug", projectName);
+            param = StringUtils.replace(param, "dbus_placeholder_table_regex", StringUtils.join(new String[] {dsName, schemaName, tableName}, "."));
+            param = StringUtils.replace(param, "dbus_placeholder_type_regex", "ROUTER_TYPE_" + projectName + ".*");
+            logger.info("create dashboard param: {}", param);
+            ret = pts.send(url, "POST", param, token);
+            if ((int) ret.get(0) == 200) {
+                logger.info("create dashboard success, {}", (String) ret.get(1));
+            } else if (((int) ret.get(0) == -1)) {
+                logger.error("call url:{} fail", url);
+                return;
+            } else {
+                logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+            }
+        } else if ((int) ret.get(0) == 200) {
+            boolean isFind = false;
+            String strJson = (String) ret.get(1);
+            JSONObject json = JSONObject.parseObject(strJson);
+            JSONObject dashboard = json.getJSONObject("dashboard");
+            JSONObject templating = dashboard.getJSONObject("templating");
+            JSONArray list = templating.getJSONArray("list");
+            if (list != null && list.size() > 0) {
+                for (int i=0; i<list.size(); i++) {
+                    JSONObject item = list.getJSONObject(i);
+                    if (StringUtils.equalsIgnoreCase(item.getString("name"), "table")) {
+                        String regex = item.getString("regex");
+                        String wkTable = StringUtils.join(new String[] {dsName, schemaName, tableName}, ".");
+                        item.put("regex", StringUtils.join(new String[] {regex, wkTable}, "|"));
+                        isFind = true;
+                        break;
+                    }
+                }
+                if (isFind) {
+                    url = host + api;
+                    String param = json.toJSONString();
+                    logger.info("update dashboard param: {}", param);
+                    ret = pts.send(url, "POST", param, token);
+                    if ((int) ret.get(0) == 200) {
+                        logger.info("update dashboard success, {}", (String) ret.get(1));
+                    } else if (((int) ret.get(0) == -1)) {
+                        logger.error("call url:{} fail", url);
+                        return;
+                    } else {
+                        logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                    }
+                }
+            }
+        } else if (((int) ret.get(0) == -1)) {
+            logger.error("call url:{} fail", url);
+            return;
+        } else {
+            logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+        }*/
+
+        String regex = "none|ROUTER_TYPE_router_test_s_r6";
+        StringBuilder regexSb = new StringBuilder();
+        for (String str : regex.split("\\|")) {
+            if (StringUtils.isNotBlank(str) &&
+                    !StringUtils.equalsIgnoreCase(str, "none")) {
+                regexSb.append(str);
+                regexSb.append("|");
+            }
+        }
+        if (StringUtils.endsWith(regexSb.toString(), "|")) {
+            regex = StringUtils.substringBeforeLast(regexSb.toString(), "|");
+        }
+        System.out.println(regex);
+
+    }
+
+    private List<Object> send(String serverUrl, String method, String param, String token) {
+        List<Object> ret = new ArrayList<>();
+        ret.add(-1);
+
+        StringBuilder response = new StringBuilder();
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        URL url = null;
+        try {
+            url = new URL(serverUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            // conn.setRequestProperty("Authorization", "Bearer eyJrIjoieGRoaU9qR0hKQ1Brc0V4VHB5ckgyNFRyQ2ZSaXJ0cHAiLCJuIjoidGVzdCIsImlkIjoxfQ==");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestMethod(method);
+            conn.setDoInput(true);
+            conn.setConnectTimeout(1000 * 5);
+
+            if (StringUtils.isNotBlank(param)) {
+                conn.setDoOutput(true);
+                writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(param);
+                writer.flush();
+            }
+
+            int httpStatus = conn.getResponseCode();
+            ret.set(0, httpStatus);
+
+            if (httpStatus == 401 ||
+                httpStatus == 403 ||
+                httpStatus == 404) {
+                if (httpStatus == 404) {
+                    reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                } else {
+                    response.append(conn.getResponseMessage());
+                }
+            } if (httpStatus == 200) {
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }
+
+            if (reader != null) {
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line).append(SystemUtils.LINE_SEPARATOR);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("send request error", e);
+            ret.set(0, -1);
+        } finally {
+            IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(writer);
+        }
+        ret.add(response.toString());
+        return ret;
+    }
+
+    public ResultEntity getAllResourcesByQuery(String queryString) {
+        return sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/getAllResourcesByQuery", queryString).getBody();
+    }
+
 
 }

@@ -44,6 +44,8 @@ public class Constants {
 
     public static final String STATISTIC_TOPIC = "dbus.statistic.topic";
 
+    public static final String DBUS_DATASOURCE_TYPE = "dbus.datasource.type";
+
     public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url";
 
     //顶级目录
@@ -65,6 +67,7 @@ public class Constants {
     public static final String EXTRACTOR_ROOT = DBUS_ROOT + "/Extractor";
 
     public static final String FULL_PULL_MONITOR_ROOT = DBUS_ROOT + "/FullPuller";
+    public static final String FULL_PULL_PROJECTS_MONITOR_ROOT = DBUS_ROOT + "/FullPuller/Projects";
     public static final String FULL_PULL_MONITOR_ROOT_GLOBAL = DBUS_ROOT + "/FullPullerGlobal";
 
     public static final String HEARTBEAT_ROOT = DBUS_ROOT + "/HeartBeat";
@@ -146,6 +149,9 @@ public class Constants {
     public static final int NEED_ROLLBACK_CANAL=2;
     public static final int SEND_NOT_COMPLETED = 3;
     public static final String EXTRACTOR_TOPOLOGY_ID = "extractor.topology.id";
+
+
+
 
     /**
      * org.apache.storm.Config.java 中存储的数据的key值

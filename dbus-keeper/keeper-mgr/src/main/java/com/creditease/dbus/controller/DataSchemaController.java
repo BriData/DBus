@@ -126,7 +126,7 @@ public class DataSchemaController extends BaseController {
 
     @GetMapping("/delete/{id}")
     public ResultEntity deleteById(@PathVariable Integer id){
-        int size = service.countBySchemaId(id);
+        int size = service.countActiveTables(id);
         if(size != 0){
             return resultEntityBuilder().status(MessageCode.SCHEMA_IS_USING).build();
         }
@@ -134,7 +134,7 @@ public class DataSchemaController extends BaseController {
     }
 
     @PostMapping("/update")
-    public ResultEntity updateById(@RequestBody DataSchema updateOne){
+    public ResultEntity updateById(@RequestBody DataSchema updateOne)throws Exception{
         return service.update(updateOne);
     }
 
@@ -172,6 +172,25 @@ public class DataSchemaController extends BaseController {
             return resultEntityBuilder().status(MessageCode.DATASOURCE_TYPE_UNKNOWN).build();
         }else {
             return resultEntity;
+        }
+    }
+
+    /**
+     * schema 级别拖回重跑,对整个schema均有影响
+     * @param dsId
+     * @param dsName
+     * @param schemaName
+     * @param offset
+     * @return
+     */
+    @GetMapping("/rerun")
+    public ResultEntity rerun(Integer dsId, String dsName, String schemaName, Long offset) {
+        try {
+            int result = service.rerun(dsId, dsName, schemaName, offset);
+            return resultEntityBuilder().status(result).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while rerun schema ({})", dsName + "." + schemaName, e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }
 

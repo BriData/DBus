@@ -60,6 +60,10 @@ public class InitZooKeeperNodesTemplate {
 			"ConfTemplates/Extractor/placeholder-mysql-extractor/producer.properties",
 			"ConfTemplates/Extractor/placeholder-mysql-extractor/consumer.properties",
 
+			"ConfTemplates/Extractor/placeholder-mongo-extractor/config.properties",
+			"ConfTemplates/Extractor/placeholder-mongo-extractor/producer.properties",
+			"ConfTemplates/Extractor/placeholder-mongo-extractor/consumer.properties",
+
 			"ConfTemplates/Router/placeholder-router/config.properties",
 			"ConfTemplates/Router/placeholder-router/consumer.properties",
 			"ConfTemplates/Router/placeholder-router/producer.properties"
@@ -88,7 +92,9 @@ public class InitZooKeeperNodesTemplate {
 			"Topology",
 			"Router",
 			"HeartBeat/ProjectMonitor",
-			"Commons/global.properties"
+			"HeartBeat/Control",
+			"Commons/global.properties",
+			"ConfTemplates/Extractor/placeholder-mysql-extractor/filter.properties"
 	};
 
 	public static String[] ZK_PROTECT_NODES_PATHS = {

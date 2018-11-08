@@ -105,7 +105,7 @@ public class ProjectResourceService {
             String status =mapper.searchStatus(resourceProjectId,tableId);
             resource.put("status",status);
             //脱敏要求
-            String encodeRequest = mapper.searchEncodeType(tableId);
+            String encodeRequest = mapper.searchEncodeType(tableId, projectId);
             resource.put("mask",encodeRequest);
             //是否投产
             boolean ifRunning = checkRunningStatus(tableId);
@@ -166,7 +166,7 @@ public class ProjectResourceService {
             resource.remove("projectName");
             int tableId = ((Long) resource.get("tableId")).intValue();
             //脱敏要求
-            String encodeRequest = mapper.searchEncodeType(tableId);
+            String encodeRequest = mapper.searchEncodeType(tableId, projectId);
             resource.put("mask", encodeRequest);
         }
 

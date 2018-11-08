@@ -78,7 +78,7 @@ public class DataSourceController extends BaseController {
 
     @GetMapping("/delete/{id}")
     public ResultEntity deleteById(@PathVariable Integer id) {
-        int size = service.countByDsId(id);
+        int size = service.countActiveTables(id);
         if(size != 0){
             return resultEntityBuilder().status(MessageCode.DATASOURCE_ALREADY_BE_USING).build();
         }
@@ -86,7 +86,7 @@ public class DataSourceController extends BaseController {
     }
 
     @PostMapping("/update")
-    public ResultEntity updateById(@RequestBody DataSource updateOne) {
+    public ResultEntity updateById(@RequestBody DataSource updateOne) throws Exception{
         return service.update(updateOne);
     }
 
@@ -190,5 +190,23 @@ public class DataSourceController extends BaseController {
     @GetMapping("/view-log")
     public ResultEntity viewLog(String topologyId) throws Exception {
         return resultEntityBuilder().payload(service.viewLog(topologyId)).build();
+    }
+
+    /**
+     * 数据线级别别拖回重跑,对整条数据线均有影响
+     * @param dsId
+     * @param dsName
+     * @param offset
+     * @return
+     */
+    @GetMapping("/rerun")
+    public ResultEntity rerun(Integer dsId, String dsName, Long offset) {
+        try {
+            int result = service.rerun(dsId, dsName, offset);
+            return resultEntityBuilder().status(result).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while rerun datasource ({})",dsName, e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
     }
 }

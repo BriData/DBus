@@ -32,10 +32,7 @@ import com.creditease.dbus.commons.SupportedOraDataType;
 import com.creditease.dbus.dbaccess.DruidDataSourceProvider;
 import com.creditease.dbus.encoders.EncodePlugin;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.manager.GenericJdbcManager;
-import com.creditease.dbus.manager.MySQLManager;
-import com.creditease.dbus.manager.OracleManager;
-import com.creditease.dbus.manager.SqlManager;
+import com.creditease.dbus.manager.*;
 import com.creditease.dbus.msgencoder.EncodeColumn;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -60,37 +57,6 @@ public class DBHelper {
             mysqlProps = FullPullPropertiesHolder.getProperties(topoType, DATASOURCE_CONFIG_NAME);
         }
     }
-
-    /*public static Connection getDBusMgrConnection() throws Exception {
-        initialize();
-        // 2. Set up jdbc driver
-        try {
-            Class.forName(mysqlProps.getProperty("driverClassName"));
-        } catch (ClassNotFoundException e) {
-            logger.error("MySQL JDBC Driver not found. ", e);
-            throw e;
-        }
-
-         // Get information about database from mysqlProps for connecting DB
-         String dbAddr = mysqlProps.getProperty("url");
-         String userName = mysqlProps.getProperty("username");
-         String password = mysqlProps.getProperty("password");
-         Connection conn = null;
-         try {
-             conn = DriverManager
-                     .getConnection(dbAddr, userName, password);
-         } catch (SQLException e) {
-             logger.error("Connection to MySQL DB failed!",e);
-             throw e;
-         } finally {
-             if (conn != null) {
-                 logger.info("Make MySQL DB Connection successful. ");
-             } else {
-                 logger.error("Failed to make MySQL DB Connection!");
-             }
-         }
-         return conn;
-    }*/
 
     /**
      * Create a connection to the database; usually used only from within
@@ -129,6 +95,31 @@ public class DBHelper {
         return connection;
     }
 
+    /**
+     * 统一资源关闭处理
+     *
+     * @param conn
+     * @param pst
+     * @param ret
+     * @return
+     * @throws SQLException
+     */
+    public static void close(Connection conn, PreparedStatement pst, ResultSet ret) {
+        try {
+            if (ret != null) {
+                ret.close();
+            }
+            if (pst != null) {
+                pst.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        } catch (SQLException e) {
+            logger.error("DBHelper close resource exception", e);
+        }
+    }
+
     public static DBConfiguration generateDBConfiguration(String dataSourceInfo) {
         // Get common basic conf info from zk. Maybe overrided by customized conf from front-end or db
         Properties basicProperties = new Properties();
@@ -147,8 +138,9 @@ public class DBHelper {
             if (prepareFetchSize != null) {
                 basicProperties.put(DBConfiguration.PREPARE_STATEMENT_FETCH_SIZE, Integer.parseInt(prepareFetchSize));
             }
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            logger.error("Exception when load basicProperties .", e);
+            throw e;
         }
 
         //从源库中获取拉取目标表信息
@@ -233,6 +225,7 @@ public class DBHelper {
             confProperties.put(DBConfiguration.TABEL_PARTITIONS, partitionsInfo);
         } catch (Exception e) {
             logger.error("Encountered exception when generating DBConfiguration.", e);
+            throw e;
         } finally {
             try {
                 if (dbManager != null) {
@@ -352,14 +345,7 @@ public class DBHelper {
                 confProperties.put(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_WRITE, masterUrl);
             }
 
-            if (ret != null) {
-                ret.close();
-                ret = null;
-            }
-            if (pst != null) {
-                pst.close();
-                pst = null;
-            }
+            DBHelper.close(null, pst, ret);
 
             //获得meta相同是否有数据
             String outputTopic = "";
@@ -413,14 +399,8 @@ public class DBHelper {
                 }
             }
 
-            if (ret != null) {
-                ret.close();
-                ret = null;
-            }
-            if (pst != null) {
-                pst.close();
-                pst = null;
-            }
+            DBHelper.close(null, pst, ret);
+
             //多租户相关处理resultTopic
             if (StringUtils.isBlank(resultTopic) && pullFullDataProject != null && !pullFullDataProject.isEmpty()) {
                 //resultTopic处理
@@ -432,14 +412,7 @@ public class DBHelper {
                     confProperties.put(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC, ret.getString("output_topic"));
                     resultTopic = ret.getString("output_topic");
                 }
-                if (ret != null) {
-                    ret.close();
-                    ret = null;
-                }
-                if (pst != null) {
-                    pst.close();
-                    pst = null;
-                }
+                DBHelper.close(null, pst, ret);
             }
 
             if (StringUtils.isBlank(resultTopic)) {
@@ -482,30 +455,14 @@ public class DBHelper {
             confProperties.put(DBConfiguration.DB_RECORD_ROW_SIZE, recordRowSize);
             logger.info("MaxRowLength is :{}", recordRowSize + "");
 
-            if (ret != null) {
-                ret.close();
-                ret = null;
-            }
-            if (pst != null) {
-                pst.close();
-                pst = null;
-            }
+            DBHelper.close(null, pst, ret);
             //查询任务表对应的脱敏配置
             getColumnsNeedEncode(conn, dbusDatasourceId, schema, logicTableName, pullFullDataMessage, confProperties);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } finally {
-            try {
-                if (ret != null)
-                    ret.close();
-                if (pst != null)
-                    pst.close();
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            DBHelper.close(conn, pst, ret);
         }
         return confProperties;
     }
@@ -586,16 +543,7 @@ public class DBHelper {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } finally {
-            try {
-                if (ret != null)
-                    ret.close();
-                if (pst != null)
-                    pst.close();
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            close(conn, pst, ret);
         }
     }
 
@@ -637,16 +585,7 @@ public class DBHelper {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } finally {
-            try {
-                if (ret != null)
-                    ret.close();
-                if (pst != null)
-                    pst.close();
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            DBHelper.close(conn, pst, ret);
         }
         return outPutCol;
     }
@@ -699,16 +638,7 @@ public class DBHelper {
         } catch (Exception e) {
             logger.error("Query Meta In Dbus encountered Excetpion", e);
         } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-                if (pst != null)
-                    pst.close();
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException e) {
-                logger.error("Query Meta In Dbus encountered Excetpion", e);
-            }
+            DBHelper.close(conn, pst, rs);
         }
         return null;
     }
@@ -793,16 +723,7 @@ public class DBHelper {
         } catch (Exception e) {
             logger.error("Query EncodePlugin In Dbus encountered Excetpion", e);
         } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-                if (pst != null)
-                    pst.close();
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException e) {
-                logger.error("Query EncodePlugin In Dbus encountered Excetpion", e);
-            }
+            DBHelper.close(conn, pst, rs);
         }
         return plugins;
     }

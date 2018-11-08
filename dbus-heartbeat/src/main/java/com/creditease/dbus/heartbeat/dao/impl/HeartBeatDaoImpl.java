@@ -59,15 +59,19 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
     }
 
 
-
     private String getMaxID() {
         return "select max(id) as maxID from db_heartbeat_monitor";
+    }
+
+    private String getMaxID2DB2() {
+        return "select max(id) as maxID from dbus.db_heartbeat_monitor";
     }
 
     //保留最后的 10000个心跳信息
     private String getDeleteOldHeartBeat() {
         return "delete from db_heartbeat_monitor where id < ?";
     }
+
 
     @Override
     public int sendPacket(String key, String dsName, String schemaName, String tableName, String packet, String dsType) {
@@ -143,7 +147,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             conn = DataSourceContainer.getInstance().getConn(key);
 
             //select maxID
-            ps = conn.prepareStatement(getMaxID());
+                ps = conn.prepareStatement(getMaxID());
             rs = ps.executeQuery();
             while (rs.next()) {
                 //read max id
@@ -153,7 +157,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             DBUtil.close(ps);
 
             //delete old heartbeat record
-            ps2 = conn.prepareStatement(getDeleteOldHeartBeat());
+                ps2 = conn.prepareStatement(getDeleteOldHeartBeat());
             ps2.setLong(1, maxID - 10000);
             cnt = ps2.executeUpdate();
             LoggerFactory.getLogger().info("[db-HeartBeatDao] 数据源: " + key + ", 删除旧心跳包成功. 条数=" + cnt);
@@ -252,22 +256,6 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return sql.toString();
     }
 
-    private String getQueryHeartbeatSql2DB2() {
-        StringBuilder sql = new StringBuilder();
-        sql.append(" select ");
-        sql.append("     DS_NAME,");
-        sql.append("     SCHEMA_NAME,");
-        sql.append("     CREATE_TIME");
-        sql.append(" from");
-        sql.append("     db_heartbeat_monitor");
-        sql.append(" where");
-        sql.append("     DS_NAME = ? and");
-        sql.append("     SCHEMA_NAME = ?");
-        sql.append(" order by");
-        sql.append("     CREATE_TIME desc");
-        sql.append(" fetch first 1 rows only");
-        return sql.toString();
-    }
 
     private String getQueryHeartbeatSql2Oracle() {
         StringBuilder sql = new StringBuilder();

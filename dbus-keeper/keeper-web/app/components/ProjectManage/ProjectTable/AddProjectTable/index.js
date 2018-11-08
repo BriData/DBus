@@ -55,6 +55,7 @@ export default class AddProjectTable extends Component {
         const projectName = project.projectName
         if (!newParams.outputTopic) {
           message.error('请输入outputTopic')
+          this.stateModalLoading(false)
           return
         }
         if (projectName && newParams.outputTopic.indexOf(projectName + '.') < 0)
@@ -92,9 +93,9 @@ export default class AddProjectTable extends Component {
    * 校验弹出内容
    */
   handleRules = params => {
-    const encodes = params && params.encodes
-    if (!encodes) {
-      message.error('脱敏项不能为空')
+    const resource = params && params.resource && Object.keys(params.resource).length
+    if (!resource) {
+      message.error('没有选择任何表！')
       return false
     }
     return true
@@ -114,14 +115,17 @@ export default class AddProjectTable extends Component {
     }
     // encodes
     encodes = {}
+    // 需要把添加的表列出来，可以没有脱敏信息，后台会自动添加源端脱敏
+    Object.keys(params.resource).forEach(_tid => {
+      encodes[_tid.substr(1)] = null
+    })
     params['encodes'] && Object.keys(params['encodes']).length > 0
-      ? Object.entries(params['encodes']).forEach(item => {
-        encodes[`${item[0]}`] = {
-          encodeOutputColumns: Object.values(item[1].encodeOutputColumns),
-          outputListType: item[1].outputListType
-        }
-      })
-      : (encodes = null)
+    && Object.entries(params['encodes']).forEach(item => {
+      encodes[`${item[0]}`] = {
+        encodeOutputColumns: Object.values(item[1].encodeOutputColumns),
+        outputListType: item[1].outputListType
+      }
+    })
     temporaryData['projectId'] = this.props.projectId
     temporaryData['encodes'] = encodes
     temporaryData['topoId'] =
@@ -138,7 +142,8 @@ export default class AddProjectTable extends Component {
       onSetSink,
       onSetResource,
       onSetTopology,
-      onSetEncodes
+      onSetEncodes,
+      onSelectAllResource
     } = this.props
     // 清空Sink信息
     onSetSink(null)
@@ -148,6 +153,8 @@ export default class AddProjectTable extends Component {
     onSetTopology(null)
     // 清空脱敏配置
     onSetEncodes(null)
+    // 清空选择所有资源
+    onSelectAllResource(null)
   };
 
   render () {
@@ -160,6 +167,7 @@ export default class AddProjectTable extends Component {
       onSetSink,
       onSetResource,
       onSetTopology,
+      onSelectAllResource,
       onSetEncodes,
       onGetResourceList,
       onGetColumns,
@@ -215,6 +223,7 @@ export default class AddProjectTable extends Component {
               onSetResourceParams={onSetResourceParams}
               onSetResource={onSetResource}
               onSetTopology={onSetTopology}
+              onSelectAllResource={onSelectAllResource}
               onSetEncodes={onSetEncodes}
               onGetTableSinks={onGetTableSinks}
               onGetTableTopics={onGetTableTopics}

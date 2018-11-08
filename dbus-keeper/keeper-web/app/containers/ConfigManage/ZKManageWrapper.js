@@ -49,7 +49,7 @@ export default class ZKManageWrapper extends Component {
     while (root.path !== payload.path) {
       let newRoot
       root.children.forEach(c => {
-        if ((payload.path + '/').indexOf(c.path + '/') > -1) {
+        if ((payload.path + '/').indexOf(c.path + '/') === 0) {
           newRoot = c
         }
       })

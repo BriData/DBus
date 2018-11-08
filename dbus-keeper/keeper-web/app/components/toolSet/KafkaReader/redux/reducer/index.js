@@ -9,7 +9,8 @@ import { fromJS } from 'immutable'
 import {
   KAFKA_READER_READ_DATA,
   KAFKA_READER_GET_TOPIC_LIST,
-  KAFKA_READER_GET_OFFSET_RANGE
+  KAFKA_READER_GET_OFFSET_RANGE,
+  KAFKA_READER_GET_TOPICS_BY_USER_ID
 } from '../action/types'
 
 const initialState = fromJS({
@@ -24,6 +25,11 @@ const initialState = fromJS({
     result: {}
   },
   offsetRange: {
+    loading: false,
+    loaded: false,
+    result: {}
+  },
+  topicsByUserIdList: {
     loading: false,
     loaded: false,
     result: {}
@@ -68,6 +74,18 @@ export default (state = initialState, action) => {
         .setIn(['offsetRange', 'loading'], false)
         .setIn(['offsetRange', 'loaded'], true)
         .setIn(['offsetRange', 'result'], action.result)
+    case KAFKA_READER_GET_TOPICS_BY_USER_ID.LOAD:
+      return state.setIn(['topicsByUserIdList', 'loading'], true)
+    case KAFKA_READER_GET_TOPICS_BY_USER_ID.SUCCESS:
+      return state
+        .setIn(['topicsByUserIdList', 'loading'], false)
+        .setIn(['topicsByUserIdList', 'loaded'], true)
+        .setIn(['topicsByUserIdList', 'result'], action.result)
+    case KAFKA_READER_GET_TOPICS_BY_USER_ID.FAIL:
+      return state
+        .setIn(['topicsByUserIdList', 'loading'], false)
+        .setIn(['topicsByUserIdList', 'loaded'], true)
+        .setIn(['topicsByUserIdList', 'result'], action.result)
     default:
       return state
   }

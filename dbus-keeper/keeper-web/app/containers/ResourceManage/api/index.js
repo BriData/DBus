@@ -33,6 +33,8 @@ export const KILL_TOPOLOGY_API = '/keeper/data-source/kill'
 export const DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID_API = '/keeper/data-schema/source-schemas'
 // 获取schema table
 export const DATA_SOURCE_GET_SCHEMA_TABLE_LIST_API = '/keeper/data-schema/schema-tables'
+// 清除全量报警
+export const DATA_SOURCE_CLEAR_FULLPULL_ALARM_API = '/keeper/fullpullHistory/clearFullPullAlarm'
 // 添加schema table
 export const DATA_SOURCE_ADD_SCHEMA_TABLE_LIST_API = '/keeper/data-schema/schema-tables'
 // 克隆ZK模板
@@ -48,6 +50,8 @@ export const VIEW_LOG_API = '/keeper/data-source/view-log'
 export const DATA_SOURCE_ADD_API = '/keeper/data-source'
 // 检查数据源连通性
 export const DATA_SOURCE_VALIDATE_API = '/keeper/data-source/validate'
+// 数据源拖回重跑
+export const DATA_SOURCE_RERUN_API = '/keeper/data-source/rerun'
 
 
 // DataSchema首页的搜索
@@ -62,6 +66,8 @@ export const DATA_SCHEMA_DELETE_API = '/keeper/data-schema/delete'
 export const DATA_SCHEMA_UPDATE_API = '/keeper/data-schema/update'
 // DataSchema增加
 export const DATA_SCHEMA_INSERT_API = '/keeper/data-schema/insert'
+// DataSchema拖回重跑
+export const DATA_SCHEMA_RERUN_API = '/keeper/data-schema/rerun'
 
 // DataTable首页的搜索
 export const DATA_TABLE_SEARCH_API = '/keeper/tables/find'
@@ -77,7 +83,8 @@ export const DATA_TABLE_INSERT_API = '/keeper/tables/insert'
 export const DATA_TABLE_START_API = '/keeper/tables/activate'
 // DataTable Stop
 export const DATA_TABLE_STOP_API = '/keeper/tables/deactivate'
-
+// DataTable 拖回重跑
+export const DATA_TABLE_RERUN_API = '/keeper/data-table/rerun'
 // DBusData 查询源端表和存储过程
 export const DBUS_DATA_SEARCH_FROM_SOURCE_API = '/keeper/data-source/searchFromSource'
 // DBusData 执行SQL

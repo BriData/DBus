@@ -41,6 +41,7 @@ import com.creditease.dbus.domain.model.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.utils.ControlMessageSenderProvider;
 import com.creditease.dbus.utils.ControlMessageSender;
+import com.creditease.dbus.utils.OrderedProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Joiner;
 import org.apache.commons.collections.map.HashedMap;
@@ -73,12 +74,21 @@ public class TableService {
     @Autowired
     private IZkService zkService;
 
+    @Autowired
+    private ToolSetService toolSetService;
+
     private static Logger logger = LoggerFactory.getLogger(TableService.class);
     private static final String INITIAL_LOAD_DATA = "load-data";
 
 
     public Integer activateDataTable(Integer id, Map<String, String> map) throws Exception {
-        ActiveTableParam param = ActiveTableParam.build(map);
+        ActiveTableParam param;
+        try {
+             param = ActiveTableParam.build(map);
+        }catch (Exception e){
+            logger.error("activateDataTable : param error,tableId :{}, param:{}",id,map);
+            return MessageCode.TABLE_PARAM_FORMAT_ERROR;
+        }
         logger.info("Receive activateDataTable request, parameter[id:{}, param:{}]", id, JSON.toJSONString(param));
         DataTable table = this.getTableById(id);
         if (table == null) {
@@ -104,11 +114,15 @@ public class TableService {
             if (DbusDatasourceType.ORACLE == dsType) {
                 logger.info("Activate oracle table");
                 // 处理oracle拉全量
-                ilService.oracleInitialLoadBySql(table, table, date.getTime());
+                ilService.oracleInitialLoadBySql(table, date.getTime());
             } else if (DbusDatasourceType.MYSQL == dsType) {
                 logger.info("Activate mysql table");
                 // 处理mysql拉全量
-                ilService.mysqlInitialLoadBySql(table, table, date.getTime());
+                ilService.mysqlInitialLoadBySql(table, date.getTime());
+            } else if (DbusDatasourceType.MONGO == dsType) {
+                logger.info("Activate mysql table");
+                // 处理mongo拉全量
+                ilService.mongoInitialLoadBySql(table, date.getTime());
             }
             else {
                 logger.error("Illegal datasource type:" + table.getDsType());
@@ -201,7 +215,19 @@ public class TableService {
 
     public ResultEntity updateTable(DataTable dataTable) {
         ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, "/tables/update", dataTable);
+
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+            return result.getBody();
+
+        //TODO mongo的表更新完后，自动reload
+        DataTable table = getTableById(dataTable.getId());//Integer dsId, String dsName, String dsType) {
+        if(DbusDatasourceType.MONGO == DbusDatasourceType.parse(table.getDsType())
+                && KeeperConstants.OK.equals(table.getStatus())) {
+            toolSetService.reloadMongoCatch(table.getDsId(),table.getDsName(),table.getDsType());
+        }
         return result.getBody();
+
+
     }
 
     public ResultEntity deleteTable(int tableId) {
@@ -674,33 +700,33 @@ public class TableService {
         return sender.get(ServiceNames.KEEPER_SERVICE, "encode-plugins/project-plugins/0").getBody();
     }
 
-    public int countByTableId(Integer tableId) {
+    public int countActiveTables(Integer tableId) {
         //是否还有项目在使用
-        return sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/count-by-table-id/{0}", tableId)
-                .getBody().getPayload(Integer.class);
+        Integer count = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/count-by-table-id/{0}", tableId).getBody().getPayload(Integer.class);
+        DataTable table = this.getTableById(tableId);
+        return count + (StringUtils.equals("ok", table.getStatus()) ? 1 : 0);
     }
 
     public List<RiderTable> riderSearch(Integer userId, String userRole) throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<RiderTable> listRider = new ArrayList<RiderTable>();
-        //获取非多租户namespace
+        //管理员获取的是不带topoName的namespace
         if ("admin".equalsIgnoreCase(userRole)) {
             List<DataTable> tables = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findAllTables")
-                    .getBody().getPayload(new TypeReference<List<DataTable>>() {
-                    });
+                    .getBody().getPayload(new TypeReference<List<DataTable>>() {});
+            boolean flag = false;
             for (DataTable table : tables) {
-                boolean flag = false;
                 if (table.getTableName().equals(table.getPhysicalTableRegex())) {
                     flag = true;
                 }
                 String dsType = table.getDsType();
                 String namespace;
                 if (flag) {
-                    namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
-                            "." + table.getVersion() + "." + "0" + "." + "0";
+                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s", dsType, table.getDsName(), table.getSchemaName(),
+                            table.getTableName(), table.getVersion(), "0", "0");
                 } else {
-                    namespace = dsType + "." + table.getDsName() + "." + table.getSchemaName() + "." + table.getTableName() +
-                            "." + table.getVersion() + "." + "0" + "." + table.getPhysicalTableRegex();
+                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s", dsType, table.getDsName(), table.getSchemaName(),
+                            table.getTableName(), table.getVersion(), "0", table.getPhysicalTableRegex());
                 }
                 RiderTable rTable = new RiderTable();
                 rTable.setNamespace(namespace);
@@ -712,22 +738,22 @@ public class TableService {
                 listRider.add(rTable);
             }
         } else {
+            //租户获取的是带topoName的namespace
             List<HashMap<String, Object>> list = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findTablesByUserId/{0}", userId)
-                    .getBody().getPayload(new TypeReference<List<HashMap<String, Object>>>() {
-                    });
+                    .getBody().getPayload(new TypeReference<List<HashMap<String, Object>>>() {});
+            boolean flag = false;
             for (HashMap<String, Object> table : list) {
-                boolean flag = false;
                 if (table.get("table_name").equals(table.get("physical_table_regex"))) {
                     flag = true;
                 }
                 String dsType = (String) table.get("ds_type");
                 String namespace;
                 if (flag) {
-                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("schema_name"),
-                            table.get("table_name"), table.get("topo_name"), table.get("version"), "0", "0");
+                    namespace = String.format("%s.%s!%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("topo_name"),
+                            table.get("schema_name"), table.get("table_name"), table.get("version"), "0", "0");
                 } else {
-                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("schema_name"),
-                            table.get("table_name"), table.get("topo_name"), table.get("version"), "0", table.get("physical_table_regex"));
+                    namespace = String.format("%s.%s!%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("topo_name"),
+                            table.get("schema_name"), table.get("table_name"), table.get("version"), "0", table.get("physical_table_regex"));
                 }
                 RiderTable rTable = new RiderTable();
                 rTable.setNamespace(namespace);
@@ -739,6 +765,22 @@ public class TableService {
             }
         }
         return listRider;
+    }
+
+    public int rerun(Integer dsId, String dsName, String schemaName, String tableName, Long offset) throws Exception{
+        String path = "/DBus/Topology/" + dsName + "-dispatcher/dispatcher.raw.topics.properties";
+        byte[] data = zkService.getData(path);
+        OrderedProperties orderedProperties = new OrderedProperties(new String(data));
+        Object value = orderedProperties.get("dbus.dispatcher.offset");
+        if(StringUtils.isNotBlank(value.toString())){
+            return MessageCode.PLEASE_TRY_AGAIN_LATER;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(dsName).append(".").append(schemaName.toLowerCase()).append(".").append(tableName.toLowerCase()).append("->").append(offset);
+        orderedProperties.put("dbus.dispatcher.offset", sb.toString());
+        zkService.setData(path, orderedProperties.toString().getBytes());
+        toolSetService.reloadConfig(dsId,dsName,"DISPATCHER_RELOAD_CONFIG");
+        return 0;
     }
 
     public static class InitialLoadStatus {

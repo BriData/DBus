@@ -23,15 +23,12 @@ package com.creditease.dbus.controller;
 import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
+import com.creditease.dbus.domain.model.FullPullHistory;
 import com.creditease.dbus.service.FullPullHistoryService;
 import com.creditease.dbus.service.ProjectResourceService;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URLDecoder;
 
@@ -59,5 +56,20 @@ public class FullPullHistoryController extends BaseController {
     @GetMapping("/dsNames")
     public ResultEntity getDSNames(HttpServletRequest request) throws Exception{
         return service.getDSNames(request.getQueryString());
+    }
+
+    @PostMapping("/dsNames")
+    public ResultEntity updata(HttpServletRequest request) throws Exception{
+        return service.getDSNames(request.getQueryString());
+    }
+    @PostMapping("/update")
+    public ResultEntity update(@RequestBody FullPullHistory fullPullHistory) throws Exception{
+        return service.update(fullPullHistory);
+    }
+
+    @GetMapping("/clearFullPullAlarm")
+    public ResultEntity clearFullPullAlarm(@RequestParam String dsName) throws Exception {
+        service.clearFullPullAlarm(dsName);
+        return resultEntityBuilder().build();
     }
 }

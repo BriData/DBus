@@ -25,6 +25,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.bean.SchemaAndTablesInfoBean;
 import com.creditease.dbus.domain.mapper.DataSchemaMapper;
+import com.creditease.dbus.domain.mapper.DataTableMapper;
 import com.creditease.dbus.domain.model.DataSchema;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.DataTable;
@@ -54,6 +55,9 @@ import java.util.Map;
 public class DataSchemaService {
     @Autowired
     private DataSchemaMapper mapper;
+
+    @Autowired
+    private DataTableMapper tableMapper;
 
     @Autowired
     private TableService dataTableService;
@@ -97,6 +101,9 @@ public class DataSchemaService {
      */
     public int update(DataSchema updateOne){
         // updateOne.setCreateTime(new Date());
+        if(updateOne.getStatus().equals("inactive")){
+            tableMapper.inactiveTableBySchemaId(updateOne.getId());
+        }
         return mapper.update(updateOne);
     }
 
@@ -327,11 +334,11 @@ public class DataSchemaService {
 
             //构造默认需要插入的表
             List<DataTable> defaultTables;
-            if(StringUtils.equals(MYSQL,dsType)){
+            if(StringUtils.equals(ORACLE,dsType)){
+                defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId,dsName,dbusSchemaId);
+            }else {
                 //！！！ 注意dbusSchemaId和schemaId的使用处
                 defaultTables = dataTableService.getDefaultTableForMySQL(dsId,dsName,dbusSchemaId);
-            }else {
-                defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId,dsName,dbusSchemaId);
             }
             //构造需要插入的表列表，然后将需要插入的表加入
             List<DataTable> tablesToAdd = defaultTables;

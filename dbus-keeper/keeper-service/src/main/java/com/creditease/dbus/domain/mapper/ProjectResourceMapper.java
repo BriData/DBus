@@ -47,7 +47,7 @@ public interface ProjectResourceMapper {
 
     String searchStatus(@Param("projectId") int projectId,@Param("tableId") int tableId);
 
-    String searchEncodeType(int tableId);
+    String searchEncodeType(@Param("tableId") Integer tableId, @Param("projectId")Integer projectId);
 
     List<Map<String, Object>> selectColumns(Integer tableId);
 

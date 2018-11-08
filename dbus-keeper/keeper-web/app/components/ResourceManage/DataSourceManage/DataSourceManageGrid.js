@@ -92,8 +92,35 @@ export default class DataSourceManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onModify, onMount, onTopo, onAdd, onDBusData} = this.props
-    const menus = [
+    const {onRerun, onClearFullPullAlarm, onModify, onMount, onTopo, onAdd, onDBusData} = this.props
+    let menus = []
+    menus.push({
+      text: <FormattedMessage
+        id="app.components.projectManage.projectTopology.table.rerun"
+        defaultMessage="拖回重跑"
+      />,
+      icon: 'reload',
+      disabled: record.type === 'db2',
+      onClick: () => onRerun(record),
+    })
+    if (record.type === 'mysql' || record.type === 'oracle' || record.type === 'mongo' || record.type === 'db2') {
+      menus.push({
+        text: <FormattedMessage
+          id="app.components.resourceManage.dataSource.clearFullPullAlarm"
+          defaultMessage="消除全量报警"
+        />,
+        confirmText: <span>
+          <FormattedMessage
+            id="app.components.resourceManage.dataSource.clearFullPullAlarm"
+            defaultMessage="消除全量报警"
+          />?
+        </span>,
+        icon: 'exclamation-circle-o',
+        onClick: () => onClearFullPullAlarm(record),
+      })
+    }
+    menus = [
+      ...menus,
       {
         text: <FormattedMessage
           id="app.components.resourceManage.dataSource.viewMountProject"
@@ -125,7 +152,7 @@ export default class DataSourceManageGrid extends Component {
     })
     return (
       <div>
-        <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle'
+        <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle' && record.type !== 'mongo'
         } icon="plus" onClick={() => onAdd(record)}>
           <FormattedMessage id="app.common.addSchema" defaultMessage="添加Schema" />
         </OperatingButton>

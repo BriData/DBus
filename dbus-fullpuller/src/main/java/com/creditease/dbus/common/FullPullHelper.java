@@ -164,7 +164,7 @@ public class FullPullHelper {
         return dbConf;
     }
 
-    public static ZkService getZkService() {
+    public static ZkService getZkService() throws Exception {
         if (zkService != null) {
             return zkService;
         } else {
@@ -328,21 +328,34 @@ public class FullPullHelper {
             //多租户监控
             zkPath = zkMonitorRootNodePath + "/Projects";
             for (String projectName : zkService.getChildren(zkPath)) {
-                List<String> dsNames = zkService.getChildren(zkPath + "/" + projectName);
-                for (String dsname : dsNames) {
-                    if (dsname.equals(dsName)) {
-                        getMonitorPaths(zkPath + "/" + projectName + "/" + dsName, paths, zkService);
-                    }
-                }
+                getMonitorPaths(zkPath + "/" + projectName + "/" + dsName, paths, zkService);
             }
         }
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         for (String path : paths) {
+            boolean updateFlag = true;
             ProgressInfo progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, path);
             String status = progressObj.getStatus();
-            if (StringUtils.isBlank(status) || (!status.equals("ending") && !status.equals("abort"))) {
+            String endTime = progressObj.getEndTime();
+            if (status != null && org.apache.commons.lang3.StringUtils.isNotBlank(status.toString()) && (status.equals("ending") || status.equals("abort"))) {
+                if (endTime != null && org.apache.commons.lang3.StringUtils.isNotBlank(endTime.toString())) {
+                    try {
+                        formatter.parse(endTime.toString());
+                    } catch (Exception e) {
+                        updateFlag = true;
+                    }
+                } else {
+                    updateFlag = true;
+                }
+            } else {
+                updateFlag = true;
+            }
+
+            if (updateFlag) {
                 progressObj.setUpdateTime(currentTimeStampString);
-                progressObj.setErrorMsg("重启topoloby,pending任务状态置为abort!");
+                progressObj.setEndTime(currentTimeStampString);
+                progressObj.setErrorMsg("全量程序重启,pending任务状态置为abort,该任务需要重新拉取!");
                 progressObj.setStatus("abort");
                 ObjectMapper mapper = JsonUtil.getObjectMapper();
                 updateZkNodeInfo(zkService, path, mapper.writeValueAsString(progressObj));
@@ -353,16 +366,18 @@ public class FullPullHelper {
     private static void getMonitorPaths(String root, List<String> childrenPaths, ZkService zkService) throws Exception {
         List<String> children = null;
         try {
+            if (!zkService.isExists(root)) return;
             children = zkService.getChildren(root);
-            if (children.size() > 0) {
+            if (children != null && children.size() > 0) {
                 for (String nodeName : children) {
                     getMonitorPaths(root + "/" + nodeName, childrenPaths, zkService);
                 }
             }
-            if (root.contains(" ")) {
+            if (root.contains(" - ")) {
                 childrenPaths.add(root);
             }
         } catch (Exception e) {
+            throw e;
         }
     }
 
@@ -530,7 +545,7 @@ public class FullPullHelper {
                 if (conn != null)
                     conn.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
         }
     }
@@ -812,6 +827,7 @@ public class FullPullHelper {
             case MYSQL:
                 return new MySQLManager(dbConf, url);
             default:
+
                 return new GenericJdbcManager(dbDriverClass, dbConf, url);
         }
 
@@ -838,11 +854,11 @@ public class FullPullHelper {
             }
             catch (SQLException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
             catch (Exception e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
         }
     }*/
@@ -1007,7 +1023,7 @@ public class FullPullHelper {
                     sql.append(" UPDATE ");
                     sql.append("     t_fullpull_history");
                     sql.append(" SET ");
-                    sql.append("     state = 'abort', error_msg='重启topoloby,pending任务状态置为abort!'");
+                    sql.append("     state = 'abort', error_msg='全量程序重启,pending任务状态置为abort,该任务需要重新拉取!'");
                     sql.append(" WHERE id = ?");
 
                     ps = conn.prepareStatement(sql.toString());
@@ -1019,8 +1035,10 @@ public class FullPullHelper {
                     if (rowId1 != null) {
                         TopicPartition topicPartition = new TopicPartition(topic, 0);
                         consumer.seek(topicPartition, fullPullReqMsgOffset1);
-                        LOG.info("splittingSpout restart : seek consumer to the first task and the state is init !" +
+                        LOG.info("splittingSpout restart : no pening task ! seek consumer to the first task and the state is init !" +
                                 " FULL_PULL_REQ_MSG_OFFSET :{}!", fullPullReqMsgOffset1);
+                    } else {
+                        LOG.info("splittingSpout restart : no pening task ! seek consumer to end !");
                     }
                 }
                 //更新该数据源pending任务的监控节点信息为完成状态
@@ -1031,7 +1049,7 @@ public class FullPullHelper {
                     sql = new StringBuilder();
                     sql.append(" UPDATE ");
                     sql.append("     t_fullpull_history");
-                    sql.append(" SET state = 'abort', error_msg='重启topoloby,阻断式拉全量状态置为abort' ");
+                    sql.append(" SET state = 'abort', error_msg='全量程序重启,阻断式拉全量状态置为abort,该任务需要重新拉取!' ");
                     sql.append(" WHERE type='normal' and dsName=?");
                     ps = conn.prepareStatement(sql.toString());
                     ps.setString(1, dsName);
@@ -1049,7 +1067,7 @@ public class FullPullHelper {
                 if (conn != null)
                     conn.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
         }
     }
@@ -1155,7 +1173,7 @@ public class FullPullHelper {
             try {
                 zkService.setData(pendingZKNodePath, pendingNodeContent.toString().getBytes());
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
 
             //todo 更新数据库，写拉全量状态
@@ -1240,18 +1258,9 @@ public class FullPullHelper {
                 return ctrl_topic;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-                if (ps != null)
-                    ps.close();
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            DBHelper.close(conn, ps, rs);
         }
         return consumerSubTopic;
     }
@@ -1282,7 +1291,7 @@ public class FullPullHelper {
 //            }
 //            zkService.setData(zkPath, updateInfo.getBytes());
 //        } catch (Exception e) {
-//            e.printStackTrace();
+//            LOG.error(e.getMessage(),e);
 //        }
 //    }
 

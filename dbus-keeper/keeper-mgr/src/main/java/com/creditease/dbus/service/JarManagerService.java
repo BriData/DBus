@@ -156,9 +156,12 @@ public class JarManagerService {
         Project project = result.getBody().getPayload(Project.class);
         String fileName = project.getKeytabPath();
         String projectName = project.getProjectName();
+        if(StringUtils.isBlank(fileName)){
+            return ResponseEntity.ok().body(new ResultEntity(21003, "请联系管理员上传密钥文件"));
+        }
         File file = new File(fileName);
         if (file == null) {
-            return null;
+            return ResponseEntity.ok().body(new ResultEntity(21003, "请联系管理员上传密钥文件"));
         }
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache, no-store, must-revalidate");

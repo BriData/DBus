@@ -170,9 +170,9 @@ public class ProjectTableController extends BaseController {
         try {
             ResultEntity result = service.addTable(tableBean);
             if (result == null) {
-                resultEntityBuilder().status(MessageCode.TABLE_ADD_LACK_MSG).build();
+                return resultEntityBuilder().status(MessageCode.TABLE_ADD_LACK_MSG).build();
             }
-            return resultEntityBuilder().payload(result).build();
+            return result;
         }catch (Exception e){
             logger.error("[add table]添加table 异常： ",e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
@@ -325,4 +325,9 @@ public class ProjectTableController extends BaseController {
         return service.getAllEncoders(projectId);
     }
 
+    @GetMapping("/getAllResourcesByQuery")
+    @ProjectAuthority
+    public ResultEntity getAllResourcesByQuery(HttpServletRequest request) throws Exception {
+        return service.getAllResourcesByQuery(request.getQueryString());
+    }
 }

@@ -29,6 +29,7 @@ import com.creditease.dbus.stream.appender.exception.InitializationException;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.Constants.EmitFields;
 import com.creditease.dbus.stream.common.Constants.StormConfigKey;
+import com.creditease.dbus.stream.common.appender.bean.DbusDatasource;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerProvider;
@@ -169,14 +170,14 @@ public class DbusAppenderBolt extends BaseRichBolt implements CommandHandlerList
         }
         */
         DbusDatasourceType type = GlobalCache.getDatasourceType();
+        DbusDatasource ds = GlobalCache.getDatasource();
         String name;
         if (type == DbusDatasourceType.ORACLE) {
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
         } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
-        } else if (type == DbusDatasourceType.MONGO) {
-            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

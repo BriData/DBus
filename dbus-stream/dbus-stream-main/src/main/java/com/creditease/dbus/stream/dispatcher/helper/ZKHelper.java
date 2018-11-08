@@ -73,6 +73,7 @@ public class ZKHelper {
         dsInfo.setDataTopicOffset(dataTopicOffset);
     }
 
+
     public Properties getProducerProps() throws Exception {
         String path = topologyRoot + "/" + Constants.DISPATCHER_PRODUCER_PROPERTIES;
         Properties props = zkService.getProperties(path);
@@ -90,6 +91,7 @@ public class ZKHelper {
         logger.info(String.format("Spout set: group.id and client.id=%s", id));
         return props;
     }
+
 
     public Properties getStatProducerProps() throws Exception {
         String path = topologyRoot + "/" + Constants.DISPATCHER_PRODUCER_PROPERTIES;
@@ -147,6 +149,17 @@ public class ZKHelper {
         String topic = configs.getProperty(Constants.STATISTIC_TOPIC);
         if (topic == null) {
             throw new PropertyException("配置参数文件内容不能为空！ " + Constants.STATISTIC_TOPIC);
+        }
+
+        return topic;
+    }
+
+    public String getSchemaRegistryRestUrl() throws Exception {
+        String path = topologyRoot + "/" + Constants.DISPATCHER_CONFIG_PROPERTIES;
+        Properties configs = zkService.getProperties(path);
+        String topic = configs.getProperty(Constants.SCHEMA_REGISTRY_REST_URL);
+        if (topic == null) {
+            throw new PropertyException("配置参数文件内容不能为空！ " + Constants.SCHEMA_REGISTRY_REST_URL);
         }
 
         return topic;

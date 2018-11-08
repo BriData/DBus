@@ -20,7 +20,7 @@ export default (store) => [
         if (!TOKEN) {
           replace('/login')
         }
-        replace('/tool-set/control-message')
+        replace('/tool-set/kafka-reader')
       }
     },
     childRoutes: [

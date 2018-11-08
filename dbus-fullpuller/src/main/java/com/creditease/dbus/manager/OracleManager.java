@@ -704,7 +704,7 @@ public class OracleManager
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         } finally {
             if (rset != null) {
                 try {
@@ -728,7 +728,7 @@ public class OracleManager
 //      }
 //    catch (Exception e) {
 //        // TODO Auto-generated catch block
-//        e.printStackTrace();
+//        LOG.error(e.getMessage(),e);
 //    }
         }
 
@@ -767,7 +767,7 @@ public class OracleManager
             LoggingUtils.logAll(LOG, "Failed to list tables", e);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         } finally {
             if (rset != null) {
                 try {
@@ -791,7 +791,7 @@ public class OracleManager
 //      }
 //    catch (Exception e) {
 //        // TODO Auto-generated catch block
-//        e.printStackTrace();
+//        LOG.error(e.getMessage(),e);
 //    }
         }
 
@@ -885,7 +885,7 @@ public class OracleManager
             return null;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         }
     }
@@ -932,7 +932,7 @@ public class OracleManager
             return null;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         }
     }
@@ -982,7 +982,7 @@ public class OracleManager
             LoggingUtils.logAll(LOG, "Failed to list columns", e);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         } finally {
             if (rset != null) {
                 try {
@@ -1007,7 +1007,7 @@ public class OracleManager
 //            }
 //            catch (Exception e) {
 //                // TODO Auto-generated catch block
-//                e.printStackTrace();
+//                LOG.error(e.getMessage(),e);
 //            }
         }
 
@@ -1057,7 +1057,7 @@ public class OracleManager
             LoggingUtils.logAll(LOG, "Failed to list columns", e);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         } finally {
             if (rset != null) {
                 try {
@@ -1080,7 +1080,7 @@ public class OracleManager
                 LoggingUtils.logAll(LOG, "Unable to discard connection", ex);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
         }
 
@@ -1242,7 +1242,7 @@ public class OracleManager
 //        }
 //        catch (Exception e) {
 //            // TODO Auto-generated catch block
-//            e.printStackTrace();
+//            LOG.error(e.getMessage(),e);
 //        }
         }
 

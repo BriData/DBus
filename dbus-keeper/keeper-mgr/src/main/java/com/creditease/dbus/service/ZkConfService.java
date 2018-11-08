@@ -391,11 +391,11 @@ public class ZkConfService {
 				result = deleteNodeRecursively(childPath);
 			}
 		}
-		for (String confFilePath : InitZooKeeperNodesTemplate.ZK_PROTECT_NODES_PATHS) {
-			if (path.equals(confFilePath)) {
-				return confFilePath + "是受保护的节点,不能删除";
-			}
-		}
+		//for (String confFilePath : InitZooKeeperNodesTemplate.ZK_PROTECT_NODES_PATHS) {
+		//	if (path.equals(confFilePath)) {
+		//		return confFilePath + "是受保护的节点,不能删除";
+		//	}
+		//}
 
 		if (zkService.getChildren(path) != null && zkService.getChildren(path).size() > 0) {
 			return result;
@@ -436,14 +436,18 @@ public class ZkConfService {
 		businessNodePath = businessNodePath.replaceAll("placeholder", dsName);  //替换占位符placeholder为dsName
 		try {
 			if (zkService.isExists(businessNodePath)) {
-				String nodeData = new String(zkService.getData(templatePath), "UTF-8");
+				byte[] data = zkService.getData(templatePath);
+				String nodeData = null;
+				if (data != null && data.length > 0) {
+					nodeData = new String(zkService.getData(templatePath), "UTF-8");
+				}
 				if (nodeData != null) {
 					nodeData = nodeData.replaceAll("typePlaceholder", dsType);
 					nodeData = nodeData.replaceAll("placeholder", dsName);
 				} else {
 					nodeData = "";
 				}
-				zkService.setData(businessNodePath, nodeData.getBytes());
+				zkService.setData(businessNodePath, nodeData.getBytes(KeeperConstants.UTF8));
 			}
 
 		} catch (Exception e) {

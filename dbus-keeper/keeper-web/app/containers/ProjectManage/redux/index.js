@@ -106,5 +106,6 @@ export {
   setTableSink,
   setTableResource,
   setTableTopology,
+  selectAllResource,
   setTableEncodes
 } from '@/app/components/ProjectManage/ProjectTable/redux/action'

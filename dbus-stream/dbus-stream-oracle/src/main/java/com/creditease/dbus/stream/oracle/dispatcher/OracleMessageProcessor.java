@@ -20,10 +20,10 @@
 
 package com.creditease.dbus.stream.oracle.dispatcher;
 
-import com.creditease.dbus.stream.common.DataSourceInfo;
-import com.creditease.dbus.stream.common.tools.IGenericMessage;
 import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.stream.common.HeartBeatPacket;
+import com.creditease.dbus.stream.common.tools.IGenericMessage;
 import com.creditease.dbus.stream.common.tools.MessageProcessor;
 import com.creditease.dbus.stream.common.tools.TableStatMap;
 import org.apache.avro.generic.GenericRecord;
@@ -45,6 +45,7 @@ public class OracleMessageProcessor extends MessageProcessor {
 
         decoder = OracleGenericSchemaDecoder.getInstance();
     }
+
 
     @Override
     public List<IGenericMessage> unwrapMessages(byte[] data) throws IOException {

@@ -8,7 +8,7 @@ import { Modal, message, Spin } from 'antd'
 import Request, {setToken} from '@/app/utils/request'
 // 导入API
 import {
-  ADD_TOPOLOGY_API,
+  ADD_TOPOLOGY_API, GET_PROJECT_INFO_API,
   MODIFY_TOPOLOGY_API
 } from '@/app/containers/ProjectManage/api'
 
@@ -19,7 +19,67 @@ export default class ProjectTopologyForm extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      loading: false
+      loading: false,
+
+      initialTopoNamePrefix: '',
+      initialTopoNameText: ''
+    }
+  }
+
+  componentWillMount = () => {
+    const {projectId, modalStatus} = this.props
+    // 根据create或modify来判断topoName默认值的填写,必须项目名为前缀
+    if (modalStatus === 'create') {
+      if (!projectId) return
+      Request(`${GET_PROJECT_INFO_API}/${projectId}`, {
+        method: 'get'
+      })
+        .then(res => {
+          if (res && res.status === 0) {
+            const projectName = res.payload.project.projectName
+            this.setState({
+              initialTopoNamePrefix: `${projectName}_`,
+              initialTopoNameText: ''
+            })
+          }
+          else {
+            message.warn(res.message)
+          }
+        })
+        .catch(error => {
+          error.response.data && error.response.data.message
+            ? message.error(error.response.data.message)
+            : message.error(error.message)
+        })
+    }
+  }
+
+  componentWillReceiveProps = nextProps => {
+    const {modalStatus, topologyInfo} = nextProps
+    const {result} = topologyInfo
+    const {initialTopoNamePrefix} = this.state
+    if (modalStatus !== 'create' && result && Object.keys(result).length && initialTopoNamePrefix === '') {
+      Request(`${GET_PROJECT_INFO_API}/${result.projectId}`, {
+        method: 'get'
+      })
+        .then(res => {
+          if (res && res.status === 0) {
+            const projectName = res.payload.project.projectName
+            const text = result.topoName.replace(`${projectName}_`, '')
+            this.setState({
+              initialTopoNamePrefix: `${projectName}_`,
+              initialTopoNameText: text
+            })
+          }
+          else {
+            message.warn(res.message)
+          }
+        })
+        .catch(error => {
+          error.response.data && error.response.data.message
+            ? message.error(error.response.data.message)
+            : message.error(error.message)
+        })
     }
   }
 
@@ -40,10 +100,11 @@ export default class ProjectTopologyForm extends Component {
       modalStatus === 'create' ? ADD_TOPOLOGY_API : MODIFY_TOPOLOGY_API
     this.topoInfoRef.validateFieldsAndScroll((err, values) => {
       if (!err) {
+        const topoName = this.state.initialTopoNamePrefix + values.topoName
         let param =
           modalStatus === 'create'
-            ? { ...values, projectId, status: 'new' }
-            : { ...result, ...values, projectId, status: 'changed' }
+            ? { ...values, projectId, status: 'new', topoName }
+            : { ...result, ...values, projectId, status: 'changed', topoName }
         this.setState({ loading: true })
         Request(requestAPI, {
           data: param,
@@ -70,6 +131,7 @@ export default class ProjectTopologyForm extends Component {
 
   render () {
     const { loading } = this.state
+    const {initialTopoNameText, initialTopoNamePrefix} = this.state
     const {
       getTopologyTemplateApi,
       visibal,
@@ -117,6 +179,8 @@ export default class ProjectTopologyForm extends Component {
                 onGetJarVersions={onGetJarVersions}
                 onGetJarPackages={onGetJarPackages}
                 getTopologyTemplateApi={getTopologyTemplateApi}
+                initialTopoNameText={initialTopoNameText}
+                initialTopoNamePrefix={initialTopoNamePrefix}
         />
             ) : (
               <div style={{ height: '378px' }} />

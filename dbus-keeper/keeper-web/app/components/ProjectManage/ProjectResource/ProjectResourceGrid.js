@@ -185,7 +185,10 @@ export default class ProjectResourceGrid extends Component {
       },
       {
         title: (
-          <FormattedMessage id="app.common.status" defaultMessage="状态" />
+          <FormattedMessage
+            id="app.components.projectManage.projectResource.table.isUse"
+            defaultMessage="是否使用"
+          />
         ),
         width: tableWidth[6],
         dataIndex: 'status',
@@ -332,17 +335,18 @@ export default class ProjectResourceGrid extends Component {
   }
 
   renderStatus =(text, record, index) => {
+    const isY = text === 'use' || text === 'ok'
     let color
-    switch (text) {
-      case 'use':
+    switch (isY) {
+      case true:
         color = 'green'
         break
       default:
         color = '#929292'
     }
-    return (<div title={text === 'use' ? 'Y' : 'N'} className={styles.ellipsis}>
+    return (<div title={isY ? 'Y' : 'N'} className={styles.ellipsis}>
       <Tag color={color} style={{cursor: 'auto'}}>
-        {text === 'use' ? 'Y' : 'N'}
+        {isY ? 'Y' : 'N'}
       </Tag>
     </div>)
   }

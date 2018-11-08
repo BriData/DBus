@@ -588,6 +588,8 @@ public class DBFacade {
                 t.setMetaChangeFlg(rs.getInt("meta_change_flg"));
                 t.setBatchId(rs.getInt("batch_id"));
                 t.setOutputBeforeUpdateFlg(rs.getInt("output_before_update_flg"));
+                t.setIsOpen(rs.getInt("is_open"));
+                t.setIsAutocomplete(rs.getBoolean("is_auto_complete"));
                 if (ts != null) {
                     t.setCreateTime(new Date(ts.getTime()));
                 }
@@ -607,6 +609,44 @@ public class DBFacade {
      */
     public DataTable queryDataTable(long dsId, String schemaName, String table) {
         String sql = "select * from t_data_tables t where t.ds_id = ? and t.schema_name = ? and table_name = ?";
+        return query(sql, new Object[]{dsId, schemaName, table}, rs -> {
+            while (rs.next()) {
+                DataTable t = new DataTable();
+                t.setId(rs.getLong("id"));
+                t.setDsId(rs.getLong("ds_id"));
+                t.setSchemaId(rs.getLong("schema_id"));
+                t.setSchema(rs.getString("schema_name"));
+                t.setTableName(rs.getString("table_name"));
+                t.setOutputTopic(rs.getString("output_topic"));
+                Timestamp ts = rs.getTimestamp("create_time");
+                t.setVerId(rs.getLong("ver_id"));
+                t.setStatus(rs.getString("status"));
+                t.setPhysicalTableRegex(rs.getString("physical_table_regex"));
+                t.setMetaChangeFlg(rs.getInt("meta_change_flg"));
+                t.setBatchId(rs.getInt("batch_id"));
+                t.setOutputBeforeUpdateFlg(rs.getInt("output_before_update_flg"));
+                t.setIsOpen(rs.getInt("is_open"));
+                t.setIsAutocomplete(rs.getBoolean("is_auto_complete"));
+                if (ts != null) {
+                    t.setCreateTime(new Date(ts.getTime()));
+                }
+                return t;
+            }
+            return null;
+        });
+    }
+
+
+    /**
+     * 查询数据库获取DataTable对象
+     *
+     * @param dsId       datasource id
+     * @param schemaName 数据库 schema 名
+     * @param table      表名
+     * @return
+     */
+    public DataTable queryDataTable(long dsId, String schemaName, String table, String schemaId) {
+        String sql = "select * from t_data_tables t where t.ds_id = ? and t.schema_name = ? and table_name = ? and ";
         return query(sql, new Object[]{dsId, schemaName, table}, rs -> {
             while (rs.next()) {
                 DataTable t = new DataTable();
@@ -691,6 +731,33 @@ public class DBFacade {
             }
         }
     }
+
+
+    public void updateVersionPos(MetaVersion ver) throws SQLException {
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = ds.getConnection();
+            String sql = "update t_meta_version set event_pos=? where id=?";
+            ps = conn.prepareStatement(sql);
+
+            ps.setLong(1, ver.getTrailPos());
+            ps.setLong(2, ver.getId());
+
+            ps.executeUpdate();
+
+        } finally {
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
+
 
     public void updateVersion(MetaVersion ver) throws Exception {
 
@@ -785,6 +852,111 @@ public class DBFacade {
     public MetaVersion queryMetaVersion(long tableId, long pos, long offset) {
         String sql = "select * from t_meta_version t where t.table_id=? and t.event_pos<=? order by t.event_pos desc";
         Map<String, Object> map = queryFirstRow(sql, tableId, pos);
+
+        if (map == null) {
+            return null;
+        }
+
+        MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+        MetaVersion ver = MetaVersion.parse(map);
+        ver.setMeta(wrapper);
+
+        return ver;
+    }
+
+
+    public MetaVersion querySuitableMetaVersion(long tableId, long pos) {
+        String sql = "select * from t_meta_version t where t.table_id=? and t.event_pos=? order by t.event_pos desc";
+        Map<String, Object> map = queryFirstRow(sql, tableId, pos);
+
+        if (map == null) {
+            return null;
+        }
+
+        MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+        MetaVersion ver = MetaVersion.parse(map);
+        ver.setMeta(wrapper);
+
+        return ver;
+    }
+
+    //根据table id
+    public MetaVersion queryMetaVersion(long tableId, long pos) {
+        String sql = "select * from t_meta_version t where t.table_id=? and t.event_pos=? order by t.event_pos desc";
+        Map<String, Object> map = queryFirstRow(sql, tableId, pos);
+
+        if (map == null) {
+            return null;
+        } else {
+            MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+            MetaVersion ver = MetaVersion.parse(map);
+            ver.setMeta(wrapper);
+
+            return ver;
+        }
+
+    }
+
+
+    public MetaVersion queryMetaVersionByTime(long tableId, long pos, long offset) {
+        String sql = "select * from t_meta_version t where t.table_id=? and t.event_pos=? and event_offset<=? order by t.event_pos desc";
+        List<Map<String, Object>> rows = query(sql, tableId, pos, offset);
+
+        Map<String, Object> map = null;
+        MetaVersion version = null;
+        long lag = Long.MAX_VALUE;
+        for(int i = 0; i < rows.size(); i++) {
+            version = MetaVersion.parse(rows.get(i));
+            if((offset - version.getOffset()) < lag ) {
+                lag = offset - version.getOffset();
+                map = rows.get(i);
+            }
+        }
+
+        if (map == null) {
+           logger.info("没有找到距离 {} 最近的版本！", offset);
+            return null;
+        }
+
+        MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+        MetaVersion ver = MetaVersion.parse(map);
+        ver.setMeta(wrapper);
+
+        return ver;
+    }
+
+
+    public MetaVersion queryMetaVersionFromDB(long tableId, long pos, long offset) {
+        String sql = "select * from t_meta_version t where t.table_id=? and t.event_pos=? and event_offset=? order by t.event_pos desc";
+        Map<String, Object> map = queryFirstRow(sql, tableId, pos, offset);
+
+        if (map == null) {
+            return null;
+        }
+
+        MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+        MetaVersion ver = MetaVersion.parse(map);
+        ver.setMeta(wrapper);
+
+        return ver;
+    }
+
+    public List<Long> queryAllPos(long tableId) {
+        List<Long> posLists = new ArrayList<>();
+        String sql = "select DISTINCT(event_pos) from t_meta_version t where t.table_id=?";
+        List<Map<String, Object>> rows = query(sql, tableId);
+
+        for(int i = 0; i < rows.size(); i++) {
+            posLists.add((Long)rows.get(i).get("event_pos"));
+        }
+        return posLists;
+    }
+
+
+
+    public MetaVersion queryLatestMetaVersion(long tableId) {
+        String sql = "select * from t_meta_version t where t.table_id=? order by t.version desc,t.update_time desc";
+        Map<String, Object> map = queryFirstRow(sql, tableId);
 
         if (map == null) {
             return null;

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,6 +61,7 @@ public class MessageCode {
     public static final int TABLE_PARAM_FORMAT_ERROR = 14007;
     public static final int TABLE_RESOURCE_FULL_PULL_FALSE = 14008;
     public static final int TABLE_OUTPUT_TOPIC_ERROR = 14009;
+    public static final int PLEASE_TRY_AGAIN_LATER = 14010;
 
     //Table module code 15xxx
     public static final int TABLE_NOT_FOUND_BY_ID = 15001;
@@ -108,6 +109,7 @@ public class MessageCode {
     public static final int MESSAGE_IS_WRONG = 18002;
     public static final int EXCEPTION_ON_SEND_MESSAGE = 18003;
     public static final int LINE_NUMBER_IS_WRONG = 18004;
+    public static final int NO_AUTHORITY_FOR_THIS_TOPIC = 18005;
 
     //Project resource module
     public static final int PROJECT_RESOURCE_IS_USING = 19001;
@@ -117,10 +119,27 @@ public class MessageCode {
 
     //Project module
     public static final int PROJECT_INACTIVE = 21001;
+    public static final int PROJECT_NOT_ALLOWED_DELETED = 21002;
 
     // project topo module code 3xxxx
     public static final int ACHIEVE_TOPOLOGY_MAX_COUNT = 30001;
     public static final int PROJECT_NOT_EXIST = 30002;
     public static final int TOPOLOGY_NOT_EXIST = 30003;
     public static final int TOPOLOGY_RUNNING_DO_NOT_DELETE = 30004;
+    public static final int TOPOLOGY_NAME_EXIST = 30005;
+
+    // dba encorde module code 4xxxx
+    public static final int DBA_ENCODE_FETCH_DBINFO = 40001;
+    public static final int DBUS_DB_INFO_IS_EMPTY = 40002;
+    public static final int CREATE_DBA_ENCODE_BACK_TABLE_FIAL = 40003;
+    public static final int BACKUP_DBA_ENCODE_DATA_FIAL = 40004;
+    public static final int SYNCHRONOUS_ENCODE_DATA_ALL_SUCCESS = 40005;
+    public static final int SYNCHRONOUS_ENCODE_DATA_PART_SUCCESS = 40006;
+    public static final int SYNCHRONOUS_ENCODE_DATA_ALL_FAIL = 40007;
+    public static final int FETCH_ALL_TABLE_IDS = 40008;
+    public static final int TABLE_IDS_IS_EMPTY = 40009;
+    public static final int CONVERT_AND_EFFECT_ALL_SUCCESS = 40010;
+    public static final int CONVERT_AND_EFFECT_PART_SUCCESS = 40011;
+    public static final int CONVERT_AND_EFFECT_ALL_FAIL = 40012;
+
 }

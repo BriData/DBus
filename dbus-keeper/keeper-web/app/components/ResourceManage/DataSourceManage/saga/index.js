@@ -18,7 +18,8 @@ import {
   DATA_SOURCE_INSERT_API,
   KILL_TOPOLOGY_API,
   DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID_API,
-  DATA_SOURCE_GET_SCHEMA_TABLE_LIST_API
+  DATA_SOURCE_GET_SCHEMA_TABLE_LIST_API,
+  DATA_SOURCE_CLEAR_FULLPULL_ALARM_API
 } from '@/app/containers/ResourceManage/api'
 
 // 导入 action types
@@ -31,7 +32,8 @@ import {
   DATA_SOURCE_INSERT,
   KILL_TOPOLOGY,
   DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID,
-  DATA_SOURCE_GET_SCHEMA_TABLE_LIST
+  DATA_SOURCE_GET_SCHEMA_TABLE_LIST,
+  DATA_SOURCE_CLEAR_FULLPULL_ALARM
 } from '../redux/action/types'
 
 // 导入 action
@@ -45,8 +47,33 @@ import {
   insertDataSource,
   killTopology,
   getSchemaListByDsId,
-  getSchemaTableList
+  getSchemaTableList,
+  clearFullPullAlarm
  } from '../redux/action'
+
+//查询DataSource信息
+function* clearFullPullAlarmRepos (action) {
+  const requestUrl = DATA_SOURCE_CLEAR_FULLPULL_ALARM_API
+  try {
+    const repos = yield call(Request, requestUrl, {
+      params: action.result,
+      method: 'get'
+    })
+    yield put(
+      clearFullPullAlarm.success(
+        (repos.status === 0 && repos.payload) || null)
+    )
+    if (repos.status === undefined) {
+      message.error('网络连接错误', 2)
+    } else if (repos.status !== 0) {
+      message.error(repos.message || '获取失败', 2)
+    } else {
+      message.success(repos.message)
+    }
+  } catch (err) {
+    yield put(clearFullPullAlarm.fail(err))
+  }
+}
 
 //查询DataSource信息
 function* searchDataSourceRepos (action) {
@@ -254,7 +281,8 @@ function* DataSourceNamage () {
     yield takeLatest(DATA_SOURCE_GET_BY_ID.LOAD, getDataSourceByIdRepos),
     yield takeLatest(KILL_TOPOLOGY.LOAD, killTopologyRepos),
     yield takeLatest(DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID.LOAD, getSchemaListByDsIdRepos),
-    yield takeLatest(DATA_SOURCE_GET_SCHEMA_TABLE_LIST.LOAD, getSchemaTableListRepos)
+    yield takeLatest(DATA_SOURCE_GET_SCHEMA_TABLE_LIST.LOAD, getSchemaTableListRepos),
+    yield takeLatest(DATA_SOURCE_CLEAR_FULLPULL_ALARM.LOAD, clearFullPullAlarmRepos)
   ]
 }
 

@@ -79,7 +79,8 @@ public class FlowLineCheckService {
             consumerSecond = (KafkaConsumer<String, byte[]>) listSecond.get(0);
             long offsetSecond = (Long) listSecond.get(1);
 
-            List<Object> listThird = initConsumer((String) infoMap.get("src_topic"), "third");
+            //List<Object> listThird = initConsumer((String) infoMap.get("src_topic"), "third");
+            List<Object> listThird = initConsumer((String) infoMap.get("topic") + ".dbus", "third");
             consumerThird = (KafkaConsumer<String, byte[]>) listThird.get(0);
             long offsetThird = (Long) listThird.get(1);
 

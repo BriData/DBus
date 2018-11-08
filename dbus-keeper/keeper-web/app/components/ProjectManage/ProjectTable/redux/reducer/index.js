@@ -12,6 +12,7 @@ import {
   PROJECT_TABLE_CREATE_SINK,
   PROJECT_TABLE_CREATE_RESOURCE,
   PROJECT_TABLE_CREATE_TOPOLOGY,
+  PROJECT_TABLE_SELECT_ALL_RESOURCE,
   PROJECT_TABLE_CREATE_ENCODES,
   PROJECT_TABLE_ALL_SEARCH,
   PROJECT_TABLE_PROJECT_LIST,
@@ -290,6 +291,9 @@ export default (state = initialState, action) => {
     // 设置拓扑
     case PROJECT_TABLE_CREATE_TOPOLOGY:
       return state.setIn(['projectTableStorage', 'topology'], action.params)
+    // 选择所有资源
+    case PROJECT_TABLE_SELECT_ALL_RESOURCE:
+      return state.setIn(['projectTableStorage', 'isSelectAllResource'], action.params)
     // 脱敏配置
     case PROJECT_TABLE_CREATE_ENCODES:
       return state.setIn(['projectTableStorage', 'encodes'], action.params)

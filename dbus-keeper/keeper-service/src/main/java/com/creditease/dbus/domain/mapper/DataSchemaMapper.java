@@ -42,4 +42,6 @@ public interface DataSchemaMapper {
     DataSchema selectById(Long id);
 
     DataSchema findByDsIdAndSchemaName(@Param("dsId") Integer dsId, @Param("schemaName") String schemaName);
+
+    void inactiveSchemaByDsId(Integer dsId);
 }

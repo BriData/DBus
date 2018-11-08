@@ -36,7 +36,9 @@ import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.TopologyType;
+import com.creditease.dbus.domain.mapper.DataSchemaMapper;
 import com.creditease.dbus.domain.mapper.DataSourceMapper;
+import com.creditease.dbus.domain.mapper.DataTableMapper;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.service.source.MongoSourceFetcher;
@@ -63,6 +65,12 @@ public class DataSourceService {
 
     @Autowired
     private DataSourceMapper mapper;
+
+    @Autowired
+    private DataSchemaMapper schemaMapper;
+
+    @Autowired
+    private DataTableMapper tableMapper;
 
     @Autowired
     private IZkService zkService;
@@ -119,6 +127,10 @@ public class DataSourceService {
      */
     public int update(DataSource updateOne) {
         updateOne.setUpdateTime(new Date());
+        if(updateOne.getStatus().equals("inactive")){
+            schemaMapper.inactiveSchemaByDsId(updateOne.getId());
+            tableMapper.inactiveTableByDsId(updateOne.getId());
+        }
         return mapper.updateByPrimaryKey(updateOne);
     }
 
@@ -330,7 +342,7 @@ public class DataSourceService {
             topologyTypes.add(TopologyType.SPLITTER_PULLER);
             topologyTypes.add(TopologyType.MYSQL_EXTRACTOR);
 
-        }else if(dbusDatasourceType == DbusDatasourceType.ORACLE){
+        } else if (dbusDatasourceType == DbusDatasourceType.ORACLE || dbusDatasourceType == DbusDatasourceType.MONGO) {
             topologyTypes.add(TopologyType.DISPATCHER_APPENDER);
             topologyTypes.add(TopologyType.SPLITTER_PULLER);
         }

@@ -13,8 +13,15 @@
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from t_project_topo
-    where id = #{id,jdbcType=INTEGER}
+    DELETE pt,tt,en,v FROM
+        t_project_topo pt
+        LEFT JOIN t_project_topo_table tt ON pt.id = tt.topo_id
+        LEFT JOIN t_project_topo_table_encode_output_columns en ON tt.id = en.project_topo_table_id
+        LEFT JOIN t_project_topo_table_meta_version v ON v.topo_id = tt.topo_id
+        AND v.project_id = tt.project_id
+        AND v.table_id = tt.table_id
+    WHERE
+        pt.id = #{id,jdbcType=INTEGER}
   </delete>
   <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTopology">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
@@ -78,7 +85,7 @@
     </if>
   </select>
   <select id="selectCountByTopoName" resultType="java.lang.Integer" parameterType="java.lang.String">
-    select count(id) from t_project_topo where topo_name = #{email}
+    select count(id) from t_project_topo where topo_name = #{topoName}
   </select>
   <select id="selectOutPutTopics" resultType="java.util.Map" parameterType="java.util.Map">
     SELECT

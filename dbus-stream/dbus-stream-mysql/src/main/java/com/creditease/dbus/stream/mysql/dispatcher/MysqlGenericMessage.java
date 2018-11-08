@@ -54,6 +54,11 @@ public class MysqlGenericMessage implements IGenericMessage {
     }
 
     @Override
+    public int getSchemaId() {
+        return 0;
+    }
+
+    @Override
     public int getSchemaHash() {
         //fake hash
         return 0x12345678;

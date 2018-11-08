@@ -50,6 +50,8 @@ public class DataTable implements Serializable {
     private String status;
     private int metaChangeFlg;
     private int batchId;
+    private int isOpen;
+    private boolean isAutocomplete;
     /**
      * 是否在ums中输出before update，0表示不输出，1表示输出，在管理库中默认为0
      */
@@ -181,5 +183,21 @@ public class DataTable implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public int getIsOpen() {
+        return isOpen;
+    }
+
+    public void setIsOpen(int isOpen) {
+        this.isOpen = isOpen;
+    }
+
+    public boolean getIsAutocomplete() {
+        return isAutocomplete;
+    }
+
+    public void setIsAutocomplete(boolean isAutocomplete) {
+        this.isAutocomplete = isAutocomplete;
     }
 }

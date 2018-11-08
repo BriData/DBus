@@ -235,7 +235,7 @@ public class MySQLManager
             return;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
 
         PrintWriter pw = new PrintWriter(System.out, true);
@@ -301,7 +301,7 @@ public class MySQLManager
                 String columnName = rs.getString(1);
                 String columnDataType = rs.getString(2);
                 if (SupportedMysqlDataType.isSupported(columnDataType)) {
-                    columns.add(columnName.toUpperCase());
+                    columns.add(columnName);
                 }
             }
             c.commit();
@@ -318,7 +318,7 @@ public class MySQLManager
             throw new RuntimeException(sqle);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         } finally {
             if (rs != null) {
@@ -373,7 +373,7 @@ public class MySQLManager
             throw new RuntimeException("Can't fetch column names for procedure.", e);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         }
     }
@@ -419,14 +419,13 @@ public class MySQLManager
             return null;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         }
     }
 
     @Override
-    public Map<String, String>
-    getColumnTypeNamesForProcedure(String procedureName) {
+    public Map<String, String> getColumnTypeNamesForProcedure(String procedureName) {
         Map<String, String> ret = new TreeMap<String, String>();
         try {
             DatabaseMetaData metaData = this.getConnection().getMetaData();
@@ -467,7 +466,7 @@ public class MySQLManager
             return null;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         }
     }

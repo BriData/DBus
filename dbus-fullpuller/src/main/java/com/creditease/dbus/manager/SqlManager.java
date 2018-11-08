@@ -186,7 +186,7 @@ public abstract class SqlManager
                         + sqlE.toString(), sqlE);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
 
             release();
@@ -732,7 +732,7 @@ public abstract class SqlManager
             LoggingUtils.logAll(LOG, "Failed to query indexed col", e);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         } finally {
             if (rset != null) {
                 try {
@@ -772,7 +772,7 @@ public abstract class SqlManager
             // }
             // catch (Exception e) {
             // // TODO Auto-generated catch block
-            // e.printStackTrace();
+            // LOG.error(e.getMessage(),e);
             // }
         }
         return splitCol;
@@ -950,7 +950,7 @@ public abstract class SqlManager
                         + sqlE.toString(), sqlE);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
 
             release();
@@ -1094,7 +1094,7 @@ public abstract class SqlManager
             return null;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             return null;
         } finally {
             try {
@@ -1262,7 +1262,8 @@ public abstract class SqlManager
             sqlStr = getOracleWriteBackSql(startTime, completedTime, pullStatus, errorMsg);
         } else if(driverClass.equals(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.MYSQL))){
             sqlStr = getMysqlWriteBackSql(startTime, completedTime, pullStatus, errorMsg);
-        } else {
+        }
+         else {
             assert(false); //not suppose to be here
         }
 
@@ -1307,7 +1308,7 @@ public abstract class SqlManager
 //          }
 //          catch (Exception e) {
 //              // TODO Auto-generated catch block
-//              e.printStackTrace();
+//              LOG.error(e.getMessage(),e);
 //          }
         }
     }
@@ -1405,7 +1406,8 @@ public abstract class SqlManager
         return totalCountOfCurShard;
     }
 
-    public List<InputSplit> querySplits(String table, String splitCol, String tablePartition, String splitterStyle, String pullCollate, int numSplitsOfCurShard, DataDrivenDBInputFormat dataDrivenDBInputFormat) {
+    public List<InputSplit> querySplits(String table, String splitCol, String tablePartition, String splitterStyle,
+                                        String pullCollate, int numSplitsOfCurShard, DataDrivenDBInputFormat dataDrivenDBInputFormat) throws Exception {
         Connection conn = null;
         PreparedStatement pStmt = null;
         ResultSet results = null;
@@ -1461,8 +1463,10 @@ public abstract class SqlManager
                 LoggingUtils.logAll(LOG, "Failed to rollback transaction", ex);
             }
             LoggingUtils.logAll(LOG, "Failed to write back original DB.", e);
+            throw e;
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
+            throw e;
         } finally {
             try {
                 if(results != null)
@@ -1504,6 +1508,7 @@ public abstract class SqlManager
             pStmt.setLong(paraIndex, seqno);
         }
     }
+
 
     private String getOracleWriteBackSql(String startTime, String completedTime, String pullStatus, String errorMsg) {
         if(StringUtils.isEmpty(startTime) && StringUtils.isEmpty(completedTime) &&

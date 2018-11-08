@@ -37,7 +37,9 @@
  */
 package com.creditease.dbus.common.utils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -521,11 +523,11 @@ public class DBConfiguration {
 //        }
 //        catch (ClassNotFoundException e) {
 //            // TODO Auto-generated catch block
-//            e.printStackTrace();
+//            LOG.error(e.getMessage(),e);
 //        }
 //        catch (SQLException e) {
 //            // TODO Auto-generated catch block
-//            e.printStackTrace();
+//            LOG.error(e.getMessage(),e);
 //        }
 //      }
 //     
@@ -560,7 +562,7 @@ public class DBConfiguration {
 
       if (FullPullHelper.isDbusKeeper(dataSourceInfo)) {
           String topoName = FullPullHelper.getTopoName(dataSourceInfo);
-          return String.format("%s.%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, topoName, version, "0", seriesTableName);
+          return String.format("%s.%s!%s.%s.%s.%s.%s.%s", dbType, dbName, topoName, dbSchema, tableName, version, "0", seriesTableName);
       } else {
           return String.format("%s.%s.%s.%s.%s.%s.%s", dbType, dbName, dbSchema, tableName, version, "0", seriesTableName);
       }
@@ -569,8 +571,12 @@ public class DBConfiguration {
   public String buildSlashedNameSpace(String dataSourceInfo, String outputVersion) {
       String dbName = (String)(this.properties.get(DBConfiguration.DataSourceInfo.DB_NAME));
       JSONObject ds = JSONObject.parseObject(dataSourceInfo);
-      String timestamp = ds.getString(DataPullConstants.FullPullInterfaceJson.TIMESTAMP_KEY);
-      timestamp = timestamp.replace(":", ".");
+
+      //String timestamp = ds.getString(DataPullConstants.FullPullInterfaceJson.TIMESTAMP_KEY);
+      //timestamp = timestamp.replace(":", ".");
+      Long id = ds.getLong(DataPullConstants.FullPullInterfaceJson.ID_KEY);
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss.SSS");
+      String timestamp = sdf.format(new Date(id));
       JSONObject payload = ds.getJSONObject(DataPullConstants.FullPullInterfaceJson.PAYLOAD_KEY);
       String dbSchema = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
       String tableName = payload.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
@@ -624,8 +630,8 @@ public class DBConfiguration {
       // dbus占位符目前我们只需要放timestamp。wh_placeholder是预留备用。目前EDP team还没用。由于这个占位符只有这里用到，暂时定义常量。
       if (FullPullHelper.isDbusKeeper(dataSourceInfo)) {
           String topoName = FullPullHelper.getTopoName(dataSourceInfo);
-          return String.format("%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s", DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbType, dbName,
-                  dbSchema, tableName, topoName, version, '0', tablePartition, System.currentTimeMillis(), "wh_placeholder");
+          return String.format("%s.%s.%s!%s.%s.%s.%s.%s.%s.%s.%s", DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbType, dbName,
+                  topoName, dbSchema, tableName, version, '0', tablePartition, System.currentTimeMillis(), "wh_placeholder");
       } else {
           return String.format("%s.%s.%s.%s.%s.%s.%s.%s.%s.%s", DbusMessage.ProtocolType.DATA_INITIAL_DATA, dbType, dbName,
                   dbSchema, tableName, version, '0', tablePartition, System.currentTimeMillis(), "wh_placeholder");

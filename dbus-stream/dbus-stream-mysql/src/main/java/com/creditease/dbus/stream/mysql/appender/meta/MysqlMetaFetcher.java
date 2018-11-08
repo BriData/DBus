@@ -68,6 +68,7 @@ public class MysqlMetaFetcher implements MetaFetcher {
                     "       t1.ordinal_position,\n" +
                     "       t1.is_nullable,\n" +
                     "       t1.data_type,\n" +
+                    "       t1.column_type,\n" +
                     "       t1.character_maximum_length,\n" +
                     "       t1.numeric_precision,\n" +
                     "       t1.numeric_scale,\n" +
@@ -120,7 +121,12 @@ public class MysqlMetaFetcher implements MetaFetcher {
         Integer colId = rs.getInt("ordinal_position");
         cell.setColumnId(colId);
         cell.setInternalColumnId(colId);
-        cell.setDataType(rs.getString("data_type"));
+        String columnType = rs.getString("column_type");
+        String dataType = rs.getString("data_type");
+        if("int".equalsIgnoreCase(dataType) && columnType.trim().toLowerCase().endsWith("unsigned")) {
+            dataType = "int unsigned";
+        }
+        cell.setDataType(dataType);
 
         /**
          * 不同类型去源端查到的列不相同

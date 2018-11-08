@@ -4,13 +4,14 @@
  */
 
 import React, { PropTypes, Component } from 'react'
-import { Table, Input, Modal, Select, Form, message, Icon } from 'antd'
+import {Tooltip, Table, Button, Input, Modal, Select, Form, message, Icon } from 'antd'
 import { FormattedMessage } from 'react-intl'
 import { intlMessage } from '@/app/i18n'
 import { fromJS } from 'immutable'
 import Request from '@/app/utils/request'
 // API
 import { GET_TABLE_PROJECT_TOPO_API } from '@/app/containers/ProjectManage/api'
+import { GET_PROJECT_ALL_RESOURCE } from '@/app/containers/ProjectManage/api'
 const FormItem = Form.Item
 const Option = Select.Option
 // 导入样式
@@ -139,6 +140,22 @@ export default class ResourceForm extends Component {
       true
     )
   };
+
+  handleResourceNameSearch = params => {
+    const { resourceParams } = this.props
+    const value = Object.values(params)[0]
+    const key = Object.keys(params)[0]
+    const newparams = fromJS(resourceParams).delete(key)
+    // 关闭过滤框
+    let filterDropdownVisible = {}
+    filterDropdownVisible[`${key}Visible`] = false
+    this.setState(filterDropdownVisible)
+    const {onSetParams} = this.props
+    onSetParams(params)
+    value || value !== ''
+      ? onSetParams({...resourceParams, ...params})
+      : onSetParams({...newparams.toJS()})
+  }
   /**
    * @param params 查询的参数 type:[Object Object]
    * @param boolean 是否将参数缓存起来 type:[Object Boolean]
@@ -217,7 +234,7 @@ export default class ResourceForm extends Component {
     // 查询 encode
     onSearchEncode({ tableId: tableId, projectId: projectId })
     // 存储tid 及 单行数据
-    this.setState({ tid: `${tableId}`, encodeRecord: record })
+    this.setState({ projectId, tid: `${tableId}`, encodeRecord: record })
     this.handleEncodeVisble(true)
   };
   /**
@@ -228,12 +245,13 @@ export default class ResourceForm extends Component {
     const { encodeSourceList, tid } = this.state
     const encodes = encodeSourceList && encodeSourceList[`${tid}`]
     const encodeOutputColumns = encodes && encodes.encodeOutputColumns
-    const flag = encodeOutputColumns
-      ? Object.values(encodeOutputColumns).some(item => String(item.encodeSource) === '2' && !item.encodeType)
-      : true
-    // 过滤
-    if (flag) {
-      message.error('脱敏项不能为空且脱敏规则为必选项')
+    console.info('encodeOutputColumns',encodeOutputColumns)
+    if(!encodeOutputColumns || Object.values(encodeOutputColumns).length === 0) {
+      message.error('请选择要输出的列')
+      return false
+    }
+    if (Object.values(encodeOutputColumns).some(item => String(item.encodeSource) === '2' && !item.encodeType)) {
+      message.error('请配置脱敏项')
       return false
     }
     const filteredEncodeOutputColumns = {}
@@ -273,13 +291,16 @@ export default class ResourceForm extends Component {
       resourceParams,
       onSetTopology,
       onSetResource,
-      onSetEncodes
+      onSetEncodes,
+      onSelectAllResource
     } = this.props
     onSetTopology({ topoId })
     // 清空resource
     onSetResource(null)
     // 清空encodes
     onSetEncodes(null)
+    // 清空选择所有资源
+    onSelectAllResource(null)
     this.handleSearch({ ...resourceParams, topoId }, true)
   };
   /**
@@ -288,6 +309,35 @@ export default class ResourceForm extends Component {
   handleEncodeChange = encodeSourceList => {
     this.setState({ encodeSourceList })
   };
+
+  handleAddAllResource = () => {
+    const {resourceParams} = this.props
+    Request(GET_PROJECT_ALL_RESOURCE, {
+      params: resourceParams,
+      method: 'get' })
+      .then(res => {
+        if (res && res.status === 0) {
+          let newDataSource = {}
+          const {onSetResource, resource} = this.props
+          // 添加 _ 防止浏览器自动排序
+          const newTables = res.payload
+          newTables.forEach(table => {
+            newDataSource[`_${table.tableId}`] = {...table}
+          })
+          // 将生成的数据存储到redux中
+          resource
+            ? onSetResource({...newDataSource, ...resource})
+            : onSetResource(newDataSource)
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+  }
   // table render
   /**
    * @param render 传入一个render
@@ -384,7 +434,8 @@ export default class ResourceForm extends Component {
       errorFlag,
       projectToposList,
       topology,
-      modalStatus
+      modalStatus,
+      projectId
     } = this.props
     const { modalkey, visble, tid, encodeRecord } = this.state
     const formItemLayout = {
@@ -506,7 +557,21 @@ export default class ResourceForm extends Component {
         key: 'Resource',
         render: this.renderComponent(
           this.renderResource(this.SelectTableWidth[0])
-        )
+        ),
+        // 自定义过滤显隐
+        ...this.filterVisible('resourceName'),
+        filterDropdown: (
+          <div className={styles.filterDropdown}>
+            <Input
+              placeholder={placeholder('Resource')}
+              onPressEnter={e =>
+                this.handleResourceNameSearch({
+                  resourceName: e.target.value
+                })
+              }
+            />
+          </div>
+        ),
       },
       {
         title: (
@@ -540,7 +605,14 @@ export default class ResourceForm extends Component {
     ]
     const { loading, result } = resourceList
     const dataSource = result && result.list
-    const selectDataSource = resource ? Object.values(resource) : []
+    const { resourceParams } = this.props
+    const resourceName = resourceParams && resourceParams.resourceName
+    let selectDataSource = resource ? Object.values(resource) : []
+    selectDataSource = selectDataSource.filter(ds => {
+      const resource = `${ds.dsType} / ${ds.dsName} / ${ds.schemaName} / ${ds.tableName}`
+      if(resourceName) return resource.indexOf(resourceName) !== -1
+      return true
+    })
     const pagination = {
       showQuickJumper: true,
       current: (result && result.pageNum) || 1,
@@ -611,6 +683,11 @@ export default class ResourceForm extends Component {
             defaultMessage="项目Resource为必选项，不能为空"
           />）
             </span>
+            {modalStatus === 'create' && (
+              <Tooltip placement="top" title="添加以上过滤条件下所有Resource">
+                <Button type="primary" onClick={this.handleAddAllResource}>一键添加</Button>
+              </Tooltip>
+            )}
           </h3>
           <Table
             size="small"
@@ -646,6 +723,7 @@ export default class ResourceForm extends Component {
           <EncodeConfig
             locale={locale}
             tid={tid}
+            projectId={projectId}
             encodes={encodes}
             encodeList={encodeList}
             encodeTypeList={encodeTypeList}
@@ -685,5 +763,6 @@ ResourceForm.propTypes = {
   onSearchEncode: PropTypes.func,
   onGetEncodeTypeList: PropTypes.func,
   onSetTopology: PropTypes.func,
+  onSelectAllResource: PropTypes.func,
   onSetSink: PropTypes.func
 }

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -143,6 +143,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
             return;
         }
 
+        // data_increment_heartbeat.mysql.mydb.cbm.t1#router_test_s_r5.6.0.0.1541041451552|1541041451550|ok.wh_placeholder
         String[] vals = StringUtils.split(key, ".");
         if (vals == null || vals.length != 10) {
             logger.error("receive heartbeat key is error. topic:{}, key:{}", topic, key);
@@ -171,8 +172,18 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
             return;
 
         String dsName = vals[2];
+        if (StringUtils.contains(vals[2], "!")) {
+            dsName = StringUtils.split(vals[2], "!")[0];
+        } else {
+            isTableOK = false;
+            logger.error("it should not be here. key:{}", key);
+        }
         String schemaName = vals[3];
         String tableName = vals[4];
+
+        if (!isTableOK)
+            return;
+
         // String dsPartition = vals[6];
         String ns = StringUtils.joinWith(".", dsName, schemaName, tableName);
         String path = StringUtils.joinWith("/", Constants.HEARTBEAT_PROJECT_MONITOR,

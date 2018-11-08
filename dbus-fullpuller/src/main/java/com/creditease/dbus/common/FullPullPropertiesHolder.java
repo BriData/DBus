@@ -174,7 +174,7 @@ public class FullPullPropertiesHolder {
             try {
                 provider = new ZkPropertiesProvider(zk, path);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(),e);
             }
         }
         
@@ -238,7 +238,7 @@ public class FullPullPropertiesHolder {
 //            initialize("localhost:2181", "/DBus/Topology/dbus-ora-appender-01");
 //            reload();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
     }
 }

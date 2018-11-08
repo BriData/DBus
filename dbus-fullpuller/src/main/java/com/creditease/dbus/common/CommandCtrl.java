@@ -74,7 +74,7 @@ public class CommandCtrl {
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
         return opResult;
     }
@@ -90,7 +90,7 @@ public class CommandCtrl {
             stormUIAddr = props.getProperty(DataPullConstants.STORM_UI);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
         return stormUIAddr;
     }
@@ -114,7 +114,7 @@ public class CommandCtrl {
                 }
             }
         }catch(Exception e){
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
         for(TopologySummary topoSumm : lstTopo){
             if(topoSumm.getTopologyName()!=null && topoSumm.getTopologyName().equals(topologyName)){

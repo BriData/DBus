@@ -252,9 +252,8 @@ public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener 
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
         } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
-        } else if (type == DbusDatasourceType.MONGO) {
-            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

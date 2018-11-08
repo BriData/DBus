@@ -40,30 +40,50 @@
     from t_project_resource
   </select>
   <select id="selectByProjectId" resultType="java.util.Map" parameterType="java.lang.Integer">
-    select
-      tpr.id resourceId,
-      dds.ds_type,
-      dds.ds_name,
-      dt.id,
-      ds.schema_name,
-      dt.status,
-      dt.table_name,
-      mv.version,
-      dt.description,
-      DATE_FORMAT(dt.create_time,'%Y-%m-%d %H:%i:%s') create_time,
-      tpr.fullpull_enable_flag
-    from
-      t_project_resource tpr,
-      t_dbus_datasource dds,
-      t_data_schema ds,
-      t_data_tables dt,
-      t_meta_version mv
-    where
-      tpr.project_id = #{projectId} AND
-      tpr.table_id = dt.id AND
-      dt.ds_id = dds.id AND
-      dt.schema_id = ds.id AND
-      dt.ver_id = mv.id
+SELECT
+	*
+FROM
+	(
+		SELECT
+			tpr.id resourceId,
+			dds.ds_type,
+			dds.ds_name,
+			dt.id,
+			ds.schema_name,
+			dt. STATUS,
+			dt.table_name,
+			mv.version,
+			dt.description,
+			DATE_FORMAT(
+				dt.create_time,
+				'%Y-%m-%d %H:%i:%s'
+			) create_time,
+			tpr.fullpull_enable_flag
+		FROM
+			t_project_resource tpr,
+			t_dbus_datasource dds,
+			t_data_schema ds,
+			t_data_tables dt,
+			t_meta_version mv
+		WHERE
+			tpr.project_id = #{projectId}
+		AND tpr.table_id = dt.id
+		AND dt.ds_id = dds.id
+		AND dt.schema_id = ds.id
+		AND dt.ver_id = mv.id
+	) pr
+LEFT JOIN (
+	SELECT
+		count(id) tptt_id_cnt,
+		table_id,
+		project_id
+	FROM
+		t_project_topo_table
+	WHERE
+		project_id = #{projectId}
+    GROUP BY
+		table_id
+) tptt ON pr.id = tptt.table_id
   </select>
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
     delete from t_project_resource
@@ -166,7 +186,9 @@
     FROM
       t_project_encode_hint
     WHERE
-      table_id = #{tableId}
+      1=1
+      <if test="tableId != null">AND table_id=#{tableId}</if>
+      <if test="projectId != null">AND project_id=#{projectId}</if>
   </select>
 
   <select id="selectColumns" parameterType="java.lang.Integer" resultType="java.util.Map">
@@ -218,5 +240,4 @@
     from t_project_resource
     where project_id = #{projectId,jdbcType=INTEGER} AND table_id = #{tableId,jdbcType=INTEGER}
   </select>
-
 </mapper>

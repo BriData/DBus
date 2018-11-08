@@ -47,7 +47,6 @@ import com.creditease.dbus.router.encode.DBusRouterEncodeColumn;
 import com.creditease.dbus.router.encode.DBusRouterPluginLoader;
 import com.creditease.dbus.router.util.DBusRouterConstants;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.storm.task.OutputCollector;
@@ -276,12 +275,14 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
 
     private String obtainNameSapce(String ns, Long tableId) {
         // eg. mysql.caiwudb.fso_yao_db.customer_offline.4.0.0
-        String[] vals = ArrayUtils.insert(4, StringUtils.split(ns, "."), inner.topologyId);
+        // String[] vals = ArrayUtils.insert(4, StringUtils.split(ns, "."), inner.topologyId);
+        String[] vals = StringUtils.split(ns, ".");
+        vals[1] = StringUtils.joinWith("!", vals[1], inner.topologyId);
         if (fixOutTableVersionMap.get(tableId) == null)
             return StringUtils.joinWith(".", vals);
 
         // 把namespace的版本号替换成固定列输出版本号
-        vals[5] = String.valueOf(fixOutTableVersionMap.get(tableId));
+        vals[4] = String.valueOf(fixOutTableVersionMap.get(tableId));
         return StringUtils.joinWith(".", vals);
     }
 
@@ -541,7 +542,7 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
 
     private DbusMessage.ProtocolType obtainProtocolType(String protocol) {
         if (StringUtils.equalsIgnoreCase(protocol, DbusMessage.ProtocolType.DATA_INCREMENT_DATA.toString()))
-            return DbusMessage.ProtocolType.DATA_INITIAL_DATA;
+            return DbusMessage.ProtocolType.DATA_INCREMENT_DATA;
         if (StringUtils.equalsIgnoreCase(protocol, DbusMessage.ProtocolType.DATA_INITIAL_DATA.toString()))
             return DbusMessage.ProtocolType.DATA_INITIAL_DATA;
         if (StringUtils.equalsIgnoreCase(protocol, DbusMessage.ProtocolType.DATA_INCREMENT_HEARTBEAT.toString()))

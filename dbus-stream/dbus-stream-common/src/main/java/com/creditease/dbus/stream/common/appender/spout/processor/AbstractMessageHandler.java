@@ -86,9 +86,8 @@ public abstract class AbstractMessageHandler {
                 name = "com.creditease.dbus.stream.mysql.appender.spout.processor.MysqlMessageHandler";
             } else if (datasourceType == DbusDatasourceType.ORACLE) {
                 name = "com.creditease.dbus.stream.oracle.appender.spout.processor.OracleMessageHandler";
-            } else if(datasourceType == DbusDatasourceType.MONGO){
-                name = "com.creditease.dbus.stream.mongo.appender.spout.processor.MongoMessageHandler";
-            } else {
+            }
+            else {
                 throw new IllegalArgumentException(datasourceType.toString() + " not support.");
             }
             Class<?> clazz = Class.forName(name);

@@ -39,7 +39,8 @@ export {
   killTopology,
   getSchemaListByDsId,
   getSchemaTableList,
-  cleanSchemaTable
+  cleanSchemaTable,
+  clearFullPullAlarm
 } from '@/app/components/ResourceManage/DataSourceManage/redux/action'
 
 

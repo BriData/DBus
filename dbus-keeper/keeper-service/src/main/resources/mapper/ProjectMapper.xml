@@ -28,8 +28,16 @@
     <result column="project_display_name" jdbcType="VARCHAR" property="projectDisplayName" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from t_project
-    where id = #{id,jdbcType=INTEGER}
+    delete p,h,r,s,pt,tt,c,v,u from t_project p
+      left join t_project_encode_hint h on p.id = h.project_id
+      left join t_project_resource r on p.id = r.project_id
+      left join t_project_sink s on p.id = s.project_id
+      left join t_project_topo pt  on p.id = pt.project_id
+      left join t_project_topo_table tt  on p.id = tt.project_id
+      left join t_project_topo_table_encode_output_columns c  on tt.id = c.project_topo_table_id
+      left join t_project_topo_table_meta_version v  on p.id = h.project_id
+      left join t_project_user u  on p.id = h.project_id
+    where p.id = #{id,jdbcType=INTEGER}
   </delete>
   <insert id="insert" parameterType="com.creditease.dbus.domain.model.Project">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
@@ -78,7 +86,7 @@
     <if test="stormApiUrl != null">storm_api_url = #{stormApiUrl,jdbcType=VARCHAR},</if>
     <if test="keytabPath != null">keytab_path = #{keytabPath,jdbcType=VARCHAR},</if>
     <if test="principal != null">principal = #{principal,jdbcType=VARCHAR},</if>
-    <!--<if test="projectDisplayName !=null ">project_display_name = #{projectDisplayName,jdbcType=VARCHAR}</if> 不能更改-->
+    <if test="projectDisplayName !=null ">project_display_name = #{projectDisplayName,jdbcType=VARCHAR},</if>
     update_time = current_timestamp()
     where id = #{id,jdbcType=INTEGER}
   </update>

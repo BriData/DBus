@@ -96,8 +96,8 @@
       <if test="batchId!= null">batch_id = #{batchId,jdbcType=INTEGER},</if>
       <if test="verChangeHistory!= null">ver_change_history = #{verChangeHistory,jdbcType=VARCHAR},</if>
       <if test="verChangeNoticeFlg!= null">ver_change_notice_flg = #{verChangeNoticeFlg,jdbcType=INTEGER},</if>
-      <if test="metaChangeFlg!= null">output_before_update_flg = #{outputBeforeUpdateFlg,jdbcType=INTEGER},</if>
-      <if test="outputBeforeUpdateFlg!= null">description = #{description,jdbcType=VARCHAR},</if>
+      <if test="outputBeforeUpdateFlg!= null">output_before_update_flg = #{outputBeforeUpdateFlg,jdbcType=INTEGER},</if>
+      <if test="description!= null">description = #{description,jdbcType=VARCHAR},</if>
       <if test="fullpullCol!= null">fullpull_col = #{fullpullCol,jdbcType=VARCHAR},</if>
       <if test="fullpullSplitShardSize!= null">fullpull_split_shard_size = #{fullpullSplitShardSize,jdbcType=VARCHAR},</if>
       <if test="fullpullSplitStyle!= null">fullpull_split_style = #{fullpullSplitStyle,jdbcType=VARCHAR},</if>
@@ -222,5 +222,17 @@
     LEFT JOIN t_meta_version mv ON dt.ver_id = mv.id
     ORDER BY
         dt.create_time DESC
+  </select>
+  <update id="inactiveTableByDsId">
+   update t_data_tables set status='inactive' where ds_id = #{dsId}
+  </update>
+  <update id="inactiveTableBySchemaId">
+    update t_data_tables set status='inactive' where schema_id = #{schemaId}
+  </update>
+  <select id="findActiveTablesByDsId" resultMap="BaseResultMap">
+    select * from t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.ds_id = #{dsId} and (t1.status = 'ok' or t1.status = 'waiting')
+  </select>
+  <select id="findActiveTablesBySchemaId" resultMap="BaseResultMap">
+    select * from  t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.schema_id = #{schemaId} and (t1.status = 'ok' or t1.status = 'waiting')
   </select>
 </mapper>

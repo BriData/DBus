@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -550,6 +550,7 @@ public class DBusRouterDao implements IDBusRouterDao {
         sql.append("  tptt.`status` in ('running', 'changed') AND");
         sql.append("  tptt.`project_id` = wk.`project_id` AND    ");
         sql.append("  tptt.`output_topic` = wk.`output_topic` AND");
+        sql.append("  tptt.`topo_id` = wk.`topo_id` AND          ");
         sql.append("  tptt.`table_id` != wk.`table_id`           ");
         return sql.toString();
     }

@@ -11,7 +11,7 @@
         { "name": "resource", "id": "app.components.menu.resource","text":"资源管理", "icon": "hdd"},
         { "name": "table", "id": "app.components.menu.table","text":"项目表管理", "icon": "layout" },
         { "name": "topology", "id": "app.components.menu.topologyManage","text":"拓扑管理", "icon": "share-alt" },
-        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量拉取记录", "icon": "switcher" },
+        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量拉取管理", "icon": "switcher" },
         { "name": "encode-manager", "id": "app.components.resourceManage.encodeManager","text":"脱敏配置查看", "icon": "lock" },
         { "name": "encode-plugin-manager", "id": "app.components.resourceManage.encodePlugin","text":"脱敏插件管理", "icon": "usb" }
     ],
@@ -31,16 +31,15 @@
         { "name": "topology", "id": "app.components.menu.topologyManage","text":"拓扑管理", "icon": "file"  },
         { "name": "sink", "id": "app.components.menu.sink", "text":"Sink", "icon": "schedule" },
         { "name": "user", "id": "app.components.menu.user", "text":"用户管理", "icon": "solution" },
-        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量拉取记录", "icon": "exception"},
+        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量拉取管理", "icon": "exception"},
         { "name": "monitor", "id": "app.components.navigator.sourceMonitor","text":"贴源监控","icon": "exclamation-circle-o" }
     ],
     "tool-set": [
+      { "name": "kafka-reader", "id": "app.components.menu.kafkaReader","text":"Kafka读取", "icon": "usb" },
       { "name": "control-message", "id": "app.components.menu.controlMessage","text":"控制消息", "icon": "message" },
-      { "name": "global-fullpull", "id": "app.components.menu.globalFullpull","text":"独立拉全量", "icon": "export" },
-      { "name": "kafka-reader", "id": "app.components.menu.kafkaReader","text":"Kafka读取", "icon": "usb" }
+      { "name": "global-fullpull", "id": "app.components.menu.globalFullpull","text":"独立拉全量", "icon": "export" }
     ],
     "self-check": [
-      { "name": "cluster-check", "id": "app.components.menu.clusterCheck","text":"集群状态", "icon": "api" },
-      { "name": "topo-check", "id": "app.components.menu.topoCheck","text":"拓扑状态", "icon": "share-alt" }
+      { "name": "cluster-check", "id": "app.components.menu.clusterCheck","text":"集群状态", "icon": "api" }
     ]
 }

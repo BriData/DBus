@@ -61,7 +61,8 @@ public class FloatSplitter implements DBSplitter  {
 
   private static final double MIN_INCREMENT = 10000 * Double.MIN_VALUE;
 
-  private final int type = Types.FLOAT;
+  //private final int type = Types.FLOAT;
+  private final int type = Types.DOUBLE;
 
   public List<InputSplit> split(long numSplits, ResultSet results,
       String colName, DBConfiguration dbConf) throws SQLException {

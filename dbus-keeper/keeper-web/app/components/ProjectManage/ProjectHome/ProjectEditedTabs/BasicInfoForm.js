@@ -20,7 +20,7 @@ export default class BasicInfoForm extends Component {
         descriptionPlaceholder: 'description,Up to 150 words',
         projectNameMessage: 'The project code must be composed of uppercase ,lowercase letters, digit, _ , -',
         projectDisplayNameMessage: 'The project name can not be empty',
-        principalMessage: 'The principal is required',
+        ownerMessage: 'The owner is required',
         projectExpire: 'The expire time is illegal',
         topologyMessage:
           'The number of topology must be integers and 0<topologyNum<=100.'
@@ -29,7 +29,7 @@ export default class BasicInfoForm extends Component {
         descriptionPlaceholder: '项目描述，最多150字符',
         projectNameMessage: '项目代号须由大小写字母、数字、_、- 组成',
         projectDisplayNameMessage: '请填写项目名称',
-        principalMessage: '负责人为必填项',
+        ownerMessage: '负责人为必填项',
         projectExpire: '请填写到期时间',
         topologyMessage: '拓扑个数必须为整数且 0<topologyNum<=100'
       }
@@ -156,8 +156,8 @@ export default class BasicInfoForm extends Component {
         <FormItem
           label={
             <FormattedMessage
-              id="app.components.projectManage.projectHome.tabs.basic.principal"
-              defaultMessage="负责人"
+              id="app.components.projectManage.projectHome.tabs.basic.owner"
+              defaultMessage="项目负责人"
             />
           }
           {...formItemLayout}
@@ -167,7 +167,7 @@ export default class BasicInfoForm extends Component {
             rules: [
               {
                 required: true,
-                message: localeMessage({ id: 'principalMessage' }),
+                message: localeMessage({ id: 'ownerMessage' }),
                 whitespace: true
               }
             ]
@@ -175,7 +175,7 @@ export default class BasicInfoForm extends Component {
             <Input
               type="text"
               placeholder={placeholder(
-                'app.components.projectManage.projectHome.tabs.basic.principal'
+                'app.components.projectManage.projectHome.tabs.basic.owner'
               )}
               onBlur={this.handleBlur}
               disabled={isUserRole}

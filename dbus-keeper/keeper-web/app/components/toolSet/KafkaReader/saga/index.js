@@ -12,21 +12,24 @@ import Request from '@/app/utils/request'
 import {
   KAFKA_READER_GET_TOPIC_LIST_API,
   KAFKA_READER_READ_DATA_API,
-  KAFKA_READER_GET_OFFSET_RANGE_API
+  KAFKA_READER_GET_OFFSET_RANGE_API,
+  KAFKA_READER_GET_TOPICS_BY_USER_ID_API
 } from '@/app/containers/toolSet/api'
 
 // 导入 action types
 import {
   KAFKA_READER_GET_TOPIC_LIST,
   KAFKA_READER_READ_DATA,
-  KAFKA_READER_GET_OFFSET_RANGE
+  KAFKA_READER_GET_OFFSET_RANGE,
+  KAFKA_READER_GET_TOPICS_BY_USER_ID
 } from '../redux/action/types'
 
 // 导入 action
 import {
   getTopicList,
   readKafkaData,
-  getOffsetRange
+  getOffsetRange,
+  getTopicsByUserId
 } from '../redux/action'
 
 function* getTopicListRepos(action) {
@@ -44,6 +47,25 @@ function* getTopicListRepos(action) {
     }
   } catch (err) {
     yield put(getTopicList.fail(err))
+    message.error(err, 2)
+  }
+}
+
+function* getTopicListsByUserIdRepos(action) {
+  const requestUrl = KAFKA_READER_GET_TOPICS_BY_USER_ID_API
+  try {
+    const repos = yield call(Request, requestUrl, {
+      params: action.result,
+      method: 'get'
+    })
+    yield put(getTopicsByUserId.success(repos))
+    if (repos.status === undefined) {
+      message.error('网络连接错误', 2)
+    } else if (repos.status !== 0) {
+      message.error(repos.message || '获取失败', 2)
+    }
+  } catch (err) {
+    yield put(getTopicsByUserId.fail(err))
     message.error(err, 2)
   }
 }
@@ -91,6 +113,7 @@ function* KafkaReader() {
     yield takeLatest(KAFKA_READER_GET_TOPIC_LIST.LOAD, getTopicListRepos),
     yield takeLatest(KAFKA_READER_READ_DATA.LOAD, readKafkaDataRepos),
     yield takeLatest(KAFKA_READER_GET_OFFSET_RANGE.LOAD, getOffsetRangeRepos),
+    yield takeLatest(KAFKA_READER_GET_TOPICS_BY_USER_ID.LOAD, getTopicListsByUserIdRepos),
   ]
 }
 

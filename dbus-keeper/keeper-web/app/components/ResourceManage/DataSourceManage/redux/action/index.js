@@ -18,7 +18,8 @@ import {
   KILL_TOPOLOGY,
   DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID,
   DATA_SOURCE_GET_SCHEMA_TABLE_LIST,
-  DATA_SOURCE_CLEAN_SCHEMA_TABLE
+  DATA_SOURCE_CLEAN_SCHEMA_TABLE,
+  DATA_SOURCE_CLEAR_FULLPULL_ALARM
 } from './types'
 
 // 设置项目基本信息
@@ -36,6 +37,13 @@ export function setDataSourceParams (params) {
     params: params
   }
 }
+// DataSource 消除全量报警
+export const clearFullPullAlarm = {
+  request: params => createAction(DATA_SOURCE_CLEAR_FULLPULL_ALARM.LOAD, { ...params }),
+  success: data => createAction(DATA_SOURCE_CLEAR_FULLPULL_ALARM.SUCCESS, { ...data }),
+  fail: error => createAction(DATA_SOURCE_CLEAR_FULLPULL_ALARM.FAIL, { ...error })
+}
+
 // DataSource 管理查询
 export const searchDataSourceList = {
   request: params => createAction(DATA_SOURCE_ALL_SEARCH.LOAD, { ...params }),

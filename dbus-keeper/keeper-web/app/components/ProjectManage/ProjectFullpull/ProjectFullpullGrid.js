@@ -11,7 +11,7 @@ import OperatingButton from '@/app/components/common/OperatingButton'
 import styles from './res/styles/index.less'
 
 export default class ProjectFullpullGrid extends Component {
-  componentWillMount () {
+  componentWillMount() {
     // 初始化查询
     // this.handleSearch(this.initParams, true)
   }
@@ -44,6 +44,17 @@ export default class ProjectFullpullGrid extends Component {
       </div>
     </Tooltip>
   )
+
+  renderOperating = (text, record, index) => {
+    const {onModify} = this.props
+    return (
+      <div>
+        <OperatingButton onClick={() => onModify(record)} icon="edit">
+          <FormattedMessage id="app.common.modify" defaultMessage="修改"/>
+        </OperatingButton>
+      </div>
+    )
+  }
 
   renderStatus = (text, record, index) => {
     let color
@@ -320,6 +331,14 @@ export default class ProjectFullpullGrid extends Component {
         dataIndex: 'errorMsg',
         key: 'errorMsg',
         render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: (
+          <FormattedMessage id="app.common.operate" defaultMessage="操作" />
+        ),
+        width: tableWidth[0],
+        key: 'operation',
+        render: this.renderComponent(this.renderOperating)
       }
     ]
     const pagination = {

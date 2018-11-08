@@ -20,16 +20,15 @@
 
 package com.creditease.dbus.stream.common.tools;
 
-import com.creditease.dbus.commons.DBusConsumerRecord;
-import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.commons.StatMessage;
+import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.stream.common.bean.DispatcherPackage;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.javatuples.Quartet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,7 @@ public abstract class MessageProcessor {
 
     protected KafkaProducer<String, String> producer = null;
 
-    public List<IGenericMessage> messageList = null;
+    public List<IGenericMessage> messageList  = new LinkedList<>();
 
     //stat info about count map, key is ds.schema.table, value is COUNT.
     protected TableStatMap statMap = null;
@@ -100,7 +99,7 @@ public abstract class MessageProcessor {
         assert (messageList != null);
         Iterator<IGenericMessage> iter = messageList.iterator();
         if (!iter.hasNext()) {
-            messageList = null;
+            messageList = new LinkedList<>();
             return null;
         }
 
@@ -124,7 +123,7 @@ public abstract class MessageProcessor {
 
                     if (processFullPullerMessage(map, msg) == 0) {
                         //正常情况
-                        ctrlMessageKey = msg.getNameSpace() + "." + msg.getSchemaHash();
+                            ctrlMessageKey = msg.getNameSpace() + "." + msg.getSchemaHash();
                         iter.remove();
                         break;
                     } else {
@@ -150,7 +149,7 @@ public abstract class MessageProcessor {
                     }
 
                 } else if (tableName.equalsIgnoreCase(Constants.HEARTBEAT_MONITOR_TABLE)) {
-                    //根据SCHEMA_NAME发送对于的topic数据，不单独发
+                    //根据SCHEMA_NAME发送对应的topic数据，不单独发
                     processHeartBeatMessage(map, msg);
                     iter.remove();
                     continue;
@@ -206,6 +205,8 @@ public abstract class MessageProcessor {
                 record.offset(), messageList.size(), record.serializedValueSize(), record.topic()));
     }
 
+
+
     /***
      * send stat info to statistic topic, do not care about success or not.
      * @param message
@@ -237,10 +238,12 @@ public abstract class MessageProcessor {
         message.cleanUp();
     }
 
-    //统计技术
+    //统计计数
     public void statMark(String schemaName, String tableName, long count) {
         statMap.mark(schemaName, tableName, count);
     }
+
+
 
     public abstract List<IGenericMessage> unwrapMessages(byte[] data) throws IOException;
 

@@ -61,32 +61,34 @@
   </insert>
   <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.FullPullHistory">
     update t_fullpull_history
-    set type = #{type,jdbcType=VARCHAR},
-    dsName = #{dsName,jdbcType=VARCHAR},
-    schemaName = #{schemaName,jdbcType=VARCHAR},
-    tableName = #{tableName,jdbcType=VARCHAR},
-    version = #{version,jdbcType=INTEGER},
-    batch_id = #{batchId,jdbcType=INTEGER},
-    state = #{state,jdbcType=VARCHAR},
-    error_msg = #{errorMsg,jdbcType=VARCHAR},
-    init_time = #{initTime,jdbcType=TIMESTAMP},
-    start_split_time = #{startSplitTime,jdbcType=TIMESTAMP},
-    start_pull_time = #{startPullTime,jdbcType=TIMESTAMP},
-    end_time = #{endTime,jdbcType=TIMESTAMP},
-    update_time = #{updateTime,jdbcType=TIMESTAMP},
-    finished_partition_count = #{finishedPartitionCount,jdbcType=BIGINT},
-    total_partition_count = #{totalPartitionCount,jdbcType=BIGINT},
-    finished_row_count = #{finishedRowCount,jdbcType=BIGINT},
-    total_row_count = #{totalRowCount,jdbcType=BIGINT},
-    project_name = #{projectName,jdbcType=VARCHAR},
-    topology_table_id = #{topologyTableId,jdbcType=INTEGER},
-    target_sink_id = #{targetSinkId,jdbcType=INTEGER},
-    target_sink_topic = #{targetSinkTopic,jdbcType=VARCHAR},
-    full_pull_req_msg_offset = #{fullPullReqMsgOffset,jdbcType=BIGINT},
-    first_shard_msg_offset = #{firstShardMsgOffset,jdbcType=BIGINT},
-    last_shard_msg_offset = #{lastShardMsgOffset,jdbcType=BIGINT},
-    cost_time = #{costTime,jdbcType=VARCHAR},
-    complete_rate = #{completeRate,jdbcType=INTEGER}
+    <set>
+      <if test = "type!=null">type = #{type,jdbcType=VARCHAR},</if>
+      <if test = "dsName!=null">dsName = #{dsName,jdbcType=VARCHAR},</if>
+      <if test = "schemaName!=null">schemaName = #{schemaName,jdbcType=VARCHAR},</if>
+      <if test = "tableName!=null">tableName = #{tableName,jdbcType=VARCHAR},</if>
+      <if test = "version!=null">version = #{version,jdbcType=INTEGER},</if>
+      <if test = "batchId!=null">batch_id = #{batchId,jdbcType=INTEGER},</if>
+      <if test = "state!=null">state = #{state,jdbcType=VARCHAR},</if>
+      <if test = "errorMsg!=null">error_msg = #{errorMsg,jdbcType=VARCHAR},</if>
+      <if test = "initTime!=null">init_time = #{initTime,jdbcType=TIMESTAMP},</if>
+      <if test = "startSplitTime!=null">start_split_time = #{startSplitTime,jdbcType=TIMESTAMP},</if>
+      <if test = "startPullTime!=null">start_pull_time = #{startPullTime,jdbcType=TIMESTAMP},</if>
+      <if test = "endTime!=null">end_time = #{endTime,jdbcType=TIMESTAMP},</if>
+      <if test = "updateTime!=null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+      <if test = "finishedPartitionCount!=null">finished_partition_count = #{finishedPartitionCount,jdbcType=BIGINT},</if>
+      <if test = "totalPartitionCount!=null">total_partition_count = #{totalPartitionCount,jdbcType=BIGINT},</if>
+      <if test = "finishedRowCount!=null">finished_row_count = #{finishedRowCount,jdbcType=BIGINT},</if>
+      <if test = "totalRowCount!=null">total_row_count = #{totalRowCount,jdbcType=BIGINT},</if>
+      <if test = "projectName!=null">project_name = #{projectName,jdbcType=VARCHAR},</if>
+      <if test = "topologyTableId!=null">topology_table_id = #{topologyTableId,jdbcType=INTEGER},</if>
+      <if test = "targetSinkId!=null">target_sink_id = #{targetSinkId,jdbcType=INTEGER},</if>
+      <if test = "targetSinkTopic!=null">target_sink_topic = #{targetSinkTopic,jdbcType=VARCHAR},</if>
+      <if test = "fullPullReqMsgOffset!=null">full_pull_req_msg_offset = #{fullPullReqMsgOffset,jdbcType=BIGINT},</if>
+      <if test = "firstShardMsgOffset!=null">first_shard_msg_offset = #{firstShardMsgOffset,jdbcType=BIGINT},</if>
+      <if test = "lastShardMsgOffset!=null">last_shard_msg_offset = #{lastShardMsgOffset,jdbcType=BIGINT},</if>
+      <if test = "costTime!=null">cost_time = #{costTime,jdbcType=VARCHAR},</if>
+      <if test = "completeRate!=null">complete_rate = #{completeRate,jdbcType=INTEGER},</if>
+    </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -162,8 +164,4 @@
       AND project_name = (select project_name from t_project where id = #{projectId,jdbcType=INTEGER})
     </if>
   </select>
-  <update id="updateReqMsgOffset">
-    update t_fullpull_history set full_pull_req_msg_offset = #{fullPullReqMsgOffset}
-    where id =#{id}
-  </update>
 </mapper>

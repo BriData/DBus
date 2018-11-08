@@ -84,6 +84,7 @@ public class DataTable {
 
     private Integer innerVersion;
 
+
     public DataTable(){
 
     }
@@ -334,4 +335,5 @@ public class DataTable {
     public void setDbusPassword(String dbusPassword) {
         this.dbusPassword = dbusPassword;
     }
+
 }

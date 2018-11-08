@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,15 @@ import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.DataTable;
 import com.google.common.base.Strings;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.*;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,9 +117,9 @@ public class InitialLoadService {
     }
 
 
-    public void oracleInitialLoadBySql(DataTable ds, DataTable table, long seqno) throws Exception {
+    public void oracleInitialLoadBySql( DataTable table, long seqno) throws Exception {
         Class.forName("oracle.jdbc.driver.OracleDriver");
-        Connection conn = DriverManager.getConnection(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPassword());
+        Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
         PreparedStatement pst = null;
         try {
             String sql = "insert into db_full_pull_requests(" +
@@ -150,14 +154,13 @@ public class InitialLoadService {
             pst.setLong(1, seqno);
             pst.setString(2, table.getSchemaName());
             pst.setString(3, table.getTableName());
-            pst.setString(4, ds.getDsName());
+            pst.setString(4, table.getDsName());
 
             pst.executeUpdate();
-            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}",ds.getMasterUrl(), ds.getDsName(), table.getSchemaName(), table.getTableName());
+            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}", table.getMasterUrl(), table.getDsName(), table.getSchemaName(), table.getTableName());
         } catch (Exception e) {
-            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", ds.getDsName(), table.getSchemaName(), table.getTableName(), e);
-        }
-        finally {
+            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", table.getDsName(), table.getSchemaName(), table.getTableName(), e);
+        } finally {
             if (pst != null) {
                 pst.close();
             }
@@ -168,9 +171,9 @@ public class InitialLoadService {
 
     }
 
-    public void mysqlInitialLoadBySql(DataTable ds, DataTable table, long seqno) throws Exception {
+    public void mysqlInitialLoadBySql( DataTable table, long seqno) throws Exception {
         Class.forName("com.mysql.jdbc.Driver");
-        Connection conn = DriverManager.getConnection(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPassword());
+        Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
         PreparedStatement pst = null;
         try {
             String sql = "insert into db_full_pull_requests (" +
@@ -208,14 +211,13 @@ public class InitialLoadService {
             pst.setString(3, table.getTableName());
             String nameString = Strings.isNullOrEmpty(table.getPhysicalTableRegex()) ? null : getMysqlTables(conn, table);
             pst.setString(4, nameString);
-            pst.setString(5, ds.getDsName());
+            pst.setString(5, table.getDsName());
 
             pst.executeUpdate();
-            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}",ds.getMasterUrl(), ds.getDsName(), table.getSchemaName(), table.getTableName());
-        } catch(Exception e) {
-            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", ds.getDsName(), table.getSchemaName(), table.getTableName(), e);
-        }
-        finally {
+            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}", table.getMasterUrl(), table.getDsName(), table.getSchemaName(), table.getTableName());
+        } catch (Exception e) {
+            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", table.getDsName(), table.getSchemaName(), table.getTableName(), e);
+        } finally {
             if (pst != null) {
                 pst.close();
             }
@@ -272,10 +274,10 @@ public class InitialLoadService {
             logger.info("正则表达式为：{}", table.getPhysicalTableRegex());
             while (rs.next()) {
                 name = rs.getString("TABLE_NAME");
-                logger.info("查询到表名：{}",name);
+                logger.info("查询到表名：{}", name);
                 Matcher matcher = p.matcher(name);
                 if (matcher.matches()) {
-                    logger.info("匹配到表名：{}",name);
+                    logger.info("匹配到表名：{}", name);
                     buf.append(name).append(";");
                 }
             }
@@ -289,6 +291,37 @@ public class InitialLoadService {
             }
             if (statement != null) {
                 statement.close();
+            }
+        }
+    }
+
+    public void mongoInitialLoadBySql(DataTable table, long time) {
+        MongoClient mongoClient = null;
+        try {
+            MongoClientURI mongoClientURI = new MongoClientURI(table.getMasterUrl());
+            mongoClient = new MongoClient(mongoClientURI);
+            Document document = new Document();
+            document.put("seqno", time);
+            document.put("schema_name", table.getSchemaName().toUpperCase());
+            document.put("table_name", table.getTableName().toUpperCase());
+            document.put("scn_no", null);
+            document.put("split_col", null);
+            document.put("split_bounding_query", null);
+            document.put("pull_target_cols", null);
+            document.put("pull_req_create_time", new Date());
+            document.put("pull_start_time", null);
+            document.put("pull_end_time", null);
+            document.put("pull_status", null);
+            document.put("pull_remark", table.getSchemaName());
+
+            mongoClient.getDatabase("dbus").getCollection("db_full_pull_requests").insertOne(document);
+
+            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}", table.getMasterUrl(), table.getDsName(), table.getSchemaName(), table.getTableName());
+        } catch (Exception e) {
+            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", table.getDsName(), table.getSchemaName(), table.getTableName(), e);
+        } finally {
+            if (mongoClient != null) {
+                mongoClient.close();
             }
         }
     }

@@ -67,4 +67,11 @@ public interface DataTableMapper {
 
     List<HashMap<String,Object>> findTablesByUserId(Integer userId);
 
+    void inactiveTableByDsId(Integer dsId);
+
+    void inactiveTableBySchemaId(Integer schemaId);
+
+    List<DataTable> findActiveTablesByDsId(int dsId);
+
+    List<DataTable> findActiveTablesBySchemaId(int schemaId);
 }

@@ -74,7 +74,7 @@
     from t_dbus_datasource
   </select>
   <select id="search" parameterType="java.util.Map" resultType="java.util.Map">
-    SELECT id, ds_name name, ds_type type, status, ds_desc description,
+    SELECT id, ds_name name, ds_type type, status,topic, ds_desc description,
       DATE_FORMAT(update_time,'%Y-%m-%d %H:%i:%s') updateTime
     FROM t_dbus_datasource
     <where>

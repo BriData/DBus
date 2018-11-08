@@ -127,6 +127,10 @@ RuleTypeTips.regexExtract = (
 RuleTypeTips.jsonPath = (
   <div>
     <p>从JSON中按key提取value</p>
+    <p>Field指定列，parameter指定要提取的Key</p>
+    <p>例如parameter为$['version']，表示提取XXX.version</p>
+    <p>如果需要提取深层的值，parameter可以填写为$['level1']['level2']['level3']，或为$['level1.level2.level3']</p>
+    <p>如果需要提取数组中的某一项，parameter可以填写为$['data'][0]，表示提取XXX.data[0]</p>
   </div>
 );
 

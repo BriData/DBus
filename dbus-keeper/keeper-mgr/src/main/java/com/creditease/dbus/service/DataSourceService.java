@@ -26,9 +26,12 @@ import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
+import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.DataSource;
+import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.utils.DelZookeeperNodesTemplate;
+import com.creditease.dbus.utils.OrderedProperties;
 import com.creditease.dbus.utils.StormToplogyOpHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.jcraft.jsch.ChannelExec;
@@ -64,6 +67,10 @@ public class DataSourceService {
     private Environment env;
     @Autowired
     private ZkConfService zkConfService;
+    @Autowired
+    private TableService tableService;
+    @Autowired
+    private ToolSetService toolSetService;
 
     private static final String KEEPER_SERVICE = ServiceNames.KEEPER_SERVICE;
 
@@ -95,15 +102,26 @@ public class DataSourceService {
         return result.getBody();
     }
 
-    public ResultEntity update(DataSource dataSource) {
+    public ResultEntity update(DataSource dataSource) throws Exception {
+        if (dataSource.getStatus().equals("inactive")) {
+            List<DataTable> tables = sender.get(KEEPER_SERVICE, "/tables/findActiveTablesByDsId/{0}", dataSource.getId()).getBody().getPayload(new TypeReference<List<DataTable>>() {
+            });
+            if (tables != null && tables.size() > 0) {
+                return new ResultEntity(15013, "请先停止该数据源下所有表,再inactive该数据源");
+            }
+        }
         ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE, "/datasource/update", dataSource);
         return result.getBody();
     }
 
-    public int countByDsId(Integer id) {
+    public int countActiveTables(Integer id) {
         //是否还有项目在使用
-        return sender.get(KEEPER_SERVICE, "/projectTable/count-by-ds-id/{id}", id)
-                .getBody().getPayload(Integer.class);
+        Integer count = sender.get(KEEPER_SERVICE, "/projectTable/count-by-ds-id/{id}", id).getBody().getPayload(Integer.class);
+        //是否还有running的表
+        List<DataTable> tables = sender.get(KEEPER_SERVICE, "/tables/findActiveTablesByDsId/{0}", id)
+                .getBody().getPayload(new TypeReference<List<DataTable>>() {
+                });
+        return count + tables.size();
     }
 
     public ResultEntity delete(Integer id) {
@@ -296,9 +314,13 @@ public class DataSourceService {
         String user = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
 
         String[] split = runningInfo.split(":");
-        String command = "tail -200 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log.creditease";
+        String command = "tail -300 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log.creditease";
 
         String execResult = executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command);
+        if(StringUtils.isBlank(execResult)){
+            command = "tail -300 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log";
+            execResult = executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command);
+        }
         Map resultMap = new HashMap<>();
         resultMap.put("runningInfo", runningInfo);
         resultMap.put("execResult", execResult);
@@ -338,5 +360,19 @@ public class DataSourceService {
                 session.disconnect();
             }
         }
+    }
+
+    public int rerun(Integer dsId,String dsName, Long offset) throws Exception {
+        String path = "/DBus/Topology/" + dsName + "-dispatcher/dispatcher.raw.topics.properties";
+        byte[] data = zkService.getData(path);
+        OrderedProperties orderedProperties = new OrderedProperties(new String(data));
+        Object value = orderedProperties.get("dbus.dispatcher.offset");
+        if(StringUtils.isNotBlank(value.toString())){
+            return MessageCode.PLEASE_TRY_AGAIN_LATER;
+        }
+        orderedProperties.put("dbus.dispatcher.offset", offset);
+        zkService.setData(path, orderedProperties.toString().getBytes());
+        toolSetService.reloadConfig(dsId,dsName,"DISPATCHER_RELOAD_CONFIG");
+        return 0;
     }
 }

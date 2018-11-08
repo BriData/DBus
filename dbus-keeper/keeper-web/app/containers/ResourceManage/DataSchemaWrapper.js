@@ -9,7 +9,8 @@ import {
   DataSchemaManageGrid,
   DataSchemaManageModifyModal,
   DataSchemaManageAddModal,
-  DataSchemaManageAddLogModal
+  DataSchemaManageAddLogModal,
+  DataSchemaManageRerunModal
 } from '@/app/components'
 import { makeSelectLocale } from '../LanguageProvider/selectors'
 import {DataSchemaModel, DataSourceModel} from './selectors'
@@ -66,7 +67,11 @@ export default class DataSchemaWrapper extends Component {
 
       addLogModalKey: 'addLogModalKey',
       addLogModalVisible: false,
-      addLogModalRecord: {}
+      addLogModalRecord: {},
+
+      rerunModalKey: 'rerunModalKey',
+      rerunModalRecord: {},
+      rerunModalVisible: false
     }
   }
   componentWillMount() {
@@ -120,7 +125,7 @@ export default class DataSchemaWrapper extends Component {
   }
 
   handleAdd = record => {
-    if (record.ds_type === 'oracle' || record.ds_type === 'mysql'
+    if (record.ds_type === 'oracle' || record.ds_type === 'mysql' || record.ds_type === 'mongo'
     ) {
       this.handleOpenAddModal(record)
     } else {
@@ -168,6 +173,20 @@ export default class DataSchemaWrapper extends Component {
     this.handleSearch({...dataSchemaParams})
   }
 
+  handleOpenRerunModal = record => {
+    this.setState({
+      rerunModalKey: this.handleRandom('rerunModalKey'),
+      rerunModalRecord: record,
+      rerunModalVisible: true
+    })
+  }
+
+  handleCloseRerunModal = () => {
+    this.setState({
+      rerunModalVisible: false
+    })
+  }
+
   render () {
     console.info(this.props)
     const {dataSourceData} = this.props
@@ -182,6 +201,7 @@ export default class DataSchemaWrapper extends Component {
     const schemaTableResult = dataSourceData.schemaTableResult
 
     const {addLogModalKey, addLogModalVisible, addLogModalRecord} = this.state
+    const {rerunModalKey, rerunModalRecord, rerunModalVisible} = this.state
     const breadSchema = [
       {
         path: '/resource-manage',
@@ -218,6 +238,7 @@ export default class DataSchemaWrapper extends Component {
           onAdd={this.handleAdd}
           deleteApi={DATA_SCHEMA_DELETE_API}
           onRefresh={this.handleRefresh}
+          onRerun={this.handleOpenRerunModal}
         />
         <DataSchemaManageModifyModal
           key={modifyModalKey}
@@ -240,6 +261,12 @@ export default class DataSchemaWrapper extends Component {
           record={addLogModalRecord}
           onClose={this.handleCloseAddLogModal}
           addApi={DATA_SOURCE_ADD_SCHEMA_TABLE_LIST_API}
+        />
+        <DataSchemaManageRerunModal
+          key={rerunModalKey}
+          visible={rerunModalVisible}
+          record={rerunModalRecord}
+          onClose={this.handleCloseRerunModal}
         />
       </div>
     )

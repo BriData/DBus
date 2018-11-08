@@ -195,9 +195,8 @@ public class DbusHeartBeatBolt extends BaseRichBolt implements HeartbeatHandlerL
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
         } else if(type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
-        }  else if(type == DbusDatasourceType.MONGO) {
-            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

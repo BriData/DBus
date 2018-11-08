@@ -237,7 +237,10 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                     switch (columnTypeName) {
                         case "DATE":
                             if (rs.getObject(i) != null) {
-                                rowDataValues.add(rs.getDate(i) + " " + rs.getTime(i));
+                                if(datasourceType.equalsIgnoreCase(DbusDatasourceType.MYSQL.name()) ||
+                                        datasourceType.equalsIgnoreCase(DbusDatasourceType.ORACLE.name())){
+                                    rowDataValues.add(rs.getDate(i) + " " + rs.getTime(i));
+                                }
                             } else {
                                 rowDataValues.add(rs.getObject(i));
                             }
@@ -264,7 +267,8 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                             if (rs.getTimestamp(i) != null) {
 //                                  rowDataValues.add(rs.getTimestamp(i).toString());
                                 String timeStamp = "";
-                                if (datasourceType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())) {
+                                if (datasourceType.toUpperCase().equals(DbusDatasourceType.MYSQL.name())
+                                        ) {
                                     timeStamp = toMysqlTimestampString(rs.getTimestamp(i), rsmd.getPrecision(i));
                                 } else if (datasourceType.toUpperCase().equals(DbusDatasourceType.ORACLE.name())) {
                                     timeStamp = toOracleTimestampString(rs.getTimestamp(i), rsmd.getScale(i));
@@ -334,7 +338,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                     //将数据写入kafka
                     sendMessageToKafka(resultKey, dbusMessage, sendCnt, recvCnt, isError);
                     tuples.clear();
-                    tuples = new ArrayList<>();
+                    //tuples = new ArrayList<>();
                 }
 
                 if (isError.get()) {
@@ -424,7 +428,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         stringProducer.send(record, new Callback() {
             public void onCompletion(RecordMetadata metadata, Exception e) {
                 if (e != null) {
-                    e.printStackTrace();
+                    LOG.error(e.getMessage(),e);
                     isError.set(true);
                 } else {
                     recvCnt.getAndIncrement();

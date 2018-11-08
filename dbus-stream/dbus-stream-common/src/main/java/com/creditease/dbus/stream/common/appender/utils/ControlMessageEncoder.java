@@ -24,6 +24,7 @@ import com.creditease.dbus.commons.ControlMessage;
 import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
+import com.creditease.dbus.stream.common.tools.DateUtil;
 import org.apache.avro.generic.GenericRecord;
 
 /**
@@ -48,4 +49,5 @@ public class ControlMessageEncoder {
 
         return message;
     }
+
 }

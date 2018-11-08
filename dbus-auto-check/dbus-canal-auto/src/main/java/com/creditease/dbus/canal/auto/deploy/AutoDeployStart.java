@@ -89,8 +89,8 @@ public class AutoDeployStart {
             bw.newLine();
             WriteProperties(instancePropsPath, "canal.instance.master.address",deployProps.getSlavePath(),bw);
             WriteProperties(instancePropsPath, "canal.instance.dbUsername",deployProps.getCanalUser(),bw);
-            WriteProperties(instancePropsPath, "canal.instance.dbPassword ",deployProps.getCanalPwd(),bw);
-            WriteProperties(instancePropsPath, "canal.instance.connectionCharset "," UTF-8",bw);
+            WriteProperties(instancePropsPath, "canal.instance.dbPassword",deployProps.getCanalPwd(),bw);
+            WriteProperties(instancePropsPath, "canal.instance.connectionCharset"," UTF-8",bw);
             bw.write("------------ update canal.properties end ------------ ");
             bw.newLine();
             //创建canal节点

@@ -45,6 +45,10 @@ public class Support {
 	}
 	
 	public static String getColumnType(Column column){
+		String type = column.getMysqlType().toLowerCase();
+		if(type.startsWith("int(") && type.endsWith("unsigned")) {
+			return "int unsigned";
+		}
 		return StringUtils.substringBefore(column.getMysqlType(), "(");
 	}
 	
@@ -53,7 +57,7 @@ public class Support {
 		String data = StringUtils.substringBetween(column.getMysqlType(), "(",")");
 		String length = StringUtils.substringBefore(data, ",");
 		String precision = StringUtils.substringAfter(data, ",");
-		String type = getColumnType(column).toUpperCase();
+		String type = StringUtils.substringBefore(column.getMysqlType(), "(").toUpperCase();
 		if("SET".equals(type) || "ENUM".equals(type)){
 			ret[0] = 0;
 			ret[1] = 0;

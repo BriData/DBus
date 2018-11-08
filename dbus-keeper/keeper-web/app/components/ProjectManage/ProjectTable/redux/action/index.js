@@ -13,6 +13,7 @@ import {
   PROJECT_TABLE_CREATE_SINK,
   PROJECT_TABLE_CREATE_RESOURCE,
   PROJECT_TABLE_CREATE_TOPOLOGY,
+  PROJECT_TABLE_SELECT_ALL_RESOURCE,
   PROJECT_TABLE_CREATE_ENCODES,
   PROJECT_TABLE_ALL_SEARCH,
   PROJECT_TABLE_PROJECT_LIST,
@@ -63,6 +64,13 @@ export function setTableResource (params) {
 export function setTableTopology (params) {
   return {
     type: PROJECT_TABLE_CREATE_TOPOLOGY,
+    params: params
+  }
+}
+// 选择所有可选表
+export function selectAllResource (params) {
+  return {
+    type: PROJECT_TABLE_SELECT_ALL_RESOURCE,
     params: params
   }
 }

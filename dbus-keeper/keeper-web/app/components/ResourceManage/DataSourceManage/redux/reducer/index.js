@@ -17,7 +17,8 @@ import {
   KILL_TOPOLOGY,
   DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID,
   DATA_SOURCE_GET_SCHEMA_TABLE_LIST,
-  DATA_SOURCE_CLEAN_SCHEMA_TABLE
+  DATA_SOURCE_CLEAN_SCHEMA_TABLE,
+  DATA_SOURCE_CLEAR_FULLPULL_ALARM
 } from '../action/types'
 
 const initialState = fromJS({
@@ -71,12 +72,29 @@ const initialState = fromJS({
     loaded: false,
     result: {}
   },
+  clearFullPullAlarmResult: {
+    loading: false,
+    loaded: false,
+    result: {}
+  },
   dataSourceParams: null,
   jarParams: null
 })
 
 export default (state = initialState, action) => {
   switch (action.type) {
+    case DATA_SOURCE_CLEAR_FULLPULL_ALARM.LOAD:
+      return state.setIn(['clearFullPullAlarmResult','loading'],true)
+    case DATA_SOURCE_CLEAR_FULLPULL_ALARM.SUCCESS:
+      return state
+        .setIn(['clearFullPullAlarmResult', 'loading'], false)
+        .setIn(['clearFullPullAlarmResult', 'loaded'], true)
+        .setIn(['clearFullPullAlarmResult', 'result'], action.result)
+    case DATA_SOURCE_CLEAR_FULLPULL_ALARM.FAIL:
+      return state
+        .setIn(['clearFullPullAlarmResult', 'loading'], false)
+        .setIn(['clearFullPullAlarmResult', 'loaded'], true)
+        .setIn(['clearFullPullAlarmResult', 'result'], action.result)
     // dataSource 管理查询
     case DATA_SOURCE_ALL_SEARCH.LOAD:
       return state.setIn(['dataSourceList','loading'],true)

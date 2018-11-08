@@ -22,3 +22,5 @@ export const KAFKA_READER_READ_DATA_API = '/keeper/toolSet/kafkaReader'
 
 export const KAFKA_READER_GET_OFFSET_RANGE_API = '/keeper/toolSet/getOffset'
 
+export const KAFKA_READER_GET_TOPICS_BY_USER_ID_API = '/keeper/toolSet/getTopicsByUser'
+

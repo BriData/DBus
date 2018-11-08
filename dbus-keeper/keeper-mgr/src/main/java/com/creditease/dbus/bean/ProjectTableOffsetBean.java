@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,11 @@ public class ProjectTableOffsetBean {
     private int partition; //partition
     private String offset; //head/latest/1234或者为""
     private String topoName;
+
+    private String dsName;
+    private String schemaName;
+    private String tableName;
+    private String projectName;
 
     public String getTopoName() {
         return topoName;
@@ -72,5 +77,37 @@ public class ProjectTableOffsetBean {
 
     public void setOffset(String offset) {
         this.offset = offset;
+    }
+
+    public String getDsName() {
+        return dsName;
+    }
+
+    public void setDsName(String dsName) {
+        this.dsName = dsName;
+    }
+
+    public String getSchemaName() {
+        return schemaName;
+    }
+
+    public void setSchemaName(String schemaName) {
+        this.schemaName = schemaName;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 }

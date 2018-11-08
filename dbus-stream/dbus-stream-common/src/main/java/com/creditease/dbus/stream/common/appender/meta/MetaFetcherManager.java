@@ -41,6 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MetaFetcherManager {
     private static Logger logger = LoggerFactory.getLogger(MetaFetcherManager.class);
     private static final String ORA_DATASOURCE_CONFIG_NAME = Constants.Properties.ORA_META;
+
+
     private static MetaFetcher fetcher;
     private static AtomicBoolean initialized = new AtomicBoolean(false);
 
@@ -77,6 +79,7 @@ public class MetaFetcherManager {
         }
         return fetcher;
     }
+
 
     private static boolean initializeMysqlMetaFetcher(String jdbcUrl, String user, String pwd) {
         try {

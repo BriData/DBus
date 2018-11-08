@@ -95,6 +95,26 @@ public class TableService {
     public PageInfo<DataTable> getTablesInPages(Integer dsId, String schemaName, String tableName, int pageNum, int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
         List<DataTable> tables = tableMapper.findTables(dsId, schemaName, tableName);
+        for(DataTable dataTable : tables) {
+            String verChangeHistory = dataTable.getVerChangeHistory();
+            if(StringUtils.isEmpty(verChangeHistory)) continue;
+            StringBuilder versionsChangeHistory = new StringBuilder();
+            for(String verId : verChangeHistory.split(",")) {
+                try {
+                    TableVersion tableVersion = tableVersionMapper.selectByPrimaryKey(Integer.parseInt(verId));
+                    if(tableVersion != null && tableVersion.getVersion()!=null) {
+                        versionsChangeHistory.append(",").append(tableVersion.getVersion());
+                    }
+                } catch (NumberFormatException e) {
+                    logger.warn("transform verId to version failed for verid: {}, error message: {}",verId, e);
+                    versionsChangeHistory.append(",").append(verId);
+                }
+            }
+            if(versionsChangeHistory.length() > 0) {
+                versionsChangeHistory.delete(0, 1);
+            }
+            dataTable.setVerChangeHistory(versionsChangeHistory.toString());
+        }
         return new PageInfo<>(tables);
     }
 
@@ -234,6 +254,7 @@ public class TableService {
 
     public Map<String, Object> cloneRuleGroup(Map<String, Object> map) throws Exception {
         int tableId = Integer.parseInt(map.get("tableId").toString());
+        final int oldGroupId = Integer.parseInt(map.get("groupId").toString());
         // 生成新的规则组信息
         DataTableRuleGroup group = new DataTableRuleGroup();
         group.setTableId(tableId);
@@ -244,7 +265,7 @@ public class TableService {
         if (insertResult == 0) {
             throw new SQLException();
         }
-        List<DataTableRule> rules = dataTableRuleMapper.getAllRules(tableId);
+        List<DataTableRule> rules = dataTableRuleMapper.getAllRules(oldGroupId);
         if (rules != null && rules.size() > 0) {
             //修改规则的groupId
             for (DataTableRule rule : rules) {
@@ -345,8 +366,8 @@ public class TableService {
             tv.setTableName(map.get("tableName").toString());
             tv.setVersion(0);
             tv.setInnerVersion(0);
-            tv.setEventOffset(0);
-            tv.setEventPos(0);
+            tv.setEventOffset(0L);
+            tv.setEventPos(0L);
             tv.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 
             tableVersionMapper.insert(tv);
@@ -781,8 +802,8 @@ public class TableService {
             tableVersion.setTableName(newTable.getTableName());
             tableVersion.setVersion(INIT_VERSION);
             tableVersion.setInnerVersion(INIT_VERSION);
-            tableVersion.setEventOffset(INIT_VERSION);
-            tableVersion.setEventPos(INIT_VERSION);
+            tableVersion.setEventOffset(0L);
+            tableVersion.setEventPos(0L);
             tableVersionMapper.insert(tableVersion);
 
             //meta插入完毕后，更新table的verId
@@ -874,5 +895,13 @@ public class TableService {
 
     public List<DataTable> findAllTables() {
         return tableMapper.findAllTables();
+    }
+
+    public List<DataTable> findActiveTablesBySchemaId(Integer schemaId) {
+        return tableMapper.findActiveTablesBySchemaId(schemaId);
+    }
+
+    public List<DataTable> findActiveTablesByDsId(Integer schemaId) {
+        return tableMapper.findActiveTablesByDsId(schemaId);
     }
 }

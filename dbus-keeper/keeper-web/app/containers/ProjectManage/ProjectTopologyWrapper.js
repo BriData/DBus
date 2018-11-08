@@ -427,6 +427,7 @@ export default class ProjectTopologyWrapper extends Component {
           onOpenRerunModal={this.handleOpenRerunModal}
         />
         <ProjectTopologyForm
+          key={modalKey}
           modalKey={modalKey}
           locale={locale}
           modalStatus={modalStatus}

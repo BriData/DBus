@@ -22,7 +22,7 @@
         <module>dbus-commons</module>
         <module>dbus-stream</module>
         <module>dbus-fullpuller</module>
-        <!--<module>dbus-tools</module>-->
+        <module>dbus-tools</module>
         <module>dbus-components</module>
         <module>dbus-heartbeat</module>
         <module>dbus-mysql-extractor</module>
@@ -54,7 +54,6 @@
                 <artifactId>storm-core</artifactId>
                 <version>1.0.1</version>
                 <scope>${scope.provided}</scope>
-                <!-- 以下部分如果调试不过可以删除exclusions -->
                 <exclusions>
                     <exclusion>
                         <groupId>com.codahale.metrics</groupId>

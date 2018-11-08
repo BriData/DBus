@@ -281,7 +281,7 @@ export default class GlobalFullpullForm extends Component {
                     }
                   ]
                 })(
-                  <Input
+                  <Input disabled
                   />
                 )}
               </FormItem>

@@ -121,7 +121,7 @@ public class DataPullingSpout extends BaseRichSpout {
             FullPullHelper.updatePendingTasksToHistoryTable(dsName, DataPullConstants.FULLPULL_PENDING_TASKS_OP_PULL_TOPOLOGY_RESTART, consumer,
                     commonProps.getProperty(Constants.ZkTopoConfForFullPull.FULL_PULL_MEDIANT_TOPIC));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             throw new InitializationException();
         }
         LOG.info("Pulling Spout {} is started!", topologyId);
@@ -251,7 +251,7 @@ public class DataPullingSpout extends BaseRichSpout {
                     }
                 } catch (Exception e) {
                     String errorMsg = "DataPullingSpout:spout-->bolt exception!" + e.getMessage();
-                    e.printStackTrace();
+                    LOG.error(e.getMessage(),e);
                     LOG.error(errorMsg, e);
                     //处理悬而未决的任务和发送拉取报告
                     if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)

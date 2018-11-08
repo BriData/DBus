@@ -107,7 +107,7 @@ export default class DataTableManageModifyModal extends Component {
             </FormItem>
             <FormItem label={<FormattedMessage
               id="app.components.resourceManage.dataTableNameAlias"
-              defaultMessage="表别名"
+              defaultMessage="模板表"
             />} {...formItemLayout}>
               {getFieldDecorator('tableNameAlias', {
                 initialValue:tableInfo.tableNameAlias,
@@ -157,6 +157,58 @@ export default class DataTableManageModifyModal extends Component {
                 initialValue: tableInfo.fullpullSplitStyle,
               })(<Input size="large" type="text" />)}
             </FormItem>
+            {tableInfo.dsType === 'mongo' ?
+              (
+                <FormItem
+                  label={<FormattedMessage
+                    id="app.components.resourceManage.dataSource.isExpand"
+                    defaultMessage="是否展开"
+                  />} {...formItemLayout}
+                >
+                  {getFieldDecorator('isOpen', {
+                    initialValue: tableInfo.isOpen ? tableInfo.isOpen : 0
+                  })(
+                    <Select
+                      showSearch
+                      optionFilterProp='children'
+                      className={styles.select}
+                      placeholder="Select status"
+                    >
+                      <Option value={1} key="1">Yes</Option>
+                      <Option value={0} key="0">No</Option>
+                    </Select>
+                  )}
+                </FormItem>
+              ) : (
+                <span/>
+              )
+            }
+            {tableInfo.dsType === 'mongo' ?
+              (
+                <FormItem
+                  label={<FormattedMessage
+                    id="app.components.resourceManage.dataSource.isAutoComplete"
+                    defaultMessage="是否自动补全"
+                  />} {...formItemLayout}
+                >
+                  {getFieldDecorator('isAutoComplete', {
+                    initialValue: tableInfo.isAutoComplete || false
+                  })(
+                    <Select
+                      showSearch
+                      optionFilterProp='children'
+                      className={styles.select}
+                      placeholder="Select status"
+                    >
+                      <Option value={true} key="yes">Yes</Option>
+                      <Option value={false} key="no">No</Option>
+                    </Select>
+                  )}
+                </FormItem>
+              ) : (
+                <span/>
+              )
+            }
           </Form>
         </Modal>
       </div>

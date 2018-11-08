@@ -26,6 +26,8 @@ import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
 import com.creditease.dbus.bean.AddSchemaAndTablesBean;
 import com.creditease.dbus.bean.SchemaAndTablesInfoBean;
 import com.creditease.dbus.bean.SourceTablesBean;
+import com.creditease.dbus.commons.IZkService;
+import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.DataSchema;
@@ -57,6 +59,9 @@ public class DataSchemaService {
     @Autowired
     private ToolSetService toolSetService;
 
+    @Autowired
+    private IZkService zkService;
+
     private static final String KEEPER_SERVICE = ServiceNames.KEEPER_SERVICE;
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -83,7 +88,14 @@ public class DataSchemaService {
         return result.getBody();
     }
 
-    public ResultEntity update(DataSchema dataSchema) {
+    public ResultEntity update(DataSchema dataSchema) throws Exception{
+        if (dataSchema.getStatus().equals("inactive")) {
+            List<DataTable> tables = sender.get(KEEPER_SERVICE, "/tables/findActiveTablesBySchemaId/{0}", dataSchema.getId()).getBody().getPayload(new TypeReference<List<DataTable>>() {
+            });
+            if (tables != null && tables.size() > 0) {
+                return new ResultEntity(15013, "请先停止该schema下所有表,再inactive该schema");
+            }
+        }
         ResponseEntity<ResultEntity> result = sender.post(KEEPER_SERVICE, "/dataschema/update", dataSchema);
         return result.getBody();
     }
@@ -179,8 +191,26 @@ public class DataSchemaService {
         return new ResultEntity();
     }
 
-	public int countBySchemaId(Integer id) {
-        return sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/count-by-schema-id/{0}", id)
-                .getBody().getPayload(Integer.class);
+	public int countActiveTables(Integer id) {
+        Integer count = sender.get(ServiceNames.KEEPER_SERVICE, "/projectTable/count-by-schema-id/{0}", id).getBody().getPayload(Integer.class);
+        //是否还有running的表
+        List<DataTable> tables = sender.get(KEEPER_SERVICE, "/tables/findActiveTablesBySchemaId/{0}", id)
+                .getBody().getPayload(new TypeReference<List<DataTable>>() {
+                });
+        return count + tables.size();
 	}
+
+    public int rerun(Integer dsId, String dsName, String schemaName, Long offset) throws Exception {
+        String path = "/DBus/Topology/" + dsName + "-appender/spout_kafka_consumer_nextoffset";
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(dsName + "." + schemaName, offset);
+        byte[] data = zkService.getData(path);
+        String value = new String(data, KeeperConstants.UTF8);
+        if (StringUtils.isNotBlank(value.toString()) || "{}".equals(value)) {
+            return MessageCode.PLEASE_TRY_AGAIN_LATER;
+        }
+        zkService.setData(path, jsonObject.toString().getBytes());
+        toolSetService.reloadConfig(dsId, dsName, "APPENDER_RELOAD_CONFIG");
+        return 0;
+    }
 }

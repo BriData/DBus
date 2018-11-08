@@ -33,6 +33,7 @@ import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Pair;
 import com.creditease.dbus.stream.common.appender.utils.PairWrapper;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
+import com.creditease.dbus.stream.common.tools.DateUtil;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
@@ -45,6 +46,8 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -172,6 +175,7 @@ public class BoltCommandHandlerHelper {
         return wrapper;
     }
 
+
     private static <T> T getFromRecord(String key, GenericRecord record) {
         return (T) record.get(key);
     }
@@ -239,9 +243,12 @@ public class BoltCommandHandlerHelper {
 
             // 发邮件
             ControlMessage gm = new ControlMessage(System.currentTimeMillis(), ControlType.COMMON_EMAIL_MESSAGE.toString(), BoltCommandHandlerHelper.class.getName());
+            StringWriter sw = new StringWriter();
+            PrintWriter writer = new PrintWriter(sw);
+            e.printStackTrace(writer);
 
             gm.addPayload("subject", "DBus生成消息异常报警");
-            gm.addPayload("contents", String.format("[%s]dbus-stream 生成dbus message失败：%s/%s/%s，原因：%s", errId, Utils.getDatasource().getDsName(), version.getSchema(), version.getTable(), e.getMessage()));
+            gm.addPayload("contents", String.format("[%s]dbus-stream 生成dbus message失败：%s/%s/%s，原因：%s", errId, Utils.getDatasource().getDsName(), version.getSchema(), version.getTable(), sw));
             gm.addPayload("datasource_schema", Utils.getDatasource().getDsName() + "/" + version.getSchema());
 
             String topic = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.GLOBAL_EVENT_TOPIC);

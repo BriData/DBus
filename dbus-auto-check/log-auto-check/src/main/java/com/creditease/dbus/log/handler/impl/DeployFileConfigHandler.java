@@ -107,8 +107,26 @@ public class DeployFileConfigHandler extends AbstractHandler {
         String flumeExtractFilePath = lccb.getFlumeExtractFilePath();
         String flumeDstTopic = lccb.getFlumeDstTopic();
 
+
+
         String flumeConfigFilePath = StringUtils.joinWith("/", flumeBasePath, "conf/flume-conf.properties");
         File flumeConfigFile = new File(flumeConfigFilePath);
+        String flumeTemplateFilePath = StringUtils.joinWith("/", flumeBasePath, "conf/flume-conf.properties.template");
+        File flumeTemplateFile = new File(flumeTemplateFilePath);
+
+        //利用文件模板
+        //1. 删除所要修改的配置文件
+        if(flumeConfigFile.exists())
+            FileUtils.deleteFile(flumeConfigFilePath);
+
+        //2. 复制要修改的配置文件
+        if(!flumeTemplateFile.exists()) {
+            System.out.println("ERROR: [" + flumeConfigFilePath + "] is not exist!");
+            bw.write(flumeConfigFilePath + " is not exist!");
+            updateConfigProcessExit(bw);
+        }
+
+        FileUtils.copyFileUsingFileChannels(flumeTemplateFile, flumeConfigFile);
 
         if(!flumeConfigFile.exists()) {
             System.out.println("ERROR: [" + flumeConfigFilePath + "] is not exist!");
@@ -201,8 +219,33 @@ public class DeployFileConfigHandler extends AbstractHandler {
         String logstashFileStartPosition = lccb.getLogstashFileStartPosition();
         String logstashDstTopic = lccb.getLogstashDstTopic();
 
+
         String logstashConfigFilePath = StringUtils.joinWith("/", logstashBasePath, "etc/logstash.conf");
         File logstashConfigFile = new File(logstashConfigFilePath);
+        String logstashTemplateFilePath = StringUtils.joinWith("/", logstashBasePath, "etc/logstash.conf.template");
+        File logstashTemplateFile = new File(logstashTemplateFilePath);
+
+        //利用文件模板
+        //1. 删除所要修改的配置文件
+        if(logstashConfigFile.exists())
+            FileUtils.deleteFile(logstashConfigFilePath);
+
+        //2. 复制要修改的配置文件
+        if(!logstashTemplateFile.exists()) {
+            System.out.println("ERROR: [" + logstashConfigFilePath + "] is not exist!");
+            bw.write(logstashConfigFilePath + " is not exist!");
+            updateConfigProcessExit(bw);
+        }
+
+        FileUtils.copyFileUsingFileChannels(logstashTemplateFile, logstashConfigFile);
+
+        if(!logstashConfigFile.exists()) {
+            System.out.println("ERROR: [" + logstashConfigFilePath + "] is not exist!");
+            bw.write(logstashConfigFilePath + " is not exist!");
+            updateConfigProcessExit(bw);
+        }
+
+
         if(!logstashConfigFile.exists()) {
             System.out.println("ERROR: " + logstashConfigFilePath + " is not exist!");
             bw.write(logstashConfigFilePath + " is not exist!");
@@ -228,6 +271,12 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         //修改抽取文件是从开始读，还是从末端读，可以为beginning或end
         String oldLogstashFileStartPositionStr = "start_position => ";
+        if(!StringUtils.equals(logstashFileStartPosition, "beginning") && !StringUtils.equals(logstashFileStartPosition, "end")) {
+            System.out.println("ERROR: " + logstashFileStartPosition + " is error，should be beginning or end!");
+            bw.write(logstashFileStartPosition + "  is error，should be beginning or end!");
+            bw.newLine();
+            updateConfigProcessExit(bw);
+        }
         String newLogstashFileStartPositionStr = buildLogstashFileStartPosition(logstashFileStartPosition);
         try {
             FileUtils.modifyFileProperties(logstashConfigFilePath, oldLogstashFileStartPositionStr, newLogstashFileStartPositionStr, bw);
@@ -290,7 +339,20 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private String buildFilebeatKafkaBrokerConfig(String kafkaBroker) {
-        return  "  hosts: [\""+ kafkaBroker + "\"]";
+        String newHost;
+        String []arr = StringUtils.split(kafkaBroker, ",");
+        StringBuffer sb = new StringBuffer("  hosts: [");
+        for(int i = 0; i < arr.length; i++) {
+            sb.append("\"");
+            sb.append(arr[i]);
+            sb.append("\"");
+            if(i != arr.length -1) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+
+        return  sb.toString();
     }
 
     private String buildFilebeatKafkaTopicConfig(String topic) {
@@ -326,12 +388,12 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private  String buildLogstashExtractFilePathStr(String path) {
-        return  "\t\tpath => [\"" + path + "\"] ";
+        return  "\tpath => [\"" + path + "\"] ";
     }
 
 
     private  String buildLogstashExtractFileSincedbStr(String path) {
-        return  "\t\tsincedb_path => \"" + path + "\"] ";
+        return  "\tsincedb_path => \"" + path + "\"] ";
     }
 
     private  String buildLogstashDsTypeStr(String type) {
@@ -339,7 +401,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private  String buildLogstashFileStartPosition(String position) {
-        return  "\t\tstart_position => \"" + position + "\" ";
+        return  "\tstart_position => \"" + position + "\" ";
     }
 
     private  String buildLogstashFileFilterType(String type) {
@@ -347,14 +409,11 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private  String buildLogstashKafkaBroker(String kafkaBroker) {
-        return  "\t\tbootstrap_servers => \"" + kafkaBroker + "\" ";
+        return  "\tbootstrap_servers => \"" + kafkaBroker + "\" ";
     }
 
     private  String buildLogstashTopic(String topic) {
-        return  "\t\ttopic_id => \"" + topic + "\" ";
+        return  "\ttopic_id => \"" + topic + "\" ";
     }
-
-
-
 
 }

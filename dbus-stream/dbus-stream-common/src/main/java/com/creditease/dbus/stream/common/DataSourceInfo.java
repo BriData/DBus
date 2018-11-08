@@ -78,12 +78,21 @@ public class DataSourceInfo {
         this.dataTopicOffset = "none";
     }
 
+    public String getSchemaRegistryRestUrl() {
+        return schemaRegistryRestUrl;
+    }
+
+    public void setSchemaRegistryRestUrl(String schemaRegistryRestUrl) {
+        this.schemaRegistryRestUrl = schemaRegistryRestUrl;
+    }
+
     private String dbSourceName = null;
     private String dbSourceType = null;
     private String dataTopic = null;
     private String ctrlTopic = null;
     private String dbusSchema = null;
     private String dataTopicOffset = null;
+    private String schemaRegistryRestUrl = null;
 
     @Override
     public String toString() {

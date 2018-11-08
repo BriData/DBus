@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,25 @@
 
 package com.creditease.dbus.service;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
 import com.creditease.dbus.bean.ProjectBean;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
@@ -36,11 +46,16 @@ import com.creditease.dbus.domain.model.Project;
 import com.creditease.dbus.domain.model.ProjectEncodeHint;
 import com.creditease.dbus.domain.model.ProjectResource;
 import com.creditease.dbus.domain.model.ProjectSink;
+import com.creditease.dbus.domain.model.ProjectTopoTable;
 import com.creditease.dbus.domain.model.ProjectUser;
 import com.creditease.dbus.domain.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -51,9 +66,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProjectService {
 
+    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private RequestSender sender;
+
+    @Autowired
+    private IZkService zkService;
 
     public ResultEntity queryProjects(Integer userId, String roleType) {
         Map<String, Object> param = new HashMap<>();
@@ -110,23 +129,61 @@ public class ProjectService {
     }
 
     public ResultEntity deleteProject(int id) {
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/delete/{id}", id);
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/select/{id}", id);
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+            return result.getBody();
+        Project project = result.getBody().getPayload(new TypeReference<Project>() {});
+
+        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/delete/{id}", id);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
 
-        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectUser/delete-by-project-id/{id}", id);
-        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
-            return result.getBody();
+        // 删除grafana dashboard
+        Properties props = null;
+        try {
+            props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+            String host = props.getProperty("grafana_url_dbus");
+            if (StringUtils.endsWith(host, "/"))
+                host = StringUtils.substringBeforeLast(host, "/");
+            String token = props.getProperty("grafanaToken");
+            String api = "/api/dashboards/db/";
+            String url = host + api + project.getProjectName();
 
-        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectSink/delete-by-project-id/{id}", id);
-        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
-            return result.getBody();
+            List<Object> ret = this.send(url, "GET", "", token);
+            if ((int) ret.get(0) == 200) {
+                ret = this.send(url, "DELETE", "", token);
+                if ((int) ret.get(0) == 200) {
+                    logger.info("delete dashboard success, {}", (String) ret.get(1));
+                } else if (((int) ret.get(0) == -1)) {
+                    logger.error("call url:{} fail", url);
+                } else {
+                    logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                }
+            } else if (((int) ret.get(0) == -1)) {
+                logger.error("call url:{} fail", url);
+            } else {
+                logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
 
-        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/delete-by-project-id/{id}", id);
-        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
-            return result.getBody();
-
-        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectEncodeHint/delete-by-project-id/{id}", id);
+        //if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+        //    return result.getBody();
+        //
+        //result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectUser/delete-by-project-id/{id}", id);
+        //if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+        //    return result.getBody();
+        //
+        //result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectSink/delete-by-project-id/{id}", id);
+        //if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+        //    return result.getBody();
+        //
+        //result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/delete-by-project-id/{id}", id);
+        //if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+        //    return result.getBody();
+        //
+        //result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectEncodeHint/delete-by-project-id/{id}", id);
         return result.getBody();
     }
 
@@ -338,13 +395,13 @@ public class ProjectService {
         return true;
     }
 
-	public ResultEntity getPrincipal(int id) {
+    public ResultEntity getPrincipal(int id) {
         return sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getPrincipal/{0}", id).getBody();
-	}
+    }
 
-	public ResultEntity getMountedProjrct(String  queryString) {
+    public ResultEntity getMountedProjrct(String  queryString) {
         return sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getMountedProjrct", queryString).getBody();
-	}
+    }
 
     /**
      * 根据projectId获取project信息，只有project的信息
@@ -356,8 +413,74 @@ public class ProjectService {
         return result.getBody();
     }
 
-	public ResultEntity search(String queryString) {
+    public ResultEntity search(String queryString) {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/search", queryString);
         return result.getBody();
-	}
+    }
+
+    public int getRunningTopoTables(int id) {
+        List<ProjectTopoTable> projectTopoTables = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getRunningTopoTables/{0}", id).getBody().getPayload(new TypeReference<List<ProjectTopoTable>>() {
+        });
+        return projectTopoTables.size();
+    }
+
+    private List<Object> send(String serverUrl, String method, String param, String token) {
+        List<Object> ret = new ArrayList<>();
+        ret.add(-1);
+
+        StringBuilder response = new StringBuilder();
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        URL url = null;
+        try {
+            url = new URL(serverUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestMethod(method);
+            conn.setDoInput(true);
+            conn.setConnectTimeout(1000 * 5);
+
+            if (StringUtils.isNotBlank(param)) {
+                conn.setDoOutput(true);
+                writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(param);
+                writer.flush();
+            }
+
+            int httpStatus = conn.getResponseCode();
+            ret.set(0, httpStatus);
+
+            if (httpStatus == 401 ||
+                    httpStatus == 403 ||
+                    httpStatus == 404) {
+                if (httpStatus == 404) {
+                    reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                } else {
+                    response.append(conn.getResponseMessage());
+                }
+            } if (httpStatus == 200) {
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }
+
+            if (reader != null) {
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line).append(SystemUtils.LINE_SEPARATOR);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("send request error", e);
+            ret.set(0, -1);
+        } finally {
+            IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(writer);
+        }
+        ret.add(response.toString());
+        return ret;
+    }
+
+    public ResultEntity getAllResourcesByQuery(String queryString) {
+        return sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getAllResourcesByQuery", queryString).getBody();
+    }
 }

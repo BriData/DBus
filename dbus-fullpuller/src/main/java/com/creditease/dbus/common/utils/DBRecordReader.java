@@ -115,7 +115,6 @@ public class DBRecordReader<T extends DBWritable> {
 //	}
 
     public HashMap<String, HashMap<String, Object>> queryMetaData() throws Exception {
-        //COLUMNNAME,COLUMNTYPENAME,PRECISION,SCALE ,ISNULLABLE
         Connection conn = null;
         PreparedStatement stat = null;
         ResultSet res = null;
@@ -242,7 +241,7 @@ public class DBRecordReader<T extends DBWritable> {
 //             close();
 //             } catch (Exception e) {
 //             // TODO Auto-generated catch block
-//             e.printStackTrace();
+//             LOG.error(e.getMessage(),e);
 //             }
 //        }
     }

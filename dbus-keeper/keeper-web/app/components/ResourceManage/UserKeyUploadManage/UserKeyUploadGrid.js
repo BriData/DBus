@@ -75,8 +75,8 @@ export default class UserKeyUploadGrid extends Component {
       },
       {
         title: <FormattedMessage
-          id="app.components.projectManage.projectHome.tabs.basic.principal"
-          defaultMessage="负责人"
+          id="app.components.projectManage.projectHome.tabs.basic.owner"
+          defaultMessage="项目负责人"
         />,
         dataIndex: 'projectOwner',
         key: 'projectOwner',
@@ -84,8 +84,8 @@ export default class UserKeyUploadGrid extends Component {
       },
       {
         title: <FormattedMessage
-          id="app.components.projectManage.uploadKey.principal"
-          defaultMessage="当事人"
+          id="app.components.projectManage.projectHome.tabs.basic.principal"
+          defaultMessage="Principal"
         />,
         dataIndex: 'principal',
         key: 'principal',

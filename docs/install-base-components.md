@@ -209,6 +209,8 @@ supervisor.slots.ports:
 worker.childopts: "-Dworker=worker -Xms1024m -Xmx2048m -Xmn768m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC  -XX:CMSInitiatingOccupancyFraction=60  -XX:CMSFullGCsBeforeCompaction=2 -XX:+UseCMSCompactAtFullCollection -XX:+PrintGCDetails -XX:+PrintHeapAtGC -XX:+PrintGCApplicationStoppedTime -Xloggc:/home/app/gc.log"
 ```
 
+访问[Release Downloads](https://github.com/BriData/DBus/releases)，到该Release页面提供的云盘地址下载  worker.xml 配置文件，分别替换dbus-n1、dbus-n2、dbus-n3的/app/dbus/apache-storm-1.0.1/log4j2/worker.xml 文件
+
 ## 4.3 启动
 
 在dbus-n1的/app/dbus/apache-storm-1.0.1/bin目录下执行如下命令：
@@ -332,6 +334,8 @@ service grafana-server start
 
 ### 6.4.2 配置grafana
 
+v0.5.0版本和以后版本可以跳过配置步骤，在web初始化时会进行自动的创建和导入。
+
 #### 6.4.2.1 配置Grafana influxdb数据源如下图：
 
 ![](img/install-base-components-06.png)
@@ -347,6 +351,8 @@ service grafana-server start
 下载Table Dashboard配置：initScript/init-table-grafana-config/grafana-table.cfg
 
 下载log Dashboard 配置：init-scripts/init-log-grafana-config/*.cfg
+
+下载地址:https://github.com/BriData/DBus/tree/master/init-scripts
 
 操作步骤如下：
 

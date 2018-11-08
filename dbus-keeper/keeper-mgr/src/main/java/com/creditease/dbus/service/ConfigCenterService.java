@@ -21,7 +21,8 @@
 package com.creditease.dbus.service;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
+import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
@@ -36,6 +37,7 @@ import com.creditease.dbus.domain.model.User;
 import com.creditease.dbus.utils.ConfUtils;
 import com.creditease.dbus.utils.DBusUtils;
 import com.creditease.dbus.utils.HttpClientUtils;
+import com.creditease.dbus.utils.JsonFormatUtils;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -78,6 +80,9 @@ public class ConfigCenterService {
 
     @Autowired
     private ToolSetService toolSetService;
+
+    @Autowired
+    private ZkConfService zkConfService;
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -184,9 +189,6 @@ public class ConfigCenterService {
     }
 
     public int updateBasicConf(LinkedHashMap<String, String> map) throws Exception {
-        if (isInitialized()) {
-            return MessageCode.DBUS_ENVIRONMENT_IS_ALREADY_INIT;
-        }
         Boolean initialized = isInitialized();
 
         //1 检测配置数据是否正确
@@ -195,21 +197,21 @@ public class ConfigCenterService {
             return initRes;
         }
 
-        //3.初始化心跳
+        //2.初始化心跳
         int heartRes = initHeartBeat(map, initialized);
         if (heartRes != 0) {
             return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
         }
-        logger.info("3.heartbeat初始化完成。");
+        logger.info("2.heartbeat初始化完成。");
 
-        //4.初始化mgr数据库
+        //3.初始化mgr数据库
         ResponseEntity<ResultEntity> res = sender.get(ServiceNames.KEEPER_SERVICE, "/toolSet/initMgrSql");
         if (res.getBody().getStatus() != 0) {
             return MessageCode.DBUS_MGR_INIT_ERROR;
         }
-        logger.info("4.mgr数据库初始化完成。");
+        logger.info("3.mgr数据库初始化完成。");
 
-        //5.模板sink添加
+        //4.模板sink添加
         String bootstrapServers = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
         String bootstrapServersVersion = map.get(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION);
         Sink sink = new Sink();
@@ -223,9 +225,9 @@ public class ConfigCenterService {
         if (res.getBody().getStatus() != 0) {
             return MessageCode.CREATE_DEFAULT_SINK_ERROR;
         }
-        logger.info("5.添加模板sink初始化完成。");
+        logger.info("4.添加模板sink初始化完成。");
 
-        //6.超级管理员添加
+        //5.超级管理员添加
         User u = new User();
         u.setRoleType("admin");
         u.setStatus("active");
@@ -238,45 +240,48 @@ public class ConfigCenterService {
         if (res.getBody().getStatus() != 0) {
             return MessageCode.CREATE_SUPER_USER_ERROR;
         }
-        logger.info("6.添加超级管理员初始化完成。");
+        logger.info("5.添加超级管理员初始化完成。");
 
-        //7.初始化storm程序包 storm.root.path
+        //6.初始化storm程序包 storm.root.path
         if (initStormJars(map, initialized) != 0) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
-        logger.info("7.storm程序包初始化完成。");
+        logger.info("6.storm程序包初始化完成。");
 
-        //8.Grafana初始化
+        //7.Grafana初始化
         String monitURL = map.get(GLOBAL_CONF_KEY_GRAFANA_URL_DBUS);
         String grafanaToken = map.get("grafanaToken");
         String influxdbUrl = map.get(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS);
         initGrafana(monitURL, influxdbUrl, grafanaToken);
-        logger.info("8.Grafana初始化完成。");
+        logger.info("7.Grafana初始化完成。");
 
-        //9.Influxdb初始化
+        //8.Influxdb初始化
         if (initInfluxdb(influxdbUrl) != 0) {
             return MessageCode.INFLUXDB_URL_ERROR;
         }
-        logger.info("9.Influxdb初始化完成。");
+        logger.info("8.Influxdb初始化完成。");
 
-        //10.初始化脱敏
-        if (initEncode() != 0) {
+        //9.初始化脱敏
+        if (initEncode(map) != 0) {
             return MessageCode.ENCODE_PLUGIN_INIT_ERROR;
         }
-        logger.info("10.脱敏插件初始化完成。");
-        if (zkService.isExists("/DBusInit")) {
-            zkService.deleteNode("/DBusInit");
-        }
-        //11.初始化报警配置
-        initAlarm(map);
-        logger.info("11.报警配置初始化完成。");
+        logger.info("9.脱敏插件初始化完成。");
 
-        //2.初始化zk节点
+
+        //10.初始化zk节点
         int zkRes = initZKNodes(map);
         if (zkRes != 0) {
             return zkRes;
         }
-        logger.info("2.zookeeper节点初始化完成。");
+        logger.info("9.zookeeper节点初始化完成。");
+
+        //11.初始化报警配置
+        initAlarm(map);
+        logger.info("11.报警配置初始化完成。");
+
+        if (zkService.isExists("/DBusInit")) {
+            zkService.deleteNode("/DBusInit");
+        }
         return 0;
     }
 
@@ -301,13 +306,13 @@ public class ConfigCenterService {
             logger.info("influxdb单独初始化完成。");
         }
         if (optionList.contains("storm")) {
-            if (initStormJars(map, false) != 0) {
+            if (initStormJars(map, true) != 0) {
                 return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
             }
             logger.info("storm程序包单独初始化完成。");
         }
         if (optionList.contains("heartBeat")) {
-            int heartRes = initHeartBeat(map, false);
+            int heartRes = initHeartBeat(map, true);
             if (heartRes != 0) {
                 return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
             }
@@ -320,6 +325,11 @@ public class ConfigCenterService {
             }
             logger.info("zookeeper节点单独初始化完成。");
         }
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        }
+        zkService.setData(Constants.GLOBAL_PROPERTIES_ROOT, sb.toString().getBytes(UTF8));
         return 0;
     }
 
@@ -629,10 +639,9 @@ public class ConfigCenterService {
      * @return
      * @throws Exception
      */
-    private int initEncode() throws Exception {
-        Properties global = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
-        String basePath = global.getProperty("dbus.encode.plugins.jars.base.path");
-        String path = basePath + "/0/20180809_155150/encoder-plugins-0.5.0.jar";
+    private int initEncode(LinkedHashMap<String, String> map) throws Exception {
+        String homePath = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
+        String path = homePath + "/dbus_encoder_plugins_jars/0/20180809_155150/encoder-plugins-0.5.0.jar";
         EncodePlugins encodePlugin = new EncodePlugins();
         encodePlugin.setName("encoder-plugins-0.5.0.jar");
         encodePlugin.setPath(path);
@@ -653,9 +662,9 @@ public class ConfigCenterService {
      * @throws Exception
      */
     private void initAlarm(LinkedHashMap<String, String> map) throws Exception {
-        //heartbeat_config.json
         byte[] data = zkService.getData(Constants.HEARTBEAT_CONFIG_JSON);
-        JSONObject json = JSONObject.parseObject(new String(data, UTF8));
+        LinkedHashMap<String, Object> json = JSON.parseObject(new String(data, UTF8),
+                new TypeReference<LinkedHashMap<String, Object>>() { }, Feature.OrderedField);
         if (StringUtils.isNotBlank(map.get("alarmSendEmail"))) {
             json.put("alarmSendEmail", map.get("alarmSendEmail"));
         }
@@ -671,11 +680,10 @@ public class ConfigCenterService {
         if (StringUtils.isNotBlank(map.get("alarmMailPass"))) {
             json.put("alarmMailPass", map.get("alarmMailPass"));
         }
-        //格式化jsonjson
-        String format = this.formatJsonString(JSON.toJSONString(json, SerializerFeature.WriteMapNullValue));
+        //格式化json
+        String format = JsonFormatUtils.toPrettyFormat(JSON.toJSONString(json, SerializerFeature.WriteMapNullValue));
         zkService.setData(Constants.HEARTBEAT_CONFIG_JSON, format.getBytes(UTF8));
     }
-
 
     /**
      * 递归删除给定路径的zk结点
@@ -741,57 +749,7 @@ public class ConfigCenterService {
         return result;
     }
 
-    /**
-     * json 字符串格式化
-     *
-     * @param s
-     * @return
-     */
-    public String formatJsonString(String s) {
-        int level = 0;
-        //存放格式化的json字符串
-        StringBuffer jsonForMatStr = new StringBuffer();
-        for (int index = 0; index < s.length(); index++)//将字符串中的字符逐个按行输出
-        {
-            //获取s中的每个字符
-            char c = s.charAt(index);
 
-            //level大于0并且jsonForMatStr中的最后一个字符为\n,jsonForMatStr加入\t
-            if (level > 0 && '\n' == jsonForMatStr.charAt(jsonForMatStr.length() - 1)) {
-                jsonForMatStr.append(getLevelStr(level));
-            }
-            //遇到"{"和"["要增加空格和换行，遇到"}"和"]"要减少空格，以对应，遇到","要换行
-            switch (c) {
-                case '{':
-                case '[':
-                    jsonForMatStr.append(c + "\n");
-                    level++;
-                    break;
-                case ',':
-                    jsonForMatStr.append(c + "\n");
-                    break;
-                case '}':
-                case ']':
-                    jsonForMatStr.append("\n");
-                    level--;
-                    jsonForMatStr.append(getLevelStr(level));
-                    jsonForMatStr.append(c);
-                    break;
-                default:
-                    jsonForMatStr.append(c);
-                    break;
-            }
-        }
-        return jsonForMatStr.toString();
-    }
-
-    private String getLevelStr(int level) {
-        StringBuffer levelStr = new StringBuffer();
-        for (int levelI = 0; levelI < level; levelI++) {
-            levelStr.append("\t");
-        }
-        return levelStr.toString();
-    }
 
     public String exeCmd(String user, String host, int port, String pubKeyPath, String command) {
         Session session = null;
@@ -901,11 +859,7 @@ public class ConfigCenterService {
         }
     }
 
-    public static void main(String[] args) {
-
-    }
-
-    public int ResetMgrDB(LinkedHashMap<String, String> map) throws Exception{
+    public int ResetMgrDB(LinkedHashMap<String, String> map) throws Exception {
         Connection connection = null;
         try {
             String content = map.get("content");
@@ -958,5 +912,12 @@ public class ConfigCenterService {
                 connection.close();
             }
         }
+    }
+
+    public void rollBackBasicConf() throws Exception {
+        if (zkService.isExists(Constants.DBUS_ROOT)) {
+            zkConfService.deleteZkNodeOfPath(Constants.DBUS_ROOT);
+        }
+        logger.info("基础配置回滚成功.success.");
     }
 }

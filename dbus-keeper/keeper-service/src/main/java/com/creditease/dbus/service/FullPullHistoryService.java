@@ -95,6 +95,6 @@ public class FullPullHistoryService {
     }
 
     public void update(FullPullHistory history) {
-        mapper.updateReqMsgOffset(history);
+        mapper.updateByPrimaryKey(history);
     }
 }

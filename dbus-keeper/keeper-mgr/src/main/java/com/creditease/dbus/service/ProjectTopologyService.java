@@ -30,9 +30,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -68,6 +70,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import static com.creditease.dbus.commons.Constants.ROUTER;
+
+
 
 /**
  * Created by mal on 2018/4/12.
@@ -117,6 +121,89 @@ public class ProjectTopologyService {
             return new ResultEntity(MessageCode.TOPOLOGY_RUNNING_DO_NOT_DELETE, "");
 
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/project-topos/delete/{0}", "", topoId);
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()) {
+            return result.getBody();
+        }
+
+        result =sender.get(ServiceNames.KEEPER_SERVICE, "/projects/select/{0}", "", pt.getProjectId());
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
+            return result.getBody();
+        Project project = result.getBody().getPayload(new TypeReference<Project>() {});
+
+        // 删除grafana dashboard router type regex
+        Properties props = null;
+        try {
+            props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+
+            String host = props.getProperty("grafana_url_dbus");
+            if (StringUtils.endsWith(host, "/"))
+                host = StringUtils.substringBeforeLast(host, "/");
+
+            String token = props.getProperty("grafanaToken");
+
+            String api = "/api/dashboards/db/";
+            String url = host + api + project.getProjectName();
+
+            List<Object> ret = this.send(url, "GET", "", token);
+            if ((int) ret.get(0) == 200) {
+                boolean isFind = false;
+                String strJson = (String) ret.get(1);
+                JSONObject json = JSONObject.parseObject(strJson);
+                JSONObject dashboard = json.getJSONObject("dashboard");
+                JSONObject templating = dashboard.getJSONObject("templating");
+                JSONArray list = templating.getJSONArray("list");
+                if (list != null && list.size() > 0) {
+                    for (int i=0; i<list.size(); i++) {
+                        JSONObject item = list.getJSONObject(i);
+                        if (StringUtils.equalsIgnoreCase(item.getString("name"), "rounter_type")) {
+                            String regex = item.getString("regex");
+                            String wkType = "ROUTER_TYPE_" + pt.getTopoName();
+                            if (StringUtils.contains(regex, wkType)) {
+                                regex = StringUtils.replace(regex, wkType, "");
+                                StringBuilder regexSb = new StringBuilder();
+                                for (String str : regex.split("\\|")) {
+                                    if (StringUtils.isNotBlank(str) &&
+                                        !StringUtils.equalsIgnoreCase(str, "none")) {
+                                        regexSb.append(str);
+                                        regexSb.append("|");
+                                    }
+                                }
+                                if (StringUtils.endsWith(regexSb.toString(), "|")) {
+                                    regex = StringUtils.substringBeforeLast(regexSb.toString(), "|");
+                                }
+                                if (StringUtils.isBlank(regexSb.toString())) {
+                                    item.put("regex", "none");
+                                } else {
+                                    item.put("regex", regex);
+                                }
+                            }
+                            isFind = true;
+                        }
+                    }
+                    if (isFind) {
+                        url = host + api;
+                        String param = json.toJSONString();
+                        logger.info("update dashboard param: {}", param);
+                        ret = this.send(url, "POST", param, token);
+                        if ((int) ret.get(0) == 200) {
+                            logger.info("update dashboard success, {}", (String) ret.get(1));
+                        } else if (((int) ret.get(0) == -1)) {
+                            logger.error("call url:{} fail", url);
+                        } else {
+                            logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+                        }
+                    }
+                }
+            } else if (((int) ret.get(0) == -1)) {
+                logger.error("call url:{} fail", url);
+            } else {
+                logger.warn("call url:{} response msg:{}", url, (String) ret.get(1));
+            }
+
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+
         return result.getBody();
     }
 
@@ -143,13 +230,22 @@ public class ProjectTopologyService {
         if (!(result.getPayload() instanceof Map))
             return result;
         Map<String, Object> payLoad = result.getPayload(new TypeReference<Map<String, Object>>() {});
-        if ((Integer) payLoad.get("isCanCreateTopology") == 1) {
-            record.setUpdateTime(new Date());
-            result = sender.post(ServiceNames.KEEPER_SERVICE, "/project-topos/insert", record).getBody();
-        } else {
+        if ((Integer) payLoad.get("isCanCreateTopology") != 1) {
             result.setStatus(MessageCode.ACHIEVE_TOPOLOGY_MAX_COUNT);
             result.setPayload(null);
+            return result;
         }
+
+        result = existTopoName(record.getTopoName());
+        Integer existCount = result.getPayload(new TypeReference<Integer>() {});
+        if(existCount > 0) {
+            result.setStatus(MessageCode.TOPOLOGY_NAME_EXIST);
+            result.setPayload(null);
+            return result;
+        }
+
+        record.setUpdateTime(new Date());
+        result = sender.post(ServiceNames.KEEPER_SERVICE, "/project-topos/insert", record).getBody();
         return result;
     }
 
@@ -479,6 +575,62 @@ public class ProjectTopologyService {
             IOUtils.closeQuietly(br);
             IOUtils.closeQuietly(sr);
         }
+    }
+
+    private List<Object> send(String serverUrl, String method, String param, String token) {
+        List<Object> ret = new ArrayList<>();
+        ret.add(-1);
+
+        StringBuilder response = new StringBuilder();
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        URL url = null;
+        try {
+            url = new URL(serverUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestMethod(method);
+            conn.setDoInput(true);
+            conn.setConnectTimeout(1000 * 5);
+
+            if (StringUtils.isNotBlank(param)) {
+                conn.setDoOutput(true);
+                writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(param);
+                writer.flush();
+            }
+
+            int httpStatus = conn.getResponseCode();
+            ret.set(0, httpStatus);
+
+            if (httpStatus == 401 ||
+                    httpStatus == 403 ||
+                    httpStatus == 404) {
+                if (httpStatus == 404) {
+                    reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                } else {
+                    response.append(conn.getResponseMessage());
+                }
+            } if (httpStatus == 200) {
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }
+
+            if (reader != null) {
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line).append(SystemUtils.LINE_SEPARATOR);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("send request error", e);
+            ret.set(0, -1);
+        } finally {
+            IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(writer);
+        }
+        ret.add(response.toString());
+        return ret;
     }
 
     private String httpGet(String serverUrl) throws Exception {

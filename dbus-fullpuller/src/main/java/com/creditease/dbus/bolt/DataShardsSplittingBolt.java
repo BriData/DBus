@@ -233,15 +233,13 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
             collector.ack(input);
             LOG.info("{}:生成分片完毕，总共分为{}片", dsKey, splitsCount);
-            try {
-                // LOG.info("..............FullPullHelper 生成分片完毕 start..........");
-                FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
-                // LOG.info("..............FullPullHelper 生成分片完毕 end............");
-            }catch (Exception e) {
-                e.printStackTrace();
-            }
+
+            // LOG.info("..............FullPullHelper 生成分片完毕 start..........");
+            FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
+            // LOG.info("..............FullPullHelper 生成分片完毕 end............");
+
         }catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
             errorMsg = "Exception happened when splitting data shards." + e.getMessage();
             LOG.error(errorMsg, e);
 
@@ -279,8 +277,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             String topoKillWaitTimeParam = commonProps.getProperty(Constants.ZkTopoConfForFullPull.TOPOS_KILL_STORM_API_WAITTIME_PARAM);
             try {
                 topoKillWaitTime=Integer.valueOf(topoKillWaitTimeParam);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // Just ignore, use the default value
             }
 
@@ -327,6 +324,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
         }  catch (Exception e) {
             loadResultMsg = e.getMessage();
             LOG.error(notifyEvtName + "ing running configuration encountered Exception!", loadResultMsg);
+            throw e;
         } finally {
             if (reloadMsgJson != null) {
                 FullPullHelper.saveReloadStatus(reloadMsgJson, "splitting-bolt", false, zkconnect);

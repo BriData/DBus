@@ -17,5 +17,6 @@ export {
 export {
   getTopicList,
   readKafkaData,
-  getOffsetRange
+  getOffsetRange,
+  getTopicsByUserId
 } from '@/app/components/toolSet/KafkaReader/redux/action'

@@ -104,8 +104,16 @@ public class ConfigCenterController extends BaseController {
     public ResultEntity updateBasicConf(@RequestBody LinkedHashMap<String, String> map) {
         try {
             int i = configCenterService.updateBasicConf(map);
+            if (i != 0) {
+                configCenterService.rollBackBasicConf();
+            }
             return resultEntityBuilder().status(i).build();
         } catch (Exception e) {
+            try {
+                configCenterService.rollBackBasicConf();
+            } catch (Exception e1) {
+                logger.error("Exception encountered while rollBackBasicConf ", e1);
+            }
             logger.error("Exception encountered while updateBasicConf ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }

@@ -235,3 +235,10 @@ div.ant-layout.ant-layout-has-sider > div.ant-layout-sider.ant-layout-sider-has-
 .high-dpi-modal .ant-modal-content {
   min-height: 600px;
 }
+
+/*全屏展示*/
+.ant-modal-max {
+  width: 95vw !important;
+  top: 1vw !important;
+}
+

@@ -19,6 +19,8 @@ export const PROJECT_TABLE_CREATE_RESOURCE = 'project/ProjectTable/PROJECT_TABLE
 
 // 设置拓扑
 export const PROJECT_TABLE_CREATE_TOPOLOGY = 'project/ProjectTable/PROJECT_TABLE_CREATE_TOPOLOGY'
+// 设置拓扑
+export const PROJECT_TABLE_SELECT_ALL_RESOURCE = 'project/ProjectTable/PROJECT_TABLE_SELECT_ALL_RESOURCE'
 
 // 脱敏配置
 export const PROJECT_TABLE_CREATE_ENCODES = 'project/ProjectTable/PROJECT_TABLE_CREATE_ENCODES'

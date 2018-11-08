@@ -218,7 +218,8 @@ public class StormToplogyOpHelper {
                 }
             }
 
-            if (DbusDatasourceType.ORACLE.name().equalsIgnoreCase(type)) {
+            if (DbusDatasourceType.ORACLE.name().equalsIgnoreCase(type) || DbusDatasourceType.MONGO.name().equalsIgnoreCase(type)
+                    ) {
                 String dispatcherAppenderTopoName = dsName + "-dispatcher-appender";
                 String[] streamSeperatedToposName = {dsName + "-dispatcher", dsName + "-appender"};
                 String streamTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, dispatcherAppenderTopoName, streamSeperatedToposName);
@@ -232,7 +233,6 @@ public class StormToplogyOpHelper {
                     allTopoForDsAvailable = TOPO_AVAILABLE_ALL_STOPPED;
                 }
             }
-
 
             if (type.toLowerCase().indexOf("log") != -1) {
                 String logTopoName = dsName + "-log-processor";
@@ -312,5 +312,6 @@ public class StormToplogyOpHelper {
             result = restTemplate.getForObject(api, String.class);
         return result;
     }
+
 
 }

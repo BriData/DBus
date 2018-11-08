@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,9 @@
 
 package com.creditease.dbus.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.constant.MessageCode;
@@ -28,11 +31,15 @@ import com.creditease.dbus.domain.model.ProjectTopoTableEncodeOutputColumns;
 import com.creditease.dbus.domain.model.ProjectTopoTableMetaVersion;
 import com.creditease.dbus.service.ProjectTableService;
 import com.github.pagehelper.PageInfo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Created with IntelliJ IDEA
@@ -113,9 +120,9 @@ public class ProjectTableController extends BaseController{
         return resultEntityBuilder().payload(tableService.getDSNames(projectId)).build();
     }
 
-    @GetMapping("/delete-by-table-id/{id}")
-    public ResultEntity deleteByTableId(@PathVariable int id){
-        int deleteResult = tableService.deleteByTableId(id);
+    @GetMapping("/delete-by-table-id/{id}/{topoStatus}")
+    public ResultEntity deleteByTableId(@PathVariable int id,@PathVariable String topoStatus){
+        int deleteResult = tableService.deleteByTableId(id, topoStatus);
         if(deleteResult == ProjectTableService.TABLE_NOT_FOUND){
             return resultEntityBuilder().status(MessageCode.TABLE_NOT_EXISTS).build();
         }else if(deleteResult == ProjectTableService.TABLE_IS_RUNNING){
@@ -242,4 +249,23 @@ public class ProjectTableController extends BaseController{
     public ResultEntity countByTableId(@PathVariable Integer tableId){
         return resultEntityBuilder().payload(tableService.countByTableId(tableId)).build();
     }
+
+    @GetMapping("/getTopoTablesByUserId/{userId}")
+    public ResultEntity getTopoTablesByUserId(@PathVariable Integer userId){
+        return resultEntityBuilder().payload(tableService.getTopoTablesByUserId(userId)).build();
+    }
+
+    @GetMapping("/getAllResourcesByQuery")
+    public ResultEntity getAllResourcesByQuery(String dsName, String schemaName, String tableName,
+                                               @RequestParam Integer projectId, @RequestParam Integer topoId ) {
+        return resultEntityBuilder().payload(tableService.getAllResourcesByQuery(dsName, schemaName, tableName, projectId, topoId)).build();
+    }
+
+    @GetMapping("/uottcisp/{projectId}/{tableId}/{topoId}")
+    public ResultEntity underOtherTopologyTableCountInSameProject(@PathVariable Integer projectId,
+                                                                  @PathVariable Integer tableId,
+                                                                  @PathVariable Integer topoId ) {
+        return resultEntityBuilder().payload(tableService.underOtherTopologyTableCountInSameProject(projectId, tableId, topoId)).build();
+    }
+
 }

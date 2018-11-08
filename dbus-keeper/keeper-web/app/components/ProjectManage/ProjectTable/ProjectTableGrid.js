@@ -90,6 +90,31 @@ export default class ProjectTableGrid extends Component {
     </Tooltip>
   )
 
+  renderTableName = (text, record, index) => {
+    text = `${record.dsName}.${record.schemaName}.${record.tableName}`
+    let namespace = '';
+    if (record.tableName === record.physicalTableRegex) {
+      namespace = record.dsType + "." + record.dsName + "." + record.schemaName + "." + record.tableName +
+        "." + record.version + "." + "0" + "." + "0";
+    }
+    else {
+      namespace = record.dsType + "." + record.dsName + "." + record.schemaName + "." + record.tableName +
+        "." + record.version + "." + "0" + "." + record.physicalTableRegex;
+    }
+    const title = <div>tableName：{record.tableName}<br/>
+      tableNameAlias：{record.tableNameAlias}<br/>
+      physicalTableRegex: {record.physicalTableRegex}<br/>
+      namespace: {namespace}<br/>
+    </div>
+    return (
+      <Tooltip title={title}>
+        <div className={styles.ellipsis}>
+          {text}
+        </div>
+      </Tooltip>
+    )
+  }
+
   renderSchemaChangeFlag = (text, record, index) => {
     let color
     switch (text) {
@@ -133,6 +158,7 @@ export default class ProjectTableGrid extends Component {
   }
 
   renderStatus =(text, record, index) => {
+    if (record.topoStatus === 'new' || record.topoStatus === 'stopped') text = 'stopped'
     let color
     switch (text) {
       case 'starting':
@@ -162,16 +188,24 @@ export default class ProjectTableGrid extends Component {
    */
   renderOperating = (text, record, index) => {
     const userInfo = getUserInfo()
-    const {onStart, onStop, onDelete, onReload, onInitialLoad} = this.props
+    const {onOpenReadKafkaModal, onStart, onStop, onDelete, onReload, onInitialLoad} = this.props
     const menus = [
       {
         text: <FormattedMessage
-          id="app.components.projectManage.projectTable.fullpull"
-          defaultMessage="拉全量"
+          id="app.components.projectManage.projectTable.readKafkaTopic"
+          defaultMessage="读取Kafka Topic"
         />,
-        icon: 'exception',
-        disabled : userInfo.roleType !== 'admin' && record.ifFullpull !== 1,
-        onClick: () => onInitialLoad(record)
+        icon: 'usb',
+        onClick: () => onOpenReadKafkaModal(record)
+      },
+      {
+        text: <FormattedMessage
+          id="app.components.projectManage.projectTable.viewFullpullHistory"
+          defaultMessage="查看拉全量历史"
+        />,
+        icon: 'switcher',
+        disabled: userInfo.roleType !== 'admin' && record.ifFullpull !== 1,
+        onClick: () => this.handleViewFullPullHistory(record)
       },
       {
         text: <FormattedMessage
@@ -213,7 +247,7 @@ export default class ProjectTableGrid extends Component {
           </OperatingButton>
         ) : (
           <Popconfirm title={'确定停止？'} onConfirm={() => onStop(record)} okText="Yes" cancelText="No">
-            <OperatingButton icon="pause">
+            <OperatingButton disabled={record.topoStatus === 'new' || record.topoStatus === 'stopped'} icon="pause">
               <FormattedMessage
                 id="app.components.resourceManage.dataTable.stop"
                 defaultMessage="停止"
@@ -224,10 +258,10 @@ export default class ProjectTableGrid extends Component {
         <OperatingButton icon="edit" onClick={() => this.props.onModifyTable(record.tableId, record.projectId, record)}>
           <FormattedMessage id="app.common.modify" defaultMessage="修改" />
         </OperatingButton>
-        <OperatingButton disabled={userInfo.roleType !== 'admin' && record.ifFullpull !== 1} icon="switcher" onClick={() => this.handleViewFullPullHistory(record)}>
+        <OperatingButton disabled={userInfo.roleType !== 'admin' && record.ifFullpull !== 1} icon="export" onClick={() => onInitialLoad(record)}>
           <FormattedMessage
-            id="app.components.projectManage.projectTable.viewFullpullHistory"
-            defaultMessage="查看拉全量历史"
+            id="app.components.projectManage.projectTable.fullpull"
+            defaultMessage="拉全量"
           />
         </OperatingButton>
         <OperatingButton icon="ellipsis" menus={menus} />
@@ -259,33 +293,13 @@ export default class ProjectTableGrid extends Component {
       },
       {
         title: <FormattedMessage
-          id="app.components.resourceManage.dataSourceName"
-          defaultMessage="数据源名称"
-        />,
-        width: tableWidth[1],
-        dataIndex: 'dsName',
-        key: 'dsName',
-        render: this.renderComponent(this.renderNomal)
-      },
-      {
-        title: <FormattedMessage
-          id="app.components.resourceManage.dataSchemaName"
-          defaultMessage="Schema名称"
-        />,
-        width: tableWidth[2],
-        dataIndex: 'schemaName',
-        key: 'schemaName',
-        render: this.renderComponent(this.renderNomal)
-      },
-      {
-        title: <FormattedMessage
           id="app.components.resourceManage.dataTableName"
           defaultMessage="表名"
         />,
-        width: tableWidth[3],
+        width: `${parseFloat(tableWidth[3])*2.5}%`,
         dataIndex: 'tableName',
         key: 'tableName',
-        render: this.renderComponent(this.renderNomal)
+        render: this.renderComponent(this.renderTableName)
       },
       {
         title: <FormattedMessage

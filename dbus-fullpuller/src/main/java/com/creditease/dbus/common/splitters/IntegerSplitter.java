@@ -58,7 +58,7 @@ import com.creditease.dbus.common.utils.InputSplit;
 public class IntegerSplitter implements DBSplitter  {
     private Logger LOG = LoggerFactory.getLogger(getClass());
 
-    private final int type = Types.INTEGER;
+    private final int type = Types.BIGINT;
 
     public List<InputSplit> split(long numSplits, ResultSet results, String colName, DBConfiguration dbConf) throws SQLException {
 

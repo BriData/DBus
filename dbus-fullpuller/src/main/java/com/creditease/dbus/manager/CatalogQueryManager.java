@@ -91,7 +91,7 @@ public abstract class CatalogQueryManager
       throw new RuntimeException(sqle);
     }catch (Exception e) {
         // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.error(e.getMessage(),e);
         return null;
     } finally {
       if (rs != null) {
@@ -140,7 +140,7 @@ public abstract class CatalogQueryManager
       throw new RuntimeException(sqle);
     }catch (Exception e) {
         // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.error(e.getMessage(),e);
         return null;
     } finally {
       if (rs != null) {
@@ -191,7 +191,7 @@ public abstract class CatalogQueryManager
       throw new RuntimeException(sqle);
     }catch (Exception e) {
         // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.error(e.getMessage(),e);
         return null;
     } finally {
       if (rs != null) {
@@ -244,7 +244,7 @@ public abstract class CatalogQueryManager
       throw new RuntimeException(sqle);
     }catch (Exception e) {
         // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.error(e.getMessage(),e);
         return null;
     } finally {
       if (rs != null) {

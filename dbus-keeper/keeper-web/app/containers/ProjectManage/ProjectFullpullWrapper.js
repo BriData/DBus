@@ -3,7 +3,7 @@ import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
 // 导入自定义组件
-import {ProjectFullpullGrid, ProjectFullpullSearch, Bread} from '@/app/components'
+import {ProjectFullpullGrid, ProjectFullpullSearch, ProjectFullpullModifyModal, Bread} from '@/app/components'
 // 修改弹框
 // selectors
 import {ProjectFullpullModel} from './selectors'
@@ -33,10 +33,11 @@ export default class ProjectFullpullWrapper extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      modalVisibal: false,
-      modalStatus: 'modify',
-      modalKey: '00000000000000000000000',
-      query: {}
+      modalVisible: false,
+      modalRecord: {},
+      modalKey: 'modalKey',
+      query: {},
+
     }
     this.tableWidth = [
       '8%',
@@ -143,6 +144,23 @@ export default class ProjectFullpullWrapper extends Component {
     )
   }
 
+  handleOpenModifyModal = (record) => {
+    this.setState({
+      modalKey: this.handleRandom("modalKey"),
+      modalRecord: record,
+      modalVisible: true
+    })
+  }
+
+  handleCloseModifyModal = () => {
+    const {projectFullpullData} = this.props
+    const {fullpullParams} = projectFullpullData
+    this.handleSearch(fullpullParams)
+    this.setState({
+      modalVisible: false
+    })
+  }
+
   render() {
     const {locale, projectFullpullData, setFullpullParams} = this.props
     const {
@@ -151,7 +169,7 @@ export default class ProjectFullpullWrapper extends Component {
       projectList,
       fullpullParams
     } = projectFullpullData
-
+    const {modalVisible, modalKey, modalRecord} = this.state
     const breadSource = [
       {
         path: '/project-manager',
@@ -190,9 +208,15 @@ export default class ProjectFullpullWrapper extends Component {
           locale={locale}
           tableWidth={this.tableWidth}
           fullpullList={fullpullList}
-          onModify={this.handleModify}
+          onModify={this.handleOpenModifyModal}
           onPagination={this.handlePagination}
           onShowSizeChange={this.handleShowSizeChange}
+        />
+        <ProjectFullpullModifyModal
+          key={modalKey}
+          visible={modalVisible}
+          fullpullInfo={modalRecord}
+          onClose={this.handleCloseModifyModal}
         />
       </div>
     )

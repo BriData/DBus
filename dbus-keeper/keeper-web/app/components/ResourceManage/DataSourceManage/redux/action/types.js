@@ -51,6 +51,13 @@ export const DATA_SOURCE_INSERT = createActionTypes('dataSource/dataSourceManage
   'FAIL'
 ])
 
+// DataSource 清除全量报警
+export const DATA_SOURCE_CLEAR_FULLPULL_ALARM = createActionTypes('dataSource/dataSourceManager/DATA_SOURCE_CLEAR_FULLPULL_ALARM', [
+  'LOAD',
+  'SUCCESS',
+  'FAIL'
+])
+
 
 // Topology kill
 export const KILL_TOPOLOGY = createActionTypes('dataSource/dataSourceManager/KILL_TOPOLOGY', [

@@ -62,7 +62,9 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append("     t_dbus_datasource ");
         sql.append(" where ");
         sql.append("     status = 'active' ");
-        sql.append("     and ds_name not in (" + dsName + ")");
+        if (StringUtils.isNotBlank(dsName)) {
+            sql.append(" and ds_name not in (" + dsName + ")");
+        }
         return sql.toString();
     }
 
@@ -119,8 +121,10 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append(" where ");
         sql.append("     dbus.id = tds.ds_id");
         sql.append("     and dbus.status = 'active'");
+        if (StringUtils.isNotBlank(dsName)) {
 //        sql.append("     and tds.schema_name not in (?)");
-        sql.append("     and dbus.ds_name not in (" + dsName + ")");
+            sql.append(" and dbus.ds_name not in (" + dsName + ")");
+        }
         sql.append("     and tds.status = 'active'");
         sql.append("     and tds.id = tdt.schema_id");
         sql.append("     and tdt.status <> 'inactive'");
@@ -145,7 +149,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append("     t_project project, ");
         sql.append("     t_data_tables dataTable, ");
         sql.append("     t_data_schema dataSchema, ");
-        sql.append("     t_dbus_datasource datasource， ");
+        sql.append("     t_dbus_datasource datasource, ");
         sql.append("     t_project_topo projectTopo ");
         sql.append(" where ");
         sql.append("     projectTable.status!='stopped' and");
@@ -390,8 +394,10 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append(" where ");
         sql.append("     dbus.id = tds.ds_id");
         sql.append("     and dbus.status = 'active'");
+        if (StringUtils.isNotBlank(dsName)) {
 //        sql.append("     and tds.schema_name not in (?)");
-        sql.append("     and dbus.ds_name not in (" + dsName + ")");
+            sql.append(" and dbus.ds_name not in (" + dsName + ")");
+        }
         sql.append("     and tds.status = 'active'");
         sql.append("     and tds.id = tdt.schema_id");
         sql.append("     and tdt.status <> 'inactive'");

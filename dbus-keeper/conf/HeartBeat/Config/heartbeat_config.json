@@ -19,7 +19,7 @@
   "monitorPath": "/DBus/HeartBeat/Monitor",
   "monitorFullPullPath": "/DBus/FullPuller",
   "projectMonitorPath":"/DBus/HeartBeat/ProjectMonitor",
-  "excludeSchema": "monitor",
+  "excludeSchema": "'monitor'",
   "checkPointPerHeartBeatCnt": "1",
   "fullPullOldVersionCnt": "3",
   "adminSMSNo": "13800138000",

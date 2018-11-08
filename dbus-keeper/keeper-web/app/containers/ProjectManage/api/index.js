@@ -103,6 +103,11 @@ export const GET_TABLE_TOPIC_API = '/keeper/projectTable/topics'
 // params {projectId}
 export const GET_TABLE_PROJECT_TOPO_API = '/keeper/projectTable/project-topologies'
 
+// 获取项目下所有resource
+export const GET_PROJECT_ALL_RESOURCE = '/keeper/projectTable/getAllResourcesByQuery'
+// 获取所有resource
+export const GET_ALL_RESOURCE = '/keeper/projects/getAllResourcesByQuery'
+
 // projectTable 新增Table
 // params {}
 export const ADD_TABLE_API = '/keeper/projectTable/add'
@@ -200,3 +205,5 @@ export const FULLPULL_HISTORY_LIST_API = '/keeper/fullpullHistory/search'
 export const FULLPULL_HISTORY_LIST_PROJECT_API = '/keeper/fullpullHistory/project-names'
 //  projectFullPull 全量拉取历史记录查询 dsName查询
 export const FULLPULL_HISTORY_LIST_DSNAME_API = '/keeper/fullpullHistory/dsNames'
+//  projectFullPull 修改
+export const FULLPULL_HISTORY_UPDATE_API = '/keeper/fullpullHistory/update'

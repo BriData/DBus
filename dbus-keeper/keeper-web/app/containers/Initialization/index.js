@@ -68,7 +68,7 @@ export default class InitializationWrapper extends Component {
     const {getBasicConf} = this.props
     getBasicConf()
 
-    // this.checkInit()
+    this.checkInit()
   }
 
   checkInit = () => {

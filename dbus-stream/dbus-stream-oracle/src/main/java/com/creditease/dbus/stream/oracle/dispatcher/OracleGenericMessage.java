@@ -89,6 +89,12 @@ public class OracleGenericMessage implements IGenericMessage {
         this.tableName = arr[1];
     }
 
+
+    @Override
+    public int getSchemaId() {
+        return 0;
+    }
+
     @Override
     public int getSchemaHash() {
         return schemaHash;

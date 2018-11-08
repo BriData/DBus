@@ -25,7 +25,9 @@ import com.creditease.dbus.stream.appender.bolt.*;
 import com.creditease.dbus.stream.appender.spout.DbusKafkaSpout;
 import com.creditease.dbus.stream.appender.utils.DbusGrouping;
 import com.creditease.dbus.stream.common.Constants;
+
 import com.creditease.dbus.stream.dispatcher.Spout.KafkaConsumerSpout;
+
 import com.creditease.dbus.stream.dispatcher.bout.DispatcherBout;
 import com.creditease.dbus.stream.dispatcher.bout.KafkaProducerBout;
 import org.apache.commons.cli.*;
@@ -53,6 +55,7 @@ public class DispatcherAppenderTopology {
     private static String topologyType;
     private static boolean runAsLocal;
     private String datasource;
+    private String datasourceType;
 
     public static void main(String[] args) throws Exception {
 
@@ -132,7 +135,14 @@ public class DispatcherAppenderTopology {
         }
     }
 
-    private void initialize(String zkconnect, String root) throws Exception {
+    private void initializeDispatcher(String zkconnect, String root) throws Exception {
+        // 初始化配置文件
+        PropertiesHolder.initialize(zkconnect, root);
+        String dispatcher_configure = com.creditease.dbus.commons.Constants.DISPATCHER_CONFIG_PROPERTIES;
+        this.datasourceType = PropertiesHolder.getProperties(dispatcher_configure, com.creditease.dbus.commons.Constants.DBUS_DATASOURCE_TYPE);
+    }
+
+    private void initializeAppender(String zkconnect, String root) throws Exception {
         // 初始化配置文件
         PropertiesHolder.initialize(zkconnect, root);
         String configure = Constants.Properties.CONFIGURE;
@@ -149,13 +159,17 @@ public class DispatcherAppenderTopology {
             /**
              * dispatcher部分
              */
-            builder.setSpout("dispatcher-kafkaConsumerSpout", new KafkaConsumerSpout(), 1);
+            //db2 dispatcher部分
+            this.initializeDispatcher(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + dispatcherTopologyId);
 
-            builder.setBolt("dispatcher-DispatcherBout", new DispatcherBout(), 1)
-                    .shuffleGrouping("dispatcher-kafkaConsumerSpout");
 
-            builder.setBolt("dispatcher-kafkaProducerBout", new KafkaProducerBout(), 1)
-                    .shuffleGrouping("dispatcher-DispatcherBout");
+                // mysql oracle的dispatcher部分
+                builder.setSpout("dispatcher-kafkaConsumerSpout", new KafkaConsumerSpout(), 1);
+                builder.setBolt("dispatcher-DispatcherBout", new DispatcherBout(), 1)
+                        .shuffleGrouping("dispatcher-kafkaConsumerSpout");
+                builder.setBolt("dispatcher-kafkaProducerBout", new KafkaProducerBout(), 1)
+                        .shuffleGrouping("dispatcher-DispatcherBout");
+
         }
 
         // 启动类型为all，或者appender
@@ -164,7 +178,7 @@ public class DispatcherAppenderTopology {
              * appender部分
              */
             // 初始化配置文件
-            this.initialize(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + appenderTopologyId);
+            this.initializeAppender(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + appenderTopologyId);
             builder.setSpout("appender-spout", new DbusKafkaSpout(), 1);
             builder.setBolt("appender-dispatcher", new DispatcherBolt(), 1).shuffleGrouping("appender-spout");
             builder.setBolt("appender-meta-fetcher", new DbusAppenderBolt(), getBoltParallelism(Constants.ConfigureKey.META_FETCHER_BOLT_PARALLELISM, 3))
@@ -173,7 +187,7 @@ public class DispatcherAppenderTopology {
                     .customGrouping("appender-meta-fetcher", new DbusGrouping());
             builder.setBolt("appender-kafka-writer", new DbusKafkaWriterBolt(), getBoltParallelism(Constants.ConfigureKey.KAFKA_WRITTER_BOLT_PARALLELISM, 3))
                     .customGrouping("appender-wrapper", new DbusGrouping());
-            //builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
+            builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
         }
 
 
@@ -188,7 +202,6 @@ public class DispatcherAppenderTopology {
         Integer num = PropertiesHolder.getIntegerValue(Constants.Properties.CONFIGURE, key);
         return num == null ? defaultValue: num.intValue();
     }
-
     private void start(StormTopology topology, boolean runAsLocal) throws Exception {
 
         Config conf = new Config();
@@ -228,7 +241,7 @@ public class DispatcherAppenderTopology {
         //设置任务在发出后，但还没处理完成的中间状态任务的最大数量, 如果没有设置最大值为50
         int MaxSpoutPending = getConfigureValueWithDefault(Constants.ConfigureKey.MAX_SPOUT_PENDING, 50);
         conf.setMaxSpoutPending(MaxSpoutPending);
-        //设置任务在多久之内没处理完成，就任务这个任务处理失败
+        //设置任务在多久之内没处理完成，则这个任务处理失败
         conf.setMessageTimeoutSecs(120);
 
 //        conf.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, true);

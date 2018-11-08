@@ -110,7 +110,7 @@ public class HttpRequest {
             byte[] responseBody = postMethod.getResponseBody();
             resStr = new String(responseBody, charset);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(),e);
         } finally {
             postMethod.releaseConnection();
         }
@@ -134,7 +134,7 @@ public class HttpRequest {
             byte[] responseBody = putMethod.getResponseBody();
             resStr = new String(responseBody, charset);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(),e);
         } finally {
             putMethod.releaseConnection();
         }
