@@ -164,4 +164,30 @@ public class DataSourceController extends BaseController{
             return resultEntityBuilder().payload(paths).build();
         }
     }
+
+    @GetMapping("/getByName")
+    public ResultEntity getByName(String dsName) {
+        return resultEntityBuilder().payload(service.getByName(dsName)).build();
+    }
+
+    /**
+     * 根据传入的dsType列表查询dataSource
+     * @param dsTypes
+     * @return
+     */
+    @PostMapping("/getDataSourceByDsTypes")
+    public ResultEntity getDataSourceByDsTypes(@RequestBody List<String> dsTypes) {
+        return resultEntityBuilder().payload(service.getDataSourceByDsTypes(dsTypes)).build();
+    }
+
+    /**
+     * 根据传入的dsType 模糊查询dataSource
+     * @param dsType
+     * @return
+     */
+    @GetMapping("/getDataSourceByDsType")
+    public ResultEntity getDataSourceByDsType(@RequestParam String dsType) {
+        return resultEntityBuilder().payload(service.getDataSourceByDsType(dsType)).build();
+    }
+
 }

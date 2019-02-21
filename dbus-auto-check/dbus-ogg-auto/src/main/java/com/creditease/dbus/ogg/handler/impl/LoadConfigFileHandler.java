@@ -9,6 +9,8 @@ import com.creditease.dbus.ogg.resource.impl.FileConfigResource;
 import java.io.BufferedWriter;
 import java.io.File;
 
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
+
 /**
  * User: 王少楠
  * Date: 2018-08-24
@@ -27,15 +29,15 @@ public class LoadConfigFileHandler extends AbstractHandler {
             //检查目录
             if(!validateConfig(config)){
                 String errMsg = "请检查配置项：[ogg.big.home: "+config.getOggBigHome()+"]";
-                bw.write(errMsg);
-                bw.newLine();
+                writeAndPrint(errMsg);
+
                 System.out.println(errMsg);
                 throw new Exception(errMsg);
             }
             AutoCheckConfigContainer.getInstance().setConfig(config);
         }catch (Exception e){
-            bw.write("加载ogg-auto.properties 属性失败");
-            bw.newLine();
+            writeAndPrint("加载ogg-auto.properties 属性失败");
+
             System.out.println("加载ogg-auto.properties 属性失败");
             throw e;
         }

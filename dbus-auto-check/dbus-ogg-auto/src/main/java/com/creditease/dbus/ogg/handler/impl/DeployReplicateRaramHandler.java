@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
+
 /**
  * User: 王少楠
  * Date: 2018-08-30
@@ -21,38 +23,27 @@ public class DeployReplicateRaramHandler extends AbstractHandler {
         deployFile(bw);
     }
 
-    private void deployFile(BufferedWriter bw) throws Exception{
+    private void deployFile(BufferedWriter bw) throws Exception {
         ConfigBean config = AutoCheckConfigContainer.getInstance().getConfig();
-        String replicateFileName = config.getDsName()+".prm";
-        System.out.println("============================================");
-        System.out.println("部署extract 配置文件: "+replicateFileName);
-        bw.write("============================================");
-        bw.newLine();
-        bw.write("部署extract 配置文件"+replicateFileName);
-        bw.newLine();
+        String replicateFileName = config.getDsName() + ".prm";
+        writeAndPrint( "********************************** EXTRACT DEPLOY START *************************************");
+        writeAndPrint( "extract 配置文件: " + replicateFileName);
+
         try {
             if (config.getAppendTables() == null) {
                 doDeployNewParamFile(config);
             } else {
                 doDeployAppendParamFile(config);
             }
-            System.out.println("部署成功: ");
-            bw.write("部署成功: ");
-            bw.newLine();
-
-            String replName = config.getDsName()+".prm";
-            String fileName = config.getOggBigHome() + "/dirprm/"+replName;
-            FileUtil.readFile(fileName,bw);
+            String fileName = config.getOggBigHome() + "/dirprm/" + config.getDsName() + ".prm";
+            FileUtil.readFile(fileName, bw);
+            writeAndPrint( "********************************* EXTRACT DEPLOY SUCCESS ************************************");
         } catch (Exception e) {
-            System.out.println("部署失败！！！");
-            bw.write("部署失败！！！");
-            bw.newLine();
-        } finally {
-
+            writeAndPrint( "*********************************** EXTRACT DEPLOY FAIL *************************************");
         }
     }
 
-    private void doDeployAppendParamFile(ConfigBean config) throws Exception{
+    private void doDeployAppendParamFile(ConfigBean config) throws Exception {
         String replName = config.getDsName();
         BufferedWriter prmWriter = null;
         try {
@@ -76,16 +67,16 @@ public class DeployReplicateRaramHandler extends AbstractHandler {
         }
     }
 
-    private void doDeployNewParamFile(ConfigBean config) throws Exception{
+    private void doDeployNewParamFile(ConfigBean config) throws Exception {
         String repliName = config.getDsName();
         BufferedWriter prmWriter = null;
         try {
             File paramFile = new File(config.getOggBigHome() + "/dirprm", repliName + ".prm");
             //如果存在的话，不覆盖，值添加table
-            if(paramFile.exists()){
+            if (paramFile.exists()) {
                 config.setAppendTables(config.getTables());
                 doDeployAppendParamFile(config);
-            }else {
+            } else {
                 paramFile.createNewFile();
                 prmWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(paramFile)));
                 prmWriter.write("REPLICAT " + repliName);
@@ -93,7 +84,7 @@ public class DeployReplicateRaramHandler extends AbstractHandler {
                 prmWriter.write("SETENV (NLS_LANG=" + config.getNlsLang() + ")");
                 prmWriter.newLine();
                 //props的文件名称，与dsName一致
-                prmWriter.write("TARGETDB LIBFILE libggjava.so SET property=dirprm/" + config.getDsName()+".props");
+                prmWriter.write("TARGETDB LIBFILE libggjava.so SET property=dirprm/" + config.getDsName() + ".props");
                 prmWriter.newLine();
                 prmWriter.write("DDL INCLUDE ALL ");
                 prmWriter.newLine();
@@ -119,6 +110,6 @@ public class DeployReplicateRaramHandler extends AbstractHandler {
                 prmWriter.close();
             }
         }
-        
-    } 
+
+    }
 }

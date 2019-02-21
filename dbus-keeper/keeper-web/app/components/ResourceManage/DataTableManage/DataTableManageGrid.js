@@ -125,7 +125,8 @@ export default class DataTableManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onRerun, onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal} = this.props
+    const {onRerun, onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal,onOpenRuleImportModal,
+      onHandleDownload} = this.props
     const dsType = record.dsType
     const notLog = dsType === 'mysql' || dsType === 'oracle' || dsType === 'mongo'
     let menus
@@ -214,7 +215,7 @@ export default class DataTableManageGrid extends Component {
         {
           text: <FormattedMessage
             id="app.components.resourceManage.dataTable.sourceEncode"
-            defaultMessage="源端脱敏"
+            defaultMessage="DBA脱敏"
           />,
           icon: 'lock',
           onClick: () => this.handleEncode(record)
@@ -393,6 +394,18 @@ export default class DataTableManageGrid extends Component {
               defaultMessage="查看已挂载项目"
             />
           </OperatingButton>
+          <OperatingButton icon="cloud-upload-o" onClick={() => onOpenRuleImportModal(record)}>
+            <FormattedMessage
+              id="app.components.resourceManage.dataTable.importRules"
+              defaultMessage="导入规则"
+            />
+          </OperatingButton>
+          <OperatingButton icon="cloud-download-o" onClick={() => onHandleDownload(record)}>
+            <FormattedMessage
+              id="app.components.resourceManage.dataTable.exportRules"
+              defaultMessage="导出规则"
+            />
+          </OperatingButton>
           <OperatingButton icon="ellipsis" menus={menus} />
         </div>
       )
@@ -407,6 +420,7 @@ export default class DataTableManageGrid extends Component {
         id: record.id,
         verChangeNoticeFlg: 0,
         verChangeHistory: '',
+        createTime: record.createTime
       },
       method: 'post'
     })

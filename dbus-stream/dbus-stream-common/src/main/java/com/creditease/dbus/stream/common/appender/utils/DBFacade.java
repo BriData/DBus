@@ -588,8 +588,6 @@ public class DBFacade {
                 t.setMetaChangeFlg(rs.getInt("meta_change_flg"));
                 t.setBatchId(rs.getInt("batch_id"));
                 t.setOutputBeforeUpdateFlg(rs.getInt("output_before_update_flg"));
-                t.setIsOpen(rs.getInt("is_open"));
-                t.setIsAutocomplete(rs.getBoolean("is_auto_complete"));
                 if (ts != null) {
                     t.setCreateTime(new Date(ts.getTime()));
                 }
@@ -625,8 +623,6 @@ public class DBFacade {
                 t.setMetaChangeFlg(rs.getInt("meta_change_flg"));
                 t.setBatchId(rs.getInt("batch_id"));
                 t.setOutputBeforeUpdateFlg(rs.getInt("output_before_update_flg"));
-                t.setIsOpen(rs.getInt("is_open"));
-                t.setIsAutocomplete(rs.getBoolean("is_auto_complete"));
                 if (ts != null) {
                     t.setCreateTime(new Date(ts.getTime()));
                 }

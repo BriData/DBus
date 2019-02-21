@@ -1,8 +1,7 @@
 import React, {PropTypes, Component} from 'react'
-import {Row, Col, Modal, Form, Select, Input, Spin, Table, Icon, message} from 'antd'
+import {Button, Row, Col, Modal, Form, Select, Input, Spin, Table, Icon, message} from 'antd'
 import {FormattedMessage} from 'react-intl'
 import OperatingButton from '@/app/components/common/OperatingButton'
-
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
@@ -17,6 +16,7 @@ export default class DataSchemaManageAddModal extends Component {
     super(props)
     this.state = {
       selectedRows: [],
+
     }
     this.tableWidth = [
       '20%',
@@ -90,6 +90,12 @@ export default class DataSchemaManageAddModal extends Component {
       })
       .catch(error => message.error(error))
   }
+
+  handleRandom = key =>
+    `${Math.random()
+      .toString(32)
+      .substr(3, 8)}${key || ''}`
+
 
   render() {
     const {visible, key, record, onClose, schemaTableResult} = this.props
@@ -195,10 +201,13 @@ export default class DataSchemaManageAddModal extends Component {
         onCancel={onClose}
         onOk={this.handleSubmit}
         width={1000}
-        title={<FormattedMessage
-          id="app.components.resourceManage.dataSchema.addTable"
-          defaultMessage="添加表"
-        />}
+        title={<div>
+          <FormattedMessage
+            id="app.components.resourceManage.dataSchema.addTable"
+            defaultMessage="添加表"
+          />
+        </div>
+        }
       >
         <Form>
           <Row>

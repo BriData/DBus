@@ -4,7 +4,7 @@
  */
 
 import React, { PropTypes, Component } from 'react'
-import { Form, Select, Input, Button, Row, Col } from 'antd'
+import {Popconfirm, Form, Select, Input, Button, Row, Col } from 'antd'
 import { FormattedMessage } from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -46,6 +46,10 @@ export default class ProjectTableSearch extends Component {
       projectList,
       topologyList,
       onCreateTable,
+      onBatchDelete,
+      onBatchStop,
+      onBatchStart,
+      onBatchFullPull,
       isCreate
     } = this.props
     const project = [
@@ -64,7 +68,7 @@ export default class ProjectTableSearch extends Component {
       <div className="form-search">
         <Form autoComplete="off" layout="inline" className={styles.searchForm} onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
-            <Col span={isCreate ? 2 : 11} className={styles.formLeft}>
+            <Col span={isCreate ? 2 : 10} className={styles.formLeft}>
               {(
                 <Button
                   size="large"
@@ -145,7 +149,7 @@ export default class ProjectTableSearch extends Component {
                 </FormItem>
               )}
             </Col>
-            <Col span={isCreate ? 22 : 13} className={styles.formRight}>
+            <Col span={isCreate ? 22 : 14} className={styles.formRight}>
               {!!isCreate && (
               <FormItem label="Topology">
                 {getFieldDecorator('topoId', {
@@ -221,6 +225,72 @@ export default class ProjectTableSearch extends Component {
                     defaultMessage="查询"
                   />
                 </Button>
+              </FormItem>
+              <FormItem>
+                <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}
+                            okText="Yes" cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="export"
+                    size="large"
+                  >
+                    <FormattedMessage
+                      id="app.components.resourceManage.dataTable.batchFullPull"
+                      defaultMessage="批量拉全量"
+                    />
+                  </Button>
+                </Popconfirm>
+              </FormItem>
+              <FormItem>
+                <Popconfirm title={<div><FormattedMessage
+                  id="app.components.resourceManage.dataTable.batchStart"
+                  defaultMessage="批量启动"
+                />?</div>} onConfirm={onBatchStart} okText="Yes" cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="caret-right"
+                    size="large"
+                  >
+                    <FormattedMessage
+                      id="app.components.resourceManage.dataTable.batchStart"
+                      defaultMessage="批量启动"
+                    />
+                  </Button>
+                </Popconfirm>
+              </FormItem>
+              <FormItem>
+                <Popconfirm title={<div><FormattedMessage
+                  id="app.components.resourceManage.dataTable.batchStop"
+                  defaultMessage="批量停止"
+                />?</div>} onConfirm={onBatchStop} okText="Yes" cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="pause"
+                    size="large"
+                  >
+                    <FormattedMessage
+                      id="app.components.resourceManage.dataTable.batchStop"
+                      defaultMessage="批量停止"
+                    />
+                  </Button>
+                </Popconfirm>
+              </FormItem>
+              <FormItem>
+                <Popconfirm title={<div><FormattedMessage
+                  id="app.components.resourceManage.jarManager.batchDelete"
+                  defaultMessage="批量删除"
+                />?</div>} onConfirm={onBatchDelete} okText="Yes" cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="delete"
+                    size="large"
+                  >
+                    <FormattedMessage
+                      id="app.components.resourceManage.jarManager.batchDelete"
+                      defaultMessage="批量删除"
+                    />
+                  </Button>
+                </Popconfirm>
               </FormItem>
             </Col>
           </Row>

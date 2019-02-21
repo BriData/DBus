@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,8 @@ public abstract class SqlManager
 
     private Logger LOG = LoggerFactory.getLogger(getClass());
 
-    /** Substring that must appear in free-form queries submitted by users.
+    /**
+     * Substring that must appear in free-form queries submitted by users.
      * This is the string '$CONDITIONS'.
      */
     public static final String SUBSTITUTE_TOKEN = "$CONDITIONS";
@@ -93,10 +94,12 @@ public abstract class SqlManager
 
     protected DBConfiguration options;
     private Statement lastStatement;
-    protected String  conString;
+    protected String conString;
     protected static Map<String, DataSource> dataSourceMap = new HashMap<>();
+
     /**
      * Constructs the SqlManager.
+     *
      * @param opts the DBConfiguration describing the user's requested action.
      */
     public SqlManager(final DBConfiguration opts, final String conString) {
@@ -134,7 +137,7 @@ public abstract class SqlManager
 
     @Override
     /** {@inheritDoc} */
-    public String [] getColumnNamesForQuery(String query) {
+    public String[] getColumnNamesForQuery(String query) {
         String rawQuery = query.replace(SUBSTITUTE_TOKEN, " (1 = 0) ");
         return getColumnNamesForRawQuery(rawQuery);
     }
@@ -186,7 +189,7 @@ public abstract class SqlManager
                         + sqlE.toString(), sqlE);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                LOG.error(e.getMessage(),e);
+                LOG.error(e.getMessage(), e);
             }
 
             release();
@@ -212,7 +215,7 @@ public abstract class SqlManager
                         if (index < 0) {
                             continue; // actually the return type
                         }
-                        for(int i = ret.size(); i < index; ++i) {
+                        for (int i = ret.size(); i < index; ++i) {
                             ret.add(null);
                         }
                         String name = results.getString("COLUMN_NAME");
@@ -316,7 +319,7 @@ public abstract class SqlManager
 
                 // If we have an unsigned int we need to make extra room by
                 // plopping it into a bigint
-                if (typeId == Types.INTEGER &&  !metadata.isSigned(i)){
+                if (typeId == Types.INTEGER && !metadata.isSigned(i)) {
                     typeId = Types.BIGINT;
                 }
 
@@ -409,7 +412,7 @@ public abstract class SqlManager
                 LoggingUtils.logAll(LOG, "SQLException closing ResultSet: "
                         + sqlE.toString(), sqlE);
             } catch (Exception e) {
-                LOG.error(e.getMessage(),e);
+                LOG.error(e.getMessage(), e);
             }
 
             release();
@@ -551,7 +554,7 @@ public abstract class SqlManager
     @Override
     public String[] listTables() {
         ResultSet results = null;
-        String [] tableTypes = {"TABLE"};
+        String[] tableTypes = {"TABLE"};
         try {
             try {
                 DatabaseMetaData metaData = this.getConnection().getMetaData();
@@ -629,7 +632,9 @@ public abstract class SqlManager
      * Retrieve the actual connection from the outer ConnManager.
      */
     public abstract Connection getConnection() throws SQLException, Exception;
+
     public abstract String getIndexedColQuery(String indexType);
+
     public abstract List<String> queryTablePartitions(String sql);
 
     public String queryIndexedColForSplit(String tableName, String indexType) {
@@ -693,7 +698,7 @@ public abstract class SqlManager
 
             String datasourceType = options.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
             DbusDatasourceType dataBaseType = DbusDatasourceType.valueOf(datasourceType.toUpperCase());
-            if(dataBaseType == DbusDatasourceType.ORACLE){
+            if (dataBaseType == DbusDatasourceType.ORACLE) {
                 // 对于ORACLE数据库，目前只有整数类型比较友好。区别对待下整数类型分片列和其他类型分片列
                 String splitColTypeDetectQuery = "select " + splitCol + " from " + tableName + " where rownum <= 1";
                 pStmtOracle = conn.prepareStatement(splitColTypeDetectQuery, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -701,19 +706,19 @@ public abstract class SqlManager
 
                 while (rsetOracle.next()) {
                     int splitColSqlDataType = rsetOracle.getMetaData().getColumnType(1);
-                    if(splitColSqlDataType==Types.INTEGER
-                            ||splitColSqlDataType==Types.TINYINT
-                            ||splitColSqlDataType==Types.SMALLINT
-                            ||splitColSqlDataType==Types.BIGINT
-                            ||splitColSqlDataType==Types.NUMERIC
-                            ||splitColSqlDataType==Types.DECIMAL
-                            ||splitColSqlDataType==Types.REAL
-                            ||splitColSqlDataType==Types.FLOAT
-                            ||splitColSqlDataType==Types.DOUBLE){
+                    if (splitColSqlDataType == Types.INTEGER
+                            || splitColSqlDataType == Types.TINYINT
+                            || splitColSqlDataType == Types.SMALLINT
+                            || splitColSqlDataType == Types.BIGINT
+                            || splitColSqlDataType == Types.NUMERIC
+                            || splitColSqlDataType == Types.DECIMAL
+                            || splitColSqlDataType == Types.REAL
+                            || splitColSqlDataType == Types.FLOAT
+                            || splitColSqlDataType == Types.DOUBLE) {
                         // 对于上述数字类型，DBUS根据 splitCol 按分片策略分片并发拉取。
                         // 此处故意留白
                         LOG.info("Found split column data type is {}(Numeric):", splitColSqlDataType);
-                    }else{
+                    } else {
                         // 对于整数以外的其它类型，将splitCol设为null。后续逻辑认为没有合适的分片列。将不对数据进行分片，所有数据作一片拉取。
                         splitCol = null;
                         LOG.info("Found split column data type is {}(None Numeric):", splitColSqlDataType);
@@ -732,7 +737,7 @@ public abstract class SqlManager
             LoggingUtils.logAll(LOG, "Failed to query indexed col", e);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            LOG.error(e.getMessage(),e);
+            LOG.error(e.getMessage(), e);
         } finally {
             if (rset != null) {
                 try {
@@ -780,22 +785,23 @@ public abstract class SqlManager
 
     /**
      * Determine what column to use to split the table.
+     *
      * @return the splitting column, if one is set or inferrable, or null
      * otherwise.
      */
     public String getSplitColumn() {
         String splitCol = options.getString(DBConfiguration.INPUT_SPLIT_COL);
-        if(StringUtils.isNotBlank(splitCol)) {
+        if (StringUtils.isNotBlank(splitCol)) {
             return splitCol;
         }
 
         String tableName = options.getString(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_KEY);
         // 对于系列表，任取其中一个表来获取Meta信息。此处取第一个表。
-        if(tableName.indexOf(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER)!=-1){
+        if (tableName.indexOf(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER) != -1) {
             tableName = tableName.split(Constants.TABLE_SPLITTED_PHYSICAL_TABLES_SPLITTER)[0];
         }
 
-        if(tableName!=null){
+        if (tableName != null) {
             splitCol = queryIndexedColForSplit(tableName, DataPullConstants.SPLIT_COL_TYPE_PK);
             if (null == splitCol) {
                 splitCol = queryIndexedColForSplit(tableName.toUpperCase(), DataPullConstants.SPLIT_COL_TYPE_PK);
@@ -814,7 +820,7 @@ public abstract class SqlManager
             }
         }
 
-        if(StringUtils.isBlank(splitCol)){
+        if (StringUtils.isBlank(splitCol)) {
             splitCol = "";
         }
         options.set(DBConfiguration.INPUT_SPLIT_COL, splitCol);
@@ -851,7 +857,8 @@ public abstract class SqlManager
 
     /**
      * Executes an arbitrary SQL statement.
-     * @param stmt The SQL statement to execute
+     *
+     * @param stmt      The SQL statement to execute
      * @param fetchSize Overrides default or parameterized fetch size
      * @return A ResultSet encapsulating the results or null on error
      */
@@ -880,11 +887,12 @@ public abstract class SqlManager
 
     /**
      * 使用connection 返回一个 statment用于后续使用，改statement 由lastStatement 管理
+     *
      * @param stmt
      * @return
      * @throws Exception
      */
-    public  PreparedStatement prepareStatement(String stmt) throws Exception  {
+    public PreparedStatement prepareStatement(String stmt) throws Exception {
         release();
 
         PreparedStatement statement = this.getConnection().prepareStatement(stmt,
@@ -896,6 +904,7 @@ public abstract class SqlManager
 
     /**
      * Executes an arbitrary SQL Statement.
+     *
      * @param stmt The SQL statement to execute
      * @return A ResultSet encapsulating the results or null on error
      */
@@ -910,8 +919,9 @@ public abstract class SqlManager
     /**
      * Prints the contents of a ResultSet to the specified PrintWriter.
      * The ResultSet is closed at the end of this method.
+     *
      * @param results the ResultSet to print.
-     * @param pw the location to print the data to.
+     * @param pw      the location to print the data to.
      */
     protected void formatAndPrintResultSet(ResultSet results, PrintWriter pw) {
         try {
@@ -950,7 +960,7 @@ public abstract class SqlManager
                         + sqlE.toString(), sqlE);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                LOG.error(e.getMessage(),e);
+                LOG.error(e.getMessage(), e);
             }
 
             release();
@@ -959,6 +969,7 @@ public abstract class SqlManager
 
     /**
      * Poor man's SQL query interface; used for debugging.
+     *
      * @param s the SQL statement to execute.
      */
     public void execAndPrint(String s) {
@@ -1094,7 +1105,7 @@ public abstract class SqlManager
             return null;
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            LOG.error(e.getMessage(),e);
+            LOG.error(e.getMessage(), e);
             return null;
         } finally {
             try {
@@ -1118,7 +1129,7 @@ public abstract class SqlManager
     }
 
     @Override
-    public long getTableRowCount(String tableName) throws SQLException,Exception {
+    public long getTableRowCount(String tableName) throws SQLException, Exception {
         release(); // Release any previous ResultSet
 
         // Escape used table name
@@ -1132,7 +1143,7 @@ public abstract class SqlManager
             Connection conn = getConnection();
             stmt = conn.createStatement();
             rset = stmt.executeQuery(countQuery);
-            if(rset.next()){
+            if (rset.next()) {
                 result = rset.getLong(1);
             }
         } catch (SQLException ex) {
@@ -1159,7 +1170,7 @@ public abstract class SqlManager
     }
 
     @Override
-    public void deleteAllRecords(String tableName) throws SQLException,Exception {
+    public void deleteAllRecords(String tableName) throws SQLException, Exception {
         release(); // Release any previous ResultSet
 
         // Escape table name
@@ -1242,7 +1253,7 @@ public abstract class SqlManager
         PreparedStatement statement = connection.prepareStatement(sql);
         ResultSet resultSet = statement.executeQuery();
 
-        if(resultSet.next()){
+        if (resultSet.next()) {
             long result = resultSet.getLong(1);
             resultSet.close();
             statement.close();
@@ -1253,21 +1264,21 @@ public abstract class SqlManager
 
     public abstract ResultSet executeSql(String sql);
 
-    public void writeBackOriginalDb(String startTime, String completedTime, String pullStatus, String errorMsg){
-        String driverClass=getDriverClass();
+    public void writeBackOriginalDb(String startTime, String completedTime, String pullStatus, String errorMsg) {
+        String driverClass = getDriverClass();
 
         String sqlStr = null;
 
         if (driverClass.equals(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.ORACLE))) {
             sqlStr = getOracleWriteBackSql(startTime, completedTime, pullStatus, errorMsg);
-        } else if(driverClass.equals(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.MYSQL))){
+        } else if (driverClass.equals(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.MYSQL))) {
             sqlStr = getMysqlWriteBackSql(startTime, completedTime, pullStatus, errorMsg);
         }
-         else {
-            assert(false); //not suppose to be here
+        else {
+            assert (false); //not suppose to be here
         }
 
-        if(null == sqlStr){
+        if (null == sqlStr) {
             return;
         }
 
@@ -1334,8 +1345,7 @@ public abstract class SqlManager
                 if (conn != null) {
                     conn.rollback();
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 LoggingUtils.logAll(LOG, "Failed to rollback transaction", ex);
             }
             LoggingUtils.logAll(LOG, "Failed to write back original DB.", e);
@@ -1363,12 +1373,13 @@ public abstract class SqlManager
         long totalCountOfCurShard = 0;
         try {
             String query = getTotalRowsCountQuery(table, splitCol, tablePartition);
+            LOG.info("queryTotalRows(), query: {}", query);
             conn = getConnection();
             pStmt = conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             results = pStmt.executeQuery();
             if (results.next()) {
                 totalCountOfCurShard = results.getLong("TOTALCOUNT");
-                LOG.info("queryTotalRows(), query: {}, totalRows : {}", query, totalCountOfCurShard);
+                LOG.info("queryTotalRows(), totalRows : {}", totalCountOfCurShard);
             }
         } catch (SQLException e) {
             try {
@@ -1379,7 +1390,7 @@ public abstract class SqlManager
                 LoggingUtils.logAll(LOG, "Failed to rollback transaction", ex);
             }
             LoggingUtils.logAll(LOG, "Failed to query total rows.", e);
-       } catch (Exception e) {
+        } catch (Exception e) {
             try {
                 if (conn != null) {
                     conn.rollback();
@@ -1424,13 +1435,13 @@ public abstract class SqlManager
             // for interpolating split points (i.e., numeric splits, text splits,
             // dates, etc.)
             int sqlDataType = results.getMetaData().getColumnType(1);
-            if(results.next()){
+            if (results.next()) {
                 // Based on the type of the results, use a different mechanism
                 // for interpolating split points (i.e., numeric splits, text splits,
                 // dates, etc.)
                 boolean isSigned = results.getMetaData().isSigned(1);
                 // MySQL has an unsigned integer which we need to allocate space for
-                if (sqlDataType == Types.INTEGER && !isSigned){
+                if (sqlDataType == Types.INTEGER && !isSigned) {
                     sqlDataType = Types.BIGINT;
                 }
             }
@@ -1451,7 +1462,7 @@ public abstract class SqlManager
                 LOG.info("Physical Table:{}.{} , {} shards generated.", table, tablePartition, numSplitsOfCurShard);
             } catch (ValidationException e) {
                 throw new IOException(e);
-            }catch (Exception e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
         } catch (SQLException e) {
@@ -1469,9 +1480,9 @@ public abstract class SqlManager
             throw e;
         } finally {
             try {
-                if(results != null)
+                if (results != null)
                     results.close();
-                if(pStmt != null)
+                if (pStmt != null)
                     pStmt.close();
 
                 getConnection().commit();
@@ -1487,12 +1498,12 @@ public abstract class SqlManager
     private void setFullPullReqTblSqlParam(PreparedStatement pStmt, String startTime, String completedTime,
                                            String pullStatus, String errorMsg, long seqno) throws SQLException {
         int paraIndex = 1;
-        if(pStmt != null){
-            if(StringUtils.isNotEmpty(startTime)){
+        if (pStmt != null) {
+            if (StringUtils.isNotEmpty(startTime)) {
                 pStmt.setString(paraIndex, startTime);
                 paraIndex++;
             }
-            if (StringUtils.isNotEmpty(completedTime)){
+            if (StringUtils.isNotEmpty(completedTime)) {
                 pStmt.setString(paraIndex, completedTime);
                 paraIndex++;
             }
@@ -1501,7 +1512,7 @@ public abstract class SqlManager
                 paraIndex++;
             }
             if (StringUtils.isNotEmpty(errorMsg)) {
-                errorMsg = errorMsg.length()>1000?errorMsg.substring(0,1000):errorMsg;
+                errorMsg = errorMsg.length() > 1000 ? errorMsg.substring(0, 1000) : errorMsg;
                 pStmt.setString(paraIndex, errorMsg);
                 paraIndex++;
             }
@@ -1511,8 +1522,8 @@ public abstract class SqlManager
 
 
     private String getOracleWriteBackSql(String startTime, String completedTime, String pullStatus, String errorMsg) {
-        if(StringUtils.isEmpty(startTime) && StringUtils.isEmpty(completedTime) &&
-                StringUtils.isEmpty(pullStatus) && StringUtils.isEmpty(errorMsg)){
+        if (StringUtils.isEmpty(startTime) && StringUtils.isEmpty(completedTime) &&
+                StringUtils.isEmpty(pullStatus) && StringUtils.isEmpty(errorMsg)) {
             return null;
         }
         //      String dbSchema = (String)(options.getConfProperties().get(DBConfiguration.DataSourceInfo.DB_SCHEMA));
@@ -1554,8 +1565,8 @@ public abstract class SqlManager
     }
 
     private String getMysqlWriteBackSql(String startTime, String completedTime, String pullStatus, String errorMsg) {
-        if(StringUtils.isEmpty(startTime) && StringUtils.isEmpty(completedTime) &&
-                StringUtils.isEmpty(pullStatus) && StringUtils.isEmpty(errorMsg)){
+        if (StringUtils.isEmpty(startTime) && StringUtils.isEmpty(completedTime) &&
+                StringUtils.isEmpty(pullStatus) && StringUtils.isEmpty(errorMsg)) {
             return null;
         }
 
@@ -1601,33 +1612,32 @@ public abstract class SqlManager
         StringBuilder query = new StringBuilder();
 
         //      String splitCol = getDBConf().getInputOrderBy();
-        if(StringUtils.isNotBlank(splitCol)){
+        if (StringUtils.isNotBlank(splitCol)) {
             query.append("SELECT COUNT(").append(splitCol).append(") TOTALCOUNT FROM ");
-        }else{
+        } else {
             query.append("SELECT COUNT(*) TOTALCOUNT FROM ");
         }
         //      query.append(getDBConf().getInputTableName());
         query.append(table);
-        if(StringUtils.isNotBlank(tablePartition)){
+        if (StringUtils.isNotBlank(tablePartition)) {
             query.append(" PARTITION (").append(tablePartition).append(") ");
         }
 
         Object consistentReadScn = options.get(DBConfiguration.DATA_IMPORT_CONSISTENT_READ_SCN);
-        if(consistentReadScn!=null){
-            query.append(" AS OF SCN ").append((Long)consistentReadScn).append(" ");
+        if (consistentReadScn != null) {
+            query.append(" AS OF SCN ").append((Long) consistentReadScn).append(" ");
         }
         String conditions = options.getInputConditions();
-        if (null != conditions) {
+        if (StringUtils.isNotBlank(conditions)) {
             query.append(" WHERE ( " + conditions + " )");
         }
-
         return query.toString();
     }
 
     /**
      * @return a query which returns the minimum and maximum values for
      * the order-by column.
-     *
+     * <p>
      * The min value should be in the first column, and the
      * max value should be in the second column of the results.
      */
@@ -1645,7 +1655,7 @@ public abstract class SqlManager
         query.append("SELECT MIN(").append(splitCol).append("), ");
         query.append("MAX(").append(splitCol).append(") FROM ");
         query.append(table);
-        if(StringUtils.isNotBlank(tablePartition)){
+        if (StringUtils.isNotBlank(tablePartition)) {
             query.append(" PARTITION (").append(tablePartition).append(") ");
         }
 //    Object consistentReadScn = getDBConf().get(DBConfiguration.DATA_IMPORT_CONSISTENT_READ_SCN);
@@ -1654,7 +1664,7 @@ public abstract class SqlManager
 //    }
 
         String conditions = options.getInputConditions();
-        if (null != conditions) {
+        if (StringUtils.isNotBlank(conditions)) {
             query.append(" WHERE ( " + conditions + " )");
         }
 

@@ -29,8 +29,8 @@
     <result column="full_pull_req_msg_offset" jdbcType="BIGINT" property="fullPullReqMsgOffset" />
     <result column="first_shard_msg_offset" jdbcType="BIGINT" property="firstShardMsgOffset" />
     <result column="last_shard_msg_offset" jdbcType="BIGINT" property="lastShardMsgOffset" />
-    <result column="cost_time" jdbcType="VARCHAR" property="costTime" />
-    <result column="complete_rate" jdbcType="INTEGER" property="completeRate" />
+    <result column="split_column" jdbcType="VARCHAR" property="splitColumn" />
+    <result column="fullpull_condition" jdbcType="VARCHAR" property="fullpullCondition" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from t_fullpull_history
@@ -40,7 +40,7 @@
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
       SELECT LAST_INSERT_ID()
     </selectKey>
-    replace into t_fullpull_history (id,type, dsName, schemaName,
+    replace into t_fullpull_history (id, type, dsName, schemaName,
     tableName, version, batch_id,
     state, error_msg, init_time,
     start_split_time, start_pull_time, end_time,
@@ -48,7 +48,8 @@
     finished_row_count, total_row_count, project_name,
     topology_table_id, target_sink_id, target_sink_topic,
     full_pull_req_msg_offset, first_shard_msg_offset,
-    last_shard_msg_offset, cost_time, complete_rate)
+    last_shard_msg_offset, split_column, fullpull_condition
+    )
     values (#{id,jdbcType=BIGINT}, #{type,jdbcType=VARCHAR}, #{dsName,jdbcType=VARCHAR}, #{schemaName,jdbcType=VARCHAR},
     #{tableName,jdbcType=VARCHAR}, #{version,jdbcType=INTEGER}, #{batchId,jdbcType=INTEGER},
     #{state,jdbcType=VARCHAR}, #{errorMsg,jdbcType=VARCHAR}, #{initTime,jdbcType=TIMESTAMP},
@@ -57,7 +58,8 @@
     #{finishedRowCount,jdbcType=BIGINT}, #{totalRowCount,jdbcType=BIGINT}, #{projectName,jdbcType=VARCHAR},
     #{topologyTableId,jdbcType=INTEGER}, #{targetSinkId,jdbcType=INTEGER}, #{targetSinkTopic,jdbcType=VARCHAR},
     #{fullPullReqMsgOffset,jdbcType=BIGINT}, #{firstShardMsgOffset,jdbcType=BIGINT},
-    #{lastShardMsgOffset,jdbcType=BIGINT}, #{costTime,jdbcType=VARCHAR}, #{completeRate,jdbcType=INTEGER})
+    #{lastShardMsgOffset,jdbcType=BIGINT}, #{splitColumn,jdbcType=VARCHAR}, #{fullpullCondition,jdbcType=VARCHAR}
+    )
   </insert>
   <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.FullPullHistory">
     update t_fullpull_history
@@ -86,17 +88,17 @@
       <if test = "fullPullReqMsgOffset!=null">full_pull_req_msg_offset = #{fullPullReqMsgOffset,jdbcType=BIGINT},</if>
       <if test = "firstShardMsgOffset!=null">first_shard_msg_offset = #{firstShardMsgOffset,jdbcType=BIGINT},</if>
       <if test = "lastShardMsgOffset!=null">last_shard_msg_offset = #{lastShardMsgOffset,jdbcType=BIGINT},</if>
-      <if test = "costTime!=null">cost_time = #{costTime,jdbcType=VARCHAR},</if>
-      <if test = "completeRate!=null">complete_rate = #{completeRate,jdbcType=INTEGER},</if>
+      <if test = "splitColumn!=null">split_column = #{splitColumn,jdbcType=VARCHAR},</if>
+      <if test = "fullpullCondition!=null">fullpull_condition = #{fullpullCondition,jdbcType=INTEGER},</if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select id, type, dsName, schemaName, tableName, version, batch_id, state, error_msg,
+     select id, type, dsName, schemaName, tableName, version, batch_id, state, error_msg,
     init_time, start_split_time, start_pull_time, end_time, update_time, finished_partition_count,
     total_partition_count, finished_row_count, total_row_count, project_name, topology_table_id,
     target_sink_id, target_sink_topic, full_pull_req_msg_offset, first_shard_msg_offset,
-    last_shard_msg_offset, cost_time, complete_rate
+    last_shard_msg_offset, split_column, fullpull_condition
     from t_fullpull_history
     where id = #{id,jdbcType=BIGINT}
   </select>
@@ -105,7 +107,7 @@
     init_time, start_split_time, start_pull_time, end_time, update_time, finished_partition_count,
     total_partition_count, finished_row_count, total_row_count, project_name, topology_table_id,
     target_sink_id, target_sink_topic, full_pull_req_msg_offset, first_shard_msg_offset,
-    last_shard_msg_offset, cost_time, complete_rate
+    last_shard_msg_offset, split_column, fullpull_condition
     from t_fullpull_history
   </select>
   <select id="search" resultMap="BaseResultMap">
@@ -122,7 +124,9 @@
     <if test="dsName != null"> and fh.dsName = #{dsName}</if>
     <if test="schemaName != null"> and fh.schemaName like "%"#{schemaName}"%"</if>
     <if test="tableName != null"> and fh.tableName like  "%"#{tableName}"%" </if>
-    order by fh.update_time desc
+    <if test="targetSinkTopic != null"> and fh.target_sink_topic like  "%"#{targetSinkTopic}"%" </if>
+    <if test="id != null"> and fh.id = #{id}</if>
+    order by ${orderBy} desc
   </select>
   <select id="searchIdsByUid" resultType="java.lang.Long">
     SELECT h.id FROM

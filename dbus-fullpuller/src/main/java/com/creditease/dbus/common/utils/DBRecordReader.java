@@ -274,7 +274,10 @@ public class DBRecordReader<T extends DBWritable> {
             String condWithPlaceholder = split.getCondWithPlaceholder();
             query.append(" WHERE (").append(condWithPlaceholder).append(")");
         }
-
+        String inputConditions = dbConf.getInputConditions();
+        if(StringUtils.isNotBlank(inputConditions)){
+            query.append(" AND (").append(inputConditions).append(")");
+        }
         String orderBy = dbConf.getInputOrderBy();
         if (orderBy != null && orderBy.length() > 0) {
             query.append(" ORDER BY ").append(orderBy);

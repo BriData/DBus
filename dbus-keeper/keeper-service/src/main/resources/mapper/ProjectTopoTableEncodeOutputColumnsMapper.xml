@@ -7,7 +7,7 @@
     <result column="field_name" jdbcType="VARCHAR" property="fieldName" />
     <result column="encode_plugin_id" jdbcType="INTEGER" property="encodePluginId" />
     <result column="field_type" jdbcType="VARCHAR" property="fieldType" />
-    <result column="data_length" jdbcType="INTEGER" property="dataLength" />
+    <result column="data_length" jdbcType="BIGINT" property="dataLength" />
     <result column="encode_type" jdbcType="VARCHAR" property="encodeType" />
     <result column="encode_param" jdbcType="VARCHAR" property="encodeParam" />
     <result column="desc_" jdbcType="VARCHAR" property="desc" />
@@ -18,6 +18,7 @@
     <result column="data_scale" jdbcType="INTEGER" property="dataScale" />
     <result column="data_precision" jdbcType="INTEGER" property="dataPrecision" />
     <result column="schema_change_comment" jdbcType="VARCHAR" property="schemaChangeComment" />
+    <result column="special_approve" jdbcType="INTEGER" property="specialApprove" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from t_project_topo_table_encode_output_columns
@@ -31,26 +32,27 @@
       field_type, data_length, encode_type,
       encode_param, desc_, truncate,
       encode_source, update_time, schema_change_flag,
-      data_scale, data_precision, schema_change_comment
+      data_scale, data_precision, schema_change_comment, special_approve
       )
     values (#{projectTopoTableId,jdbcType=INTEGER}, #{fieldName,jdbcType=VARCHAR}, #{encodePluginId,jdbcType=INTEGER},
-      #{fieldType,jdbcType=VARCHAR}, #{dataLength,jdbcType=INTEGER}, #{encodeType,jdbcType=VARCHAR},
+      #{fieldType,jdbcType=VARCHAR}, #{dataLength,jdbcType=BIGINT}, #{encodeType,jdbcType=VARCHAR},
       #{encodeParam,jdbcType=VARCHAR}, #{desc,jdbcType=VARCHAR}, #{truncate,jdbcType=INTEGER},
       #{encodeSource,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT},
-      #{dataScale,jdbcType=INTEGER}, #{dataPrecision,jdbcType=INTEGER}, #{schemaChangeComment,jdbcType=VARCHAR}
+      #{dataScale,jdbcType=INTEGER}, #{dataPrecision,jdbcType=INTEGER}, #{schemaChangeComment,jdbcType=VARCHAR},
+      #{specialApprove,jdbcType=INTEGER}
       )
   </insert>
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select id, project_topo_table_id, field_name, encode_plugin_id, field_type, data_length,
         encode_type, encode_param, desc_, truncate, encode_source, update_time, schema_change_flag,
-        data_scale, data_precision, schema_change_comment
+        data_scale, data_precision, schema_change_comment, special_approve
         from t_project_topo_table_encode_output_columns
         where id = #{id,jdbcType=INTEGER}
     </select>
     <select id="selectAll" resultMap="BaseResultMap">
         select id, project_topo_table_id, field_name, encode_plugin_id, field_type, data_length,
         encode_type, encode_param, desc_, truncate, encode_source, update_time, schema_change_flag,
-        data_scale, data_precision, schema_change_comment
+        data_scale, data_precision, schema_change_comment, special_approve
         from t_project_topo_table_encode_output_columns
     </select>
   <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectTopoTableEncodeOutputColumns">
@@ -59,7 +61,7 @@
       <if test="projectTopoTableId !=null">project_topo_table_id = #{projectTopoTableId,jdbcType=INTEGER},</if>
       <if test="fieldName != null">field_name = #{fieldName,jdbcType=VARCHAR},</if>
       <if test="fieldType != null">field_type = #{fieldType,jdbcType=VARCHAR},</if>
-      <if test="dataLength != null">data_length = #{dataLength,jdbcType=INTEGER},</if>
+      <if test="dataLength != null">data_length = #{dataLength,jdbcType=BIGINT},</if>
       <if test="encodeType != null">encode_type = #{encodeType,jdbcType=VARCHAR},</if>
       <if test="encodeParam != null">encode_param = #{encodeParam,jdbcType=VARCHAR},</if>
       <if test="desc != null">desc_ = #{desc,jdbcType=VARCHAR},</if>
@@ -70,6 +72,7 @@
       <if test="dataScale != null">data_scale = #{dataScale,jdbcType=INTEGER},</if>
       <if test="dataPrecision != null">data_precision = #{dataPrecision,jdbcType=INTEGER},</if>
       <if test="schemaChangeComment != null">schema_change_comment = #{schemaChangeComment,jdbcType=VARCHAR},</if>
+      <if test="specialApprove != null">special_approve = #{specialApprove,jdbcType=INTEGER},</if>
       <!-- user在将encode改为default或其他的时候，encodePluginId可能为空，应该直接更新-->
       encode_plugin_id = #{encodePluginId,jdbcType=INTEGER}
     </set>
@@ -90,6 +93,7 @@
       encodeColumn.data_scale dataScale,
       encodeColumn.schema_change_flag schemaChangeFlag,
       encodeColumn.schema_change_comment schemaChangeComment,
+      encodeColumn.special_approve specialApprove,
       tm.data_type dataType
     FROM
     (SELECT
@@ -127,140 +131,38 @@
      columns.field_name = #{fieldName,jdbcType=VARCHAR}
   </select>
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
-    DELETE from t_project_topo_table_encode_output_columns where id in
-    (select a.id from
-      (select c.id from t_project_topo_table_encode_output_columns c,t_project_topo_table t
-      where c.project_topo_table_id = t.id and t.topo_id = #{projectId}) a )
+   delete pe from t_project_topo_table_encode_output_columns pe,t_project_topo_table pt
+   where pe.project_topo_table_id = pt.id and pt.project_id = #{projectId}
   </delete>
   <select id="search" resultType="java.util.Map">
     SELECT
-        c.id,
-        c.project_topo_table_id,
-        p.project_name,
-        t.topo_name,
-        td.ds_name,
-        dt.schema_name,
-        dt.table_name,
-        c.field_name,
-        c.encode_type,
-        c.encode_param,
-        c.encode_source,
-        c.encode_plugin_id
+      tdds.ds_name dsName,
+      tds.schema_name schemaName,
+      tdt.table_name tableName,
+      tpt.topo_name topoName,
+      tp.project_display_name projectName,
+      tptt.id tpttId,
+      tptteoc.id,
+      tptteoc.field_name fieldName,
+      tptteoc.encode_type encodeType,
+      tptteoc.encode_param encodeParam,
+      tptteoc.encode_source encodeSource,
+      tptteoc.encode_plugin_id encodePluginId,
+      tptteoc.special_approve specialApprove
     FROM
-        t_project_topo_table tt,
-        t_project p,
-        t_project_topo t,
-        t_data_tables dt,
-        t_dbus_datasource td,
-        t_project_topo_table_encode_output_columns c
+      t_project_topo_table_encode_output_columns tptteoc
+    LEFT JOIN t_project_topo_table tptt on tptt.id = tptteoc.project_topo_table_id
+    LEFT JOIN t_project_topo tpt on tpt.id = tptt.topo_id
+    LEFT JOIN t_project tp on tp.id = tptt.project_id
+    LEFT JOIN `t_data_tables` tdt on tdt.id = tptt.table_id
+    LEFT JOIN `t_data_schema` tds on tds.id = tdt.schema_id
+    LEFT JOIN `t_dbus_datasource` tdds on tds.ds_id = tdds.id
     <where>
-        tt.project_id = p.id
-        AND tt.topo_id = t.id
-        AND tt.table_id = dt.id
-        AND dt.ds_id = td.id
-        AND tt.id = c.project_topo_table_id
-        <if test="projectId != null">AND tt.project_id = #{projectId}</if>
-        <if test="topoId != null">AND tt.topo_id = #{topoId}</if>
-        <if test="dsId != null">AND dt.ds_id = #{dsId}</if>
-        <if test="schemaName != null">AND dt.schema_name like "%"#{schemaName}"%"</if>
-        <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
-    </where>
-    union all
-    SELECT
-        c.id,
-        tt.id project_topo_table_id,
-        p.project_name,
-        t.topo_name,
-        td.ds_name,
-        dt.schema_name,
-        dt.table_name,
-        c.field_name,
-        c.encode_type,
-        c.encode_param,
-        0 encode_source,
-        c.plugin_id encode_plugin_id
-    FROM
-        t_project_topo_table tt,
-        t_project p,
-        t_project_topo t,
-        t_data_tables dt,
-        t_dbus_datasource td,
-        t_encode_columns c
-    <where>
-        tt.project_id = p.id
-        AND tt.topo_id = t.id
-        AND tt.table_id = dt.id
-        AND dt.ds_id = td.id
-        AND tt.table_id = c.table_id
-        AND tt.output_list_type = 0
-        <if test="projectId != null">AND tt.project_id = #{projectId}</if>
-        <if test="topoId != null">AND tt.topo_id = #{topoId}</if>
-        <if test="dsId != null">AND dt.ds_id = #{dsId}</if>
-        <if test="schemaName != null">AND dt.schema_name like "%"#{schemaName}"%"</if>
-        <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
-    </where>
-    union all
-    SELECT
-      c.id,
-      null project_topo_table_id,
-      null project_name,
-      null topo_name,
-      td.ds_name,
-      dt.schema_name,
-      dt.table_name,
-      c.field_name,
-      c.encode_type,
-      c.encode_param,
-      0 encode_source,
-      c.plugin_id encode_plugin_id
-    FROM
-      t_data_tables dt,
-      t_dbus_datasource td,
-      t_encode_columns c
-      <where>
-          dt.ds_id = td.id
-          AND dt.id = c.table_id
-          <if test="dsId != null">AND dt.ds_id = #{dsId}</if>
-          <if test="schemaName != null">AND dt.schema_name like "%"#{schemaName}"%"</if>
-          <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
-      </where>
-    union all
-    SELECT
-        c.id,
-        tt.id project_topo_table_id,
-        p.project_name,
-        t.topo_name,
-        td.ds_name,
-        dt.schema_name,
-        dt.table_name,
-        c.field_name,
-        c.encode_type,
-        c.encode_param,
-        0 encode_source,
-        c.plugin_id encode_plugin_id
-    FROM
-        t_project_topo_table tt,
-        t_project p,
-        t_project_topo t,
-        t_data_tables dt,
-        t_dbus_datasource td,
-        t_encode_columns c,
-        t_project_topo_table_meta_version v
-    <where>
-        tt.project_id = p.id
-        AND tt.topo_id = t.id
-        AND tt.table_id = dt.id
-        AND dt.ds_id = td.id
-        AND tt.table_id = c.table_id
-        AND tt.meta_ver = v.version
-        AND c.field_name = v.column_name
-        AND tt.output_list_type = 1
-        AND tt.topo_id = v.topo_id
-        <if test="projectId != null">AND tt.project_id = #{projectId}</if>
-        <if test="topoId != null">AND tt.topo_id = #{topoId}</if>
-        <if test="dsId != null">AND dt.ds_id = #{dsId}</if>
-        <if test="schemaName != null">AND dt.schema_name like "%"#{schemaName}"%"</if>
-        <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
+      <if test="projectId != null">AND tptt.project_id = #{projectId}</if>
+      <if test="topoId != null">AND tptt.topo_id = #{topoId}</if>
+      <if test="dsId != null">AND tdds.id = #{dsId}</if>
+      <if test="schemaName != null">AND tds.schema_name like "%"#{schemaName}"%"</if>
+      <if test="tableName != null">AND tdt.table_name like "%"#{tableName}"%"</if>
     </where>
   </select>
   <select id="selectByTopoTableId" resultMap="BaseResultMap">

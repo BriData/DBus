@@ -226,6 +226,8 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                         collector.emit(new Values(dataSourceInfo));
                     } else if (key.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
                             || key.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
+                        LOG.info("Received full pull request: {}", dataSourceInfo);
+
                         //判断任务是否安全
                         if (!confirmTaskIsSecurity(dataSourceInfo)) {
                             return;
@@ -233,7 +235,6 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
                         //判断能否继续分片(上一个任务状态必须是Ending/abort状态才可以开始新的分片)
                         waitForLastTaskEnd(dataSourceInfo);
                         //处理消息
-                        LOG.info("Received full pull request: {}", dataSourceInfo);
                         flowedMsgCount++;
 
                         // 每次拉取都要进行批次号加1处理。这条语句的位置不要变动。
@@ -309,7 +310,7 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             pst = conn.prepareStatement(sql.toString());
             pst.setLong(1, id);
             pst.executeUpdate();
-            LOG.info("任务对应的表不能拉全量. update state to abort id:{} \n. dataSourceInfo:{}", id, dataSourceInfo);
+            LOG.error("任务对应的表不能拉全量. update state to abort id:{} \n. dataSourceInfo:{}", id, dataSourceInfo);
             return false;
         } catch (Exception e) {
             //出于安全考考虑,查询出错不能拉全量
@@ -326,38 +327,35 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
      *
      * @param dataSourceInfo
      */
-    private void waitForLastTaskEnd(String dataSourceInfo) {
+   private void waitForLastTaskEnd(String dataSourceInfo) {
         JSONObject jsonObject = JSONObject.parseObject(dataSourceInfo);
         Long id = jsonObject.getJSONObject("payload").getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
         Connection conn = null;
         PreparedStatement pst = null;
         ResultSet ret = null;
-        boolean flag = true;
         try {
             conn = DBHelper.getDBusMgrConnection();
             StringBuilder sql = new StringBuilder();
-            sql.append(" SELECT  h.id ,h.state FROM t_fullpull_history h ");
+
+            sql.append(" SELECT  p.id ,p.full_pull_req_msg_offset FROM ");
+            sql.append("( SELECT  h.id ,h.full_pull_req_msg_offset,h.state FROM t_fullpull_history h ");
             if (isGlobal) {
                 sql.append(" WHERE h.type = 'global'");
             } else {
                 sql.append(" WHERE h.type = 'indepent' and h.dsName = '").append(dsName).append("'");
             }
-            sql.append(" and h.id < ").append(id);
-            sql.append(" ORDER BY h.id DESC LIMIT 1 ");
+            sql.append(" and h.id < ").append(id).append(" and h.full_pull_req_msg_offset is not NULL ");
+            sql.append(" ORDER BY h.id DESC LIMIT 1 )p ").append(" where p.state not in ('ending','abort')");
 
-            while (flag) {
+            LOG.info("last task sql: {}",sql.toString());
+            while (true) {
                 pst = conn.prepareStatement(sql.toString());
                 ret = pst.executeQuery();
                 if (ret.next()) {
-                    String state = ret.getString("state");
-                    long LId = ret.getLong("id");
-                    if (StringUtils.isNotBlank(state) && ("ending".equals(state) || "abort".equals(state))) {
-                        break;
-                    }
-                    LOG.info("waitting for last task to end . id:{} ", LId);
+                    LOG.info("waitting for last task to end . id:{} offset:{}", ret.getLong("id"),ret.getLong("full_pull_req_msg_offset"));
                     TimeUnit.MILLISECONDS.sleep(60000);
-                } else {
-                    break;
+                }else{
+                    return;
                 }
             }
         } catch (Exception e) {
@@ -366,6 +364,68 @@ public class DataShardsSplittingSpout extends BaseRichSpout {
             DBHelper.close(conn, pst, ret);
         }
     }
+
+    /*private void waitForLastTaskEnd(String dataSourceInfo) {
+        JSONObject jsonObject = JSONObject.parseObject(dataSourceInfo);
+        Long id = jsonObject.getJSONObject("payload").getLong(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet ret = null;
+        try {
+            Long thisOffset = null;
+            Long lastOffset = null;
+            Long lastId = null;
+            conn = DBHelper.getDBusMgrConnection();
+            StringBuilder sql = new StringBuilder();
+
+            sql.append(" SELECT id ,full_pull_req_msg_offset offset FROM t_fullpull_history WHERE full_pull_req_msg_offset is not NULL and id = ").append(id);
+            sql.append(" UNION SELECT  p.id ,p.full_pull_req_msg_offset offset FROM ");
+            sql.append("( SELECT  h.id ,h.full_pull_req_msg_offset,h.state FROM t_fullpull_history h ");
+            if (isGlobal) {
+                sql.append(" WHERE h.type = 'global'");
+            } else {
+                sql.append(" WHERE h.type = 'indepent' and h.dsName = '").append(dsName).append("'");
+            }
+            sql.append(" and h.id < ").append(id).append(" and h.full_pull_req_msg_offset is not NULL ");
+            sql.append(" ORDER BY h.id DESC LIMIT 1 )p ").append(" where p.state not in ('ending','abort')");
+
+            LOG.info("last task sql: {}",sql.toString());
+
+            while (true) {
+                pst = conn.prepareStatement(sql.toString());
+                ret = pst.executeQuery();
+                while (ret.next()) {
+                    if (id.equals(ret.getLong("id"))) {
+                        thisOffset = ret.getLong("offset");
+                    } else {
+                        lastId = ret.getLong("id");
+                        lastOffset = ret.getLong("offset");
+                    }
+                }
+                LOG.info("waitting for last task to end .thisId:{} ,thisOffset:{} ,lastId:{} , lastOffset:{}", id, thisOffset, lastId, lastOffset);
+                //测试发现拉全量full_pull_req_msg_offset数值更新数据库比较慢,但是任务已经来了,就会导致取出的thisOffset是null
+                if (thisOffset == null) {
+                    //等待数据库完成update full_pull_req_msg_offset 并且提交了事务,才能查询到真正的full_pull_req_msg_offset数值
+                    TimeUnit.MILLISECONDS.sleep(1000);
+                    LOG.info("thisOffset is null");
+                    continue;
+                }
+                if (lastOffset == null) {
+                    return;
+                }
+                if (thisOffset < lastOffset) {
+                    return;
+                }
+                TimeUnit.MILLISECONDS.sleep(60000);
+                lastOffset = null;
+                lastId = null;
+            }
+        } catch (Exception e) {
+            LOG.error("Exception Info:{}", e);
+        } finally {
+            DBHelper.close(conn, pst, ret);
+        }
+    }*/
 
     /**
      * 定义字段id，该id在简单模式下没有用处，但在按照字段分组的模式下有很大的用处。

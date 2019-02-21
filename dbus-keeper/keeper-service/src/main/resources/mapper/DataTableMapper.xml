@@ -101,7 +101,11 @@
       <if test="fullpullCol!= null">fullpull_col = #{fullpullCol,jdbcType=VARCHAR},</if>
       <if test="fullpullSplitShardSize!= null">fullpull_split_shard_size = #{fullpullSplitShardSize,jdbcType=VARCHAR},</if>
       <if test="fullpullSplitStyle!= null">fullpull_split_style = #{fullpullSplitStyle,jdbcType=VARCHAR},</if>
-      create_time = current_timestamp()
+    <choose>
+      <when test="createTime != null">create_time = #{createTime,jdbcType=TIMESTAMP}</when>
+      <otherwise>create_time = current_timestamp()</otherwise>
+    </choose>
+
     where id = #{id,jdbcType=INTEGER}
   </update>
   <update id="confirmVerChange">
@@ -234,5 +238,47 @@
   </select>
   <select id="findActiveTablesBySchemaId" resultMap="BaseResultMap">
     select * from  t_data_tables t1, t_dbus_datasource t2 where t1.ds_id = t2.id and t1.schema_id = #{schemaId} and (t1.status = 'ok' or t1.status = 'waiting')
+  </select>
+  <update id="startOrStopTableByTableIds">
+    update t_data_tables set status = #{status}
+    where id in
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
+  <select id="isExistByTableName" resultType="java.util.Map">
+    SELECT
+    GROUP_CONCAT(tds.ds_name separator ';') ds_names,
+    tdt.table_name,
+    count(*) cnt
+    FROM
+    t_data_tables tdt,
+    t_dbus_datasource tds
+    WHERE
+    tdt.ds_id = tds.id AND
+    tdt.table_name in (#{tables}) AND
+    tdt.ds_id in (#{dsIds})
+    GROUP BY
+    tdt.table_name
+  </select>
+  <select id="getDataSourcesByTableIds" parameterType="java.util.ArrayList" resultType="java.util.Map">
+    SELECT
+      DISTINCT td.id, td.ds_name
+    FROM
+      t_data_tables tt, t_dbus_datasource td
+    WHERE
+      tt.ds_id = td.id
+      AND tt.id IN
+      <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+  </select>
+  <select id="searchTableByIds" resultMap="BaseResultMap">
+    select * from t_data_tables t1, t_dbus_datasource t2
+    where t1.ds_id = t2.id
+    and t1.id in
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
   </select>
 </mapper>

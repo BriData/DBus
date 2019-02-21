@@ -31,12 +31,7 @@ import com.github.pagehelper.PageInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Created by mal on 2018/3/21.
@@ -55,7 +50,8 @@ public class ProjectController extends BaseController {
                                   int pageNum,
                                   int pageSize,
                                   String sortby,
-                                  String order) {
+                                  String order,
+                                  @RequestParam(required = false) Integer hasDbaEncode) {
         sortby = DBusUtils.underscoresNaming(sortby);
         if (!StringUtils.isBlank(order)) {
             if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
@@ -63,7 +59,7 @@ public class ProjectController extends BaseController {
                 order = null;
             }
         }
-        PageInfo<Map<String, Object>> page = service.queryResources(dsName, schemaName, tableName, pageNum, pageSize, sortby, order);
+        PageInfo<Map<String, Object>> page = service.queryResources(dsName, schemaName, tableName, pageNum, pageSize, sortby, order, hasDbaEncode);
         return resultEntityBuilder().payload(page).build();
     }
 

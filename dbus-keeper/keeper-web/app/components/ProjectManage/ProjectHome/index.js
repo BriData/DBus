@@ -200,10 +200,12 @@ export default class ProjectHome extends Component {
     } else if (!params.sink || Object.keys(params.sink).length === 0) {
       this.setState({ modalActiveTab: 'sink', errorFlag: 'sinkForm' })
       return false
-    } else if (!params.resource || Object.keys(params.resource).length === 0) {
+    }
+    /*else if (!params.resource || Object.keys(params.resource).length === 0) {
       this.setState({ modalActiveTab: 'resource', errorFlag: 'resourceForm' })
       return false
-    } else if (!params.alarm || alarmFlag) {
+    } */
+    else if (!params.alarm || alarmFlag) {
       this.setState({ modalActiveTab: 'alarm' })
       return false
     }

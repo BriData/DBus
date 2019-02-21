@@ -15,6 +15,18 @@ const Option = Select.Option
 
 @Form.create()
 export default class ProjectFullpullSearch extends Component {
+  constructor(props) {
+    super(props)
+    this.orderColumns = [
+      { value: 'id', text: 'ID' },
+      { value: 'fullPullReqMsgOffset', text: '拉取信息offset' },
+      { value: 'initTime', text: '初始化时间' },
+      { value: 'startSplitTime', text: '开始分片时间' },
+      { value: 'startPullTime', text: '开始拉取时间' },
+      { value: 'endTime', text: '完成时间' },
+      { value: 'updateTime', text: '更新时间' }
+    ]
+  }
   /**
    * 校验并查询
    */
@@ -24,20 +36,23 @@ export default class ProjectFullpullSearch extends Component {
     // 校验并查询
     validateFields((err, value) => {
       if (!err) {
-        if (value.projectName==='请选择Project') {
-          value.projectName=null;
+        if (value.projectName === '请选择Project') {
+          value.projectName = null;
+        }
+        if (value.dsName === '请选择DataSource') {
+          value.dsName = null;
         }
         onSearch({ ...fullpullParams, ...value }, true)
       }
     })
   }
 
-  render () {
+  render() {
     const { getFieldDecorator } = this.props.form
-    const {query} = this.props
-    const {dataSourceList, projectList} = this.props
-    const project = projectList ? [{projectName: '请选择Project'}, ...projectList] : [{projectName: '请选择Project'}]
-    const dataSource = dataSourceList ? [{dsName: '请选择DataSource'}, ...dataSourceList.map(ds => ({dsName:ds.dsName} ))] : [{dsName: '请选择DataSource'}]
+    const { query } = this.props
+    const { dataSourceList, projectList } = this.props
+    const project = projectList ? [{ projectName: '请选择Project' }, ...projectList] : [{ projectName: '请选择Project' }]
+    const dataSource = dataSourceList ? [{ dsName: '请选择DataSource' }, ...dataSourceList.map(ds => ({ dsName: ds.dsName }))] : [{ dsName: '请选择DataSource' }]
 
     return (
       <div className="form-search">
@@ -62,7 +77,7 @@ export default class ProjectFullpullSearch extends Component {
                     placeholder="Select Project"
                   >
                     {project.map(item => (
-                      <Option value={`${item.projectName}`} key={`${item.projectName ? item.projectName: 'projectName'}`}>
+                      <Option value={`${item.projectName}`} key={`${item.projectName ? item.projectName : 'projectName'}`}>
                         {item.projectName}
                       </Option>
                     ))}
@@ -71,6 +86,45 @@ export default class ProjectFullpullSearch extends Component {
               </FormItem>
             </Col>
             <Col span={18} className={styles.formRight}>
+              <FormItem
+                label={
+                  <FormattedMessage
+                    id="app.common.orderColumn"
+                    defaultMessage="排序列"
+                  />
+                }
+              >
+                {getFieldDecorator('orderBy', {
+                  rules: [
+                    {
+                      message: '请选择消息类型'
+                    }
+                  ]
+                })(
+                  <Select
+                    showSearch
+                    optionFilterProp='children'
+                    className={styles.select}
+                    placeholder="Select orderColumn"
+                  >
+                    {this.orderColumns.map(item => (
+                      <Option value={item.value} key={item.value}>
+                        {item.text}
+                      </Option>
+                    ))}
+                  </Select>
+                )}
+              </FormItem>
+              <FormItem>
+                {getFieldDecorator('id', {
+                  initialValue: query.id
+                })(<Input className={styles.input} placeholder="ID" />)}
+              </FormItem>
+              <FormItem>
+                {getFieldDecorator('targetSinkTopic', {
+                  initialValue: query.targetSinkTopic
+                })(<Input className={styles.input} placeholder="targetSinkTopic" />)}
+              </FormItem>
               <FormItem>
                 {getFieldDecorator('dsName', {
                   initialValue: query.dsName

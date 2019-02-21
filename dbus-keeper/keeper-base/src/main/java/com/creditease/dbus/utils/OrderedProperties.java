@@ -25,6 +25,7 @@ public class OrderedProperties {
     }
 
     public static void formatToMap(String dataString) {
+        dataString = dataString.replace("\r", "");
         String[] split = dataString.split("\n");
         for (String s : split) {
             if (StringUtils.isBlank(s) || s.startsWith("#")) {

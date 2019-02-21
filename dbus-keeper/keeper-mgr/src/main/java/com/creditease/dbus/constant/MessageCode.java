@@ -62,6 +62,7 @@ public class MessageCode {
     public static final int TABLE_RESOURCE_FULL_PULL_FALSE = 14008;
     public static final int TABLE_OUTPUT_TOPIC_ERROR = 14009;
     public static final int PLEASE_TRY_AGAIN_LATER = 14010;
+    public static final int CREATE_DASHBOARD_ERROR = 14011;
 
     //Table module code 15xxx
     public static final int TABLE_NOT_FOUND_BY_ID = 15001;
@@ -110,6 +111,9 @@ public class MessageCode {
     public static final int EXCEPTION_ON_SEND_MESSAGE = 18003;
     public static final int LINE_NUMBER_IS_WRONG = 18004;
     public static final int NO_AUTHORITY_FOR_THIS_TOPIC = 18005;
+    public static final int FULLPULL_TOPO_IS_NOT_RUNNING = 18006;
+    public static final int TOPO_TYPE_AND_DSTYPE_NOT_MATCH = 18007;
+    public static final int UNSUPPORTED_CTRL_MESSAGE_TYPES = 18008;
 
     //Project resource module
     public static final int PROJECT_RESOURCE_IS_USING = 19001;
@@ -120,6 +124,18 @@ public class MessageCode {
     //Project module
     public static final int PROJECT_INACTIVE = 21001;
     public static final int PROJECT_NOT_ALLOWED_DELETED = 21002;
+
+    //ogg canal module
+    public static final int STOP_REPLICAT_ERROR = 22001;
+    public static final int START_REPLICAT_ERROR = 22002;
+    public static final int DEPLOY_REPLICAT_ERROR = 22003;
+    public static final int ADD_REPLICAT_ERROR = 22004;
+    public static final int SSH_CONF_ERROR = 22005;
+    public static final int DEPLOY_CANAL_ERROR = 22006;
+
+    //fullpull
+    public static final int ILLEGAL_CONTROL_MESSAGE = 23001;
+    public static final int EXCEPTION_WHEN_GOLBAL_FULLPULL = 23002;
 
     // project topo module code 3xxxx
     public static final int ACHIEVE_TOPOLOGY_MAX_COUNT = 30001;
@@ -141,5 +157,7 @@ public class MessageCode {
     public static final int CONVERT_AND_EFFECT_ALL_SUCCESS = 40010;
     public static final int CONVERT_AND_EFFECT_PART_SUCCESS = 40011;
     public static final int CONVERT_AND_EFFECT_ALL_FAIL = 40012;
+    public static final int SESSION_IS_NOT_EXISTS = 40013;
+    public static final int ENCODE_PLUGINS_NOT_EXISTS = 40014;
 
 }

@@ -21,8 +21,11 @@
 package com.creditease.dbus.service.source;
 
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 public class MongoSourceFetcher {
@@ -31,8 +34,16 @@ public class MongoSourceFetcher {
         int ret;
         MongoClient client = null;
         try {
-            MongoClientURI uri = new MongoClientURI(map.get("URL").toString());
-            client = new MongoClient(uri);
+            String url = map.get("URL").toString();
+            String user = map.get("user").toString();
+            String password = map.get("password").toString();
+            MongoCredential credential = MongoCredential.createCredential(user, "admin", password.toCharArray());
+            ArrayList<ServerAddress> serverAddresses = new ArrayList<>();
+            for (String urlOne : url.split(",")) {
+                String[] host_port = urlOne.split(":");
+                serverAddresses.add(new ServerAddress(host_port[0], Integer.parseInt(host_port[1])));
+            }
+            client = new MongoClient(serverAddresses, Arrays.asList(credential));
 
             ret = 0;
             for (String name : client.listDatabaseNames()) {

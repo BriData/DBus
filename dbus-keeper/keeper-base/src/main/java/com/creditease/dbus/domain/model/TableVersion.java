@@ -21,6 +21,7 @@
 package com.creditease.dbus.domain.model;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Shrimp on 16/9/8.
@@ -38,6 +39,16 @@ public class TableVersion {
     private Long eventPos;
     private Date updateTime;
     private String comments;
+
+    private List<TableVersion> tableVersions;
+
+    public List<TableVersion> getTableVersions() {
+        return tableVersions;
+    }
+
+    public void setTableVersions(List<TableVersion> tableVersions) {
+        this.tableVersions = tableVersions;
+    }
 
     public Integer getId() {
         return id;

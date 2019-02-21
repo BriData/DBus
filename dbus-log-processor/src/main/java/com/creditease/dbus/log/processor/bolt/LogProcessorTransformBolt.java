@@ -393,21 +393,30 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
             } else if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
                 timeStamp = Long.valueOf(data.getRecordMap().get("timestamp"));
             }
-            List<Object> values = new ArrayList<>();
-            Long ums_id = (timeStamp - 1483200000000L) << 22 | (data.getPartition() << 18) | (data.getOffset() % 262144);
-            values.add(ums_id);
-            values.add(DateUtil.convertLongToStr4Date(timeStamp));
-            values.add("i");
-            values.add(String.valueOf(inner.zkHelper.getZkservice().nextValue(buildNameSpaceForZkUidFetch(dsName))));
 
-            // 设置其它field
-            for (String strField : data.getValue()) {
-                Field field = JSON.parseObject(strField, Field.class);
-                if (idx == 0)
-                    builder.appendSchema(field.getName(), convertProcessorLogDataType(field.getType()), false);
-                values.add(field.getValue());
+            try {
+                List<Object> values = new ArrayList<>();
+                Long ums_id = (timeStamp - 1483200000000L) << 22 | (data.getPartition() << 18) | (data.getOffset() % 262144);
+                values.add(ums_id);
+                values.add(DateUtil.convertLongToStr4Date(timeStamp));
+                values.add("i");
+                values.add(String.valueOf(inner.zkHelper.getZkservice().nextValue(buildNameSpaceForZkUidFetch(dsName))));
+
+                // 设置其它field
+                for (String strField : data.getValue()) {
+                    Field field = JSON.parseObject(strField, Field.class);
+                    if (idx == 0)
+                        builder.appendSchema(field.getName(), convertProcessorLogDataType(field.getType()), false);
+                    values.add(field.getValue());
+                }
+                builder.appendPayload(values.toArray());
+            } catch (IllegalArgumentException e) {
+                logger.error("IllegalArgumentException : {}", e);
+                logger.info("schema info: {}", builder.getMessage().getSchema().toString());
+                logger.info("values info: {}", data.getValue().toString());
+            } catch (Exception e) {
+                logger.error("生成ums出错：{}", e);
             }
-            builder.appendPayload(values.toArray());
             idx++;
         }
         return builder.getMessage();

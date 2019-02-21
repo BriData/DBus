@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ControlType;
@@ -105,10 +106,12 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
                             isCtrl = false;
                             processData(record);
                         }
-                        doAck(isCtrl, record.topic(), record.partition(), record.offset(), consumer);
+                        if (!isReload)
+                            doAck(isCtrl, record.topic(), record.partition(), record.offset(), consumer);
                     } catch (Exception e) {
                         logger.error("process record error.", e);
-                        doException(isCtrl, record.topic(), record.partition(), record.offset(), consumer);
+                        if (!isReload)
+                            doException(isCtrl, record.topic(), record.partition(), record.offset(), consumer);
                     }
                     if (isReload)
                         break;
@@ -346,7 +349,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
         if (sinks != null) {
             Sink delSink = null;
             for (Sink sink : sinks) {
-                String wkNs = StringUtils.joinWith(",", sink.getDsName(), sink.getSchemaName(), sink.getTableName());
+                String wkNs = StringUtils.joinWith(".", sink.getDsName(), sink.getSchemaName(), sink.getTableName());
                 if (StringUtils.equals(wkNs, namespace)) {
                     delSink = sink;
                     break;
@@ -410,6 +413,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
                     props.setProperty("bootstrap.servers", sink.getUrl());
                     props.setProperty("group.id", StringUtils.joinWith("-", props.getProperty("group.id"), "monitor"));
                     props.setProperty("client.id", StringUtils.joinWith("-", props.getProperty("client.id"), "monitor"));
+                    logger.info("monitor spout create consumer 1.");
                     KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(props);
                     consumerMap.put(sink.getUrl(), consumer);
                     Set<String> topics = new HashSet<>();
@@ -441,16 +445,16 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
             }
         }
 
-        if (!urlTopicsMap.containsKey(bootstrapServers)) {
+        if (!isCtrl && !consumerMap.containsKey(bootstrapServers)) {
             consumerConf.setProperty("group.id", StringUtils.joinWith("-", consumerConf.getProperty("group.id"), "monitor"));
             consumerConf.setProperty("client.id", StringUtils.joinWith("-", consumerConf.getProperty("client.id"), "monitor"));
+            logger.info("monitor spout create consumer 2.");
             KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerConf);
             consumerMap.put(bootstrapServers, consumer);
             List<TopicPartition> assignTopics = new ArrayList<>();
             assignTopics(consumer.partitionsFor(obtainCtrlTopic()), assignTopics);
             consumer.assign(assignTopics);
-            if (!isCtrl)
-                consumer.seekToEnd(monitorSpoutConfig.getTopicMap().get(obtainCtrlTopic()));
+            consumer.seekToEnd(monitorSpoutConfig.getTopicMap().get(obtainCtrlTopic()));
         }
 
         // 当发生控制时，重新验证所需要的kafka url和已生成的consumer是否一致
@@ -460,14 +464,15 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
                 continue;
             if (!urlTopicsMap.containsKey(url)) {
                 KafkaConsumer<String, byte[]> consumer = consumerMap.get(url);
-                consumerMap.remove(url);
                 consumer.close();
+                consumerMap.remove(url);
             }
         }
 
         if (!isCtrl)
             urls = new HashSet<>(consumerMap.keySet());
 
+        logger.info("urls: {}", JSON.toJSONString(urls));
         logger.info("consumer map keys: {}", JSONObject.toJSONString(consumerMap.keySet()));
     }
 

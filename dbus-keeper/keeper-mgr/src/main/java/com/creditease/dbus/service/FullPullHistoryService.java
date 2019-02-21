@@ -101,6 +101,7 @@ public class FullPullHistoryService {
                 if (endTime != null && StringUtils.isNotBlank(endTime.toString())) {
                     try {
                         formatter.parse(endTime.toString());
+                        updateFlag = false;
                     } catch (Exception e) {
                         updateFlag = true;
                     }
@@ -113,7 +114,6 @@ public class FullPullHistoryService {
             if (updateFlag) {
                 monitorData.put("UpdateTime", currentTimeStampString);
                 monitorData.put("EndTime", currentTimeStampString);
-                monitorData.put("ErrorMsg", "一键清除全量报警,pending任务状态置为abort,该任务需要重新拉取!");
                 monitorData.put("Status", "abort");
                 String format = JsonFormatUtils.toPrettyFormat(JSON.toJSONString(monitorData, SerializerFeature.WriteMapNullValue));
                 zkService.setData(path, format.getBytes(KeeperConstants.UTF8));

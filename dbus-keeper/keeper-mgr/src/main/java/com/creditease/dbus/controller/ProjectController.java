@@ -210,11 +210,16 @@ public class ProjectController extends BaseController {
     @GetMapping("/delete/{id}")
     @ProjectAuthority
     public ResultEntity deleteById(@PathVariable("id") int id) {
-        //判断能否直接删除project
-        if(service.getRunningTopoTables(id) != 0){
-            return resultEntityBuilder().status(PROJECT_NOT_ALLOWED_DELETED).build();
+        try {
+            //判断能否直接删除project
+            if(service.getRunningTopoTables(id) != 0){
+                return resultEntityBuilder().status(PROJECT_NOT_ALLOWED_DELETED).build();
+            }
+            return service.deleteProject(id);
+        } catch (Exception e) {
+            logger.error("Exception when delete project", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
-        return service.deleteProject(id);
     }
 
     @PostMapping("/status")

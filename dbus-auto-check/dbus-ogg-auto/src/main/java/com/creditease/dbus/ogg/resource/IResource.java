@@ -7,6 +7,6 @@ package com.creditease.dbus.ogg.resource;
  */
 public interface IResource<T> {
 
-    public T load();
+    T load() throws Exception;
 
 }

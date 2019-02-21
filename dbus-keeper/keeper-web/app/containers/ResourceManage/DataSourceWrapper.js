@@ -2,7 +2,7 @@ import React, {PropTypes, Component} from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
-import {message} from 'antd'
+import {message, Modal} from 'antd'
 // 导入自定义组件
 import {
   Bread,
@@ -12,7 +12,9 @@ import {
   DataSourceManageTopologyModal,
   DataSourceManageMountModal,
   DataSourceManageAddModal,
-  DataSourceManageRerunModal
+  DataSourceManageRerunModal,
+  DataSourceManageBatchAddTableModal,
+  DataSourceManagePreProcessModal
 } from '@/app/components'
 // selectors
 import {DataSourceModel,JarManageModel} from './selectors'
@@ -38,7 +40,8 @@ import {
   DATA_SOURCE_UPDATE_API,
   DATA_SOURCE_DELETE_API,
   DATA_SOURCE_ADD_SCHEMA_TABLE_LIST_API,
-  TOPO_JAR_START_API
+  TOPO_JAR_START_API,
+  DATA_SOURCE_GENERATE_OGG_TRAIN_NAME_API
 } from './api'
 import {
   GET_MOUNT_PROJECT_API
@@ -93,6 +96,12 @@ export default class DataSourceWrapper extends Component {
       rerunModalKey: 'rerunModalKey',
       rerunModalVisible: false,
       rerunModalRecord: {},
+
+      batchAddTableModalKey: 'batchAddTableModalKey',
+      batchAddTableModalVisible: false,
+
+      preProcessModalKey: 'preProcessModalKey',
+      preProcessModalVisible: false
     }
   }
 
@@ -270,6 +279,46 @@ export default class DataSourceWrapper extends Component {
     })
   }
 
+  handleOpenBatchAddTableModal = () => {
+    this.setState({
+      batchAddTableModalKey: this.handleRandom('batchAddTableModalKey'),
+      batchAddTableModalVisible: true
+    })
+  }
+
+  handleCloseBatchAddTableModal = () => {
+    this.setState({
+      batchAddTableModalVisible: false
+    })
+  }
+
+  handleOpenPreProcessModal = () => {
+    this.setState({
+      preProcessModalKey: this.handleRandom('preProcessModalKey'),
+      preProcessModalVisible: true
+    })
+  }
+
+  handleClosePreProcessModal = () => {
+    this.setState({
+      preProcessModalVisible: false
+    })
+  }
+
+  handleGenerateOggTrailName = () => {
+    Request(DATA_SOURCE_GENERATE_OGG_TRAIN_NAME_API)
+      .then(res => {
+        if (res && res.status === 0) {
+          Modal.info({
+            content: <span style={{fontSize: 14 }}>OGG Trail前缀：{res.payload}</span>,
+          });
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
   render() {
     console.info(this.props)
     const {locale, dataSourceData} = this.props
@@ -293,6 +342,8 @@ export default class DataSourceWrapper extends Component {
 
     const {mountModalContent, mountModalVisible, mountModalKey} = this.state
     const {rerunModalVisible, rerunModalRecord, rerunModalKey} = this.state
+    const {batchAddTableModalKey, batchAddTableModalVisible} = this.state
+    const {preProcessModalKey, preProcessModalVisible} = this.state
     const breadSource = [
       {
         path: '/resource-manage',
@@ -320,6 +371,9 @@ export default class DataSourceWrapper extends Component {
           params={dataSourceParams}
           onSearch={this.handleSearch}
           onCreateDataSource={this.handleCreateDataSource}
+          onBatchAddTable={this.handleOpenBatchAddTableModal}
+          onPreProcess={this.handleOpenPreProcessModal}
+          onGenerateOggTrailName={this.handleGenerateOggTrailName}
         />
         <DataSourceManageGrid
           dataSourceList={dataSourceList}
@@ -378,6 +432,16 @@ export default class DataSourceWrapper extends Component {
           visible={rerunModalVisible}
           record={rerunModalRecord}
           onClose={this.handleCloseRerunModal}
+        />
+        <DataSourceManageBatchAddTableModal
+          key={batchAddTableModalKey}
+          visible={batchAddTableModalVisible}
+          onClose={this.handleCloseBatchAddTableModal}
+        />
+        <DataSourceManagePreProcessModal
+          key={preProcessModalKey}
+          visible={preProcessModalVisible}
+          onClose={this.handleClosePreProcessModal}
         />
       </div>
     )

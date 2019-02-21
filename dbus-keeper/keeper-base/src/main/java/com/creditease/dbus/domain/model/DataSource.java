@@ -41,6 +41,8 @@ public class DataSource {
 
     private String dsType;
 
+    private String instanceName;
+
     private String status;
 
     private String dsDesc;
@@ -65,6 +67,10 @@ public class DataSource {
 
     private String dsPartition;
 
+    private String canalUser;
+
+    private String canalPass;
+
     public Integer getId() {
         return id;
     }
@@ -87,6 +93,14 @@ public class DataSource {
 
     public void setDsType(String dsType) {
         this.dsType = dsType;
+    }
+
+    public String getInstanceName() {
+        return instanceName;
+    }
+
+    public void setInstanceName(String instanceName) {
+        this.instanceName = instanceName;
     }
 
     public String getStatus() {
@@ -183,5 +197,21 @@ public class DataSource {
 
     public void setDsPartition(String dsPartition) {
         this.dsPartition = dsPartition;
+    }
+
+    public String getCanalUser() {
+        return canalUser;
+    }
+
+    public void setCanalUser(String canalUser) {
+        this.canalUser = canalUser;
+    }
+
+    public String getCanalPass() {
+        return canalPass;
+    }
+
+    public void setCanalPass(String canalPass) {
+        this.canalPass = canalPass;
     }
 }

@@ -45,4 +45,6 @@ public interface ProjectTopoTableMetaVersionMapper {
                               @Param("topoId") int topoId,
                               @Param("tableId") int tableId,
                               @Param("columnName") String columnName);
+
+	int deleteByProjectId(int projectId);
 }

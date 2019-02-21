@@ -21,6 +21,7 @@
 package com.creditease.dbus.service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.creditease.dbus.base.ResultEntity;
@@ -45,7 +46,8 @@ import com.creditease.dbus.utils.OrderedProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Joiner;
 import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -56,7 +58,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -70,12 +75,12 @@ import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTS
 public class TableService {
     @Autowired
     private RequestSender sender;
-
     @Autowired
     private IZkService zkService;
-
     @Autowired
     private ToolSetService toolSetService;
+    @Autowired
+    private AutoDeployDataLineService autoDeployDataLineService;
 
     private static Logger logger = LoggerFactory.getLogger(TableService.class);
     private static final String INITIAL_LOAD_DATA = "load-data";
@@ -84,9 +89,9 @@ public class TableService {
     public Integer activateDataTable(Integer id, Map<String, String> map) throws Exception {
         ActiveTableParam param;
         try {
-             param = ActiveTableParam.build(map);
-        }catch (Exception e){
-            logger.error("activateDataTable : param error,tableId :{}, param:{}",id,map);
+            param = ActiveTableParam.build(map);
+        } catch (Exception e) {
+            logger.error("activateDataTable : param error,tableId :{}, param:{}", id, map);
             return MessageCode.TABLE_PARAM_FORMAT_ERROR;
         }
         logger.info("Receive activateDataTable request, parameter[id:{}, param:{}]", id, JSON.toJSONString(param));
@@ -221,18 +226,34 @@ public class TableService {
 
         //TODO mongo的表更新完后，自动reload
         DataTable table = getTableById(dataTable.getId());//Integer dsId, String dsName, String dsType) {
-        if(DbusDatasourceType.MONGO == DbusDatasourceType.parse(table.getDsType())
+        if (DbusDatasourceType.MONGO == DbusDatasourceType.parse(table.getDsType())
                 && KeeperConstants.OK.equals(table.getStatus())) {
-            toolSetService.reloadMongoCatch(table.getDsId(),table.getDsName(),table.getDsType());
+            toolSetService.reloadMongoCatch(table.getDsId(), table.getDsName(), table.getDsType());
         }
         return result.getBody();
 
 
     }
 
-    public ResultEntity deleteTable(int tableId) {
+    public ResultEntity deleteTable(int tableId) throws Exception {
+        DataTable table = this.getTableById(tableId);
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/delete/{0}", tableId);
-        return result.getBody();
+        if (result.getBody().getStatus() != 0) {
+            return result.getBody();
+        }
+        ResultEntity resultEntity = new ResultEntity();
+        if (table.getDsType().equalsIgnoreCase("oracle")) {
+            String dsName = table.getDsName();
+            if (autoDeployDataLineService.isAutoDeployOgg(dsName)) {
+                String schemaName = table.getSchemaName();
+                HashMap<String, String> map = new HashMap<>();
+                map.put("dsName", dsName);
+                map.put("schemaName", schemaName);
+                map.put("tableNames", table.getTableName());
+                resultEntity.setStatus(autoDeployDataLineService.deleteOracleTable(map));
+            }
+        }
+        return resultEntity;
     }
 
     public ResultEntity confirmStatusChange(int tableId) {
@@ -290,7 +311,7 @@ public class TableService {
      * @param schemaId 数据源ID
      * @return 返回满足条件的EncodeColumn列表
      */
-    private DataSchema getDataSchemaById(Integer schemaId) {
+    public DataSchema getDataSchemaById(Integer schemaId) {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/dataschema/get/{0}", schemaId);
         return result.getBody().getPayload(DataSchema.class);
     }
@@ -713,7 +734,8 @@ public class TableService {
         //管理员获取的是不带topoName的namespace
         if ("admin".equalsIgnoreCase(userRole)) {
             List<DataTable> tables = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findAllTables")
-                    .getBody().getPayload(new TypeReference<List<DataTable>>() {});
+                    .getBody().getPayload(new TypeReference<List<DataTable>>() {
+                    });
             boolean flag = false;
             for (DataTable table : tables) {
                 if (table.getTableName().equals(table.getPhysicalTableRegex())) {
@@ -740,7 +762,8 @@ public class TableService {
         } else {
             //租户获取的是带topoName的namespace
             List<HashMap<String, Object>> list = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findTablesByUserId/{0}", userId)
-                    .getBody().getPayload(new TypeReference<List<HashMap<String, Object>>>() {});
+                    .getBody().getPayload(new TypeReference<List<HashMap<String, Object>>>() {
+                    });
             boolean flag = false;
             for (HashMap<String, Object> table : list) {
                 if (table.get("table_name").equals(table.get("physical_table_regex"))) {
@@ -767,20 +790,96 @@ public class TableService {
         return listRider;
     }
 
-    public int rerun(Integer dsId, String dsName, String schemaName, String tableName, Long offset) throws Exception{
+    public int rerun(Integer dsId, String dsName, String schemaName, String tableName, Long offset) throws Exception {
         String path = "/DBus/Topology/" + dsName + "-dispatcher/dispatcher.raw.topics.properties";
         byte[] data = zkService.getData(path);
         OrderedProperties orderedProperties = new OrderedProperties(new String(data));
         Object value = orderedProperties.get("dbus.dispatcher.offset");
-        if(StringUtils.isNotBlank(value.toString())){
+        if (value != null && StringUtils.isNotBlank(value.toString()) && !"none".equals(value)) {
             return MessageCode.PLEASE_TRY_AGAIN_LATER;
         }
         StringBuilder sb = new StringBuilder();
         sb.append(dsName).append(".").append(schemaName.toLowerCase()).append(".").append(tableName.toLowerCase()).append("->").append(offset);
         orderedProperties.put("dbus.dispatcher.offset", sb.toString());
         zkService.setData(path, orderedProperties.toString().getBytes());
-        toolSetService.reloadConfig(dsId,dsName,"DISPATCHER_RELOAD_CONFIG");
+        toolSetService.reloadConfig(dsId, dsName, "DISPATCHER_RELOAD_CONFIG");
         return 0;
+    }
+
+    public ResultEntity batchStartTableByTableIds(ArrayList<Integer> tableIds) {
+        return startOrStopTableByTableIds(tableIds,"ok");
+    }
+
+    public ResultEntity batchStopTableByTableIds(ArrayList<Integer> tableIds) {
+        return startOrStopTableByTableIds(tableIds,"abort");
+    }
+
+    private ResultEntity startOrStopTableByTableIds(ArrayList<Integer> tableIds,String status) {
+        String query = "/tables/startOrStopTableByTableIds?status=" + status;
+        ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, query, tableIds);
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()) {
+            logger.error("update table status by table id list error {}", tableIds);
+            return result.getBody();
+        }
+        result = sender.post(ServiceNames.KEEPER_SERVICE, "/tables/getDataSourcesByTableIds", tableIds);
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()) {
+            logger.error("get datasource by table id list error {}", tableIds);
+            return result.getBody();
+        }
+        List<Map<String, Object>> dataSources = result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {
+        });
+        for (Map<String, Object> map : dataSources) {
+            int i = toolSetService.reloadConfig((Integer) map.get("id"), (String) map.get("ds_name"), ToolSetService.APPENDER_RELOAD_CONFIG);
+            if (i != 0) {
+                logger.error("error when send APPENDER_RELOAD_CONFIG {}", map);
+                ResultEntity resultEntity = new ResultEntity(0, null);
+                resultEntity.setStatus(i);
+                return resultEntity;
+            }
+        }
+        logger.info("batch start tables by table id list success .tableids:{}", tableIds);
+        return result.getBody();
+    }
+
+    public ResultEntity importRulesByTableId(Integer tableId, MultipartFile uploadFile) throws Exception{
+        File saveDir = new File(SystemUtils.getJavaIoTmpDir(), String.valueOf(System.currentTimeMillis()));
+        if (!saveDir.exists()) saveDir.mkdirs();
+        File tempFile = new File(saveDir, uploadFile.getOriginalFilename());
+        uploadFile.transferTo(tempFile);
+        StringBuilder sb = new StringBuilder();
+        BufferedReader br = null;
+        try {
+             br = new BufferedReader(new FileReader(tempFile));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } finally {
+            if (br != null) {
+                br.close();
+            }
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
+        return sender.post(ServiceNames.KEEPER_SERVICE, "/tables/importRulesByTableId/"+tableId, sb.toString()).getBody();
+    }
+
+    public void exportRulesByTableId(Integer tableId, HttpServletResponse response) {
+        ResultEntity body = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/exportRulesByTableId/{0}", tableId).getBody();
+        String payload = body.getPayload(String.class);
+        String fileName = System.currentTimeMillis() + ".json";
+        response.setHeader("content-type", "application/octet-stream");
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+        OutputStream os = null;
+        try {
+            os = response.getOutputStream();
+            os.write(payload.getBytes(KeeperConstants.UTF8));
+            os.flush();
+        } catch (IOException e) {
+            logger.error("Exception when export rules by tableid {}", tableId);
+        }
     }
 
     public static class InitialLoadStatus {
@@ -854,17 +953,17 @@ public class TableService {
     }*/
 
     public ResultEntity getDSList() {
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "tables/DSList");
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/DSList");
         return result.getBody();
     }
 
     public ResultEntity findById(Integer tableId) {
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "tables/{tableId}", tableId);
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/{tableId}", tableId);
         return result.getBody();
     }
 
     public DataTable findTableById(Integer tableId) {
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "tables/{tableId}", tableId);
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/{tableId}", tableId);
         return result.getBody().getPayload(DataTable.class);
     }
 

@@ -94,7 +94,9 @@ public class InitZooKeeperNodesTemplate {
 			"HeartBeat/ProjectMonitor",
 			"HeartBeat/Control",
 			"Commons/global.properties",
-			"ConfTemplates/Extractor/placeholder-mysql-extractor/filter.properties"
+			"ConfTemplates/Extractor/placeholder-mysql-extractor/filter.properties",
+			"Commons/auto-deploy-ogg.conf",
+			"Commons/auto-deploy-canal.conf"
 	};
 
 	public static String[] ZK_PROTECT_NODES_PATHS = {

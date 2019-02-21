@@ -21,12 +21,16 @@
 package com.creditease.dbus.heartbeat.event.impl;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.FullPullNodeDetailVo;
 import com.creditease.dbus.components.sms.DBusSmsFactory;
 import com.creditease.dbus.components.sms.ISms;
@@ -44,13 +48,13 @@ import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
 import com.creditease.dbus.heartbeat.util.MsgUtil;
 import com.creditease.dbus.heartbeat.vo.CheckVo;
-import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
 import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 
@@ -163,7 +167,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                     if (fpNodeDetail == null || StringUtils.isNotBlank(fpNodeDetail.getEndTime()))
                         continue;
 
-                    if (StringUtils.isNotBlank(fpNodeDetail.getErrorMsg())) {
+                    /*if (StringUtils.isNotBlank(fpNodeDetail.getErrorMsg())) {
                         LOG.error("全量拉取执行过程中key:{},发生错误:{}.", path, fpNodeDetail.getErrorMsg());
                         // 准备通知storm
                         String type = ControlType.MONITOR_ALARM.name();
@@ -180,7 +184,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                         } else {
                             LOG.error("key:{},对应的数据源为null.", db_schema[2]);
                         }
-                    }
+                    }*/
 
                     if (!isRun.get())
                         break;
@@ -277,20 +281,37 @@ public class CheckFullPullEvent extends AbstractEvent {
                                     email = map.get("Email");
                                 }
                             }
-                            String projectRelatedEmail = getProjectRelatedFullpullEmail(db_schema[2], db_schema[3], db_schema[4]);
-                            if (StringUtils.isNotBlank(projectRelatedEmail)) {
-                                email += "," + projectRelatedEmail;
+
+                            if (ArrayUtils.getLength(db_schema) == 8) {
+                                // eg: /DBus/FullPuller/Projects/P000123_12/db8_sh_s/NEWDX_SH/TEAM/2019-01-03 14.15.33.131 - 0
+                                String projectRelatedEmail = getProjectRelatedFullpullEmail(db_schema[4], db_schema[5], db_schema[6]);
+                                if (StringUtils.isNotBlank(projectRelatedEmail)) {
+                                    email += "," + projectRelatedEmail;
+                                }
                             }
+
                             if (StringUtils.isNotBlank(email)) {
                                 LOG.info("[check-fullpull-event] 接收拉取全量邮件报警收件人EMail地址:{}.", email);
                                 IMail mail = DBusMailFactory.build();
                                 String subject = "DBus全量监控报警 ";
                                 // String contents = MsgUtil.format(Constants.MAIL_FULL_PULLER, path, check.getAlarmCnt(), check.getTimeoutCnt());
-                                String contents = MsgUtil.format(Constants.MAIL_FULL_PULLER_NEW,
-                                        "DBus全量监控报警", db_schema[2], db_schema[3], db_schema[4], db_schema[5],
-                                        DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
-                                        IMail.ENV,
-                                        fpNodeDetail.toHtml());
+                                String contents = StringUtils.EMPTY;
+                                if (ArrayUtils.getLength(db_schema) == 6) {
+                                    // eg: /DBus/FullPuller/db8_sh_s/NEWDX_SH/TEAM/2019-01-03 14.15.33.131 - 0
+                                    contents = MsgUtil.format(Constants.MAIL_FULL_PULLER_NEW,
+                                            "DBus全量监控报警", db_schema[2], db_schema[3], db_schema[4], db_schema[5],
+                                            DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
+                                            IMail.ENV,
+                                            fpNodeDetail.toHtml());
+                                } else if (ArrayUtils.getLength(db_schema) == 8) {
+                                    // eg: /DBus/FullPuller/Projects/P000123_12/db8_sh_s/NEWDX_SH/TEAM/2019-01-03 14.15.33.131 - 0
+                                    contents = MsgUtil.format(Constants.MAIL_FULL_PULLER_NEW_PROJECT,
+                                            "DBus全量监控报警", db_schema[3], db_schema[4], db_schema[5], db_schema[6], db_schema[7],
+                                            DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
+                                            IMail.ENV,
+                                            fpNodeDetail.toHtml());
+                                }
+
                                 Message msg = new Message();
                                 msg.setAddress(email);
                                 msg.setContents(contents);
@@ -307,7 +328,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                             }
 
                             // 准备通知storm
-                            String type = ControlType.MONITOR_ALARM.name();
+                            /*String type = ControlType.MONITOR_ALARM.name();
                             ControlMessage cm = new ControlMessage(System.currentTimeMillis(),
                                     type, "heartbeat");
                             cm.addPayload(Constants.CONFIG_KAFKA_CONTROL_PAYLOAD_DB_KEY, db_schema[2]);
@@ -321,7 +342,7 @@ public class CheckFullPullEvent extends AbstractEvent {
 
                             } else {
                                 LOG.error("key:{}对应的数据源为null.", db_schema[2]);
-                            }
+                            }*/
                         }
                         LOG.info(check.toString());
                     } else {
@@ -349,7 +370,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                 Collections.addAll(emails, emailsVO.getFullPullerEmails());
             }
         }
-        return StringUtils.join(emails, ",");
+        return StringUtils.join(emails, ";");
     }
 
 }

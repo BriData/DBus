@@ -50,6 +50,7 @@ public class MessageCode {
     //FullPull module code 12xxxx
     public static final int USER_ROLE_EMPTY = 120001;
     public static final int USER_ID_EMPTY = 120002;
+    public static final int FULL_PULL_CODITION_ERROR = 120003;
 
     //ProjectTable module code 13xxx
     public static final int TABLE_ID_EMPTY = 130001;
@@ -81,6 +82,7 @@ public class MessageCode {
     public static final int USE_THE_DIFF_CONTRAST  = 170004;
     public static final int FETCH_TABLE_ERROR  = 170005;
     public static final int SOURCE_TABLE_INSERT_ERROR  = 170006;
+    public static final int TABLE_SUPPLEMENTAL_LOG_NOT_OPEN  = 170007;
 
     //Jar module code 18xxx
     public static final int PLUGIN_IS_USING  = 180001;

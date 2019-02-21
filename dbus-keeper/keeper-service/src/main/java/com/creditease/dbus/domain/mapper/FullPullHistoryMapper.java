@@ -21,7 +21,6 @@
 package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.domain.model.FullPullHistory;
-import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;

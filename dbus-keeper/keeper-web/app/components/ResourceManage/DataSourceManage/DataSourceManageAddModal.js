@@ -217,15 +217,6 @@ export default class DataSourceManageAddModal extends Component {
         const {tableInfos} = this.state
         tableInfos[currentSchema] = filteredSelectedRows
 
-        // 如果选中的所有内容都是已经存在的，则删除schemaInfos和tableInfos相关信息
-        if (filteredSelectedRows.length === 0) {
-          delete schemaInfos[currentSchema]
-          delete tableInfos[currentSchema]
-        }
-        if (selectedRows.length === 0) {
-          delete recordRowKeys[currentSchema]
-        }
-
         this.setState({recordRowKeys, schemaInfos, tableInfos})
       },
       getCheckboxProps: record => ({

@@ -72,7 +72,8 @@ public class MysqlMetaFetcher implements MetaFetcher {
                     "       t1.character_maximum_length,\n" +
                     "       t1.numeric_precision,\n" +
                     "       t1.numeric_scale,\n" +
-                    "       t1.datetime_precision,\n" +
+                    ////mysql5.5没有这一列
+                    //"       t1.datetime_precision,\n" +
                     "       t1.column_key,\n" +
                     "       t1.column_comment\n" +
                     "  from information_schema.columns t1\n" +
@@ -142,9 +143,11 @@ public class MysqlMetaFetcher implements MetaFetcher {
         } else if(rs.getObject("numeric_precision") != null) {
             cell.setDataPrecision(rs.getInt("numeric_precision"));
             cell.setDataScale(rs.getInt("numeric_scale"));
-        } else if(rs.getObject("datetime_precision") != null) {
-            cell.setDataPrecision(rs.getInt("datetime_precision"));
         }
+        //mysql5.5没有这一列
+        //else if(rs.getObject("datetime_precision") != null) {
+        //    cell.setDataPrecision(rs.getInt("datetime_precision"));
+        //}
 
         if("yes".equalsIgnoreCase(rs.getString("is_nullable"))) {
             cell.setNullAble("Y");
@@ -180,8 +183,12 @@ public class MysqlMetaFetcher implements MetaFetcher {
             ps.setString(1, schema);
             ps.setString(2, table);
             ResultSet resultSet = ps.executeQuery();
-
-            resultSet.next();
+            if (!resultSet.next()) {
+                TableComments tableComments = new TableComments();
+                tableComments.setOwner(schema);
+                tableComments.setTableName(table);
+                return tableComments;
+            }
             TableComments tableComments = new TableComments();
             tableComments.setOwner(resultSet.getString("TABLE_SCHEMA"));
             tableComments.setTableName(resultSet.getString("TABLE_NAME"));

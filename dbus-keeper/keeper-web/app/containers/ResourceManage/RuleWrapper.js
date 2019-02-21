@@ -72,7 +72,10 @@ export default class RuleWrapper extends Component {
       })
         .then(res => {
           if (res && res.status === 0) {
-            const {rules, offset, topic} = res.payload
+            let {rules, offset, topic} = res.payload
+            if (offset >= 20) {
+              offset -= 20
+            }
             this.setState({
               rules: rules.map(rule => ({
                 ...rule,
@@ -83,7 +86,7 @@ export default class RuleWrapper extends Component {
                 key: this.handleRandom('rule')
               })),
               kafkaTopic: topic,
-              kafkaOffset: offset - 20,
+              kafkaOffset: offset,
             }, () => this.handleExecuteRule([]))
           } else {
             message.warn(res.message)

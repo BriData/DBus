@@ -5,6 +5,7 @@
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
     <result column="ds_type" jdbcType="VARCHAR" property="dsType" />
+    <result column="instance_name" jdbcType="VARCHAR" property="instanceName" />
     <result column="status" jdbcType="VARCHAR" property="status" />
     <result column="ds_desc" jdbcType="VARCHAR" property="dsDesc" />
     <result column="topic" jdbcType="VARCHAR" property="topic" />
@@ -31,12 +32,12 @@
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
       SELECT LAST_INSERT_ID()
     </selectKey>
-    insert into t_dbus_datasource (ds_name, ds_type, status, 
+    insert into t_dbus_datasource (ds_name, ds_type, instance_name, status,
       ds_desc, topic, ctrl_topic, 
       schema_topic, split_topic, master_url, 
       slave_url, dbus_user, dbus_pwd, 
       update_time, ds_partition)
-    values (#{dsName,jdbcType=VARCHAR}, #{dsType,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, 
+    values (#{dsName,jdbcType=VARCHAR}, #{dsType,jdbcType=VARCHAR}, #{instanceName,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR},
       #{dsDesc,jdbcType=VARCHAR}, #{topic,jdbcType=VARCHAR}, #{ctrlTopic,jdbcType=VARCHAR}, 
       #{schemaTopic,jdbcType=VARCHAR}, #{splitTopic,jdbcType=VARCHAR}, #{masterUrl,jdbcType=VARCHAR}, 
       #{slaveUrl,jdbcType=VARCHAR}, #{dbusUser,jdbcType=VARCHAR}, #{dbusPwd,jdbcType=VARCHAR}, 
@@ -47,6 +48,7 @@
     <set>
       <if test="dsName !=null">ds_name = #{dsName,jdbcType=VARCHAR},</if>
       <if test="dsType !=null"> ds_type = #{dsType,jdbcType=VARCHAR},</if>
+      <if test="instanceName !=null"> instance_name = #{instanceName,jdbcType=VARCHAR},</if>
       <if test="status !=null">status = #{status,jdbcType=VARCHAR},</if>
       <if test="dsDesc !=null">ds_desc = #{dsDesc,jdbcType=VARCHAR},</if>
       <if test="topic !=null">topic = #{topic,jdbcType=VARCHAR},</if>
@@ -63,13 +65,13 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select id, ds_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic, 
+    select id, ds_name, instance_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic,
     master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
     from t_dbus_datasource
     where id = #{id,jdbcType=INTEGER}
   </select>
   <select id="selectAll" resultMap="BaseResultMap">
-    select id, ds_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic, 
+    select id, ds_name, instance_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic,
     master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
     from t_dbus_datasource
   </select>
@@ -97,6 +99,11 @@
     where ds_name = #{dsName,jdbcType=VARCHAR}
   </select>
 
+  <select id="getByName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select * from t_dbus_datasource
+    where ds_name = #{dsName,jdbcType=VARCHAR}
+  </select>
+
   <update id="updateDsStatusByPrimaryKey" parameterType="java.util.Map">
     update  t_dbus_datasource td
     left join  t_data_schema ts on td.id = ts.ds_id
@@ -109,5 +116,16 @@
   <select id="getDSNames" resultType="java.util.Map">
     select id dsId,ds_name,ds_type,concat(ds_type,'/',ds_name) dsTypeName, ctrl_topic,master_url, slave_url,dbus_user,dbus_pwd
     from t_dbus_datasource
+  </select>
+  <select id="getDataSourceByDsTypes" resultMap="BaseResultMap">
+    select * from t_dbus_datasource
+    where ds_type in
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </select>
+  <select id="getDataSourceByDsType" resultMap="BaseResultMap">
+    select * from t_dbus_datasource
+    where ds_type like "%"#{dsType}"%"
   </select>
 </mapper>

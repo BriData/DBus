@@ -75,12 +75,14 @@ public class FlowLineCheckService {
         try {
             retMap.put("status", true);
             Map<String, Object> infoMap = loadCheckFlowLineInfo(tableId);
+            logger.info("flow line check info: {}", JSON.toJSONString(infoMap));
+
             List<Object> listSecond = initConsumer((String) infoMap.get("topic"), "second");
             consumerSecond = (KafkaConsumer<String, byte[]>) listSecond.get(0);
             long offsetSecond = (Long) listSecond.get(1);
 
-            //List<Object> listThird = initConsumer((String) infoMap.get("src_topic"), "third");
-            List<Object> listThird = initConsumer((String) infoMap.get("topic") + ".dbus", "third");
+            List<Object> listThird = initConsumer((String) infoMap.get("src_topic"), "third");
+//            List<Object> listThird = initConsumer((String) infoMap.get("topic") + ".dbus", "third");
             consumerThird = (KafkaConsumer<String, byte[]>) listThird.get(0);
             long offsetThird = (Long) listThird.get(1);
 

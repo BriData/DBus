@@ -34,10 +34,7 @@ import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.EncodePlugins;
 import com.creditease.dbus.domain.model.Sink;
 import com.creditease.dbus.domain.model.User;
-import com.creditease.dbus.utils.ConfUtils;
-import com.creditease.dbus.utils.DBusUtils;
-import com.creditease.dbus.utils.HttpClientUtils;
-import com.creditease.dbus.utils.JsonFormatUtils;
+import com.creditease.dbus.utils.*;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -112,7 +109,7 @@ public class ConfigCenterService {
         String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
         String path = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
         String pubKeyPath = env.getProperty("pubKeyPath");
-        String s = exeCmdErrorStream(user, host, port, pubKeyPath, "cd " + path);
+        String s = SSHUtils.executeCommand(user, host, port, pubKeyPath, "cd " + path, true);
         if (s == null) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
@@ -135,7 +132,7 @@ public class ConfigCenterService {
         String heartuser = map.get("heartbeat.user");
         String heartpath = map.get("heartbeat.jar.path");
         for (String hearthost : hosts) {
-            String res = exeCmdErrorStream(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath);
+            String res = SSHUtils.executeCommand(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath, true);
             if (res == null) {
                 return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
             }
@@ -377,7 +374,7 @@ public class ConfigCenterService {
         String user = map.get(GLOBAL_CONF_KEY_STORM_SSH_USER);
         String path = map.get(GLOBAL_CONF_KEY_STORM_HOME_PATH);
         String pubKeyPath = env.getProperty("pubKeyPath");
-        String s = exeCmdErrorStream(user, host, port, pubKeyPath, "cd " + path);
+        String s = SSHUtils.executeCommand(user, host, port, pubKeyPath, "cd " + path, true);
         if (s == null) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
@@ -402,7 +399,7 @@ public class ConfigCenterService {
         String heartuser = map.get("heartbeat.user");
         String heartpath = map.get("heartbeat.jar.path");
         for (String hearthost : hosts) {
-            String res = exeCmdErrorStream(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath);
+            String res = SSHUtils.executeCommand(heartuser, hearthost, heartport, pubKeyPath, "cd " + heartpath, true);
             if (res == null) {
                 return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
             }
@@ -489,37 +486,42 @@ public class ConfigCenterService {
             String pubKeyPath = env.getProperty("pubKeyPath");
             for (String host : hosts) {
                 if (initialized) {
-                    String cmd = "kill -s TERM $(jps -l | grep 'heartbeat' | awk '{print $1}')";
-                    logger.info("cmd:{}", cmd);
-                    if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
-                        return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+                    String pid = SSHUtils.executeCommand(user, host, port, pubKeyPath,
+                            "ps -ef | grep 'com.creditease.dbus.heartbeat.start.Start' | grep -v grep | awk '{print $2}'", false);
+                    if (StringUtils.isNotBlank(pid)) {
+                        String cmd = "kill -s " + pid;
+                        logger.info("cmd:{}", cmd);
+                        if (StringUtils.isNotBlank(SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true))) {
+                            return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+                        }
                     }
-                    cmd = MessageFormat.format(" rm -rf {0};rm -rf {1}", heartPath, heartZipPath);
+                    String cmd = MessageFormat.format(" rm -rf {0};rm -rf {1}", heartPath, heartZipPath);
                     logger.info("cmd:{}", cmd);
-                    if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
-                        return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
+                    String rmResult = SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true);
+                    if(StringUtils.isNotBlank(rmResult)) {
+                        logger.warn("error when rm dbus-heartbeat-0.5.0.zip message :{}", rmResult);
                     }
                 }
                 //6.1.新建目录
                 String cmd = MessageFormat.format(" mkdir -pv {0}", path);
                 logger.info("cmd:{}", cmd);
-                if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+                if (StringUtils.isNotBlank(SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true))) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
                 //6.2.上传压缩包
-                if (uploadFile(user, host, port, pubKeyPath, ConfUtils.getParentPath() + "/dbus-heartbeat-0.5.0.zip", path) != 0) {
+                if (SSHUtils.uploadFile(user, host, port, pubKeyPath, ConfUtils.getParentPath() + "/dbus-heartbeat-0.5.0.zip", path) != 0) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
                 //6.3.解压压缩包
                 cmd = MessageFormat.format("cd {0};unzip -oq dbus-heartbeat-0.5.0.zip", path);
                 logger.info("cmd:{}", cmd);
-                if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+                if (StringUtils.isNotBlank(SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true))) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
                 //6.4启动心跳
                 cmd = MessageFormat.format("cd {0}; nohup ./heartbeat.sh >/dev/null 2>&1 & ", path + "/dbus-heartbeat-0.5.0");
                 logger.info("cmd:{}", cmd);
-                if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+                if (StringUtils.isNotBlank(SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true))) {
                     return MessageCode.HEARTBEAT_SSH_SECRET_CONFIGURATION_ERROR;
                 }
             }
@@ -551,24 +553,25 @@ public class ConfigCenterService {
             String cmd = MessageFormat.format("rm -rf {0}; rm -rf {1}; rm -rf {2};rm -rf {3}",
                     jarsPath, routerJarsPath, encodePluginsPath, baseJarsPath);
             logger.info("cmd:{}", cmd);
-            if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
-                return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
+            String rmResult = SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true);
+            if(StringUtils.isNotBlank(rmResult)){
+                logger.warn("error when rm dbus-heartbeat-0.5.0.zip message :{}", rmResult);
             }
         }
         //7.1.新建目录
         String cmd = MessageFormat.format(" mkdir -pv {0}", homePath);
         logger.info("cmd:{}", cmd);
-        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+        if (StringUtils.isNotBlank(SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true))) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
         //7.2.上传压缩包
-        if (uploadFile(user, host, port, pubKeyPath, ConfUtils.getParentPath() + "/base_jars.zip", homePath) != 0) {
+        if (SSHUtils.uploadFile(user, host, port, pubKeyPath, ConfUtils.getParentPath() + "/base_jars.zip", homePath) != 0) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
         //7.3.解压压缩包
         cmd = MessageFormat.format(" cd {0}; unzip -oq base_jars.zip", homePath);
         logger.info("cmd:{}", cmd);
-        if (null == exeCmd(user, host, port, pubKeyPath, cmd)) {
+        if (StringUtils.isNotBlank(SSHUtils.executeCommand(user, host, port, pubKeyPath, cmd, true))) {
             return MessageCode.STORM_SSH_SECRET_CONFIGURATION_ERROR;
         }
         return 0;
@@ -664,7 +667,8 @@ public class ConfigCenterService {
     private void initAlarm(LinkedHashMap<String, String> map) throws Exception {
         byte[] data = zkService.getData(Constants.HEARTBEAT_CONFIG_JSON);
         LinkedHashMap<String, Object> json = JSON.parseObject(new String(data, UTF8),
-                new TypeReference<LinkedHashMap<String, Object>>() { }, Feature.OrderedField);
+                new TypeReference<LinkedHashMap<String, Object>>() {
+                }, Feature.OrderedField);
         if (StringUtils.isNotBlank(map.get("alarmSendEmail"))) {
             json.put("alarmSendEmail", map.get("alarmSendEmail"));
         }
@@ -747,116 +751,6 @@ public class ConfigCenterService {
             }
         }
         return result;
-    }
-
-
-
-    public String exeCmd(String user, String host, int port, String pubKeyPath, String command) {
-        Session session = null;
-        ChannelExec channel = null;
-        try {
-            JSch jsch = new JSch();
-            jsch.addIdentity(pubKeyPath);
-
-            session = jsch.getSession(user, host, port);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
-            channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand(command);
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(channel.getInputStream()));
-            channel.connect();
-            String msg;
-            StringBuilder sb = new StringBuilder();
-            while ((msg = in.readLine()) != null) {
-                sb.append(msg).append("\n");
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return null;
-        } finally {
-            if (channel != null) {
-                channel.disconnect();
-            }
-            if (session != null) {
-                session.disconnect();
-            }
-        }
-    }
-
-    public String exeCmdErrorStream(String user, String host, int port, String pubKeyPath, String command) {
-        Session session = null;
-        ChannelExec channel = null;
-        try {
-            JSch jsch = new JSch();
-            jsch.addIdentity(pubKeyPath);
-
-            session = jsch.getSession(user, host, port);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
-            channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand(command);
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(channel.getErrStream()));
-            channel.connect();
-            String msg;
-            StringBuilder sb = new StringBuilder();
-            while ((msg = in.readLine()) != null) {
-                sb.append(msg).append("\n");
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return null;
-        } finally {
-            if (channel != null) {
-                channel.disconnect();
-            }
-            if (session != null) {
-                session.disconnect();
-            }
-        }
-    }
-
-    public int uploadFile(String user, String host, int port, String pubKeyPath, String pathFrom, String pathTo) {
-        Session session = null;
-        ChannelSftp sftp = null;
-        InputStream in = null;
-        try {
-            JSch jsch = new JSch();
-            jsch.addIdentity(pubKeyPath);
-
-            session = jsch.getSession(user, host, port);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect(30000);
-
-            sftp = (ChannelSftp) session.openChannel("sftp");
-            sftp.connect(1000);
-            sftp.cd(pathTo);
-            pathFrom = pathFrom.replace("\\", "/");
-            File file = new File(pathFrom);
-            in = new FileInputStream(file);
-            sftp.put(in, file.getName());
-            return 0;
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return -1;
-        } finally {
-            try {
-                if (session != null) {
-                    session.disconnect();
-                }
-                if (sftp != null) {
-                    sftp.disconnect();
-                }
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public int ResetMgrDB(LinkedHashMap<String, String> map) throws Exception {

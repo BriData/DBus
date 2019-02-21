@@ -40,50 +40,37 @@
     from t_project_resource
   </select>
   <select id="selectByProjectId" resultType="java.util.Map" parameterType="java.lang.Integer">
-SELECT
-	*
-FROM
-	(
-		SELECT
-			tpr.id resourceId,
-			dds.ds_type,
-			dds.ds_name,
-			dt.id,
-			ds.schema_name,
-			dt. STATUS,
-			dt.table_name,
-			mv.version,
-			dt.description,
-			DATE_FORMAT(
-				dt.create_time,
-				'%Y-%m-%d %H:%i:%s'
-			) create_time,
-			tpr.fullpull_enable_flag
-		FROM
-			t_project_resource tpr,
-			t_dbus_datasource dds,
-			t_data_schema ds,
-			t_data_tables dt,
-			t_meta_version mv
-		WHERE
-			tpr.project_id = #{projectId}
-		AND tpr.table_id = dt.id
-		AND dt.ds_id = dds.id
-		AND dt.schema_id = ds.id
-		AND dt.ver_id = mv.id
-	) pr
-LEFT JOIN (
-	SELECT
-		count(id) tptt_id_cnt,
-		table_id,
-		project_id
-	FROM
-		t_project_topo_table
-	WHERE
-		project_id = #{projectId}
-    GROUP BY
-		table_id
-) tptt ON pr.id = tptt.table_id
+    SELECT
+      pr.*,
+      tptt.*,
+      IF(tdec.table_id, 1, 0) hasDbaEncode
+    FROM
+      (SELECT
+         tpr.id resourceId,
+         dds.ds_type,
+         dds.ds_name,
+         dt.id,
+         ds.schema_name,
+         dt. STATUS,
+         dt.table_name,
+         mv.version,
+         dt.description,
+         DATE_FORMAT(dt.create_time, '%Y-%m-%d %H:%i:%s') create_time,
+         tpr.fullpull_enable_flag
+       FROM
+      	  t_project_resource tpr,
+      	  t_dbus_datasource dds,
+      	  t_data_schema ds,
+      	  t_data_tables dt,
+      	  t_meta_version mv
+       WHERE
+         tpr.project_id = #{projectId}
+         AND tpr.table_id = dt.id
+         AND dt.ds_id = dds.id
+         AND dt.schema_id = ds.id
+         AND dt.ver_id = mv.id) pr
+    LEFT JOIN (SELECT distinct table_id FROM t_dba_encode_columns GROUP BY table_id) tdec ON pr.id = tdec.table_id
+    LEFT JOIN (SELECT count(id) tptt_id_cnt, table_id, project_id FROM t_project_topo_table WHERE project_id = #{projectId} GROUP BY table_id ) tptt ON pr.id = tptt.table_id
   </select>
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
     delete from t_project_resource
@@ -134,43 +121,60 @@ LEFT JOIN (
   </select>
 
   <select id="searchTableResource" parameterType="java.util.Map" resultType="java.util.Map">
+    select * from
+    (select res.*,
+    IF (tdec.table_id, 1, 0) hasDbaEncode
+    from (
     SELECT DISTINCT *
     FROM (
-      SELECT
-      dsource.ds_type dsType,
-      dsource.ds_name dsName,
-      dtable.id tableId,
-      project.id projectId,
-      dschema.schema_name schemaName,
-      dtable.table_name tableName,
-      dtable.status,
-      dtable.description,
-      presource.fullpull_enable_flag ifFullpull
-      FROM
-      t_dbus_datasource dsource,
-      t_data_schema dschema,
-      t_data_tables dtable,
-      t_project_resource presource,
-      t_project project
-      <where>
-        dtable.id=presource.table_id AND
-        presource.project_id=project.id AND
-        dtable.ds_id = dsource.id AND
-        dtable.schema_id = dschema.id
-        <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
-        <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
-        <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
-        <if test="projectId != null">AND presource.project_id=#{projectId}</if>
-      </where>
+    SELECT
+    dsource.ds_type dsType,
+    dsource.ds_name dsName,
+    dtable.id tableId,
+    project.id projectId,
+    dschema.schema_name schemaName,
+    dtable.table_name tableName,
+    dtable.status,
+    dtable.description,
+    presource.fullpull_enable_flag ifFullpull
+    FROM
+    t_dbus_datasource dsource,
+    t_data_schema dschema,
+    t_data_tables dtable,
+    t_project_resource presource,
+    t_project project
+    <where>
+      dtable.id=presource.table_id AND
+      presource.project_id=project.id AND
+      dtable.ds_id = dsource.id AND
+      dtable.schema_id = dschema.id
+      <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
+      <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
+      <if test="projectId != null">AND presource.project_id=#{projectId}</if>
+    </where>
     ) tresource
     WHERE
     tresource.tableId not in(
-      SELECT DISTINCT table_id
-      FROM t_project_topo_table
-      WHERE
-        project_id = #{projectId} AND
-        topo_id = #{topoId}
+    SELECT DISTINCT table_id
+    FROM t_project_topo_table
+    WHERE
+    project_id = #{projectId} AND
+    topo_id = #{topoId}
     )
+    ) res
+    LEFT JOIN (
+    SELECT DISTINCT
+    table_id
+    FROM
+    t_dba_encode_columns
+    GROUP BY
+    table_id
+    ) tdec ON res.tableId = tdec.table_id) t
+    <where>
+      <if test="hasDbaEncode != null">t.hasDbaEncode=#{hasDbaEncode}</if>
+    </where>
+
   </select>
   <select id="searchStatus" parameterType="java.lang.Integer" resultType="java.lang.String">
     SELECT

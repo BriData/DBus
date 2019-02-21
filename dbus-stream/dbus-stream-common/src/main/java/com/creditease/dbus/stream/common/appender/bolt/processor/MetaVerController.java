@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,23 @@ public class MetaVerController {
      */
     public static MetaVersion getSuitableVersion(String key, long pos, long offset) {
         MetaVersion version = getVersionFromCache(key);
+
+        if (version == null) {
+            String schema = StringUtils.substringBefore(key, ".");
+            String table = StringUtils.substringAfter(key, ".");
+            DataTable t = DBFacadeManager.getDbFacade().queryDataTable(Utils.getDatasource().getId(), schema, table);
+            if (t == null) {
+                logger.warn("table{} not found.", key);
+                return null;
+            }
+            version = DBFacadeManager.getDbFacade().queryMetaVersion(t.getId(), pos, offset);
+            if (version != null) {
+                putVersion(key, version);
+            } else {
+                logger.warn("version not found by key: {}", key);
+            }
+            return version;
+        }
 
         // 如果当前使用的trailPos值比消息中的pos值大说明出现重复消费kafka消息的情况,
         // 此时需要找到合适版本的version解析消息
@@ -90,7 +108,7 @@ public class MetaVerController {
                 version = DBFacadeManager.getDbFacade().queryMetaVersionByTime(table.getId(), Long.parseLong(pos), time);
                 if (version == null) {
                     logger.info("出现数据的event_time小于当前版本变更时最早的时间，但两者的pos值一致！");
-                    logger.info("最新版本的event_time： {}，pos：{}，该条数据的event_time：{}，pos:{}",latestV.getOffset(), latestV.getTrailPos(), time, pos);
+                    logger.info("最新版本的event_time： {}，pos：{}，该条数据的event_time：{}，pos:{}", latestV.getOffset(), latestV.getTrailPos(), time, pos);
                     //如果出现此情况，则应该根据pos值去数据库中查询该pos值对应的最新版本的数据
                     //重读数据的时候不应该走到这个位置
                     version = DBFacadeManager.getDbFacade().queryMetaVersion(table.getId(), Long.parseLong(pos));

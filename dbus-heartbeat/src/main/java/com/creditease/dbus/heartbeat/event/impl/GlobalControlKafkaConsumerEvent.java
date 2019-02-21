@@ -40,11 +40,10 @@ import com.creditease.dbus.heartbeat.util.HTMLUtil;
 import com.creditease.dbus.heartbeat.util.MsgUtil;
 import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
 import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
-
-
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;

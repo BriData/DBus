@@ -21,7 +21,9 @@
 package com.creditease.dbus.bean;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import org.apache.commons.lang3.builder.ToStringStyle;
+
 
 /**
  * User: 王少楠

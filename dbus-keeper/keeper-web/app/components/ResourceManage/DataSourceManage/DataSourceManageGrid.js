@@ -88,6 +88,29 @@ export default class DataSourceManageGrid extends Component {
     </div>)
   }
 
+  renderOggOrCanal = (text, record, index) => {
+    let title
+    if (record.type === 'oracle') {
+      title = <div>OGG Host：{record.oggOrCanalHost}<br/>
+        OGG Path：{record.oggOrCanalPath}<br/>
+        OGG Replicat Name：{record.oggReplicatName}<br/>
+        OGG Trail Prefix: {record.oggTrailName}<br/>
+      </div>
+    } else if (record.type === 'mysql') {
+      title = <div>Canal Host：{record.oggOrCanalHost}<br/>
+        Canal Path：{record.oggOrCanalPath}<br/>
+      </div>
+    }
+
+    return (
+      <Tooltip title={title}>
+        <div className={styles.ellipsis}>
+          {text}
+        </div>
+      </Tooltip>
+    )
+  }
+
   /**
    * @description option render
    */
@@ -273,6 +296,18 @@ export default class DataSourceManageGrid extends Component {
         dataIndex: 'topoAvailableStatus',
         key: 'topoAvailableStatus',
         render: this.renderComponent(this.renderTopoStatus)
+      },
+      {
+        title: (
+          <FormattedMessage
+            id="app.components.resourceManage.oggOrCanal"
+            defaultMessage="OGG或Canal"
+          />
+        ),
+        width: this.tableWidth[1],
+        dataIndex: 'oggOrCanalHost',
+        key: 'oggOrCanalHost',
+        render: this.renderComponent(this.renderOggOrCanal)
       },
       {
         title: (

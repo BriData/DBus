@@ -335,6 +335,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
         List<TopicPartition> assignTopics = new ArrayList<>();
         if (!isCtrl) {
             Properties props = inner.zkHelper.loadKafkaConsumerConf();
+            logger.info("read spout create consumer.");
             consumer = new KafkaConsumer<>(props);
         }
         assignTopics(consumer.partitionsFor(obtainCtrlTopic()), assignTopics);

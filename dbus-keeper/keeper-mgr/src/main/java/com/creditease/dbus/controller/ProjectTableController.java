@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,7 +54,10 @@ public class ProjectTableController extends BaseController {
 
     @GetMapping("/tables")
     public ResultEntity queryTable(HttpServletRequest request) throws Exception {
-        return service.queryTable(URLDecoder.decode(request.getQueryString(), "UTF-8"));
+        long start = System.currentTimeMillis();
+        ResultEntity resultEntity = service.queryTable(URLDecoder.decode(request.getQueryString(), "UTF-8"));
+        logger.info("query topology table cost all time {}", System.currentTimeMillis() - start);
+        return resultEntity;
     }
 
     @ApiOperation(value = "getProjectTopoNames ", notes = "获取project下所有topology的id和name信息")
@@ -257,6 +261,17 @@ public class ProjectTableController extends BaseController {
 
     }
 
+    @PostMapping("/batchStart")
+    public ResultEntity batchStartTopoTables(@RequestBody ArrayList<Integer> topoTableIds) {
+        try {
+            return resultEntityBuilder().status(service.batchStartTopoTables(topoTableIds)).build();
+        }catch (Exception e){
+            logger.error("Exception when batch start topo tables ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+
+    }
+
     @GetMapping("/stop")
     public ResultEntity stopTable(@RequestParam("tableId") Integer projectTopoTableId,
                                   @RequestParam("topoName") String topoName) {
@@ -268,11 +283,21 @@ public class ProjectTableController extends BaseController {
         }
     }
 
+    @PostMapping("/batchStop")
+    public ResultEntity batchStopTopoTables(@RequestBody ArrayList<Integer> topoTableIds) {
+        try {
+            return resultEntityBuilder().status(service.batchStopTopoTables(topoTableIds)).build();
+        }catch (Exception e){
+            logger.error("Exception when batch stop topo tables ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
     @GetMapping("/reload")
     public ResultEntity reloadTable(@RequestParam("tableId") Integer projectTopoTableId,
                                     @RequestParam("topoName") String topoName) {
         try {
-            service.reload(projectTopoTableId,topoName);
+            service.reloadTopoTable(projectTopoTableId,topoName);
             return resultEntityBuilder().build();
         }catch (Exception e){
             return resultEntityBuilder().status(MessageCode.TABLE_NOT_FOUND).build();
@@ -281,42 +306,43 @@ public class ProjectTableController extends BaseController {
 
     @GetMapping("/delete/{id}")
     public ResultEntity deleteById(@PathVariable("id") Integer id) {
-        return service.deleteById(id);
+        try {
+            return service.deleteById(id);
+        } catch (Exception e) {
+            logger.error("Exception when delete topo table ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping("/delete")
+    public ResultEntity deleteByIds(@RequestBody List<Integer> topoTableIds) {
+        try {
+            ResultEntity resultEntity = service.deleteByIds(topoTableIds);
+            if (resultEntity.getMessage() == null) {
+                return resultEntityBuilder().status(resultEntity.getStatus()).build();
+            }
+            return resultEntity;
+        } catch (Exception e) {
+            logger.error("Exception when batch delete topo tables ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
     }
 
     /**
-     * 直接返回，不等待结果
+     * 租户拉全量入口
+     * @param projectTableId
+     * @param outputTopic
+     * @param fullpullCondition
+     * @return
+     * @throws Exception
      */
     @GetMapping("/initialLoad")
-    public ResultEntity initialLoad(Integer projectTableId, String outputTopic) throws Exception{
-        ResultEntity entity = service.fullPull(projectTableId, outputTopic);
-        if (entity != null) {//** 非空，说明失败
-            //*** 如果非空，说明需要根据i18n自动构造返回想你想
-            if(entity.getMessage() == null){
-                return resultEntityBuilder().status(entity.getStatus()).build();
-            }
-            //*** message不为空，说明返回信息完整，直接返回。
-            return entity;
-        } else {//** 成功直接返回
-            return resultEntityBuilder().build();
+    public ResultEntity initialLoad(Integer projectTableId, String outputTopic, String fullpullCondition) throws Exception {
+        ResultEntity entity = service.fullPull(projectTableId, outputTopic, fullpullCondition);
+        if (entity.getMessage() == null) {
+            return resultEntityBuilder().status(entity.getStatus()).build();
         }
-       /* while(true) {
-            if (result.isDone()) {/*//*调用完成
-                ResultEntity entity = result.get();
-                if (entity != null) {/*//** 非空，说明失败
-                    /*//*** 如果非空，说明需要根据i18n自动构造返回想你想
-                    if(entity.getMessage() == null){
-                        return resultEntityBuilder().status(entity.getStatus()).build();
-                    }
-                    /*//*** message不为空，说明返回信息完整，直接返回。
-                    return entity;
-                } else {/*//** 成功直接返回
-                    return resultEntityBuilder().build();
-                }
-            }else {/*//* 调用未完成，等待
-                Thread.sleep(100);
-            }
-        }*/
+        return entity;
     }
 
     @GetMapping("/encoders")
@@ -329,5 +355,10 @@ public class ProjectTableController extends BaseController {
     @ProjectAuthority
     public ResultEntity getAllResourcesByQuery(HttpServletRequest request) throws Exception {
         return service.getAllResourcesByQuery(request.getQueryString());
+    }
+
+    @GetMapping("/getProjectTableById")
+    public ResultEntity getProjectTableById(@RequestParam int projectTopoTableId){
+        return resultEntityBuilder().payload(service.getTableById(projectTopoTableId)).build();
     }
 }

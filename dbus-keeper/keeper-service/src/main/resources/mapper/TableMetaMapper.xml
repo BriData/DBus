@@ -29,7 +29,7 @@
     where id = #{id,jdbcType=INTEGER}
   </delete>
   <insert id="insert" parameterType="com.creditease.dbus.domain.model.TableMeta">
-    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
       SELECT LAST_INSERT_ID()
     </selectKey>
     insert into t_table_meta (ver_id, column_name, original_column_name,

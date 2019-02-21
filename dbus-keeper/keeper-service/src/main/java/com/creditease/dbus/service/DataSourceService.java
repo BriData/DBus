@@ -48,6 +48,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,7 +168,7 @@ public class DataSourceService {
      */
     public List<DataSource> getDataSourceByName(String dsName) {
         HashMap<String, Object> param = new HashMap<>();
-        param.put("dsName", dsName);
+        param.put("dsName", StringUtils.trim(dsName));
         return mapper.getDataSourceByName(param);
     }
 
@@ -357,4 +358,17 @@ public class DataSourceService {
         }
         return topologyTypes;
     }
+
+    public DataSource getByName(String dsName){
+        return mapper.getByName(StringUtils.trim(dsName));
+    }
+
+    public List<DataSource> getDataSourceByDsType(String dsType) {
+        return mapper.getDataSourceByDsType(dsType);
+    }
+
+    public List<DataSource> getDataSourceByDsTypes(List<String> dsTypes) {
+        return mapper.getDataSourceByDsTypes(dsTypes);
+    }
+
 }

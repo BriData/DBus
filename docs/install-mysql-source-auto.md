@@ -147,6 +147,10 @@ FLUSH PRIVILEGES;
 
 ## 2 canal配置
 
+**这里提供了两种canal部署方式,推荐第二种**
+
+### 2.1.手动脚本部署
+
 **1) 下载canal自动部署包：**
 
 
@@ -265,6 +269,20 @@ Dbus系统丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTE
 **如何部署多个canal实例？**
 
 脚本提供多次部署的能力。重复执行：修改conf/canal-auto.properties文件-->sh deplogy.sh，可以部署多个canal实例。每次执行会根据canal-auto.properties中配置的“dsname”作为后缀，生成相应的文件，如：配置“dsname=testdb”，执行脚本后，在当前目录下生成canal-testdb目录，即为一个canal部署实例；再次修改配置文件，设置“dsname=testdb2”，运行后会生成另外一个实例目录：canal-testdb2。
+
+### 2.2.web自动部署canal
+
+**强烈推荐这一种**!!!
+
+- 将dbus-canal-auto-0.5.0.tar.gz拷贝至服务器并解压即可
+
+- 如果是老用户请在zookeeper创建一个空节点,新用户不需要添加,初始化的时候会自动添加
+
+  ```
+  /DBusCommons/auto-deploy-canal.conf
+  ```
+
+其实到了这里就可以了,剩下的是3DBus 一键加线配置时才需要做的事情
 
 ## 3 Dbus一键加线
 

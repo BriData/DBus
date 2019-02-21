@@ -244,35 +244,14 @@ public class DBHelper {
         JSONObject fullDataPullReqObj = wrapperObj.getJSONObject("payload");
         // JSONObject.fromObject(jsonObj.getString("fullDataPullReq"));
         JSONObject pullFullDataProject = wrapperObj.getJSONObject("project");
+        boolean isKeeper = FullPullHelper.isDbusKeeper(pullFullDataMessage);
         int dbusDatasourceId = fullDataPullReqObj.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_DATA_SOURCE_ID);
         String schema = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCHEMA_NAME);
         String logicTableName = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_TABLE_NAME);
         Object scn = fullDataPullReqObj.get(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SCN_NO);
         long seqNo = fullDataPullReqObj.getLongValue(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SEQNO);
 
-        // 这些字段可以为空
-        String resultTopic = null;
-        String splitCol = null;
-        Integer splitShardSize = null;
-        String splitStyle = null;
-        if (fullDataPullReqObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_RESULT_TOPIC)) {
-            resultTopic = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_RESULT_TOPIC);
-            logger.info("[Control message Conf Info ---] get Out put topic is: {}", resultTopic);
-        }
-        if (fullDataPullReqObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_COL)) {
-            splitCol = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_COL);
-            logger.info("[Control message Conf Info ---] get Split col is: {}", splitCol);
-        }
-        if (fullDataPullReqObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_SHARD_SIZE)) {
-            splitShardSize = fullDataPullReqObj.getInteger(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_SHARD_SIZE);
-            logger.info("[Control message Conf Info ---] get splitShardSize is: {}", String.valueOf(splitShardSize));
-        }
-        if (fullDataPullReqObj.containsKey(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_STYLE)) {
-            splitStyle = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_STYLE);
-            logger.info("[Control message Conf Info ---] get splitStyle is: {}", splitStyle);
-        }
         String splitBoundingQuery = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_BOUNDING_QUERY);
-        String inputConditions = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_INPUT_CONDITIONS);
         String pullTargetCols = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_PULL_TARGET_COLS);
 
         //兼容旧版本 1.2的时间
@@ -296,11 +275,8 @@ public class DBHelper {
         if (scn != null && StringUtils.isNotBlank((String) scn)) {
             confProperties.put(DBConfiguration.DATA_IMPORT_CONSISTENT_READ_SCN, Long.valueOf((String) scn));
         }
-
         confProperties.put(DBConfiguration.DATA_IMPORT_CONSISTENT_READ_SEQNO, seqNo);
-        if (StringUtils.isNotBlank(inputConditions)) {
-            confProperties.put(DBConfiguration.INPUT_CONDITIONS_PROPERTY, inputConditions);
-        }
+
         if (StringUtils.isNotBlank(splitBoundingQuery)) {
             confProperties.put(DBConfiguration.INPUT_BOUNDING_QUERY, splitBoundingQuery);
         }
@@ -316,6 +292,13 @@ public class DBHelper {
         // sb.append("t_dbus_datasource ds, t_meta_version mv ");
         // sb.append("where mv.ds_id=ds.id and ds.id = ");
         // sb.append(dbusDatasourceId);
+        // 这些字段可以为空
+        //这里有三个优先级,第一优先级全量请求参数 > 第二优先级多租户配置 > 第三优先级源端配置
+        String resultTopic = null;
+        String splitCol = null;
+        Integer splitShardSize = null;
+        String splitStyle = null;
+        String inputConditions = null;
 
         Connection conn = null;
         PreparedStatement pst = null;
@@ -348,7 +331,6 @@ public class DBHelper {
             DBHelper.close(null, pst, ret);
 
             //获得meta相同是否有数据
-            String outputTopic = "";
             sql = "SELECT mv.db_name, mv.id metaVersionId, mv.version, mv.schema_name, dt.output_topic, dt.fullpull_col, dt.fullpull_split_shard_size, dt.fullpull_split_style " +
                     "FROM t_data_tables dt, t_meta_version mv " +
                     "WHERE dt.ds_id = ? " +
@@ -371,64 +353,48 @@ public class DBHelper {
                 confProperties.put(DBConfiguration.DataSourceInfo.TABLE_NAME, logicTableName);
                 confProperties.put(DBConfiguration.DataSourceInfo.PULLING_VERSION, version);
 
-                //若拉全量请求指定了相关拉取参数,用指定的。否则，用数据库里查到的配置。
-                outputTopic = ret.getString("output_topic");
-                splitCol = StringUtils.isNotBlank(splitCol) ? splitCol : ret.getString("fullpull_col");
-                splitShardSize = (splitShardSize != null && !splitShardSize.equals(0)) ? splitShardSize : ret.getInt("fullpull_split_shard_size");
-                splitStyle = StringUtils.isNotBlank(splitStyle) ? splitStyle : ret.getString("fullpull_split_style");
-
-                //logger.info("[Costomized Conf Info ---] Out put topic is :{}, Split col is:{}, Split shard size is:{}, SplitStyle is: {}",
-                //        resultTopic, splitCol, splitShardSize, splitStyle);
-                //
-                //if(StringUtils.isNotBlank(resultTopic)){
-                //    logger.info("[Costomized Conf Info ---] covered Out put topic is: {}", resultTopic);
-                //    confProperties.put(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC, resultTopic);
-                //}
-                if (StringUtils.isNotBlank(splitCol)) {
-                    logger.info("[Costomized Conf Info ---] covered Split col is: {}", splitCol);
-                    confProperties.put(DBConfiguration.INPUT_SPLIT_COL, splitCol);
-                }
-
-                if (splitShardSize != null && !splitShardSize.equals(0)) {
-                    logger.info("[Costomized Conf Info ---] covered Split shard size is: {}", String.valueOf(splitShardSize));
-                    confProperties.put(DBConfiguration.SPLIT_SHARD_SIZE, splitShardSize);
-                }
-                if (StringUtils.isNotBlank(splitStyle)) {
-                    logger.info("[Costomized Conf Info ---] covered SplitStyle is: {}", splitStyle);
-                    confProperties.put(DBConfiguration.SPLIT_STYLE, splitStyle);
-                }
+                //第三优先级源端配置获取
+                resultTopic = ret.getString("output_topic");
+                splitCol = ret.getString("fullpull_col");
+                splitShardSize = ret.getInt("fullpull_split_shard_size");
+                splitStyle = ret.getString("fullpull_split_style");
             }
-
             DBHelper.close(null, pst, ret);
 
             //多租户相关处理resultTopic
-            if (StringUtils.isBlank(resultTopic) && pullFullDataProject != null && !pullFullDataProject.isEmpty()) {
+            if (isKeeper) {
                 //resultTopic处理
-                sql = "SELECT output_topic FROM t_project_topo_table WHERE id = ?";
+                sql = "SELECT  " +
+                        "output_topic, " +
+                        "fullpull_col, " +
+                        "fullpull_split_shard_size, " +
+                        "fullpull_split_style, " +
+                        "fullpull_condition " +
+                        "FROM " +
+                        "t_project_topo_table " +
+                        "WHERE id = ?";
+                //sql = "SELECT output_topic FROM t_project_topo_table WHERE id = ?";
                 pst = conn.prepareStatement(sql);
                 pst.setInt(1, pullFullDataProject.getIntValue(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_TOPO_TABLE_ID));
                 ret = pst.executeQuery();
                 while (ret.next()) {
                     confProperties.put(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC, ret.getString("output_topic"));
-                    resultTopic = ret.getString("output_topic");
+                    String output_topic = ret.getString("output_topic");
+                    String fullpull_col = ret.getString("fullpull_col");
+                    Integer fullpull_split_shard_size = ret.getInt("fullpull_split_shard_size");
+                    String fullpull_split_style = ret.getString("fullpull_split_style");
+                    String fullpull_condition = ret.getString("fullpull_condition");
+
+                    //第二优先级租户配置获取
+                    resultTopic = StringUtils.isNotBlank(output_topic) ? output_topic : resultTopic;
+                    splitCol = StringUtils.isNotBlank(fullpull_col) ? fullpull_col : splitCol;
+                    splitShardSize = (fullpull_split_shard_size != null && !fullpull_split_shard_size.equals(0)) ? fullpull_split_shard_size : splitShardSize;
+                    splitStyle = StringUtils.isNotBlank(fullpull_split_style) ? fullpull_split_style : splitStyle;
+                    inputConditions = StringUtils.isNotBlank(fullpull_condition) ? fullpull_condition : inputConditions;
                 }
                 DBHelper.close(null, pst, ret);
-            }
 
-            if (StringUtils.isBlank(resultTopic)) {
-                confProperties.put(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC, outputTopic);
-                resultTopic = outputTopic;
-            }
-
-            if (StringUtils.isNotBlank(resultTopic)) {
-                confProperties.put(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC, resultTopic);
-            }
-
-            logger.info("[Costomized Conf Info ---] Out put topic is :{}, Split col is:{}, Split shard size is:{}, SplitStyle is: {}",
-                    resultTopic, splitCol, splitShardSize, splitStyle);
-            //多租户相关处理project
-            if (pullFullDataProject != null && !pullFullDataProject.isEmpty()) {
-                //project处理
+                //多租户相关处理project
                 confProperties.put(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_NAME,
                         pullFullDataProject.get(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_NAME));
                 confProperties.put(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_ID,
@@ -439,10 +405,61 @@ public class DBHelper {
                         pullFullDataProject.get(DataPullConstants.FULL_DATA_PULL_REQ_PROJECT_TOPO_TABLE_ID));
             }
 
+            //第一优先级全量请求参数获取
+            String reqResultTopic = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_RESULT_TOPIC);
+            String reqSplitCol = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_COL);
+            String reqSplitShardSize = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_SHARD_SIZE);
+            String reqSplitStyle = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_SPLIT_STYLE);
+            String reqInputConditions = fullDataPullReqObj.getString(DataPullConstants.FULL_DATA_PULL_REQ_PAYLOAD_INPUT_CONDITIONS);
+
+            if (StringUtils.isNotBlank(reqResultTopic)) {
+                resultTopic = reqResultTopic;
+                logger.info("[full pull config ---] coverd outPutTopic from fullpull request is: {}", resultTopic);
+            }
+            if (StringUtils.isNotBlank(reqSplitCol)) {
+                splitCol = reqSplitCol;
+                logger.info("[full pull config ---] coverd splitCol from fullpull request is: {}", splitCol);
+            }
+            if (StringUtils.isNotBlank(reqSplitShardSize)) {
+                splitShardSize = Integer.parseInt(reqSplitShardSize);
+                logger.info("[full pull config ---] coverd splitShardSize from fullpull request is: {}", splitShardSize);
+            }
+            if (StringUtils.isNotBlank(reqSplitStyle)) {
+                splitStyle = reqSplitStyle;
+                logger.info("[full pull config ---] coverd splitStyle from fullpull request is: {}", splitStyle);
+            }
+            if (StringUtils.isNotBlank(reqInputConditions)) {
+                inputConditions = reqInputConditions;
+                logger.info("[full pull config ---] coverd inputConditions from fullpull request is: {}", inputConditions);
+            }
+
+            //最终配置放入confProperties
+            if (StringUtils.isNotBlank(resultTopic)) {
+                confProperties.put(DBConfiguration.DataSourceInfo.OUTPUT_TOPIC, resultTopic);
+                logger.info("[full pull config ---] outPutTopic is: {}", resultTopic);
+            }
+            if (StringUtils.isNotBlank(splitCol)) {
+                confProperties.put(DBConfiguration.INPUT_SPLIT_COL, splitCol);
+                logger.info("[full pull config ---] splitCol is: {}", splitCol);
+            }
+            if (splitShardSize != null && splitShardSize != 0) {
+                confProperties.put(DBConfiguration.SPLIT_SHARD_SIZE, splitShardSize);
+                logger.info("[full pull config ---] splitShardSize is: {}", splitShardSize);
+            }
+            if (StringUtils.isNotBlank(splitStyle)) {
+                confProperties.put(DBConfiguration.SPLIT_STYLE, splitStyle);
+                logger.info("[full pull config ---] splitStyle is: {}", splitStyle);
+            }
+            if (StringUtils.isNotBlank(inputConditions)) {
+                confProperties.put(DBConfiguration.INPUT_CONDITIONS_PROPERTY, inputConditions);
+                logger.info("[full pull config ---] splitConditions is: {}", inputConditions);
+            }
+            logger.info("[full pull config ---]  outPutTopic is :{}, splitCol is:{}, splitShardSize is:{}, splitStyle is: {}, inputConditions is:{}",
+                    resultTopic, splitCol, splitShardSize, splitStyle, inputConditions);
+
             int recordRowSize = 0;
             //计算每个row最大长度来估算prefetch行数
             sql = "SELECT data_length, data_type FROM t_table_meta where ver_id = ? ";
-
             pst = conn.prepareStatement(sql);
             pst.setInt(1, metaVersionId);
             ret = pst.executeQuery();
@@ -472,13 +489,14 @@ public class DBHelper {
         JSONObject wrapperObj = JSONObject.parseObject(pullFullDataMessage);
         JSONObject pullFullDataProject = wrapperObj.getJSONObject("project");
 
+        boolean isKeeper = FullPullHelper.isDbusKeeper(pullFullDataMessage);
         PreparedStatement pst = null;
         ResultSet ret = null;
         String sql = "";
         try {
             // 源端表脱敏字段添加
             List<EncodeColumn> list = new ArrayList<>();
-            sql = "SELECT c.*, m.data_length FROM t_encode_columns c,t_data_tables t,t_table_meta m"
+            sql = "SELECT c.*, m.data_length FROM t_dba_encode_columns c,t_data_tables t,t_table_meta m"
                     + " WHERE "
                     + "c.table_id = t.id "
                     + "AND m.ver_id = t.ver_id "
@@ -505,7 +523,7 @@ public class DBHelper {
             }
 
             //多租户版本
-            if (pullFullDataProject != null && !pullFullDataProject.isEmpty()) {
+            if (isKeeper) {
                 // 普通用户配置脱敏字段添加
                 sql = "SELECT h.*, m.data_length,tt.table_id " +
                         "FROM t_project_topo_table_encode_output_columns h,t_data_tables t,t_table_meta m , t_project_topo_table tt " +
@@ -514,6 +532,7 @@ public class DBHelper {
                         "AND m.column_name = h.field_name " +
                         "AND tt.id = h.project_topo_table_id " +
                         "AND h.encode_plugin_id is not null " +
+                        "AND h.special_approve = 0 " +
                         "AND h.project_topo_table_id = ? " +
                         "AND tt.project_id = ? ";
 
@@ -720,6 +739,7 @@ public class DBHelper {
                 plugin.setJarPath(rs.getString("path"));
                 plugins.add(plugin);
             }
+            logger.info("load encode plugins.{}", plugins);
         } catch (Exception e) {
             logger.error("Query EncodePlugin In Dbus encountered Excetpion", e);
         } finally {

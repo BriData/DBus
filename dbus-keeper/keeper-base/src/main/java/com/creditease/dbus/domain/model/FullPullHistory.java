@@ -79,9 +79,9 @@ public class FullPullHistory {
 
     private Long lastShardMsgOffset;
 
-    private String costTime;
+    private String splitColumn;
 
-    private Integer completeRate;
+    private String fullpullCondition;
 
     public Long getId() {
         return id;
@@ -307,20 +307,19 @@ public class FullPullHistory {
         this.lastShardMsgOffset = lastShardMsgOffset;
     }
 
-    public String getCostTime() {
-        return costTime;
+    public String getSplitColumn() {
+        return splitColumn;
     }
 
-    public void setCostTime(String costTime) {
-        this.costTime = costTime;
+    public void setSplitColumn(String splitColumn) {
+        this.splitColumn = splitColumn;
     }
 
-    public Integer getCompleteRate() {
-        return completeRate;
+    public String getFullpullCondition() {
+        return fullpullCondition;
     }
 
-    public void setCompleteRate(Integer completeRate) {
-        this.completeRate = completeRate;
+    public void setFullpullCondition(String fullpullCondition) {
+        this.fullpullCondition = fullpullCondition;
     }
-
 }

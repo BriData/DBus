@@ -45,6 +45,12 @@ export const LATEST_JAR_GET_PATH_API = '/keeper/data-source/paths'
 export const TOPO_JAR_START_API = '/keeper/data-source/startTopology'
 // 查看日志
 export const VIEW_LOG_API = '/keeper/data-source/view-log'
+// 批量加表
+export const DATA_SOURCE_BATCH_ADD_TABLE_API = '/keeper/data-service/batchAddTables/addSchemaAndTables'
+// 批量检查
+export const DATA_SOURCE_PRE_PROCESS_API = '/keeper/data-service/accessDbusPreTreated/check'
+// 生成OGG Trail前缀
+export const DATA_SOURCE_GENERATE_OGG_TRAIN_NAME_API = '/keeper/autoDeploy/getOggTrailName'
 
 // 添加data source
 export const DATA_SOURCE_ADD_API = '/keeper/data-source'
@@ -52,6 +58,14 @@ export const DATA_SOURCE_ADD_API = '/keeper/data-source'
 export const DATA_SOURCE_VALIDATE_API = '/keeper/data-source/validate'
 // 数据源拖回重跑
 export const DATA_SOURCE_RERUN_API = '/keeper/data-source/rerun'
+// 获取OGG配置
+export const DATA_SOURCE_GET_OGG_CONF_API = '/keeper/autoDeploy/getOggConf'
+// 设置OGG配置
+export const DATA_SOURCE_SET_OGG_CONF_API = '/keeper/autoDeploy/setOggConf'
+// 获取canal配置
+export const DATA_SOURCE_GET_CANAL_CONF_API = '/keeper/autoDeploy/getCanalConf'
+// 设置canal配置
+export const DATA_SOURCE_SET_CANAL_CONF_API = '/keeper/autoDeploy/setCanalConf'
 
 
 // DataSchema首页的搜索
@@ -81,10 +95,14 @@ export const DATA_TABLE_UPDATE_API = '/keeper/tables/updateTable'
 export const DATA_TABLE_INSERT_API = '/keeper/tables/insert'
 // DataTable Start
 export const DATA_TABLE_START_API = '/keeper/tables/activate'
+// DataTable批量启动
+export const DATA_TABLE_BATCH_START_API = '/keeper/tables/batchStartTableByTableIds'
+// DataTable批量停止
+export const DATA_TABLE_BATCH_STOP_API = '/keeper/tables/batchStopTableByTableIds'
 // DataTable Stop
 export const DATA_TABLE_STOP_API = '/keeper/tables/deactivate'
 // DataTable 拖回重跑
-export const DATA_TABLE_RERUN_API = '/keeper/data-table/rerun'
+export const DATA_TABLE_RERUN_API = '/keeper/tables/rerun'
 // DBusData 查询源端表和存储过程
 export const DBUS_DATA_SEARCH_FROM_SOURCE_API = '/keeper/data-source/searchFromSource'
 // DBusData 执行SQL
@@ -134,7 +152,10 @@ export const EXECUTE_RULES_API = '/keeper/tables/executeRules'
 // 规则 保存
 export const SAVE_ALL_RULES_API = '/keeper/tables/saveAllRules'
 
-
+// 导入规则
+export const IMPORT_RULES_API = '/keeper/tables/importRulesByTableId'
+// 导出规则
+export const EXPORT_RULES_API = '/keeper/tables/exportRulesByTableId'
 
 // 脱敏插件查询
 export const SEARCH_ENCODE_PLUGIN_API = '/keeper/jars/search-encode-plugin'

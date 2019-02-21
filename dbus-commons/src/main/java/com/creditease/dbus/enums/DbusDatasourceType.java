@@ -28,7 +28,8 @@ import java.util.Map;
  */
 public enum DbusDatasourceType {
     ORACLE, MYSQL,
-    LOG_LOGSTASH, LOG_LOGSTASH_JSON, LOG_UMS, LOG_FLUME, LOG_FILEBEAT, ES_SQL_BATCH, MONGO, UNKNOWN;
+    LOG_LOGSTASH, LOG_LOGSTASH_JSON, LOG_UMS, LOG_FLUME, LOG_FILEBEAT,
+    JSONLOG, ES_SQL_BATCH, MONGO, UNKNOWN;
 
     public static Map<String, DbusDatasourceType> map;
     public static final String ALIAS_FOR_ALL_LOG_DS_TYPE = "ALIAS_FOR_ALL_LOG_DS_TYPE";

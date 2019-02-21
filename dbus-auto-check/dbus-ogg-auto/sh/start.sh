@@ -3,7 +3,7 @@
 #获得当前shell所在路径
 basepath=$(cd `dirname $0`; pwd)
 #echo $basepath
-echo "************ starting ************"
+echo "****************************************** starting *****************************************"
 #jvm启动参数
 #GC_OPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -Xloggc:/data/dbus-canal-auto/logs/gc/gc.log"
 LOG_CONF="-Dlogs.base.path=$basepath -Duser.dir=$basepath"

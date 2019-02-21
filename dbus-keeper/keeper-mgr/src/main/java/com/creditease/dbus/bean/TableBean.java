@@ -19,6 +19,9 @@
  */
 
 package com.creditease.dbus.bean;
+import com.creditease.dbus.domain.model.ProjectTopoTable;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -98,4 +101,5 @@ public class TableBean {
     public void setEncodes(Map<Integer, ProjectTopoTableEncodeOutputColumnsBean> encodes) {
         this.encodes = encodes;
     }
+
 }

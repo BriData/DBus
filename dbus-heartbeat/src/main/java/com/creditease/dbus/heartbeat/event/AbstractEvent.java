@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,8 @@ public abstract class AbstractEvent implements IEvent {
 
     protected volatile AtomicBoolean isRun = new AtomicBoolean(true);
 
+    protected String dsName = null;
+
     protected AbstractEvent(long interval) {
         this.interval = interval;
     }
@@ -64,6 +66,12 @@ public abstract class AbstractEvent implements IEvent {
     protected AbstractEvent(long interval, CountDownLatch cdl) {
         this.interval = interval;
         this.cdl = cdl;
+    }
+
+    protected AbstractEvent(long interval, CountDownLatch cdl, String dsName) {
+        this.interval = interval;
+        this.cdl = cdl;
+        this.dsName = dsName;
     }
 
     @Override
@@ -81,20 +89,27 @@ public abstract class AbstractEvent implements IEvent {
                     if (this instanceof EmitHeartBeatEvent) {
                         heartBeatCnt++;
                         txTime = System.currentTimeMillis();
-                        LOG.info("[control-event] 心跳次数:{}.", heartBeatCnt);
+                        LOG.info("[control-event] {} 心跳次数:{}.", dsName, heartBeatCnt);
                     }
                     for (DsVo ds : dsVos) {
                         if (this instanceof EmitHeartBeatEvent) {
                             if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_LOGSTASH)
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_LOGSTASH_JSON)
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_UMS)
-                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MONGO)
+                                    // || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MONGO)
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FILEBEAT)
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FLUME)) {
                                 LOG.info(ds.getType() + "，Ignored!");
                                 continue;
                             }
                         }
+
+                        // 用于实现一个数据源一个线程插入心跳
+                        if (StringUtils.isNotBlank(dsName) &&
+                            !StringUtils.equalsIgnoreCase(dsName, ds.getKey())) {
+                            continue;
+                        }
+
                         for (MonitorNodeVo node : nodes) {
                             //快速退出
                             if (!isRun.get())

@@ -25,6 +25,7 @@ import java.util.List;
 
 import com.google.common.base.Joiner;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,7 +185,8 @@ public class DbusMessageBuilder {
     private void validateAndConvert(Object[] tuple) {
         List<DbusMessage.Field> fields = message.getSchema().getFields();
         if (tuple.length != fields.size()) {
-            throw new IllegalArgumentException("Data length can't match with the field size of the message schema");
+            throw new IllegalArgumentException(String.format("Data fields length != schema field length!!  data_length=%d, schema_length=%d",
+                        tuple.length, fields.size()));
         }
         DbusMessage.Field field;
         for (int i = 0; i < fields.size(); i++) {
@@ -201,6 +203,9 @@ public class DbusMessageBuilder {
                 tuple[i] = DataType.convertValueByDataType(field.dataType(), value);
             } catch (DataTypeException e) {
                 logger.error("Data type '{}' of filed '{}' not match with String", field.dataType(), field.getName());
+                throw e;
+            } catch (NullPointerException e) {
+                logger.error("NullPointerException Data type '{}' of filed '{}'", field.dataType(), field.getName());
                 throw e;
             }
         }

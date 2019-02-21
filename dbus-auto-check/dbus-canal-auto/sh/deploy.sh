@@ -3,17 +3,17 @@
 #获得当前shell所在路径
 basepath=$(cd `dirname $0`; pwd)
 #echo $basepath
-echo "************ starting ************"
+echo "****************************************** starting *****************************************"
 #jvm启动参数
 #GC_OPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -Xloggc:/data/dbus-canal-auto/logs/gc/gc.log"
 LOG_CONF="-Dlogs.base.path=$basepath -Duser.dir=$basepath"
 OOM_OPTS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$basepath/logs/oom"
 JVM_OPTS="-server -Xmx4096m -Xms100m -XX:NewRatio=1"
 CLASS_PATH=""
-MAIN=" com.creditease.dbus.canal.auto.deploy.AutoDeployStart"
+MAIN="com.creditease.dbus.canal.auto.AutoDeployStart"
 if [ "x$1" = "xcheck" ]
 then
-        MAIN="com.creditease.dbus.canal.auto.check.AutoCheckStart"
+        MAIN="com.creditease.dbus.canal.auto.AutoCheckStart"
 fi
 
 

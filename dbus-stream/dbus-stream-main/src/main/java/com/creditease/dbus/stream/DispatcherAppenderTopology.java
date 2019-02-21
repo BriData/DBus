@@ -159,17 +159,14 @@ public class DispatcherAppenderTopology {
             /**
              * dispatcher部分
              */
-            //db2 dispatcher部分
+            //dispatcher部分
             this.initializeDispatcher(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + dispatcherTopologyId);
 
-
-                // mysql oracle的dispatcher部分
                 builder.setSpout("dispatcher-kafkaConsumerSpout", new KafkaConsumerSpout(), 1);
                 builder.setBolt("dispatcher-DispatcherBout", new DispatcherBout(), 1)
                         .shuffleGrouping("dispatcher-kafkaConsumerSpout");
                 builder.setBolt("dispatcher-kafkaProducerBout", new KafkaProducerBout(), 1)
                         .shuffleGrouping("dispatcher-DispatcherBout");
-
         }
 
         // 启动类型为all，或者appender
@@ -187,7 +184,9 @@ public class DispatcherAppenderTopology {
                     .customGrouping("appender-meta-fetcher", new DbusGrouping());
             builder.setBolt("appender-kafka-writer", new DbusKafkaWriterBolt(), getBoltParallelism(Constants.ConfigureKey.KAFKA_WRITTER_BOLT_PARALLELISM, 3))
                     .customGrouping("appender-wrapper", new DbusGrouping());
-            builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
+
+            // 为了避免dbus-router统计信息与dispatcher和appender不一致的情况，将写心跳到kafka中的逻辑提前到appender-kafka-writer中
+            //builder.setBolt("appender-heart-beat", new DbusHeartBeatBolt(), 1).shuffleGrouping("appender-kafka-writer");
         }
 
 

@@ -18,27 +18,27 @@ public abstract class AbstractConfigResource<T> implements IResource<T> {
 
     protected Properties props;
 
-    protected AbstractConfigResource(String name){this.name = name;}
+    protected AbstractConfigResource(String name) {
+        this.name = name;
+    }
 
-    public T load() {
+    public T load() throws Exception{
         init();
         return parse();
     }
 
     public abstract T parse();
-    protected void init() {
+
+    protected void init() throws Exception{
         FileInputStream fis = null;
         try {
             props = new Properties();
             File file = new File(System.getProperty("user.dir") + "/conf/" + name);
             fis = new FileInputStream(file);
             props.load(fis);
-
-
         } catch (IOException e) {
-            System.out.println("init config resource "+name+" error");
-            throw new RuntimeException("init config resource " + name + " error!");
-        }finally {
+            throw e;
+        } finally {
             IOUtils.closeQuietly(fis);
         }
     }

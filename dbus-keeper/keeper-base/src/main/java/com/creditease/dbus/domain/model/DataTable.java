@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,13 +85,16 @@ public class DataTable {
     private Integer innerVersion;
 
 
-    public DataTable(){
+    private String fullpullCondition;
+
+    public DataTable() {
 
     }
 
-    public DataTable(Integer dsId, Integer schemaId, String schemaName, String tableName,
+    public DataTable(Integer dsId, String dsName, Integer schemaId, String schemaName, String tableName,
                      String physicalTableRegex, String outputTopic, String status) {
         this.dsId = dsId;
+        this.dsName = dsName;
         this.schemaId = schemaId;
         this.schemaName = schemaName;
         this.tableName = tableName;
@@ -336,4 +339,13 @@ public class DataTable {
         this.dbusPassword = dbusPassword;
     }
 
+
+
+    public String getFullpullCondition() {
+        return fullpullCondition;
+    }
+
+    public void setFullpullCondition(String fullpullCondition) {
+        this.fullpullCondition = fullpullCondition;
+    }
 }

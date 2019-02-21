@@ -15,8 +15,21 @@ const KafkaReaderModel = () => createSelector(
   (state) => state.toJS()
 )
 
+// 获取 DataSource state
+const DataSourceModel = () => createSelector(
+  (state) => state.get('DataSourceReducer'),
+  (state) => state.toJS()
+)
+// 获取 JarManage state
+const JarManageModel = () => createSelector(
+  (state) => state.get('JarManageReducer'),
+  (state) => state.toJS()
+)
+
 export {
   ControlMessageModel,
   GlobalFullpullModel,
-  KafkaReaderModel
+  KafkaReaderModel,
+  DataSourceModel,
+  JarManageModel
 }

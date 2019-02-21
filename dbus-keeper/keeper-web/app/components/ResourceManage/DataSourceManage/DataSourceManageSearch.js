@@ -26,7 +26,7 @@ export default class DataSourceManageSearch extends Component {
 
   render () {
     const { getFieldDecorator } = this.props.form
-    const {onCreateDataSource} = this.props
+    const {onCreateDataSource, onBatchAddTable, onPreProcess, onGenerateOggTrailName} = this.props
     const dsTypeList = [
       null,
       'mysql',
@@ -47,18 +47,28 @@ export default class DataSourceManageSearch extends Component {
           onKeyUp={e => e.keyCode === 13 && this.handleSearch()}
         >
           <Row>
-            <Col span={6} className={styles.formLeft}>
-              <Button
-                onClick={onCreateDataSource}
-                type="primary"
-              >
-                <FormattedMessage
-                  id="app.components.resourceManage.dataSource.newDataLine"
-                  defaultMessage="新建数据线"
-                />
-              </Button>
+            <Col span={12} className={styles.formLeft}>
+              <FormItem>
+                <Button
+                  onClick={onCreateDataSource}
+                  type="primary"
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataSource.newDataLine"
+                    defaultMessage="新建数据线"
+                  />
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  onClick={onGenerateOggTrailName}
+                  type="primary"
+                >
+                  生成OGG Trail前缀
+                </Button>
+              </FormItem>
             </Col>
-            <Col span={18} className={styles.formRight}>
+            <Col span={12} className={styles.formRight}>
               <FormItem>
                 {getFieldDecorator('dsType', {
                   initialValue: null

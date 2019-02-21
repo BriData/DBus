@@ -71,10 +71,10 @@ export default class AddSchemaTable extends Component {
         dsType:dataSource.dsType
       }
     }
-    if(Object.keys(schemaInfos).length === 0) {
-      message.warn("未选中任何表")
-      return
-    }
+    // if(Object.keys(schemaInfos).length === 0) {
+    //   message.warn("未选中任何表")
+    //   return
+    // }
     data.schemaAndTables = Object.keys(schemaInfos).map(schemaName => {
       const schema = schemaInfos[schemaName]
       const tables = tableInfos[schemaName]

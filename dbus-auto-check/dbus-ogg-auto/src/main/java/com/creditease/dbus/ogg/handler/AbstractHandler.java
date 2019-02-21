@@ -9,14 +9,12 @@ import java.io.BufferedWriter;
  */
 public abstract class AbstractHandler implements IHandler{
 
-    public boolean process(BufferedWriter bw) {
-        boolean isOk = true;
+    public void process(BufferedWriter bw) throws Exception{
         try {
             checkDeploy(bw);
         } catch (Exception e) {
-            isOk = false;
+            throw e;
         }
-        return isOk;
     }
 
     public abstract void checkDeploy(BufferedWriter bw) throws Exception;

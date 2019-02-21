@@ -8,6 +8,7 @@ import App from '@/app/containers/App'
 import ControlMessageWrapper from '@/app/containers/ToolSet/ControlMessageWrapper'
 import GlobalFullpullWrapper from '@/app/containers/ToolSet/GlobalFullpullWrapper'
 import KafkaReaderWrapper from '@/app/containers/ToolSet/KafkaReaderWrapper'
+import BatchRestartTopo from '@/app/containers/ToolSet/BatchRestartTopoWrapper'
 // HOCFactory({'siderHidden': true})(App)
 // 导出路由
 export default (store) => [
@@ -35,6 +36,10 @@ export default (store) => [
       {
         path: '/tool-set/kafka-reader',
         component: KafkaReaderWrapper
+      },
+      {
+        path: '/tool-set/batch-restart-topo',
+        component: BatchRestartTopo
       }
     ]
   }

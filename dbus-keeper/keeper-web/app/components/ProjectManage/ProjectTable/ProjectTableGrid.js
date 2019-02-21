@@ -94,11 +94,11 @@ export default class ProjectTableGrid extends Component {
     text = `${record.dsName}.${record.schemaName}.${record.tableName}`
     let namespace = '';
     if (record.tableName === record.physicalTableRegex) {
-      namespace = record.dsType + "." + record.dsName + "." + record.schemaName + "." + record.tableName +
+      namespace = record.dsType + "." + record.dsName + "!" + record.topoName + "." + record.schemaName + "." + record.tableName +
         "." + record.version + "." + "0" + "." + "0";
     }
     else {
-      namespace = record.dsType + "." + record.dsName + "." + record.schemaName + "." + record.tableName +
+      namespace = record.dsType + "." + record.dsName + "!" + record.topoName + "." + record.schemaName + "." + record.tableName +
         "." + record.version + "." + "0" + "." + record.physicalTableRegex;
     }
     const title = <div>tableName：{record.tableName}<br/>
@@ -155,6 +155,54 @@ export default class ProjectTableGrid extends Component {
         {text}
       </Tag>
     </div>)
+  }
+
+  renderDbaEncode1  =(text, record, index) => {
+    let color
+    switch (text) {
+      case 1:
+        color = 'red'
+        break
+      default:
+        color = 'green'
+    }
+    text = text ? 'Y' : 'N'
+    return (<div title={text} className={styles.ellipsis}>
+      <Tag color={color} style={{cursor: 'auto'}}>
+        {text}
+      </Tag>
+    </div>)
+  }
+
+  renderDbaEncode = (text, record, index) => {
+    let has = record.hasDbaEncode
+    let use = record.useDbaEncode
+
+    let color
+    switch (has) {
+      case 1:
+        color = 'red'
+        break
+      default:
+        color = 'green'
+    }
+
+    has = has ? 'Y' : 'N'
+    use = use ? 'Y' : 'N'
+
+    const title = <div>
+      hasDBAEncode：{has}<br/>
+      useDBAEncode: {use}<br/>
+    </div>
+    return (
+      <Tooltip title={title}>
+        <div className={styles.ellipsis}>
+          <Tag color={color} style={{cursor: 'auto'}}>
+            {has}
+          </Tag>
+        </div>
+      </Tooltip>
+    )
   }
 
   renderStatus =(text, record, index) => {
@@ -273,7 +321,9 @@ export default class ProjectTableGrid extends Component {
       tableWidth,
       tableList,
       onPagination,
-      onShowSizeChange
+      onShowSizeChange,
+      onSelectionChange,
+      selectedRowKeys
     } = this.props
     const { loading, loaded } = tableList
     const { total, pageSize, pageNum, list } = tableList.result
@@ -283,10 +333,32 @@ export default class ProjectTableGrid extends Component {
     const columns = [
       {
         title: <FormattedMessage
+          id="app.components.projectManage.projectTable.projectTopoTableId"
+          defaultMessage="项目表ID"
+        />,
+        width: tableWidth[0],
+        dataIndex: 'tableId',
+        key: 'tableId',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: (
+          <FormattedMessage
+            id="app.components.resourceManage.dataTable.id"
+            defaultMessage="源端表ID"
+          />
+        ),
+        width: tableWidth[1],
+        dataIndex: 'sourcetableId',
+        key: 'sourcetableId',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: <FormattedMessage
           id="app.components.resourceManage.dataSourceType"
           defaultMessage="数据源类型"
         />,
-        width: tableWidth[0],
+        width: tableWidth[2],
         dataIndex: 'dsType',
         key: 'dsType',
         render: this.renderComponent(this.renderNomal)
@@ -336,7 +408,7 @@ export default class ProjectTableGrid extends Component {
           id="app.components.projectManage.projectTable.outputFormat"
           defaultMessage="输出格式"
         />,
-        width: tableWidth[8],
+        width: tableWidth[7],
         dataIndex: 'outputType',
         key: 'outputType',
         render: this.renderComponent(this.renderNomal)
@@ -346,7 +418,7 @@ export default class ProjectTableGrid extends Component {
           id="app.components.projectManage.projectTable.topoStatus"
           defaultMessage="拓扑状态"
         />,
-        width: tableWidth[4],
+        width: tableWidth[8],
         dataIndex: 'topoStatus',
         key: 'topoStatus',
         render: this.renderComponent(this.renderTopoStatus)
@@ -356,17 +428,47 @@ export default class ProjectTableGrid extends Component {
           id="app.components.projectManage.projectTable.tableStatus"
           defaultMessage="表状态"
         />,
-        width: tableWidth[7],
+        width: tableWidth[9],
         dataIndex: 'status',
         key: 'status',
         render: this.renderComponent(this.renderStatus)
       },
       {
         title: <FormattedMessage
-          id="app.components.projectManage.projectTable.schemaChange"
-          defaultMessage="Schema是否变更"
+          id="app.components.projectManage.projectTable.dbaEncodeColumn"
+          defaultMessage="DBA脱敏"
         />,
-        width: '12%',
+        width: tableWidth[10],
+        dataIndex: 'hasDbaEncode',
+        key: 'hasDbaEncode',
+        render: this.renderComponent(this.renderDbaEncode)
+      },
+      /*{
+        title: <FormattedMessage
+          id="app.components.projectManage.projectTable.dbaEncodeColumn"
+          defaultMessage="DBA脱敏列"
+        />,
+        width: tableWidth[7],
+        dataIndex: 'hasDbaEncode',
+        key: 'hasDbaEncode',
+        render: this.renderComponent(this.renderDbaEncode)
+      },
+      {
+        title: <FormattedMessage
+          id="app.components.projectManage.projectTable.useDbaEncodeColumn"
+          defaultMessage="使用DBA脱敏列"
+        />,
+        width: tableWidth[7],
+        dataIndex: 'useDbaEncode',
+        key: 'useDbaEncode',
+        render: this.renderComponent(this.renderDbaEncode)
+      },*/
+      {
+        title: <FormattedMessage
+          id="app.components.projectManage.projectTable.schemaChange"
+          defaultMessage="表结构是否变更"
+        />,
+        width: tableWidth[11],
         dataIndex: 'schemaChangeFlag',
         key: 'schemaChangeFlag',
         render: this.renderComponent(this.renderSchemaChangeFlag)
@@ -376,7 +478,7 @@ export default class ProjectTableGrid extends Component {
           id="app.common.user.backup"
           defaultMessage="备注"
         />,
-        width: tableWidth[9],
+        width: tableWidth[12],
         dataIndex: 'description',
         key: 'description',
         render: this.renderComponent(this.renderNomal)
@@ -385,14 +487,14 @@ export default class ProjectTableGrid extends Component {
         title: (
           <FormattedMessage id="app.common.operate" defaultMessage="操作" />
         ),
-        width: tableWidth[10],
+        width: tableWidth[13],
         render: this.renderComponent(this.renderOperating)
       }
     ]
     const pagination = {
       showSizeChanger: true,
       showQuickJumper: true,
-      pageSizeOptions: ['10', '20', '50', '100'],
+      pageSizeOptions: ['10', '20', '50', '100', '500', '1000'],
       current: pageNum || 1,
       pageSize: pageSize || 10,
       total: total,
@@ -402,7 +504,11 @@ export default class ProjectTableGrid extends Component {
     return (
       <div className={styles.table}>
         <Table
-          rowKey={record => `${record.tableId}`}
+          rowSelection={{
+            onChange: onSelectionChange,
+            selectedRowKeys: selectedRowKeys
+          }}
+          rowKey={record => record.tableId}
           dataSource={dataSource}
           columns={columns}
           pagination={pagination}

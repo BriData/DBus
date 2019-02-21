@@ -136,10 +136,25 @@ export const STOP_TABLE_PARTITION_OFFSET_API = '/keeper/projectTable/stop'
 // Reload Table
 export const RELOAD_TABLE_API = '/keeper/projectTable/reload'
 
+// 批量拉全量
+export const PROJECT_TABLE_BATCH_FULLPULL_API = '/keeper/fullpull/batchGlobalfullPull'
+
 // 删除table
 export const PROJECT_TABLE_DELETE_API = '/keeper/projectTable/delete'
+
+// 批量停止
+export const PROJECT_TABLE_BATCH_STOP_API = '/keeper/projectTable/batchStop'
+
+// 批量启动
+export const PROJECT_TABLE_BATCH_START_API = '/keeper/projectTable/batchStart'
+
+// 获取拉全量配置
+export const PROJECT_TABLE_GET_INITIAL_LOAD_CONF_API = '/keeper/projectTable/getProjectTableById'
+// 保存拉全量配置
+export const PROJECT_TABLE_SAVE_INITIAL_LOAD_CONF_API = '/keeper/fullpull/updateCondition'
 // 拉全量
 export const PROJECT_TABLE_INITIAL_LOAD_API = '/keeper/projectTable/initialLoad'
+
 
 // projectTable startTable
 // projectTable stopTable

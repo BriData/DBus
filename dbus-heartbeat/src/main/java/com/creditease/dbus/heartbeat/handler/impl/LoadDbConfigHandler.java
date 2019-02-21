@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,17 +25,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.heartbeat.vo.*;
-import org.apache.commons.collections.CollectionUtils;
-
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
+import com.creditease.dbus.heartbeat.container.MongoClientContainer;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.resource.IResource;
-import com.creditease.dbus.heartbeat.resource.remote.MonitorNodeConfigResource;
 import com.creditease.dbus.heartbeat.resource.remote.DsConfigResource;
+import com.creditease.dbus.heartbeat.resource.remote.MonitorNodeConfigResource;
 import com.creditease.dbus.heartbeat.resource.remote.TargetTopicConfigResource;
 import com.creditease.dbus.heartbeat.util.Constants;
+import com.creditease.dbus.heartbeat.vo.DsVo;
+import com.creditease.dbus.heartbeat.vo.JdbcVo;
+import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
+import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
+
+import org.apache.commons.collections.CollectionUtils;
 
 /**
  * 加载DataSource和Schema的信息
@@ -59,13 +63,16 @@ public class LoadDbConfigHandler extends AbstractHandler {
         if (CollectionUtils.isNotEmpty(dsVos)) {
             ConcurrentHashMap<String, DsVo> cmap = new ConcurrentHashMap<String, DsVo>();
             for (JdbcVo conf : dsVos) {
+                cmap.put(conf.getKey(), (DsVo) conf);
                 if (DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_LOGSTASH)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_LOGSTASH_JSON)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_UMS)
-                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.MONGO)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_FLUME)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_FILEBEAT)) {
-                    cmap.put(conf.getKey(), (DsVo) conf);
+                    continue;
+                }
+                if (DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.MONGO)) {
+                    MongoClientContainer.getInstance().register(conf);
                     continue;
                 }
                 DataSourceContainer.getInstance().register(conf);

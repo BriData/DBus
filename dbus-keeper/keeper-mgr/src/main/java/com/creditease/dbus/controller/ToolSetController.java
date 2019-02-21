@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,12 @@ import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.service.ToolSetService;
+import com.creditease.dbus.service.TopologyService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 
@@ -41,6 +43,8 @@ import java.util.Map;
 public class ToolSetController extends BaseController {
     @Autowired
     private ToolSetService toolSetService;
+    @Autowired
+    private TopologyService topoLogyService;
 
     /**
      * 发送controMessage
@@ -52,13 +56,20 @@ public class ToolSetController extends BaseController {
     @PostMapping(path = "sendCtrlMessage", consumes = "application/json")
     public ResultEntity sendCtrlMessage(@RequestBody Map<String, String> map) {
         try {
-            Integer result = toolSetService.sendCtrlMessage(map);
-            if (result != null) {
-                return resultEntityBuilder().status(result).build();
-            }
-            return resultEntityBuilder().build();
+            return resultEntityBuilder().status(toolSetService.sendCtrlMessage(map)).build();
         } catch (Exception e) {
             logger.error("Exception encountered while request sendCtrlMessage", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+
+    @GetMapping(path = "batchSendControMessage")
+    public ResultEntity batchSendControMessage(@RequestParam String reloadType) {
+        try {
+            return resultEntityBuilder().status(toolSetService.batchSendControMessage(reloadType)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while batchSendControMessage", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }
@@ -220,6 +231,42 @@ public class ToolSetController extends BaseController {
             return resultEntityBuilder().build();
         } catch (Exception e) {
             logger.error("Exception encountered while request initConfig", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping("/batchRestartTopo")
+    public ResultEntity batchRestartTopo(@RequestBody Map<String,Object> map) {
+        try {
+            String dsType = (String) map.get("dsType");
+            String jarPath = (String) map.get("jarPath");
+            String topoType = (String) map.get("topoType");
+            ArrayList<String> dsNameList = (ArrayList<String>) map.get("dsNameList");
+            logger.info("************* batch restart topo start dsType:{},topoType:{},jarPath:{},dsNameList:{} " +
+                    "************* ", dsType, topoType, jarPath, dsNameList);
+            if ("mysql".equalsIgnoreCase(dsType)) {
+                if (topoType.equalsIgnoreCase("log-processor")) {
+                    return resultEntityBuilder().status(MessageCode.TOPO_TYPE_AND_DSTYPE_NOT_MATCH).build();
+                }
+            } else if ("oracle".equalsIgnoreCase(dsType)) {
+                if (topoType.equalsIgnoreCase("log-processor")
+                        || topoType.equalsIgnoreCase("mysql-extractor")) {
+                    return resultEntityBuilder().status(MessageCode.TOPO_TYPE_AND_DSTYPE_NOT_MATCH).build();
+                }
+            }
+            else {
+                if (topoType.equalsIgnoreCase("splitter-puller")
+                        || topoType.equalsIgnoreCase("dispatcher-appender")
+                        || topoType.equalsIgnoreCase("mysql-extractor")
+                        || topoType.equalsIgnoreCase("dispatcher")
+                        || topoType.equalsIgnoreCase("appender")) {
+                    return resultEntityBuilder().status(MessageCode.TOPO_TYPE_AND_DSTYPE_NOT_MATCH).build();
+                }
+            }
+            topoLogyService.batchRestartTopo(jarPath, topoType, dsNameList);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request batchRestartTopo", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

@@ -219,7 +219,7 @@ export default class KafkaReaderForm extends Component {
                 {...formItemLayout}
               >
                 {getFieldDecorator('params', {
-                  initialValue: record && record.outputTopic && `${record.dsName}.${record.schemaName}.${record.tableName}`,
+                  initialValue: record && record.outputTopic && `${record.dsName}!${record.topoName}.${record.schemaName}.${record.tableName}`,
                   rules: []
                 })(
                   <Input
@@ -238,6 +238,7 @@ export default class KafkaReaderForm extends Component {
                 {...formItemLayout}
               >
                 {getFieldDecorator('negParams', {
+                  initialValue: 'data_increment_heartbeat',
                   rules: []
                 })(
                   <Input

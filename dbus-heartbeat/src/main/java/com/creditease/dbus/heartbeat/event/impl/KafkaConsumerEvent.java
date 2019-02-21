@@ -245,7 +245,7 @@ public class KafkaConsumerEvent extends AbstractEvent {
                                     !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_LOGSTASH)) &&
                                     !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_LOGSTASH_JSON)) &&
                                     !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_UMS)) &&
-                                    !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.MONGO)) &&
+                                    // !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.MONGO)) &&
                                     !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_FILEBEAT)) &&
                                     !(DbusDatasourceType.stringEqual(vals[1],DbusDatasourceType.LOG_FLUME))) {
                                 continue;

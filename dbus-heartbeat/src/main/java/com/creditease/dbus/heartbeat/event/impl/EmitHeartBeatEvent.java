@@ -55,6 +55,12 @@ public class EmitHeartBeatEvent extends AbstractEvent {
         this.checkPointPerHeartBeatCnt = checkPointPerHeartBeatCnt;
     }
 
+    public EmitHeartBeatEvent(long interval, CountDownLatch cdl, int checkPointPerHeartBeatCnt, String dsName) {
+        super(interval, cdl, dsName);
+        dao = new HeartBeatDaoImpl();
+        this.checkPointPerHeartBeatCnt = checkPointPerHeartBeatCnt;
+    }
+
     @Override
     public void fire(DsVo ds, MonitorNodeVo node, String path, long txTime) {
         try {

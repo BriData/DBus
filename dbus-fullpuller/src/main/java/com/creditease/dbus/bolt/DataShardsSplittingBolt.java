@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,7 +126,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
                 LOG.error("Reloading Conf for SplittingBolt is reloaded failed!");
             }
         } else if (dataType.equals(DataPullConstants.DATA_EVENT_FULL_PULL_REQ)
-                   || dataType.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
+                || dataType.equals(DataPullConstants.DATA_EVENT_INDEPENDENT_FULL_PULL_REQ)) {
             doSplitting(input, dataType);
         } else if (dataType.equals(DataPullConstants.COMMAND_FULL_PULL_STOP)) {
             stopTopo(input);
@@ -151,7 +151,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
         String errorMsg = "";
 
         boolean metaCompatible = FullPullHelper.validateMetaCompatible(dataSourceInfo);
-        if(!metaCompatible) {
+        if (!metaCompatible) {
             errorMsg = "Detected that META is not compatible now!";
             LOG.error(errorMsg);
             //出错了，善后事宜
@@ -169,14 +169,25 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
 
         try {
             dbManager = FullPullHelper.getDbManager(dbConf, dbConf.getString(DBConfiguration.DataSourceInfo.URL_PROPERTY_READ_ONLY));
+
             //获取分片列
-            String splitByCol = DBHelper.getSplitColumn(dbManager, dbConf);
+            int splitShardSize = dbConf.getSplitShardSize();
+            String splitByCol = "";
+            // 如果splitShardSize 为 -1，不分片
+            if (splitShardSize != -1) {
+                splitByCol = DBHelper.getSplitColumn(dbManager, dbConf);
+            }
             LOG.info("doSplitting() Will use col [{}] to split data.", splitByCol);
+            //把分片列更新到全量历史库
+            JSONObject fullpullUpdateParams = new JSONObject();
+            fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
+            fullpullUpdateParams.put("split_column",splitByCol);
+            FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
             // oracleManager.checkTableImportOptions();
             //根据分片列获取分片信息
-            Map<String,Object> splitInfoMap = inputFormat.getSplits(splitByCol, dbManager, dataSourceInfo, zkService);
+            Map<String, Object> splitInfoMap = inputFormat.getSplits(splitByCol, dbManager, dataSourceInfo, zkService);
             //从分片信息中获取总行数
-            long totalRows = (long)splitInfoMap.get(Constants.TABLE_SPLITTED_TOTAL_ROWS_KEY);
+            long totalRows = (long) splitInfoMap.get(Constants.TABLE_SPLITTED_TOTAL_ROWS_KEY);
             //int splitsCount= (int)splitInfoMap.get(Constants.TABLE_SPLITTED_SHARDS_COUNT_KEY);
 
             JSONObject wrapperObj = JSONObject.parseObject(dataSourceInfo);
@@ -185,7 +196,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             String batchNo = payloadObj.getString(DataPullConstants.FullPullInterfaceJson.BATCH_NO_KEY);
 
             //分片信息列表
-            List<InputSplit> inputSplitList = (List<InputSplit>)splitInfoMap.get(Constants.TABLE_SPLITTED_SHARD_SPLITS_KEY);
+            List<InputSplit> inputSplitList = (List<InputSplit>) splitInfoMap.get(Constants.TABLE_SPLITTED_SHARD_SPLITS_KEY);
             //总共分为多少片
             int splitsCount = inputSplitList.size();
             //向monitor节点写分片信息
@@ -210,26 +221,26 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
                 ProducerRecord record = new ProducerRecord<>(fullPullMediantTopic, dataType, wrapperObject.toString().getBytes());
                 Future<RecordMetadata> future = byteProducer.send(record);
                 producedRecord = future.get();
-                if(splitIndex == 1) {
+                if (splitIndex == 1) {
                     firstShardMsgOffset = producedRecord.offset();
                 }
-                if(splitIndex == inputSplitList.size()){
+                if (splitIndex == inputSplitList.size()) {
                     lastShardMsgOffset = producedRecord.offset();
                 }
                 LOG.info("dskey: {}, 生成第{}片分片, 所属分区：{}.{}, lower:{}, upper:{}", dsKey, splitIndex,
-                         inputSplit.getTargetTableName(), inputSplit.getTablePartitionInfo(),
-                        ((DataDrivenDBInputFormat.DataDrivenDBInputSplit)inputSplit).getLowerValue(),
-                        ((DataDrivenDBInputFormat.DataDrivenDBInputSplit)inputSplit).getUpperValue());
+                        inputSplit.getTargetTableName(), inputSplit.getTablePartitionInfo(),
+                        ((DataDrivenDBInputFormat.DataDrivenDBInputSplit) inputSplit).getLowerValue(),
+                        ((DataDrivenDBInputFormat.DataDrivenDBInputSplit) inputSplit).getUpperValue());
             }
-            JSONObject fullpullUpdateParams = new JSONObject();
-            fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
-            fullpullUpdateParams.put("version",version);
-            fullpullUpdateParams.put("batch_id",batchNo);
-            fullpullUpdateParams.put("total_partition_count",splitsCount);
-            fullpullUpdateParams.put("total_row_count",totalRows);
-            fullpullUpdateParams.put("status","splitting");
-            fullpullUpdateParams.put("first_shard_msg_offset",firstShardMsgOffset);
-            fullpullUpdateParams.put("last_shard_msg_offset",lastShardMsgOffset);
+            fullpullUpdateParams.clear();
+            fullpullUpdateParams.put("dataSourceInfo", dataSourceInfo);
+            fullpullUpdateParams.put("version", version);
+            fullpullUpdateParams.put("batch_id", batchNo);
+            fullpullUpdateParams.put("total_partition_count", splitsCount);
+            fullpullUpdateParams.put("total_row_count", totalRows);
+            fullpullUpdateParams.put("status", "splitting");
+            fullpullUpdateParams.put("first_shard_msg_offset", firstShardMsgOffset);
+            fullpullUpdateParams.put("last_shard_msg_offset", lastShardMsgOffset);
             FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
             collector.ack(input);
             LOG.info("{}:生成分片完毕，总共分为{}片", dsKey, splitsCount);
@@ -238,8 +249,8 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
             // LOG.info("..............FullPullHelper 生成分片完毕 end............");
 
-        }catch (Exception e) {
-            LOG.error(e.getMessage(),e);
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
             errorMsg = "Exception happened when splitting data shards." + e.getMessage();
             LOG.error(errorMsg, e);
 
@@ -247,12 +258,12 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
             FullPullHelper.finishPullReport(zkService, dataSourceInfo, FullPullHelper.getCurrentTimeStampString(), Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
             collector.fail(input);
-        }finally{
+        } finally {
             try {
                 if (dbManager != null) {
                     dbManager.close();
                 }
-            }  catch (Exception e) {
+            } catch (Exception e) {
                 LOG.error("close dbManager error.", e);
             }
         }
@@ -276,7 +287,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             int topoKillWaitTime = Constants.ZkTopoConfForFullPull.TOPOS_KILL_STORM_API_WAITTIME_PARAM_DEFAULT_VAL;
             String topoKillWaitTimeParam = commonProps.getProperty(Constants.ZkTopoConfForFullPull.TOPOS_KILL_STORM_API_WAITTIME_PARAM);
             try {
-                topoKillWaitTime=Integer.valueOf(topoKillWaitTimeParam);
+                topoKillWaitTime = Integer.valueOf(topoKillWaitTimeParam);
             } catch (Exception e) {
                 // Just ignore, use the default value
             }
@@ -285,13 +296,13 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             // TODO Topo都kill了，后面这几行代码还能执行？
             LOG.info("Id为 {}的Topology Kill已結束.", topologyId);
             // collector.ack(input);  //不跟踪消息
-        }catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("收到停服命令:{},处理时发生异常！", data);
             collector.fail(input);
         }
     }
 
-    private void writeTotalCountToZk(ZkService zkService, String dataSourceInfo, int totalCount, long totalRows){
+    private void writeTotalCountToZk(ZkService zkService, String dataSourceInfo, int totalCount, long totalRows) {
         String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
 
         String progressInfoNodePath = FullPullHelper.getMonitorNodePath(dataSourceInfo);
@@ -306,7 +317,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             FullPullHelper.updateZkNodeInfo(zkService, progressInfoNodePath, mapper.writeValueAsString(progressObj));
         } catch (Exception e) {
             String errorMsg = "Encountered exception when writing msg to zk monitor.";
-            LOG.error(errorMsg,e);
+            LOG.error(errorMsg, e);
         }
     }
 
@@ -321,7 +332,7 @@ public class DataShardsSplittingBolt extends BaseRichBolt {
             this.zkService = (ZkService) confMap.get(FullPullHelper.RUNNING_CONF_KEY_ZK_SERVICE);
             loadResultMsg = "Running Config is " + notifyEvtName + " successfully for DataShardsSplittingBolt!";
             LOG.info(loadResultMsg);
-        }  catch (Exception e) {
+        } catch (Exception e) {
             loadResultMsg = e.getMessage();
             LOG.error(notifyEvtName + "ing running configuration encountered Exception!", loadResultMsg);
             throw e;

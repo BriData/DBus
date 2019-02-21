@@ -6,9 +6,10 @@ import com.creditease.dbus.ogg.handler.AbstractHandler;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
 
 /**
  * User: 王少楠
@@ -21,49 +22,38 @@ public class CheckKafkaHandler extends AbstractHandler {
         checkKafka(bw);
     }
 
-    private void checkKafka(BufferedWriter bw) throws Exception{
+    private void checkKafka(BufferedWriter bw) throws Exception {
         ConfigBean config = AutoCheckConfigContainer.getInstance().getConfig();
         String kafkaUrl = config.getKafkaUrl();
         String[] brokers = kafkaUrl.split(",");
-        System.out.println("============================================");
-        System.out.println("检测kafka url: [kafka url ="+kafkaUrl+"]");
-        bw.write("============================================");
-        bw.newLine();
-        bw.write("检测kafka url: [kafka url ="+kafkaUrl+"]");
-        bw.newLine();
+        writeAndPrint("********************************** CHECK KAFKA URL START *************************************");
+        writeAndPrint("检测kafka url: [kafka url =" + kafkaUrl + "]");
 
-
-        for(int i = 0; i < brokers.length; i++) {
+        for (int i = 0; i < brokers.length; i++) {
             String arr[] = StringUtils.split(brokers[i], ":");
-            try{
-                testKafkaConn(bw, arr[0], arr[1]);
-            }catch (Exception e){
-                bw.write("检测异常，请检查kafka配置项！");
-                bw.newLine();
-                System.out.println("检测异常，请检查kafka配置项！");
-
+            try {
+                testKafkaConn(arr[0], arr[1]);
+            } catch (Exception e) {
+                writeAndPrint("检测kafka url异常，请检查kafka配置！");
+                writeAndPrint("********************************* CHECK KAFKA URL FAIL **************************************");
                 throw e;
             }
         }
-
+        writeAndPrint("******************************* CHECK KAFKA URL SUCCDESS ************************************");
     }
 
-    private void testKafkaConn(BufferedWriter bw,String ip ,String port) throws Exception{
+    private void testKafkaConn(String ip, String port) throws Exception {
         Socket socket = null;
-        try{
+        try {
             socket = new Socket();
-            socket.connect(new InetSocketAddress(ip,Integer.valueOf(port)));
+            socket.connect(new InetSocketAddress(ip, Integer.valueOf(port)));
             socket.close();
-            System.out.println("kafka 连接正常：[ 地址: "+ip+"  端口："+port+"]");
-            bw.write("kafka 连接正常：[ 地址: "+ip+"  端口："+port+"]");
-            bw.newLine();
+            writeAndPrint("kafka 连接正常：[ 地址: " + ip + "  端口：" + port + "]");
         } catch (Exception e) {
-            System.out.println("kafka 连接异常：[ 地址: "+ip+"  端口："+port+"]");
-            bw.write("kafka 连接异常：[ 地址: "+ip+"  端口："+port+"]");
-            bw.newLine();
+            writeAndPrint("kafka 连接异常：[ 地址: " + ip + "  端口：" + port + "]");
             throw e;
-        }finally {
-            if(socket!=null)
+        } finally {
+            if (socket != null)
                 socket.close();
         }
     }

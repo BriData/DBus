@@ -45,11 +45,25 @@ export default class EncodeManagerGrid extends Component {
     </Tooltip>
   )
 
+  renderSpecialApprove = (text, record, index) => {
+    let title
+    switch (text) {
+      case 1:
+        title = 'Y'
+        break
+      default:
+        title = 'N'
+    }
+    return (<div title={title} className={styles.ellipsis}>
+      {title}
+    </div>)
+  }
+
   renderEncodeSource = (text, record, index) => {
     let title
     switch (text) {
       case 0:
-        title = '源端脱敏'
+        title = 'DBA脱敏'
         break
       case 1:
         title = '项目级脱敏'
@@ -90,11 +104,11 @@ export default class EncodeManagerGrid extends Component {
         title: (
           <FormattedMessage
             id="app.components.projectManage.encodeManager.project_topo_table_id"
-            defaultMessage="项目拓扑表名"
+            defaultMessage="项目拓扑表ID"
           />
         ),
-        dataIndex: 'project_topo_table_id',
-        key: 'project_topo_table_id',
+        dataIndex: 'tpttId',
+        key: 'tpttId',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -104,8 +118,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="项目名称"
           />
         ),
-        dataIndex: 'project_name',
-        key: 'project_name',
+        dataIndex: 'projectName',
+        key: 'projectName',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -115,8 +129,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="拓扑名称"
           />
         ),
-        dataIndex: 'topo_name',
-        key: 'topo_name',
+        dataIndex: 'topoName',
+        key: 'topoName',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -126,8 +140,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="数据源名称"
           />
         ),
-        dataIndex: 'ds_name',
-        key: 'ds_name',
+        dataIndex: 'dsName',
+        key: 'dsName',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -137,8 +151,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="Schema名称"
           />
         ),
-        dataIndex: 'schema_name',
-        key: 'schema_name',
+        dataIndex: 'schemaName',
+        key: 'schemaName',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -148,8 +162,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="表名"
           />
         ),
-        dataIndex: 'table_name',
-        key: 'table_name',
+        dataIndex: 'tableName',
+        key: 'tableName',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -159,9 +173,20 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="列名"
           />
         ),
-        dataIndex: 'field_name',
-        key: 'field_name',
+        dataIndex: 'fieldName',
+        key: 'fieldName',
         render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: (
+          <FormattedMessage
+            id="app.components.projectManage.projectHome.tabs.resource.specialApprove"
+            defaultMessage="特批不脱敏"
+          />
+        ),
+        dataIndex: 'specialApprove',
+        key: 'specialApprove',
+        render: this.renderComponent(this.renderSpecialApprove)
       },
       {
         title: (
@@ -170,8 +195,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="脱敏类型"
           />
         ),
-        dataIndex: 'encode_type',
-        key: 'encode_type',
+        dataIndex: 'encodeType',
+        key: 'encodeType',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -181,8 +206,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="脱敏参数"
           />
         ),
-        dataIndex: 'encode_param',
-        key: 'encode_param',
+        dataIndex: 'encodeParam',
+        key: 'encodeParam',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -192,8 +217,8 @@ export default class EncodeManagerGrid extends Component {
             defaultMessage="脱敏源"
           />
         ),
-        dataIndex: 'encode_source',
-        key: 'encode_source',
+        dataIndex: 'encodeSource',
+        key: 'encodeSource',
         render: this.renderComponent(this.renderEncodeSource)
       },
       {
@@ -204,8 +229,8 @@ export default class EncodeManagerGrid extends Component {
           />
         ),
         width: '12%',
-        dataIndex: 'encode_plugin_id',
-        key: 'encode_plugin_id',
+        dataIndex: 'encodePluginId',
+        key: 'encodePluginId',
         render: this.renderComponent(this.renderNomal)
       }
     ]

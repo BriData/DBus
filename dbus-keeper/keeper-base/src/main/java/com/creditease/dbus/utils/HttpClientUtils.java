@@ -20,13 +20,15 @@
 
 package com.creditease.dbus.utils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -141,5 +143,71 @@ public class HttpClientUtils {
         }
     }
 
+
+    /**
+     * grafana utils
+     *
+     * @param serverUrl
+     * @param method
+     * @param param
+     * @param token
+     * @return
+     */
+    public static List<Object> send(String serverUrl, String method, String param, String token) {
+        List<Object> ret = new ArrayList<>();
+        ret.add(-1);
+
+        StringBuilder response = new StringBuilder();
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        URL url = null;
+        try {
+            url = new URL(serverUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestMethod(method);
+            conn.setDoInput(true);
+            conn.setConnectTimeout(1000 * 5);
+
+            if (StringUtils.isNotBlank(param)) {
+                conn.setDoOutput(true);
+                writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                writer.write(param);
+                writer.flush();
+            }
+
+            int httpStatus = conn.getResponseCode();
+            ret.set(0, httpStatus);
+
+            if (httpStatus == 401 ||
+                    httpStatus == 403 ||
+                    httpStatus == 404) {
+                if (httpStatus == 404) {
+                    reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                } else {
+                    response.append(conn.getResponseMessage());
+                }
+            }
+            if (httpStatus == 200) {
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }
+
+            if (reader != null) {
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line).append(SystemUtils.LINE_SEPARATOR);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("send request error", e);
+            ret.set(0, -1);
+        } finally {
+            IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(writer);
+        }
+        ret.add(response.toString());
+        return ret;
+    }
 
 }

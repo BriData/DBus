@@ -9,7 +9,7 @@
     <result column="version" jdbcType="INTEGER" property="version" />
     <result column="column_name" jdbcType="VARCHAR" property="columnName" />
     <result column="data_type" jdbcType="VARCHAR" property="dataType" />
-    <result column="data_length" jdbcType="INTEGER" property="dataLength" />
+    <result column="data_length" jdbcType="BIGINT" property="dataLength" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="schema_change_flag" jdbcType="TINYINT" property="schemaChangeFlag" />
     <result column="schema_change_comment" jdbcType="TINYINT" property="schemaChangeComment" />
@@ -30,7 +30,7 @@
     data_precision, data_scale)
     values (#{projectId,jdbcType=INTEGER}, #{topoId,jdbcType=INTEGER}, #{tableId,jdbcType=INTEGER},
     #{version,jdbcType=INTEGER}, #{columnName,jdbcType=VARCHAR}, #{dataType,jdbcType=VARCHAR},
-    #{dataLength,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT},
+    #{dataLength,jdbcType=BIGINT}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT},
     #{dataPrecision,jdbcType=INTEGER}, #{dataScale,jdbcType=INTEGER})
   </insert>
   <select id="selectAll" resultMap="BaseResultMap">
@@ -47,7 +47,7 @@
       <if test="columnName !=null">column_name = #{columnName,jdbcType=INTEGER},</if>
       <if test="version !=null">version = #{version,jdbcType=INTEGER},</if>
       <if test="dataType != null">data_type = #{dataType,jdbcType=VARCHAR},</if>
-      <if test="dataLength != null">data_length = #{dataLength,jdbcType=INTEGER},</if>
+      <if test="dataLength != null">data_length = #{dataLength,jdbcType=BIGINT},</if>
       <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
       <if test="schemaChangeFlag != null">schema_change_flag = #{schemaChangeFlag,jdbcType=TINYINT},</if>
       <if test="dataScale != null">data_scale = #{dataScale,jdbcType=INTEGER},</if>
@@ -77,5 +77,8 @@
       topo_id = #{topoId,jdbcType=INTEGER} AND
       table_id = #{tableId,jdbcType=INTEGER}
       <if test="columnName != null"> AND column_name = #{columnName,jdbcType=VARCHAR}</if>
+  </delete>
+  <delete id="deleteByProjectId" parameterType="java.lang.Integer">
+    delete from t_project_topo_table_meta_version where project_id = #{projectId}
   </delete>
 </mapper>

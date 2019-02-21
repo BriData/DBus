@@ -14,6 +14,10 @@
     <result column="meta_ver" jdbcType="INTEGER" property="metaVer" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="schema_change_flag" jdbcType="TINYINT" property="schemaChangeFlag" />
+    <result column="fullpull_col" jdbcType="VARCHAR" property="fullpullCol" />
+    <result column="fullpull_split_shard_size" jdbcType="VARCHAR" property="fullpullSplitShardSize" />
+    <result column="fullpull_split_style" jdbcType="VARCHAR" property="fullpullSplitStyle" />
+    <result column="fullpull_condition" jdbcType="VARCHAR" property="fullpullCondition" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from t_project_topo_table
@@ -26,11 +30,15 @@
     insert into t_project_topo_table (project_id, table_id, topo_id,
     status, output_topic, output_type,
     sink_id, output_list_type, meta_ver,
-    update_time, schema_change_flag)
+    update_time, schema_change_flag, fullpull_col,
+    fullpull_split_shard_size, fullpull_split_style,
+    fullpull_condition)
     values (#{projectId,jdbcType=INTEGER}, #{tableId,jdbcType=INTEGER}, #{topoId,jdbcType=INTEGER},
     #{status,jdbcType=VARCHAR}, #{outputTopic,jdbcType=VARCHAR}, #{outputType,jdbcType=VARCHAR},
     #{sinkId,jdbcType=INTEGER}, #{outputListType,jdbcType=INTEGER}, #{metaVer,jdbcType=INTEGER},
-    #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT})
+    #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT}, #{fullpullCol,jdbcType=VARCHAR},
+    #{fullpullSplitShardSize,jdbcType=VARCHAR}, #{fullpullSplitStyle,jdbcType=VARCHAR},
+    #{fullpullCondition,jdbcType=VARCHAR})
   </insert>
   <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectTopoTable">
     update t_project_topo_table
@@ -45,19 +53,25 @@
       <if test="outputListType != null">output_list_type = #{outputListType,jdbcType=INTEGER},</if>
       <if test="sinkId != null">sink_id = #{sinkId,jdbcType=INTEGER},</if>
       <if test="metaVer != null">meta_ver = #{metaVer,jdbcType=INTEGER},</if>
-      <if test="schemaChangeFlag != null">schema_change_flag = #{schemaChangeFlag,jdbcType=TINYINT},</if>
+      <if test="schemaChangeFlag != null">schema_change_flag = #{fullpullCol,jdbcType=TINYINT},</if>
+      <if test="fullpullCol != null">fullpull_col = #{schemaChangeFlag,jdbcType=TINYINT},</if>
+      <if test="fullpullSplitShardSize != null">fullpull_split_shard_size = #{fullpullSplitShardSize,jdbcType=TINYINT},</if>
+      <if test="fullpullSplitStyle != null">fullpull_split_style = #{fullpullSplitStyle,jdbcType=TINYINT},</if>
+      <if test="fullpullCondition != null">fullpull_condition = #{fullpullCondition,jdbcType=TINYINT},</if>
     </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select id, project_id, table_id, topo_id, status, output_topic, output_type, sink_id,
-    output_list_type, meta_ver, update_time, schema_change_flag
+     select id, project_id, table_id, topo_id, status, output_topic, output_type, sink_id,
+    output_list_type, meta_ver, update_time, schema_change_flag, fullpull_col, fullpull_split_shard_size,
+    fullpull_split_style, fullpull_condition
     from t_project_topo_table
     where id = #{id,jdbcType=INTEGER}
   </select>
   <select id="selectAll" resultMap="BaseResultMap">
     select id, project_id, table_id, topo_id, status, output_topic, output_type, sink_id,
-    output_list_type, meta_ver, update_time, schema_change_flag
+    output_list_type, meta_ver, update_time, schema_change_flag, fullpull_col, fullpull_split_shard_size,
+    fullpull_split_style, fullpull_condition
     from t_project_topo_table
   </select>
 
@@ -92,7 +106,17 @@
      dsource.id = dtable.ds_id
     <if test="projectId != null">AND topotable.project_id= #{projectId,jdbcType=INTEGER}</if>
   </select>
-  <select id="searchTable" parameterType="java.util.Map" resultType="java.util.Map">
+  <!--<select id="searchTable" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+    t_table_tmp.*,
+    IF (tdec.table_id, 1, 0) hasDbaEncode,
+    IF (
+    tptteoc.project_topo_table_id,
+    1,
+    0
+    ) useDbaEncode
+    FROM
+    (
     SELECT
     topotable.id tableId,
     project.id projectId,
@@ -102,7 +126,7 @@
     dtable.id sourcetableId,
     dsource.ds_type dsType,
     dsource.ds_name dsName,
-    dschema.schema_name schemaName,
+    dtable.schema_name schemaName,
     dtable.table_name tableName,
     dtable.table_name_alias tableNameAlias,
     dtable.physical_table_regex physicalTableRegex,
@@ -118,60 +142,148 @@
     resource.fullpull_enable_flag ifFullpull
     FROM
     t_dbus_datasource dsource,
-    t_data_schema dschema,
     t_data_tables dtable,
     t_project project,
     t_project_topo_table topotable,
     t_project_topo topology,
     t_project_resource resource,
     t_meta_version metaversion
-    <where>
-      resource.project_id=topotable.project_id AND
-      resource.table_id=topotable.table_id AND
-      dtable.id=topotable.table_id AND
-      topotable.project_id=project.id AND
-      dtable.ds_id = dsource.id AND
-      dtable.schema_id = dschema.id AND
-      topology.id = topotable.topo_id AND
-      dtable.ver_id = metaversion.id
-      <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
-      <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
+    WHERE
+    resource.project_id = topotable.project_id
+    AND resource.table_id = topotable.table_id
+    AND dtable.id = topotable.table_id
+    AND topotable.project_id = project.id
+    AND dtable.ds_id = dsource.id
+    AND topology.id = topotable.topo_id
+    AND dtable.ver_id = metaversion.id
+    <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
+    <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
+    <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
+    <if test="projectId != null">AND topotable.project_id=#{projectId}</if>
+    <if test="topoId != null">AND topotable.topo_id=#{topoId}</if>
+    ) t_table_tmp
+    LEFT JOIN (
+    SELECT DISTINCT
+    table_id
+    FROM
+    t_dba_encode_columns
+    GROUP BY
+    table_id
+    ) tdec ON t_table_tmp.sourceTableId = tdec.table_id
+    LEFT JOIN (
+    SELECT DISTINCT
+    project_topo_table_id
+    FROM
+    t_project_topo_table_encode_output_columns
+    WHERE
+    encode_source = 0
+    GROUP BY
+    project_topo_table_id
+    ) tptteoc ON t_table_tmp.tableId = tptteoc.project_topo_table_id
+  </select>-->
+  <select id="searchTable" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+      topotable.id tableId,
+      project.id projectId,
+      project.project_name projectName,
+      project.project_display_name projectDisplayName,
+      topotable.topo_id topoId,
+      dtable.id sourcetableId,
+      dsource.ds_type dsType,
+      dsource.ds_name dsName,
+      dtable.schema_name schemaName,
+      dtable.table_name tableName,
+      dtable.table_name_alias tableNameAlias,
+      dtable.physical_table_regex physicalTableRegex,
+      metaversion.version version,
+      topology.topo_name topoName,
+      topology.status topoStatus,
+      dtable.output_topic inputTopic,
+      topotable.output_topic outputTopic,
+      topotable.status,
+      topotable.output_type outputType,
+      topotable.schema_change_flag schemaChangeFlag,
+      dtable.description,
+      resource.fullpull_enable_flag ifFullpull
+    FROM
+      t_dbus_datasource dsource,
+      t_data_tables dtable,
+      t_project project,
+      t_project_topo_table topotable,
+      t_project_topo topology,
+      t_project_resource resource,
+      t_meta_version metaversion
+    WHERE
+      resource.project_id = topotable.project_id
+      AND resource.table_id = topotable.table_id
+      AND dtable.id = topotable.table_id
+      AND topotable.project_id = project.id
+      AND dtable.ds_id = dsource.id
+      AND topology.id = topotable.topo_id
+      AND dtable.ver_id = metaversion.id
+      <if test="dsName != null">AND dsource.ds_name = #{dsName}</if>
+      <if test="schemaName != null">AND dtable.schema_name like "%"#{schemaName}"%"</if>
       <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
       <if test="projectId != null">AND topotable.project_id=#{projectId}</if>
       <if test="topoId != null">AND topotable.topo_id=#{topoId}</if>
-    </where>
+  </select>
+  <select id="getDbaEncodeTable" parameterType="java.util.List" resultType="java.lang.Long">
+    SELECT table_id tableId FROM t_dba_encode_columns WHERE table_id IN
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+    GROUP BY table_id
+  </select>
+  <select id="getDbaEncodeProjectTable" parameterType="java.util.List" resultType="java.lang.Long">
+    SELECT project_topo_table_id topoTableId FROM t_project_topo_table_encode_output_columns
+    WHERE encode_source = 0 AND  project_topo_table_id IN
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+    GROUP BY project_topo_table_id
   </select>
   <select id="selectByTableId" parameterType="java.lang.Integer" resultType="java.util.Map">
     SELECT
-      topotable.id tableId,
-      topotable.topo_id topoId,
-      dsource.ds_type dsType,
-      dsource.ds_name dsName,
-      dschema.schema_name schemaName,
-      dtable.table_name tableName,
-      dtable.description,
-      dtable.id sourceTableId,
-      resource.fullpull_enable_flag ifFullpull,
-      topotable.sink_id sinkId,
-      topotable.output_type outputType,
-      topotable.output_topic outputTopic,
-      topotable.output_list_type outputListType,
-      topotable.project_id projectId,
-      topotable.meta_ver version
-
+        t_topo_table_tmp.*,
+    IF (tdec.table_id, 1, 0) hasDbaEncode
     FROM
-      t_dbus_datasource dsource,
-      t_data_schema dschema,
-      t_data_tables dtable,
-      t_project_topo_table topotable,
-      t_project_resource resource
-    WHERE
-      dtable.id=topotable.table_id AND
-      dtable.ds_id = dsource.id AND
-      dtable.schema_id = dschema.id AND
-      topotable.id = #{projectTableId} AND
-      resource.table_id = topotable.table_id AND
-      resource.project_id = topotable.project_id
+        (
+		SELECT
+			topotable.id tableId,
+			topotable.topo_id topoId,
+			dsource.ds_type dsType,
+			dsource.ds_name dsName,
+			dtable.schema_name schemaName,
+			dtable.table_name tableName,
+			dtable.description,
+			dtable.id sourceTableId,
+			resource.fullpull_enable_flag ifFullpull,
+			topotable.sink_id sinkId,
+			topotable.output_type outputType,
+			topotable.output_topic outputTopic,
+			topotable.output_list_type outputListType,
+			topotable.project_id projectId,
+			topotable.meta_ver version
+		FROM
+			t_dbus_datasource dsource,
+			t_data_tables dtable,
+			t_project_topo_table topotable,
+			t_project_resource resource
+		WHERE
+			dtable.id = topotable.table_id
+		AND dtable.ds_id = dsource.id
+		AND topotable.id = #{projectTableId}
+		AND resource.table_id = topotable.table_id
+		AND resource.project_id = topotable.project_id
+	) t_topo_table_tmp
+    LEFT JOIN (
+        SELECT DISTINCT
+            table_id
+        FROM
+            t_dba_encode_columns
+        GROUP BY
+            table_id
+    ) tdec ON t_topo_table_tmp.sourceTableId = tdec.table_id
   </select>
   <select id="selectNameByTopic" parameterType="java.util.Map" resultType="java.lang.String">
     SELECT DISTINCT
@@ -221,7 +333,7 @@
     select count(1) from t_project_topo_table where table_id = #{tableId}
   </select>
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
-    delete from t_project_topo_table t where t.topo_id = #{projectId}
+    delete from t_project_topo_table t where t.project_id = #{projectId}
   </delete>
   <select id="selectBySourceTableId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     SELECT *
@@ -247,5 +359,137 @@
       t.project_id = #{projectId,jdbcType=INTEGER} AND
       t.table_id = #{tableId,jdbcType=INTEGER} AND
       t.topo_id <![CDATA[!= ]]> #{topoId,jdbcType=INTEGER}
+  </select>
+  <select id="searchProjectTable" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+	  topotable.id tableId,
+      project.id projectId,
+      project.project_name projectName,
+      project.project_display_name projectDisplayName,
+      topotable.topo_id topoId,
+      dtable.id sourcetableId,
+      dsource.ds_type dsType,
+      dsource.ds_name dsName,
+      dtable.schema_name schemaName,
+      dtable.table_name tableName,
+      dtable.table_name_alias tableNameAlias,
+      dtable.physical_table_regex physicalTableRegex,
+      metaversion.version version,
+      topology.topo_name topoName,
+      topology.status topoStatus,
+      dtable.output_topic inputTopic,
+      topotable.output_topic outputTopic,
+      topotable.status,
+      topotable.output_type outputType,
+      topotable.schema_change_flag schemaChangeFlag,
+      dtable.description,
+      resource.fullpull_enable_flag ifFullpull,
+      project.principal
+    FROM
+        t_dbus_datasource dsource,
+        t_data_tables dtable,
+        t_project project,
+        t_project_topo_table topotable,
+        t_project_topo topology,
+        t_project_resource resource,
+        t_meta_version metaversion
+    WHERE
+        resource.project_id = topotable.project_id
+    AND resource.table_id = topotable.table_id
+    AND dtable.id = topotable.table_id
+    AND topotable.project_id = project.id
+    AND dtable.ds_id = dsource.id
+    AND topology.id = topotable.topo_id
+    AND dtable.ver_id = metaversion.id
+    <if test="dsName != null">AND dsource.ds_name = #{dsName}</if>
+    <if test="schemaName != null">AND dtable.schema_name like "%"#{schemaName}"%"</if>
+    <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
+    <if test="projectId != null">AND topotable.project_id=#{projectId}</if>
+    <if test="topoId != null">AND topotable.topo_id=#{topoId}</if>
+  </select>
+  <select id="getNamesByTopoTableId" parameterType="java.lang.Integer"  resultType="java.util.Map">
+    SELECT
+        d.ds_name,
+        t.schema_name,
+        t.table_name,
+        p.project_name,
+        pt.topo_name
+    FROM
+        t_project_topo_table tt,
+        t_project p,
+        t_project_topo pt,
+        t_data_tables t,
+        t_dbus_datasource d
+    WHERE
+        tt.project_id = p.id
+    AND tt.topo_id = pt.id
+    AND tt.table_id = t.id
+    AND t.ds_id = d.id
+    AND tt.id = #{topoTableId}
+  </select>
+  <select id="getTopoTablesByIds" parameterType="java.util.List" resultType="java.util.Map">
+    SELECT pt.*,p.project_name,pp.topo_name,tt.table_name,tt.schema_name,ts.ds_name,pp.status topo_status
+    FROM
+      t_project_topo_table pt ,
+      t_project p,t_project_topo pp,
+      t_data_tables tt,
+     t_dbus_datasource ts
+    WHERE
+      pt.project_id=p.id
+      AND pt.topo_id=pp.id
+      AND pt.table_id=tt.id
+      AND tt.ds_id=ts.id
+      AND pt.id IN
+      <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+  </select>
+  <update id="updateStatusByTopoTableIds">
+    UPDATE t_project_topo_table
+    SET STATUS = #{status}
+    WHERE id IN
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
+  <select id="searchTableByTopoTableIds" parameterType="java.util.List" resultType="java.util.Map">
+    SELECT
+      ptt.id topoTableId,
+      ptt.project_id projectId,
+      p.project_name projectName,
+      p.principal,
+      ptt.sink_id sinkId,
+      ptt.fullpull_col fullpullCol,
+      ptt.fullpull_split_shard_size fullpullSplitShardSize,
+      ptt.fullpull_split_style fullpullSplitStyle,
+      ptt.fullpull_condition fullpullCondition,
+      dt.ds_id dsId,
+      dd.ds_type dsType,
+      dd.ds_name dsName,
+      dd.ctrl_topic ctrlTopic,
+      dd.master_url masterUrl,
+      dd.slave_url slaveUrl,
+      dd.dbus_user dbusUser,
+      dd.dbus_pwd dbusPwd,
+      dt.schema_name schemaName,
+      dt.id tableId,
+      dt.table_name tableName,
+      dt.physical_table_regex physicalTableRegex,
+      dt.output_topic outputTopic
+    FROM
+      t_project_topo_table ptt,
+      t_project p,
+      t_project_topo pt,
+      t_data_tables dt,
+      t_dbus_datasource dd
+    WHERE
+      ptt.project_id = p.id
+      AND ptt.topo_id = pt.id
+      AND ptt.table_id = dt.id
+      AND dt.ds_id = dd.id
+      AND ptt.id IN
+      <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
   </select>
 </mapper>

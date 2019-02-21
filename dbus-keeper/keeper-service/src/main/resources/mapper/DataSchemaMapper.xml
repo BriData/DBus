@@ -78,7 +78,7 @@
     set ts.status=#{status} , tt.status =#{status}  where ts.id = #{id}
   </update>
   <select id="selectById" resultMap="BaseResultMap">
-    select * from t_data_schema where id = #{id}
+    select d.ds_type,d.ds_name,s.* from t_data_schema s,t_dbus_datasource d where s.ds_id = d.id and s.id = #{id}
   </select>
   <select id="findByDsIdAndSchemaName" resultMap="BaseResultMap">
     select s.*, ds.ds_name ,ds.ds_type

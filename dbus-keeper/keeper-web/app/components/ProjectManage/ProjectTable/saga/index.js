@@ -196,6 +196,10 @@ function* getReSourceColumnsRepos (action) {
       message.error('网络连接错误', 2)
     } else if (repos.status !== 0) {
       message.error(repos.message || '获取失败', 2)
+    } else {
+      if(repos.payload && repos.payload.length === 0) {
+        message.warn('该表无列信息', 2)
+      }
     }
   } catch (err) {
     yield put(getColumns.fail(err))

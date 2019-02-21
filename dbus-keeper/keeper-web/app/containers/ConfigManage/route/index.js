@@ -9,6 +9,7 @@ import ZKManageWrapper from '@/app/containers/ConfigManage/ZKManageWrapper'
 import GlobalConfigWrapper from '@/app/containers/ConfigManage/GlobalConfigWrapper'
 import HeartbeatConfigWrapper from '@/app/containers/ConfigManage/HeartbeatConfigWrapper'
 import DBusMgrConfigWrapper from '@/app/containers/ConfigManage/DBusMgrConfigWrapper'
+import DBAEncodeConfigWrapper from '@/app/containers/ConfigManage/DBAEncodeConfigWrapper'
 // HOCFactory({'siderHidden': true})(App)
 // 导出路由
 export default (store) => [
@@ -40,6 +41,10 @@ export default (store) => [
       {
         path: '/config-manage/dbus-mgr-config',
         component: DBusMgrConfigWrapper
+      },
+      {
+        path: '/config-manage/dba-encode-config',
+        component: DBAEncodeConfigWrapper
       },
     ]
   }

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,6 @@
 
 package com.creditease.dbus.service;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.bean.SchemaAndTablesInfoBean;
 import com.creditease.dbus.domain.mapper.DataSchemaMapper;
 import com.creditease.dbus.domain.mapper.DataTableMapper;
@@ -53,346 +50,249 @@ import java.util.Map;
  */
 @Service
 public class DataSchemaService {
-    @Autowired
-    private DataSchemaMapper mapper;
+	@Autowired
+	private DataSchemaMapper mapper;
 
-    @Autowired
-    private DataTableMapper tableMapper;
+	@Autowired
+	private DataTableMapper tableMapper;
 
-    @Autowired
-    private TableService dataTableService;
+	@Autowired
+	private TableService dataTableService;
 
-    @Autowired
-    private DataSourceService dataSourceService;
+	@Autowired
+	private DataSourceService dataSourceService;
 
-    private static Logger logger = LoggerFactory.getLogger(DataSchemaService.class);
-    /* 方法中用到的高频字符串常量*/
-    public static final String DBUS = "dbus";
-    public static final String RESULT = "result";
+	private static Logger logger = LoggerFactory.getLogger(DataSchemaService.class);
+	/* 方法中用到的高频字符串常量*/
+	public static final String DBUS = "dbus";
+	public static final String RESULT = "result";
 
-    public static final String MYSQL = "mysql";
-    public static final String ORACLE = "oracle";
-    /**
-     * schema索
-     * @return
-     */
-    public PageInfo<Map<String,Object>> searchSchemaAndDs(int pageNum,int pageSize,Integer dsId,String schemaName){
-        Map<String, Object> param = new HashedMap();
-        param.put("dsId",dsId);
-        param.put("schemaName",schemaName == null? schemaName:schemaName.trim());
-        PageHelper.startPage(pageNum,pageSize);
-        List<Map<String,Object>> dataSchemas = mapper.searchSchemaAndDs(param);
-        return new PageInfo<>(dataSchemas);
-    }
+	public static final String MYSQL = "mysql";
+	public static final String ORACLE = "oracle";
 
-    /**
-     * @param schemaId schema 的id
-     *        dsId schema所属ds的id
-     *        schemaName schema名称
-     * @param dsId
-     */
-    public List<DataSchema>  searchSchema(Long schemaId, Long dsId, String schemaName){
-        return mapper.searchSchema(schemaId, dsId, schemaName == null?schemaName:schemaName.trim());
-    }
+	/**
+	 * schema索
+	 *
+	 * @return
+	 */
+	public PageInfo<Map<String, Object>> searchSchemaAndDs(int pageNum, int pageSize, Integer dsId, String schemaName) {
+		Map<String, Object> param = new HashedMap();
+		param.put("dsId", dsId);
+		param.put("schemaName", schemaName == null ? schemaName : schemaName.trim());
+		PageHelper.startPage(pageNum, pageSize);
+		List<Map<String, Object>> dataSchemas = mapper.searchSchemaAndDs(param);
+		return new PageInfo<>(dataSchemas);
+	}
 
-    /**
-     * 根据 ID更新某条记录
-     * @param updateOne
-     */
-    public int update(DataSchema updateOne){
-        // updateOne.setCreateTime(new Date());
-        if(updateOne.getStatus().equals("inactive")){
-            tableMapper.inactiveTableBySchemaId(updateOne.getId());
-        }
-        return mapper.update(updateOne);
-    }
+	/**
+	 * @param schemaId schema 的id
+	 *                 dsId schema所属ds的id
+	 *                 schemaName schema名称
+	 * @param dsId
+	 */
+	public List<DataSchema> searchSchema(Long schemaId, Long dsId, String schemaName) {
+		return mapper.searchSchema(schemaId, dsId, schemaName == null ? schemaName : schemaName.trim());
+	}
 
-    /**
-     * @return 插入的新数据的ID
-     */
-    public Integer insertOne(DataSchema newOne){
-        newOne.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        mapper.insert(newOne);
-        return newOne.getId();
-    }
+	/**
+	 * 根据 ID更新某条记录
+	 *
+	 * @param updateOne
+	 */
+	public int update(DataSchema updateOne) {
+		// updateOne.setCreateTime(new Date());
+		if (updateOne.getStatus().equals("inactive")) {
+			tableMapper.inactiveTableBySchemaId(updateOne.getId());
+		}
+		return mapper.update(updateOne);
+	}
 
-    public int modifyDataSchemaStatus(Map<String, Object> param) {
-        return mapper.updateSchemaStatusByPrimaryKey(param);
-    }
+	/**
+	 * @return 插入的新数据的ID
+	 */
+	public Integer insertOne(DataSchema newOne) {
+		newOne.setCreateTime(new Timestamp(System.currentTimeMillis()));
+		mapper.insert(newOne);
+		return newOne.getId();
+	}
 
-    public int deleteBySchemaId(Long id) {
-        return mapper.deleteBySchemaId(id);
-    }
+	public int modifyDataSchemaStatus(Map<String, Object> param) {
+		return mapper.updateSchemaStatusByPrimaryKey(param);
+	}
 
-    public DataSchema selectById(Long id) {
-        return mapper.selectById(id);
-    }
+	public int deleteBySchemaId(Long id) {
+		return mapper.deleteBySchemaId(id);
+	}
 
-    /**
-     * @return 根据dsType，构造不同的dbus schema
-     */
-    private DataSchema getDbusSchema(String dsType,Integer dsId,String dsName){
-        DataSchema dbusSchema = new DataSchema();
+	public DataSchema selectById(Long id) {
+		return mapper.selectById(id);
+	}
 
-        StringBuilder srcTopic = new StringBuilder(dsName);
-        StringBuilder targetTopic = new StringBuilder(dsName);
-        if(MYSQL.equals(dsType)){
-            srcTopic.append(".").append(DBUS);
-            targetTopic.append(".").append(DBUS).append(".").append(RESULT);
+	/**
+	 * @return 根据dsType，构造不同的dbus schema
+	 */
+	private DataSchema getDbusSchema(String dsType, Integer dsId, String dsName) {
+		DataSchema dbusSchema = new DataSchema();
 
-            dbusSchema.setSchemaName(DBUS);
-        }else {
-            srcTopic.append(".").append(DBUS.toUpperCase());
-            targetTopic.append(".").append(DBUS.toUpperCase()).append(".").append(RESULT);
+		StringBuilder srcTopic = new StringBuilder(dsName);
+		StringBuilder targetTopic = new StringBuilder(dsName);
+		if (MYSQL.equals(dsType)) {
+			srcTopic.append(".").append(DBUS);
+			targetTopic.append(".").append(DBUS).append(".").append(RESULT);
 
-            dbusSchema.setSchemaName(DBUS.toUpperCase());
-        }
-        dbusSchema.setDsId(dsId);
-        dbusSchema.setStatus(DataSchema.ACTIVE);
-        dbusSchema.setDescription("");
-        dbusSchema.setSrcTopic(srcTopic.toString());
-        dbusSchema.setTargetTopic(targetTopic.toString());
+			dbusSchema.setSchemaName(DBUS);
+		} else {
+			srcTopic.append(".").append(DBUS.toUpperCase());
+			targetTopic.append(".").append(DBUS.toUpperCase()).append(".").append(RESULT);
 
-        return dbusSchema;
-    }
+			dbusSchema.setSchemaName(DBUS.toUpperCase());
+		}
+		dbusSchema.setDsId(dsId);
+		dbusSchema.setStatus(DataSchema.ACTIVE);
+		dbusSchema.setDescription("");
+		dbusSchema.setSrcTopic(srcTopic.toString());
+		dbusSchema.setTargetTopic(targetTopic.toString());
 
-    /**
-     * 插入新的schema, 根据dsId和schemaName过滤
-     * @return 新的schemaId 或者 其他信息
-     */
-    private Integer insertSchema(DataSchema newSchema){
-        Integer dsId = newSchema.getDsId();
-        String schemaName = newSchema.getSchemaName();
-        if(dsId == null || StringUtils.isEmpty(schemaName)){
-            logger.error("[insert schema] param illegal: dsId:{},schemaName:{}",
-                    dsId,schemaName);
-            return -1;
-        }
-        // 如果不存在，插入
-        DataSchema oldSchema =findSchema(dsId,schemaName);
-        if(oldSchema == null){
-            return insertOne(newSchema);
-        }else {
-            return oldSchema.getId();
-        }
-    }
+		return dbusSchema;
+	}
 
-    /**
-     * 根据dsId和schemaName 查找schema
-     * @param dsId
-     * @param schemaName
-     * @return
-     */
-    public DataSchema findSchema(int dsId, String schemaName){
-       return mapper.findByDsIdAndSchemaName(dsId,schemaName);
-    }
+	/**
+	 * 插入新的schema, 根据dsId和schemaName过滤
+	 *
+	 * @return 新的schemaId 或者 其他信息
+	 */
+	private Integer insertSchema(DataSchema newSchema) {
+		Integer dsId = newSchema.getDsId();
+		String schemaName = newSchema.getSchemaName();
+		if (dsId == null || StringUtils.isEmpty(schemaName)) {
+			logger.error("[insert schema] param illegal: dsId:{},schemaName:{}",
+					dsId, schemaName);
+			return -1;
+		}
+		// 如果不存在，插入
+		DataSchema oldSchema = findSchema(dsId, schemaName);
+		if (oldSchema == null) {
+			return insertOne(newSchema);
+		} else {
+			return oldSchema.getId();
+		}
+	}
 
-    public void addSchemaAndTables(List<SchemaAndTablesInfoBean> schemaAndTablesList) throws Exception{
-        for(SchemaAndTablesInfoBean schemaAndTables : schemaAndTablesList){
-            addSchemaAndTables(schemaAndTables);
-        }
+	/**
+	 * 根据dsId和schemaName 查找schema
+	 *
+	 * @param dsId
+	 * @param schemaName
+	 * @return
+	 */
+	public DataSchema findSchema(int dsId, String schemaName) {
+		return mapper.findByDsIdAndSchemaName(dsId, StringUtils.trim(schemaName));
+	}
 
-    }
+	public void addSchemaAndTables(List<SchemaAndTablesInfoBean> schemaAndTablesList) throws Exception {
+		for (SchemaAndTablesInfoBean schemaAndTables : schemaAndTablesList) {
+			addSchemaAndTables(schemaAndTables);
+		}
 
-    public void addSchemaAndTables(SchemaAndTablesInfoBean schemaAndTables) throws Exception{
-        try{
-            //获取传入的具体信息
-            DataSchema newSchema = schemaAndTables.getSchema();
-            newSchema.setStatus(DataSchema.ACTIVE); //添加默认的状态，active
-            String schemaName = newSchema.getSchemaName();
-            if(StringUtils.isEmpty(schemaName)){
-                logger.error("[add schema and tables] schemaName is empty. schemaInfo : {}",newSchema.toString());
-                throw new IllegalArgumentException("schemaName is illegal");
-            }
-            Integer dsId = newSchema.getDsId();
-            String dsType = newSchema.getDsType();
-            String dsName = newSchema.getDsName();
+	}
 
-            List<DataTable> newTables = schemaAndTables.getTables();
+	public void addSchemaAndTables(SchemaAndTablesInfoBean schemaAndTables) throws Exception {
+		try {
+			//获取传入的具体信息
+			DataSchema newSchema = schemaAndTables.getSchema();
+			newSchema.setStatus(DataSchema.ACTIVE); //添加默认的状态，active
+			String schemaName = newSchema.getSchemaName();
+			if (StringUtils.isEmpty(schemaName)) {
+				logger.error("[add schema and tables] schemaName is empty. schemaInfo : {}", newSchema.toString());
+				throw new IllegalArgumentException("schemaName is illegal");
+			}
+			Integer dsId = newSchema.getDsId();
+			String dsType = newSchema.getDsType();
+			String dsName = newSchema.getDsName();
 
+			List<DataTable> newTables = schemaAndTables.getTables();
+			//插入schema, 并获得插入的schemaId, 下面插入table用
+			Integer schemaId = insertSchema(newSchema);
+			if (schemaId < 0) {
+				logger.error("[add schema and tables] Insert schema error: : {}", newSchema.toString());
+				throw new IllegalArgumentException("insert schema error");
+			}
+			logger.info("insert schema [{}] success.", newSchema.getSchemaName());
 
-            //插入schema, 并获得插入的schemaId, 下面插入table用
-            Integer schemaId = insertSchema(newSchema);
-            if(schemaId <0){
-                logger.error("[add schema and tables] Insert schema error: : {}",newSchema.toString());
-                throw new IllegalArgumentException("insert schema error");
-            }
+			//构造默认的dbus schema,并尝试插入（存在不插入）
+			DataSchema dbusSchema = getDbusSchema(dsType, dsId, dsName);
+			Integer dbusSchemaId = insertSchema(dbusSchema);
+			if (dbusSchemaId < 0) {
+				logger.error("[add schema and tables] Insert dbus schema error: " +
+						"dbus schema info's format is illegal. dbusSchema:{}", dbusSchema.toString());
+				throw new IllegalArgumentException("insert dbus schema error");
+			}
+			//构造默认需要插入的表。
+			// mysql和oracle添加，需要对默认表检查插入
+			//log类型的不需要
+			List<DataTable> defaultTables;
+			if (StringUtils.equals(MYSQL, dsType)) {
+				//！！！ 注意dbusSchemaId和schemaId的使用处
+				defaultTables = dataTableService.getDefaultTableForMySQL(dsId, dsName, dbusSchemaId);
+			} else if (StringUtils.equals(ORACLE, dsType)) {
+				defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId, dsName, dbusSchemaId);
+			}
+			else {
+				defaultTables = new ArrayList<>();
+			}
+			//构造需要插入的表列表，然后将需要插入的表加入
+			List<DataTable> tablesToAdd = defaultTables;
 
-            //构造默认的dbus schema,并尝试插入（存在不插入）
-            DataSchema dbusSchema = getDbusSchema(dsType,dsId,dsName);
-            Integer dbusSchemaId = insertSchema(dbusSchema);
-            if(dbusSchemaId <0){
-                logger.error("[add schema and tables] Insert dbus schema error: " +
-                                "dbus schema info's format is illegal. dbusSchema:{}",dbusSchema.toString());
-                throw new IllegalArgumentException("insert dbus schema error");
-            }
+			//将dsId和schemaId等信息加入table中
+			for (int i = 0; i < newTables.size(); i++) {
+				DataTable newTable = newTables.get(i);
+				String tableName = newTable.getTableName();
+				// 如果是默认的表，略过（列表中已存在）
+				if (dataTableService.ifDefaultTable(tableName)) {
+					continue;
+				}
+				newTable.setDsId(dsId);
+				newTable.setDsType(dsType);
+				newTable.setDsName(dsName);
+				newTable.setSchemaId(schemaId);
+				newTable.setSchemaName(schemaName);
+				newTable.setStatus("ok");
+				tablesToAdd.add(newTable);
+				logger.info("newTable [{}] added.", newTable.getTableName());
+			}
 
-            /*schema插入完毕,然后插入tables信息*/
+			//插入表
+			Integer tableInsertResult = dataTableService.insertManageTable(tablesToAdd);
+			if (tableInsertResult == -1) {
+				throw new Exception("tables insert error!");
+			}
+		} catch (Exception e) {
+			logger.error("[add schema and tables] Exception:{}", e);
+			throw e;
+		}
+	}
 
+	public List<DataSchema> fetchSchemas(Integer dsId) throws Exception {
 
-
-            /*插入table时，也跟插入schema类似，需要对默认的表进行尝试插入的操作（默认添加默认的表）*/
-
-            //构造默认需要插入的表。
-            // mysql和oracle添加，需要对默认表检查插入
-            //log类型的不需要
-            List<DataTable> defaultTables;
-            if(StringUtils.equals(MYSQL,dsType)){
-                //！！！ 注意dbusSchemaId和schemaId的使用处
-                defaultTables = dataTableService.getDefaultTableForMySQL(dsId,dsName,dbusSchemaId);
-            }else if(StringUtils.equals(ORACLE,dsType)){
-                defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId,dsName,dbusSchemaId);
-            }
-            else {
-                defaultTables = new ArrayList<>();
-            }
-            //构造需要插入的表列表，然后将需要插入的表加入
-            List<DataTable> tablesToAdd = defaultTables;
-
-            //将dsId和schemaId等信息加入table中
-            for(int i=0; i<newTables.size(); i++){
-                DataTable newTable = newTables.get(i);
-                String tableName = newTable.getTableName();
-                // 如果是默认的表，略过（列表中已存在）
-                if(dataTableService.ifDefaultTable(tableName)){
-                    continue;
-                }
-
-
-                newTable.setDsId(dsId);
-                newTable.setSchemaId(schemaId);
-                newTable.setSchemaName(schemaName);
-                newTable.setStatus("abort");
-
-                tablesToAdd.add(newTable);
-            }
-
-            //插入表
-            Integer tableInsertResult =dataTableService.insertManageTable(tablesToAdd);
-            if(tableInsertResult == -1){
-                throw new Exception("tables insert error!");
-            }
-        }catch (Exception e){
-            logger.error("[add schema and tables] Exception:{}",e);
-            throw e;
-        }
-    }
-
-    public void addSchemaAndTables(Map<String,Object> schemaAndTablesInfo) throws Exception{
-        try{
-            //获取传入的具体信息
-            JSONObject infos = new JSONObject(schemaAndTablesInfo);
-            String dsName = infos.getString("dsName");
-            String dsType = infos.getString("dsType");
-            Integer dsId = infos.getInteger("dsId");
-            String schemaName = infos.getString("schemaName");
-            if(StringUtils.isEmpty(schemaName)){
-                logger.error("[add schema and tables] schemaName is empty. schemaAndTablesInfo : {}",schemaAndTablesInfo);
-                return;
-            }
-            String description = infos.getString("description");
-            String status = infos.getString("status");
-            String srcTopic = infos.getString("src_topic");
-            String targetTopic = infos.getString("target_topic");
-            JSONArray tables = infos.getJSONArray("tables");
-
-            //构造需要插入的schema
-            DataSchema newSchema = new DataSchema();
-            newSchema.setDsId(dsId);
-            newSchema.setDsName(dsName);
-            newSchema.setDsType(dsType);
-            newSchema.setSchemaName(schemaName);
-            newSchema.setDescription(description);
-            newSchema.setStatus(status);
-            newSchema.setSrcTopic(srcTopic);
-            newSchema.setTargetTopic(targetTopic);
-
-            //插入schema, 并获得插入的schemaId, 下面插入table用
-            Integer schemaId = insertSchema(newSchema);
-            if(schemaId <0){
-                logger.error("[add schema and tables] Insert schema error: " +
-                        "schema info's format is illegal. newSchema: dsId:{}, dsName:{}, dsType:{},schemaName:{}," +
-                        "desc:{}, status:{}, srcTopic:{},targetTopic:{}  ",dsId,dsName,dsType,schemaName,description,
-                        status,srcTopic,targetTopic);
-                throw new IllegalArgumentException("insert schema error");
-            }
-
-            //构造默认的dbus schema,并尝试插入（存在不插入）
-            DataSchema dbusSchema = getDbusSchema(dsType,dsId,dsName);
-            Integer dbusSchemaId = insertSchema(dbusSchema);
-            if(dbusSchemaId <0){
-                logger.error("[add schema and tables] Insert dbus schema error: " +
-                        "dbus schema info's format is illegal. dbusSchema:   dsId:{}, dsName:{}, dsType:{},schemaName:{}," +
-                        "desc:{}, status:{}, srcTopic:{},targetTopic:{} ",dbusSchema.getDsId(),dbusSchema.getDsName(),
-                        dbusSchema.getSchemaName(),dbusSchema.getDescription(),dbusSchema.getStatus(),
-                        dbusSchema.getSrcTopic(),dbusSchema.getTargetTopic());
-                throw new IllegalArgumentException("insert dbus schema error");            }
-
-            /*schema插入完毕,然后插入tables信息*/
-
-            /*插入table时，也跟插入schema类似，需要对默认的表进行尝试插入的操作（默认添加默认的表）*/
-
-            //构造默认需要插入的表
-            List<DataTable> defaultTables;
-            if(StringUtils.equals(ORACLE,dsType)){
-                defaultTables = dataTableService.getDefaultTableForNotMySQL(dsId,dsName,dbusSchemaId);
-            }else {
-                //！！！ 注意dbusSchemaId和schemaId的使用处
-                defaultTables = dataTableService.getDefaultTableForMySQL(dsId,dsName,dbusSchemaId);
-            }
-            //构造需要插入的表列表，然后将需要插入的表加入
-            List<DataTable> tablesToAdd = defaultTables;
-            for(int i=0; i<tables.size(); i++){
-                JSONObject tableInfo = tables.getJSONObject(i);
-
-                String tableName = tableInfo.getString("tableName");
-                // 如果是默认的表，略过（列表中已存在）
-                if(dataTableService.ifDefaultTable(tableName)){
-                    continue;
-                }
-
-                DataTable newTable = new DataTable(dsId,schemaId,schemaName, tableName,
-                        tableInfo.getString("physicalTableRegex"),
-                        tableInfo.getString("outputTopic"),"abort");
-                tablesToAdd.add(newTable);
-            }
-
-            //插入表
-            Integer tableInsertResult =dataTableService.insertManageTable(tablesToAdd);
-            if(tableInsertResult == -1){
-                throw new Exception("tables insert error!");
-            }
-        }catch (Exception e){
-            logger.error("[add schema and tables] Exception:{}",e);
-            throw e;
-        }
-    }
-
-    public List<DataSchema> fetchSchemas(Integer dsId) throws Exception{
-
-        DataSource ds =dataSourceService.getById(dsId);
-        List<DataSchema> list;
-        if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MYSQL)
-                || DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.ORACLE)
-                )
-        {
-            SchemaFetcher fetcher = SchemaFetcher.getFetcher(ds);
-            list = fetcher.fetchSchema();
-        } else if(DbusDatasourceType.stringEqual(ds.getDsType(),DbusDatasourceType.MONGO)) {
-            MongoSchemaFetcher fetcher = new MongoSchemaFetcher(ds);
-            list = fetcher.fetchSchema();
-        } else {
-            throw new IllegalArgumentException("Unsupported datasource type");
-        }
-        for(int i=0;i<list.size();i++){
-            list.get(i).setDsId(ds.getId());
-            list.get(i).setStatus(ds.getStatus());
-            list.get(i).setSrcTopic(ds.getDsName()+"."+list.get(i).getSchemaName());
-            list.get(i).setTargetTopic(ds.getDsName()+"."+list.get(i).getSchemaName()+".result");
-        }
-        return list;
-
-    }
-
-
+		DataSource ds = dataSourceService.getById(dsId);
+		List<DataSchema> list;
+		if (DbusDatasourceType.stringEqual(ds.getDsType(), DbusDatasourceType.MYSQL)
+				|| DbusDatasourceType.stringEqual(ds.getDsType(), DbusDatasourceType.ORACLE)
+				) {
+			SchemaFetcher fetcher = SchemaFetcher.getFetcher(ds);
+			list = fetcher.fetchSchema();
+		} else if (DbusDatasourceType.stringEqual(ds.getDsType(), DbusDatasourceType.MONGO)) {
+			MongoSchemaFetcher fetcher = new MongoSchemaFetcher(ds);
+			list = fetcher.fetchSchema();
+		} else {
+			throw new IllegalArgumentException("Unsupported datasource type");
+		}
+		for (int i = 0; i < list.size(); i++) {
+			list.get(i).setDsId(ds.getId());
+			list.get(i).setStatus(ds.getStatus());
+			list.get(i).setSrcTopic(ds.getDsName() + "." + list.get(i).getSchemaName());
+			list.get(i).setTargetTopic(ds.getDsName() + "." + list.get(i).getSchemaName() + ".result");
+		}
+		return list;
+	}
 }

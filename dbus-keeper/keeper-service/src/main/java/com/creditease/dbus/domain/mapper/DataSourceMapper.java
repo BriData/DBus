@@ -41,7 +41,14 @@ public interface DataSourceMapper {
 
     List<DataSource> getDataSourceByName(Map<String, Object> param);
 
+    DataSource getByName(String dsName);
+
     void updateDsStatusByPrimaryKey(Map<String, Object> param);
 
     List<Map<String,Object>> getDSNames();
+
+    List<DataSource> getDataSourceByDsTypes(@Param("list") List<String> dsTypes);
+
+    List<DataSource> getDataSourceByDsType(String dsType);
+
 }

@@ -19,7 +19,8 @@
         { "name": "zk-manage", "id": "app.components.menu.zkManage","text":"ZK管理", "icon": "setting" },
         { "name": "global-config", "id": "app.components.menu.globalConfig","text":"全局配置", "icon": "global" },
         { "name": "heartbeat-config", "id": "app.components.menu.heartbeatConfig","text":"心跳配置", "icon": "heart-o" },
-        { "name": "dbus-mgr-config", "id": "app.components.menu.mgrConfig","text":"管理库配置", "icon": "database" }
+        { "name": "dbus-mgr-config", "id": "app.components.menu.mgrConfig","text":"管理库配置", "icon": "database" },
+        { "name": "dba-encode-config", "id": "app.components.menu.dbaEncodeConfig","text":"DBA脱敏配置", "icon": "lock" }
     ],
     "source-monitor": [
         { "name": "topology", "id": "app.components.menu.topologyManage","text":"Topology", "icon": "book" }
@@ -37,7 +38,8 @@
     "tool-set": [
       { "name": "kafka-reader", "id": "app.components.menu.kafkaReader","text":"Kafka读取", "icon": "usb" },
       { "name": "control-message", "id": "app.components.menu.controlMessage","text":"控制消息", "icon": "message" },
-      { "name": "global-fullpull", "id": "app.components.menu.globalFullpull","text":"独立拉全量", "icon": "export" }
+      { "name": "global-fullpull", "id": "app.components.menu.globalFullpull","text":"独立拉全量", "icon": "export" },
+      { "name": "batch-restart-topo", "id": "app.components.menu.batchRestartTopo","text":"批量启动拓扑", "icon": "reload" }
     ],
     "self-check": [
       { "name": "cluster-check", "id": "app.components.menu.clusterCheck","text":"集群状态", "icon": "api" }

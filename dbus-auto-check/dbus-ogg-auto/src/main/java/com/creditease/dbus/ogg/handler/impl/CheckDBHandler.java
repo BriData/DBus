@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
+
 /**
  * User: 王少楠
  * Date: 2018-08-24
@@ -17,18 +19,13 @@ import java.sql.ResultSet;
  */
 public class CheckDBHandler extends AbstractHandler {
 
-    public void checkDeploy(BufferedWriter bw)throws Exception {
+    public void checkDeploy(BufferedWriter bw) throws Exception {
         checkDB(bw);
     }
 
-    private void checkDB(BufferedWriter bw) throws Exception{
-        System.out.println("============================================");
-        System.out.println("check db account start ");
-        bw.write("============================================");
-        bw.newLine();
-        bw.write("check db account start ");
-        bw.newLine();
-
+    private void checkDB(BufferedWriter bw) throws Exception {
+        writeAndPrint( "********************************** CHECK DB ACCOUNT START ***********************************");
+        writeAndPrint( " ");
 
         ConfigBean config = AutoCheckConfigContainer.getInstance().getConfig();
         String url = config.getOggUrl();
@@ -43,32 +40,18 @@ public class CheckDBHandler extends AbstractHandler {
             String sqlTest = "select * from dba_roles where ROLE = 'DBA'";
             ps = conn.prepareStatement(sqlTest);
             rs = ps.executeQuery();
-            if(rs.next()){
-                System.out.println("ogg 用户拥有权限："+rs.getString("ROLE"));
-                System.out.println("check db account ok ");
-                System.out.println("============================================");
-
-                bw.write("check db account ok ");
-                bw.newLine();
-                bw.write("============================================");
-                bw.newLine();
-            }else {
-                System.out.println("check db account ok fail: ogg 用户未授权DBA权限！！");
-                System.out.println("============================================");
-                bw.write("check db account ok fail: ogg 用户未授权DBA权限！！");
-                bw.newLine();
-                bw.write("============================================");
-                bw.newLine();
-                throw new Exception("check fail");
+            if (rs.next()) {
+                writeAndPrint( "ogg 用户拥有权限：" + rs.getString("ROLE"));
+                writeAndPrint( "check db account ok ");
+            } else {
+                writeAndPrint( "check db account fail: ogg 用户未授权DBA权限！！");
+                throw new Exception();
             }
-
-
-        }catch (Exception e){
-            System.out.println("check db account fail.");
-            bw.write("check db account fail.");
-            bw.newLine();
+            writeAndPrint( "********************************* CHECK DB ACCOUNT SUCCDESS *********************************");
+        } catch (Exception e) {
+            writeAndPrint( "********************************** CHECK DB ACCOUNT FAIL ************************************");
             throw e;
-        }finally {
+        } finally {
             DBUtil.close(rs);
             DBUtil.close(ps);
             DBUtil.close(conn);

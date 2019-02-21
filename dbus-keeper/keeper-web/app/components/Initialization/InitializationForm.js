@@ -232,10 +232,6 @@ export default class InitializationForm extends Component {
                   rules: [
                     {
                       required: true,
-                      message: '请输入Influxdb URL'
-                    },
-                    {
-                      pattern: /^http:\/\/\S+:\d{1,5}\/?$/,
                       message: '请输入正确的URL，例如http://influxdb_server_ip:8086'
                     }
                   ]

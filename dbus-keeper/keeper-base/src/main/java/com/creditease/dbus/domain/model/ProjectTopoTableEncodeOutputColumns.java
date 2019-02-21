@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class ProjectTopoTableEncodeOutputColumns {
 
     private String fieldType;
 
-    private Integer dataLength;
+    private Long dataLength;
 
     private String encodeType;
 
@@ -54,6 +54,8 @@ public class ProjectTopoTableEncodeOutputColumns {
     private Integer dataPrecision;
 
     private String schemaChangeComment;
+
+    private Integer specialApprove;
 
     public Integer getId() {
         return id;
@@ -95,11 +97,11 @@ public class ProjectTopoTableEncodeOutputColumns {
         this.fieldType = fieldType;
     }
 
-    public Integer getDataLength() {
+    public Long getDataLength() {
         return dataLength;
     }
 
-    public void setDataLength(Integer dataLength) {
+    public void setDataLength(Long dataLength) {
         this.dataLength = dataLength;
     }
 
@@ -181,5 +183,36 @@ public class ProjectTopoTableEncodeOutputColumns {
 
     public void setSchemaChangeComment(String schemaChangeComment) {
         this.schemaChangeComment = schemaChangeComment;
+    }
+
+    public Integer getSpecialApprove() {
+        return specialApprove;
+    }
+
+    public void setSpecialApprove(Integer specialApprove) {
+        this.specialApprove = specialApprove;
+    }
+
+    @Override
+    public String toString() {
+        return "ProjectTopoTableEncodeOutputColumns{" +
+                "id=" + id +
+                ", projectTopoTableId=" + projectTopoTableId +
+                ", fieldName='" + fieldName + '\'' +
+                ", encodePluginId=" + encodePluginId +
+                ", fieldType='" + fieldType + '\'' +
+                ", dataLength=" + dataLength +
+                ", encodeType='" + encodeType + '\'' +
+                ", encodeParam='" + encodeParam + '\'' +
+                ", desc='" + desc + '\'' +
+                ", truncate=" + truncate +
+                ", encodeSource=" + encodeSource +
+                ", updateTime=" + updateTime +
+                ", schemaChangeFlag=" + schemaChangeFlag +
+                ", dataScale=" + dataScale +
+                ", dataPrecision=" + dataPrecision +
+                ", schemaChangeComment='" + schemaChangeComment + '\'' +
+                ", specialApprove=" + specialApprove +
+                '}';
     }
 }

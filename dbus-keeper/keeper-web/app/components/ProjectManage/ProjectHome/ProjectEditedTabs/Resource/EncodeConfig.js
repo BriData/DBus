@@ -447,7 +447,12 @@ export default class EncodeConfig extends Component {
           >
             {encodesAsyn.map(item => (
               <Option value={`${item.cid}`} key={`${item.cid}`}>
-                {item.columnName}
+                {item.encodeType ?
+                  <span title='DBA脱敏'>
+                    {item.columnName}
+                    <Icon type="lock" style={{ color: "red"}} />
+                  </span>
+                  : item.columnName}
               </Option>
             ))}
           </Select>

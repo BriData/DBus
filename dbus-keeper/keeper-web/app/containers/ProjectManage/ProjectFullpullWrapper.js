@@ -107,6 +107,10 @@ export default class ProjectFullpullWrapper extends Component {
     if (params.dsName === 'null') delete params.dsName
     if (params.schemaName === 'null') delete params.schemaName
     if (params.tableName === 'null') delete params.tableName
+    if (params.id === 'null') delete params.id
+    if (params.orderBy === 'null') delete params.orderBy
+    if (params.targetSinkTopic === 'null') delete params.targetSinkTopic
+  
     getFullpullList(params)
   };
 

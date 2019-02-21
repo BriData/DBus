@@ -21,6 +21,8 @@
 package com.creditease.dbus.stream.common.tools;
 
 import com.creditease.dbus.commons.StatMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
@@ -28,7 +30,7 @@ import java.util.HashMap;
  * key = schemaName.tableName
  */
 public class TableStatMap extends HashMap<String, StatMessage> {
-
+    protected Logger logger = LoggerFactory.getLogger(getClass());
     private String dsName;
 
     public void initDsName (String dsName) {
@@ -36,7 +38,7 @@ public class TableStatMap extends HashMap<String, StatMessage> {
     }
 
     private String makeKey(String schemaName, String tableName) {
-        return String.format("%s.%s", schemaName, tableName);
+        return String.format("%s.%s", schemaName, tableName).toLowerCase();
     }
 
     public void mark(String schemaName, String tableName, long count) {
@@ -44,6 +46,7 @@ public class TableStatMap extends HashMap<String, StatMessage> {
         String key = makeKey(schemaName, tableName);
         StatMessage message = this.get(key);
         if (message == null) {
+            logger.info("mark key:{}",key);
             return;
         }
         //count++
@@ -56,6 +59,7 @@ public class TableStatMap extends HashMap<String, StatMessage> {
         StatMessage message = this.get(key);
         if (message == null) {
             message = new StatMessage(dsName, schemaName, tableName, StatMessage.DISPATCH_TYPE);
+            logger.info("logMeter put key:{}",key);
             this.put(key, message);
         }
 

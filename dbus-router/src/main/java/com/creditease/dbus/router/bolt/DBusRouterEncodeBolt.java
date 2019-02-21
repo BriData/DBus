@@ -122,6 +122,8 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
         } catch (Exception e) {
             collector.fail(input);
             if (data.isUMS()) statWindows.correc(data.getNameSpace(), data.getSize());
+            logger.error("encode bolt execute error data: {}", JSON.toJSONString(data));
+            e.printStackTrace();
             logger.error("encode bolt execute error.", e);
             collector.reportError(e);
         }

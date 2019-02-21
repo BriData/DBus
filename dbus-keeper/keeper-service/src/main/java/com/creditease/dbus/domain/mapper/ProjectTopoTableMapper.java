@@ -46,6 +46,12 @@ public interface ProjectTopoTableMapper {
 
     List<Map<String,Object>> searchTable(Map<String, Object> params);
 
+    List<Long> getDbaEncodeTable(List<Long> sourceTableIds);
+
+    List<Long> getDbaEncodeProjectTable(List<Long> tableIds);
+
+    List<Map<String,Object>> searchProjectTable(Map<String, Object> params);
+
     Map<String,Object>  selectByTableId(@Param("projectTableId") Integer tableId);
 
     List<String> selectNameByTopic(Map<String, Object> params);
@@ -76,4 +82,11 @@ public interface ProjectTopoTableMapper {
                                                   @Param("tableId") Integer tableId,
                                                   @Param("topoId") Integer topoId);
 
+    Map<String,Object> getNamesByTopoTableId(Integer topoTableId);
+
+    List<Map<String,Object>> getTopoTablesByIds(List<Integer> topoTableIds);
+
+    void updateStatusByTopoTableIds(@Param("status") String status, @Param("list") List<Integer> topoTableIds);
+
+    List<Map<String,Object>> searchTableByTopoTableIds(@Param("list") List<Integer> topoTableIds);
 }

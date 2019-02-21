@@ -51,6 +51,7 @@ import com.github.pagehelper.PageInfo;
 
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
@@ -125,13 +126,16 @@ public class ProjectTableService {
                                                       Integer pageNum,
                                                       Integer pageSize,
                                                       Integer projectId,
-                                                      Integer topoId){
+                                                      Integer topoId,
+                                                      Integer hasDbaEncode){
         Map<String,Object> param = new HashedMap();
         param.put("dsName",dsName == null? dsName : dsName.trim());
         param.put("schemaName",schemaName == null? schemaName: schemaName.trim());
         param.put("tableName",tableName == null ? tableName : tableName.trim());
         param.put("projectId",projectId);
         param.put("topoId",topoId);
+        param.put("hasDbaEncode",hasDbaEncode);
+
 
         PageHelper.startPage(pageNum,pageSize);
         //查询到project下所有resource信息
@@ -163,24 +167,70 @@ public class ProjectTableService {
         return new PageInfo(resources);
     }
 
-    public PageInfo<Map<String,Object>> queryTable(String dsName,
-                                                   String schemaName,
-                                                   String tableName,
-                                                   Integer pageNum,
-                                                   Integer pageSize,
-                                                   Integer projectId,
-                                                   Integer topoId){
+    public PageInfo<Map<String, Object>> queryTable(String dsName,
+                                                    String schemaName,
+                                                    String tableName,
+                                                    Integer pageNum,
+                                                    Integer pageSize,
+                                                    Integer projectId,
+                                                    Integer topoId) {
+        //1.根绝条件查询topoTable列表
+        Map<String, Object> param = new HashedMap();
+        param.put("dsName", dsName == null ? dsName : dsName.trim());
+        param.put("schemaName", schemaName == null ? schemaName : schemaName.trim());
+        param.put("tableName", tableName == null ? tableName : tableName.trim());
+        param.put("projectId", projectId);
+        param.put("topoId", topoId);
+        //放在查询前，且只有紧跟在方法后的第一个Mybatis的查询（Select）方法会被分页
+        PageHelper.startPage(pageNum, pageSize);
+        long start = System.currentTimeMillis();
+        List<Map<String, Object>> tables = projectTopoTableMapper.searchTable(param);
+        long end = System.currentTimeMillis();
+        logger.info("search project topo table cost time {}", end - start);
+        //tableId,projectId,projectName,projectDisplayName,topoId,sourcetableId,dsType,dsName,schemaName,tableName,
+        //tableNameAlias,physicalTableRegex,version,topoName,topoStatus,inputTopic,outputTopic,status,outputType,schemaChangeFlag,description,ifFullpull
+        ArrayList<Long> sourceTableIds = new ArrayList<>();
+        ArrayList<Long> tableIds = new ArrayList<>();
+        for (Map<String, Object> table : tables) {
+            sourceTableIds.add((Long) table.get("sourcetableId"));
+            tableIds.add((Long) table.get("tableId"));
+        }
+        //2.查询是否有dba脱敏
+        long start1 = System.currentTimeMillis();
+        if(sourceTableIds.size()!=0){
+            List<Long> dbaEncodeTable = projectTopoTableMapper.getDbaEncodeTable(sourceTableIds);
+            for (Map<String, Object> table : tables) {
+                if (dbaEncodeTable.contains(table.get("sourcetableId"))) {
+                    table.put("hasDbaEncode", 0);
+                }
+            }
+        }
+        long end1 = System.currentTimeMillis();
+        logger.info("search dba encode table cost time {}", end1 - start1);
+
+        //3.查询是否使用dba脱敏
+        if(tableIds.size()!=0) {
+            List<Long> dbaEncodeProjectTable = projectTopoTableMapper.getDbaEncodeProjectTable(tableIds);
+            for (Map<String, Object> table : tables) {
+                if (dbaEncodeProjectTable.contains(table.get("tableId"))) {
+                    table.put("useDbaEncode", 0);
+                }
+            }
+        }
+        long end2 = System.currentTimeMillis();
+        logger.info("search dba encode project topo table cost time {}", end2 - end1);
+        return new PageInfo(tables);
+    }
+
+    public List<Map<String, Object>> queryTable(String dsName, String schemaName, String tableName,
+                                                    Integer projectId, Integer topoId) {
         Map<String,Object> param = new HashedMap();
         param.put("dsName",dsName==null?dsName:dsName.trim());
         param.put("schemaName",schemaName == null? schemaName:schemaName.trim());
         param.put("tableName",tableName == null? tableName:tableName.trim());
         param.put("projectId",projectId);
         param.put("topoId",topoId);
-        //放在查询前，且只有紧跟在方法后的第一个Mybatis的查询（Select）方法会被分页
-        PageHelper.startPage(pageNum,pageSize);
-        List<Map<String,Object>> tables = projectTopoTableMapper.searchTable(param);
-
-        return new PageInfo(tables);
+        return projectTopoTableMapper.searchProjectTable(param);
     }
 
     public List<Map<String,Object>> getProjectNames(){
@@ -200,25 +250,26 @@ public class ProjectTableService {
     }
 
     public int deleteByTableId(int topoTableId,String topoStatus){
-        ProjectTopoTable table2Del =projectTopoTableMapper.selectByPrimaryKey(topoTableId);
-        if(table2Del == null) {
-            return TABLE_NOT_FOUND;
-        }else {
-            int projectId = table2Del.getProjectId();
-            int topoId = table2Del.getTopoId();
-            int sourceTableId = table2Del.getTableId();
-            if(StringUtils.equalsIgnoreCase(topoStatus, TableStatus.RUNNING.getValue()) || StringUtils.equalsIgnoreCase(topoStatus, TableStatus.CHANGED.getValue())) {
-                if (!StringUtils.equalsIgnoreCase(table2Del.getStatus(), TableStatus.STOPPED.getValue())) {
-                    return TABLE_IS_RUNNING;
-                }
-            }
-            //删除table信息
-            projectTopoTableMapper.deleteByPrimaryKey(topoTableId);
-            //删除column信息
-            encodeColumnMapper.deleteByTopoTableId(topoTableId);
-            //删除meta_version信息
-            return tableMetaVersionMapper.deleteByNonPrimaryKey(projectId, topoId, sourceTableId, null);
+        ProjectTopoTable table2Del = projectTopoTableMapper.selectByPrimaryKey(topoTableId);
+        if (table2Del == null) {
+            return MessageCode.TABLE_NOT_EXISTS;
         }
+        int projectId = table2Del.getProjectId();
+        int topoId = table2Del.getTopoId();
+        int sourceTableId = table2Del.getTableId();
+        if (StringUtils.equalsIgnoreCase(topoStatus, TableStatus.RUNNING.getValue()) || StringUtils.equalsIgnoreCase(topoStatus, TableStatus.CHANGED.getValue())) {
+            if (!StringUtils.equalsIgnoreCase(table2Del.getStatus(), TableStatus.STOPPED.getValue())) {
+                return MessageCode.TABLE_IS_RUNNING;
+            }
+        }
+        //删除table信息
+        projectTopoTableMapper.deleteByPrimaryKey(topoTableId);
+        //删除column信息
+        encodeColumnMapper.deleteByTopoTableId(topoTableId);
+        //删除meta_version信息
+        tableMetaVersionMapper.deleteByNonPrimaryKey(projectId, topoId, sourceTableId, null);
+        logger.info("delete topo table success. projectId;{},topoId:{},tableId:{}", projectId, topoId, sourceTableId);
+        return 0;
     }
 
     public int deleteColumnByTableId(int topoTableId){
@@ -251,9 +302,10 @@ public class ProjectTableService {
                     column.getProjectTopoTableId(),column.getFieldName());
             if(oldColumn !=null){
                 column.setId(oldColumn.getId());
+                logger.info("[encode] will update EncodeOutputColumns with param {}", column);
                 encodeColumnMapper.updateByPrimaryKey(column);
-
             }else {
+                logger.info("[encode] will insert EncodeOutputColumns with param {}", column);
                 encodeColumnMapper.insert(column);
             }
         }
@@ -304,7 +356,7 @@ public class ProjectTableService {
             int topoId = ((Long)tableMsg.get("topoId")).intValue();
             int version = (int) tableMsg.get("version");
 
-            //获取非源端的脱敏信息：adminEncode+userEncode
+            //新的逻辑-获取所有的脱敏信息：dbaEncode+adminEncode+userEncode
             List<Map<String,Object>> adminUserEncodeColumns = getEncodeColumns(projectTableId);
 
             //源端column信息
@@ -350,7 +402,7 @@ public class ProjectTableService {
                     }
                 }
             }
-            //将非源端脱敏信息和 disable字段 添加到输出列
+            //将所有脱敏信息和 disable字段 添加到输出列
             for(Map<String, Object> resultColumn: resultColumns) {
                 //将非源端脱敏信息添加到输出列
                 for(Map<String,Object> adminUserEncodeColumn: adminUserEncodeColumns) {
@@ -363,6 +415,7 @@ public class ProjectTableService {
                         resultColumn.put("encodePluginId",adminUserEncodeColumn.get("encodePluginId"));
                         resultColumn.put("schemaChangeFlag",adminUserEncodeColumn.get("schemaChangeFlag"));
                         resultColumn.put("schemaChangeComment",adminUserEncodeColumn.get("schemaChangeComment"));
+                        resultColumn.put("specialApprove",adminUserEncodeColumn.get("specialApprove"));
 
                         //前端需要改字段作为column的id
                         if(resultColumn.get("cid") == null){
@@ -400,8 +453,6 @@ public class ProjectTableService {
                 }else {//用户自定义的
                     resultColumn.put("disable",false);
                 }
-
-
             }
 
 
@@ -659,4 +710,23 @@ public class ProjectTableService {
         return projectTopoTableMapper.underOtherTopologyTableCountInSameProject(projectId, tableId, topoId);
     }
 
+    /**
+     * 根据topoTableId获取
+     * ds_name,schema_name,table_name, project_name,topo_name
+     */
+    public Map<String, Object> getNamesByTopoTableId(Integer topoTableId) {
+        return projectTopoTableMapper.getNamesByTopoTableId(topoTableId);
+    }
+
+    public List<Map<String,Object>> getTopoTablesByIds(List<Integer> topoTableIds) {
+        return projectTopoTableMapper.getTopoTablesByIds(topoTableIds);
+    }
+
+    public void updateStatusByTopoTableIds(String status,List<Integer> topoTableIds) {
+        projectTopoTableMapper.updateStatusByTopoTableIds(status,topoTableIds);
+    }
+
+    public List<Map<String, Object>> queryTable(List<Integer> topoTableIds) {
+        return projectTopoTableMapper.searchTableByTopoTableIds(topoTableIds);
+    }
 }

@@ -39,37 +39,15 @@ public class FullPullHistoryService {
 
     @Autowired
     private FullPullHistoryMapper mapper;
-    private final static String ENCODE_CHAR = "*****";
 
-    public PageInfo<FullPullHistory> search(Integer pageNum, Integer pageSize, Integer userId, String roleType, FullPullHistory history) {
+    public PageInfo<FullPullHistory> search(Integer pageNum, Integer pageSize, Integer userId, String roleType, HashMap<String, Object> param) {
         PageHelper.startPage(pageNum, pageSize);
-
-        HashMap<String, Object> param = new HashMap<>();
-        param.put("projectName", history.getProjectName());
-        param.put("dsName", history.getDsName());
-        param.put("schemaName", history.getSchemaName());
-        param.put("tableName", history.getTableName());
         if(!"admin".equals(roleType)){
             param.put("userId", userId);
         }
         List<FullPullHistory> list = mapper.search(param);
-
-        //非admin用户数据脱敏
-       /* if (!"admin".equals(roleType)) {
-            List<Long> ids = mapper.searchIdsByUid(userId);
-            encodeColumus(list, ids);
-        }*/
         PageInfo pageInfo = new PageInfo(list);
         return pageInfo;
-    }
-
-    private void encodeColumus(List<FullPullHistory> list, List<Long> ids) {
-        for (FullPullHistory history : list) {
-            if (!ids.contains(history.getId())) {
-                history.setTableName(ENCODE_CHAR);
-                history.setSchemaName(ENCODE_CHAR);
-            }
-        }
     }
 
     public List<Map<String, Object>> getDatasourceNames(Integer userId, String roleType, Integer projectId) {

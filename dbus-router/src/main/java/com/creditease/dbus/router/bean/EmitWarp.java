@@ -75,19 +75,29 @@ public class EmitWarp<T> implements Serializable {
     }
 
     public boolean isCtrl() {
-        return StringUtils.contains(key, "ctrl");
+        return StringUtils.equals(key, "ctrl");
     }
 
     public boolean isStat() {
-        return StringUtils.contains(key, "stat");
+        return StringUtils.equals(key, "stat");
     }
 
     public boolean isMysql() {
-        return StringUtils.contains(key, "mysql");
+        boolean ret = false;
+        String[] vals = StringUtils.split(key, ".");
+        if (vals != null && vals.length > 2) {
+            ret = StringUtils.equalsIgnoreCase(vals[1], "mysql");
+        }
+        return ret;
     }
 
     public boolean isOracle() {
-        return StringUtils.contains(key, "oracle");
+        boolean ret = false;
+        String[] vals = StringUtils.split(key, ".");
+        if (vals != null && vals.length > 2) {
+            ret = StringUtils.equalsIgnoreCase(vals[1], "oracle");
+        }
+        return ret;
     }
 
     public T getData() {

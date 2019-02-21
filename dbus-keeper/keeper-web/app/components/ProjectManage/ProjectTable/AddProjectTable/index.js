@@ -115,12 +115,15 @@ export default class AddProjectTable extends Component {
     }
     // encodes
     encodes = {}
-    // 需要把添加的表列出来，可以没有脱敏信息，后台会自动添加源端脱敏
+    // 需要把添加的表列出来，可以没有脱敏信息，后台会自动添加DBA脱敏
     Object.keys(params.resource).forEach(_tid => {
       encodes[_tid.substr(1)] = null
     })
     params['encodes'] && Object.keys(params['encodes']).length > 0
     && Object.entries(params['encodes']).forEach(item => {
+      Object.keys(item[1].encodeOutputColumns).forEach(key => {
+        item[1].encodeOutputColumns[key].fieldType = item[1].encodeOutputColumns[key].dataType
+      })
       encodes[`${item[0]}`] = {
         encodeOutputColumns: Object.values(item[1].encodeOutputColumns),
         outputListType: item[1].outputListType

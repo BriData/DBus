@@ -349,7 +349,12 @@ public class OraMetaFetcher implements MetaFetcher {
             ps.setString(2, table);
             ResultSet resultSet = ps.executeQuery();
 
-            resultSet.next();
+            if (!resultSet.next()) {
+                TableComments tableComments = new TableComments();
+                tableComments.setOwner(schema);
+                tableComments.setTableName(table);
+                return tableComments;
+            }
             TableComments tableComments = new TableComments();
             tableComments.setOwner(resultSet.getString("owner"));
             tableComments.setTableName(resultSet.getString("table_name"));

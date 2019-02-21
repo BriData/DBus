@@ -26,19 +26,27 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLRecoverableException;
+import java.util.Map;
 
+import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
+import com.creditease.dbus.heartbeat.container.MongoClientContainer;
 import com.creditease.dbus.heartbeat.dao.IHeartBeatDao;
 import com.creditease.dbus.heartbeat.exception.SQLTimeOutException;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.mongo.DBusMongoClient;
 import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DBUtil;
 import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.vo.HeartBeatMonitorVo;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
 import org.apache.commons.lang.StringUtils;
+import org.bson.Document;
 
 public class HeartBeatDaoImpl implements IHeartBeatDao {
 
@@ -75,6 +83,70 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
 
     @Override
     public int sendPacket(String key, String dsName, String schemaName, String tableName, String packet, String dsType) {
+        int cnt = 0;
+        if (DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.MONGO)) {
+            cnt = sendNoSqlPacket(key, dsName, schemaName, tableName, packet, dsType);
+        } else if (DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.MYSQL) ||
+                   DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.ORACLE)
+                ) {
+            cnt = sendRdbmsPacket(key, dsName, schemaName, tableName, packet, dsType);
+        }
+        return cnt;
+    }
+
+    private int sendNoSqlPacket(String key, String dsName, String schemaName, String tableName, String packet, String dsType) {
+        int cnt = 0;
+        DBusMongoClient dbusMongoClient = null;
+        try {
+            dbusMongoClient = MongoClientContainer.getInstance().getMongoClient(key);
+            Document record = new Document();
+            record.put("DS_NAME", dsName);
+            record.put("SCHEMA_NAME", schemaName);
+            record.put("TABLE_NAME", tableName);
+            record.put("PACKET", packet);
+            record.put("CREATE_TIME", DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
+            record.put("UPDATE_TIME", DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
+            if (dbusMongoClient.getShardMongoClients() != null &&
+                dbusMongoClient.getShardMongoClients().size() > 0) {
+                if (dbusMongoClient.isShardCollection(schemaName, tableName)) {
+                    for (Map.Entry<String, MongoClient> client : dbusMongoClient.getShardMongoClients().entrySet()) {
+                        MongoDatabase db = client.getValue().getDatabase("dbus");
+                        MongoCollection collection = db.getCollection("db_heartbeat_monitor");
+                        record.put("_id", dbusMongoClient.nextSequence("db_heartbeat_monitor"));
+                        collection.insertOne(record);
+                        cnt++;
+                    }
+                } else {
+                    String majorShard = dbusMongoClient.getDbMajorShard(schemaName);
+                    if (StringUtils.isNotBlank(majorShard)) {
+                        MongoClient client = dbusMongoClient.getShardMongoClients().get(majorShard);
+                        MongoDatabase db = client.getDatabase("dbus");
+                        MongoCollection collection = db.getCollection("db_heartbeat_monitor");
+                        record.put("_id", dbusMongoClient.nextSequence("db_heartbeat_monitor"));
+                        collection.insertOne(record);
+                        cnt++;
+                    }
+                }
+            } else {
+                MongoClient client = dbusMongoClient.getMongoClient();
+                MongoDatabase db = client.getDatabase("dbus");
+                MongoCollection collection = db.getCollection("db_heartbeat_monitor");
+                record.put("_id", dbusMongoClient.nextSequence("db_heartbeat_monitor"));
+                collection.insertOne(record);
+                cnt++;
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger().error("[db-HeartBeatDao]", e);
+        }
+        if (cnt >= 1) {
+             LoggerFactory.getLogger().info("[db-HeartBeatDao] 数据源: " + key + ", 插入心跳包成功. " + packet);
+        } else {
+             LoggerFactory.getLogger().error("[db-HeartBeatDao]: 数据源: " + key + ", 插入心跳包失败!" + packet);
+        }
+        return cnt;
+    }
+
+    private int sendRdbmsPacket(String key, String dsName, String schemaName, String tableName, String packet, String dsType) {
         Connection conn = null;
         PreparedStatement ps = null;
         int cnt = 0;
@@ -135,6 +207,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         }
         return cnt;
     }
+
     @Override
     public int deleteOldHeartBeat(String key, String dsType) {
         Connection conn = null;

@@ -71,6 +71,19 @@ public class ProjectTableController extends BaseController{
         return resultEntityBuilder().payload(page).build();
     }
 
+    @GetMapping("/search-table-nopage")
+    public ResultEntity searchTable(String dsName, String schemaName, String tableName, Integer projectId, Integer topoId) {
+        List<Map<String, Object>> topoTables = tableService.queryTable(dsName, schemaName, tableName, projectId, topoId);
+        return resultEntityBuilder().payload(topoTables).build();
+    }
+
+    @PostMapping("/search-tables")
+    public ResultEntity searchTable(@RequestBody List<Integer> topoTableIds) {
+        List<Map<String, Object>> topoTables = tableService.queryTable(topoTableIds);
+        return resultEntityBuilder().payload(topoTables).build();
+    }
+
+
     /**
      * 添加table页的resource搜索项
      */
@@ -81,10 +94,11 @@ public class ProjectTableController extends BaseController{
                                     @RequestParam(defaultValue = "1") Integer pageNum,
                                     @RequestParam(defaultValue = "10")Integer pageSize,
                                     @RequestParam Integer projectId,
-                                       @RequestParam Integer topoId){
+                                       @RequestParam Integer topoId,
+                                       @RequestParam(required = false) Integer hasDbaEncode){
 
         PageInfo<Map<String,Object>> page = tableService.queryResource(dsName,schemaName,tableName,
-                pageNum,pageSize,projectId,topoId);
+                pageNum,pageSize,projectId,topoId,hasDbaEncode);
         return resultEntityBuilder().payload(page).build();
     }
 
@@ -122,14 +136,7 @@ public class ProjectTableController extends BaseController{
 
     @GetMapping("/delete-by-table-id/{id}/{topoStatus}")
     public ResultEntity deleteByTableId(@PathVariable int id,@PathVariable String topoStatus){
-        int deleteResult = tableService.deleteByTableId(id, topoStatus);
-        if(deleteResult == ProjectTableService.TABLE_NOT_FOUND){
-            return resultEntityBuilder().status(MessageCode.TABLE_NOT_EXISTS).build();
-        }else if(deleteResult == ProjectTableService.TABLE_IS_RUNNING){
-            return resultEntityBuilder().status(MessageCode.TABLE_IS_RUNNING).build();
-        }else {
-            return resultEntityBuilder().payload(deleteResult).build();
-        }
+        return resultEntityBuilder().status(tableService.deleteByTableId(id, topoStatus)).build();
     }
 
     @GetMapping("/delete-column-by-table-id/{id}")
@@ -266,6 +273,26 @@ public class ProjectTableController extends BaseController{
                                                                   @PathVariable Integer tableId,
                                                                   @PathVariable Integer topoId ) {
         return resultEntityBuilder().payload(tableService.underOtherTopologyTableCountInSameProject(projectId, tableId, topoId)).build();
+    }
+
+    /**
+     * 根据topoTableId获取
+     * ds_name,schema_name,table_name, project_name,topo_name
+     */
+    @GetMapping("/getNamesByTopoTableId/{topoTableId}")
+    public ResultEntity getNamesByTopoTableId(@PathVariable Integer topoTableId) {
+        return resultEntityBuilder().payload(tableService.getNamesByTopoTableId(topoTableId)).build();
+    }
+
+    @PostMapping("/getTopoTablesByIds")
+    public ResultEntity getTopoTablesByIds(@RequestBody List<Integer> topoTableIds) {
+        return resultEntityBuilder().payload(tableService.getTopoTablesByIds(topoTableIds)).build();
+    }
+
+    @PostMapping("/updateStatusByTopoTableIds")
+    public ResultEntity updateStatusByTopoTableIds(@RequestParam String status, @RequestBody List<Integer> topoTableIds) {
+        tableService.updateStatusByTopoTableIds(status, topoTableIds);
+        return resultEntityBuilder().build();
     }
 
 }

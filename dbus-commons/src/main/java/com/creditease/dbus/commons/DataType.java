@@ -204,6 +204,7 @@ public enum DataType {
             return convertJsonLogDataType(type);
         }
 
+
         // 这里复用json的类型转换函数
         if (DbusDatasourceType.stringEqual(dataSourceType, DbusDatasourceType.ES_SQL_BATCH)) {
             return convertJsonLogDataType(type);

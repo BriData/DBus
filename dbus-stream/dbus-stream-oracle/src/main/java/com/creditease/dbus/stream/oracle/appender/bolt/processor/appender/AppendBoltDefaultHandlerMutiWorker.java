@@ -128,6 +128,11 @@ public class AppendBoltDefaultHandlerMutiWorker implements BoltCommandHandler {
 
             //TODO 2.获取version以及meta信息
             MetaVersion version = MetaVerController.getSuitableVersion(dbSchema, tableName, pos, offset);
+            if (version == null) {
+                // topology中的spout、和上级bolt存在table和version是否存在的验证，正常逻辑不会执行到这里
+                logger.error("table[{}.{}] or version not found, data was ignored.", schemaName, tableName);
+                return;
+            }
             MetaWrapper meta = version.getMeta();
 
             //*********************************************************************

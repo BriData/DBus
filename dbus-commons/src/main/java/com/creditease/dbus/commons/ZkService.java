@@ -250,11 +250,11 @@ public class ZkService implements IZkService {
                 //logger.info("CAS设置数据成功，path：" + path );
                 return stat.getVersion();
             } else {
-                logger.error("CAS设置数据失败，path：" + path);
+                logger.error("CAS设置数据失败，path : {}", path);
                 return -1;
             }
         } catch (KeeperException.BadVersionException ex) {
-            logger.error("CAS设置数据失败，path：" + path);
+            logger.error("CAS设置数据失败，path : {},error msg : {}", path, ex.getMessage());
             return -1;
         }
 

@@ -25,7 +25,6 @@ import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.domain.model.ZkNode;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.utils.InitZooKeeperNodesTemplate;
 import com.creditease.dbus.utils.ZkConfTemplateHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -106,7 +105,7 @@ public class ZkConfService {
 	 * @return zk tree json
 	 */
 	public ZkNode loadZkTreeByDsName(String dsName, String dsType) throws Exception {
-		ZkNode root = initialTreeOfPath(com.creditease.dbus.commons.Constants.DBUS_ROOT, false);
+		ZkNode root = initialTreeOfPath(Constants.DBUS_ROOT, false);
 		root.setToggled(true);
 		ZkNode businessRoot = getLastCommonParent(root);
 		List<ZkNode> businessConfChildren = loadBusinessConf(dsName, dsType);
@@ -150,8 +149,8 @@ public class ZkConfService {
 			for (String rootNodePath : rootNodesSetOfDs) {
 				// 公共节点可能被重复处理，例如：/DBus/ConfTemplaes/Topology，可能被处理多次。
 				// 但结果幂等。为了代码简洁性，选择接受重复处理，而不是各种判断，特殊处理，增加代码复杂性,导致代码不可读。
-				initialTreeOfPath(com.creditease.dbus.commons.Constants.DBUS_CONF_TEMPLATE_ROOT + "/" + rootNodePath, true);
-				cloneNodeRecursively(com.creditease.dbus.commons.Constants.DBUS_CONF_TEMPLATE_ROOT + "/" + rootNodePath, dsName, dsType);
+				initialTreeOfPath(Constants.DBUS_CONF_TEMPLATE_ROOT + "/" + rootNodePath, true);
+				cloneNodeRecursively(Constants.DBUS_CONF_TEMPLATE_ROOT + "/" + rootNodePath, dsName, dsType);
 			}
 		}
 		logger.info("cloneConfFromTemplate request process ok. dsName:{},dsType:{} ", dsName, dsType);

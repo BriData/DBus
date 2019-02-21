@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class Constants {
     public static final String KAFKA_BOOTSTRAP_SERVERS = "dbus.kafka.BootstrapServers";
     public static final String ZOOKEEPER_SESSION_TIMEOUT = "dbus.zookeeper.session.timeout";
     public static final String MANGER_DB_CONNECT_URL = "dbus.manger.DB.connect.url";
-    public static final String TOPOLOGY_ID =       "dbus.storm.topology.dispatcher.id";
+    public static final String TOPOLOGY_ID = "dbus.storm.topology.dispatcher.id";
     public static final String ROUTER_PROJECT_NAME = "dbus.storm.topology.router.project.name";
 
     public static final String STATISTIC_TOPIC = "dbus.statistic.topic";
@@ -58,8 +58,12 @@ public class Constants {
     public static final String MYSQL_PROPERTIES_ROOT = COMMON_ROOT + "/mysql.properties";
     public static final String GLOBAL_PROPERTIES = "global.properties";
     public static final String GLOBAL_PROPERTIES_ROOT = COMMON_ROOT + "/global.properties";
+    public static final String OGG_PROPERTIES = "auto-deploy-ogg.conf";
+    public static final String CANAL_PROPERTIES = "auto-deploy-canal.conf";
+    public static final String OGG_PROPERTIES_ROOT = COMMON_ROOT + "/" + OGG_PROPERTIES;
+    public static final String CANAL_PROPERTIES_ROOT = COMMON_ROOT + "/" + CANAL_PROPERTIES;
 
-    public static final String  TEMPLATE_NODE_NAME = "/ConfTemplates";
+    public static final String TEMPLATE_NODE_NAME = "/ConfTemplates";
     public static final String DBUS_CONF_TEMPLATE_ROOT = DBUS_ROOT + "/ConfTemplates";
 
     public static final String CONTROL_MESSAGE_RESULT_ROOT = DBUS_ROOT + "/ControlMessageResult";
@@ -146,7 +150,7 @@ public class Constants {
 
     //extractor constants
     public static final int NEED_ACK_CANAL = 1;
-    public static final int NEED_ROLLBACK_CANAL=2;
+    public static final int NEED_ROLLBACK_CANAL = 2;
     public static final int SEND_NOT_COMPLETED = 3;
     public static final String EXTRACTOR_TOPOLOGY_ID = "extractor.topology.id";
 
@@ -207,19 +211,26 @@ public class Constants {
         }
     }
 
-    private Constants() {}
+    private Constants() {
+    }
 
     /**
      * t_data_tables 表 status 字段常量值
      */
     public static class DataTableStatus {
-        /** 可以正常接收数据状态 */
+        /**
+         * 可以正常接收数据状态
+         */
         public static final String DATA_STATUS_OK = "ok";
 
-        /** 需要抛弃该表的数据状态 */
+        /**
+         * 需要抛弃该表的数据状态
+         */
         public static final String DATA_STATUS_ABORT = "abort";
 
-        /** 正在等待拉全量状态 */
+        /**
+         * 正在等待拉全量状态
+         */
         public static final String DATA_STATUS_WAITING = "waiting";
     }
 
@@ -257,8 +268,8 @@ public class Constants {
         // config default values
         public static final long HEARTBEAT_MONITOR_TIME_INTERVAL_DEFAULT_VAL = 60L; //单位：秒 原来设置值为180（3min）;
 
-        public static final long TOPOS_KILL_WAIT_TIME_FOR_RETRIES_DEFAULT_VAL =  180L;
-        public static final long TOPOS_KILL_WAIT_TIMEOUT_DEFAULT_VAL =  1200L;
+        public static final long TOPOS_KILL_WAIT_TIME_FOR_RETRIES_DEFAULT_VAL = 180L;
+        public static final long TOPOS_KILL_WAIT_TIMEOUT_DEFAULT_VAL = 1200L;
         public static final int TOPOS_KILL_STORM_API_WAITTIME_PARAM_DEFAULT_VAL = 15;
     }
 

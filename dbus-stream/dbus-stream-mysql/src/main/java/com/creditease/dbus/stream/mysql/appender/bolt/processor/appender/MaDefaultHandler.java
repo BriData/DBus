@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,6 +95,11 @@ public class MaDefaultHandler implements BoltCommandHandler {
 
             //TODO 2.获取version以及meta信息
             MetaVersion version = MetaVerController.getSuitableVersion(dbSchema, tableName, pos, offset);
+            if (version == null) {
+                // topology中的spout、和上级bolt存在table和version是否存在的验证，正常逻辑不会执行到这里
+                logger.error("table[{}.{}] or version not found, data was ignored.", dbSchema, tableName);
+                return;
+            }
             DataTable table = ThreadLocalCache.get(Constants.CacheNames.DATA_TABLES, Utils.buildDataTableCacheKey(version.getSchema(), version.getTable()));
 
             //TODO 3.将前两步获取到的avro schema 和 meta数据 emit 到下一个bolt处理
@@ -138,7 +143,7 @@ public class MaDefaultHandler implements BoltCommandHandler {
             /**
              * meta信息不兼容不升版本，只需要删除重建t_table_meta中的meta信息
              * 兼容则只需要清除metaChangeFlag
-              */
+             */
 
             if (version.getMeta() != null && !result.isCompatible()) {
                 // 发送termination消息
@@ -210,11 +215,11 @@ public class MaDefaultHandler implements BoltCommandHandler {
          * 即需要将数据生成的metaWrapper中的注释填充为sourceMetaWrapper的注释
          */
         MetaWrapper sourceMetaWrapper = MetaFetcherManager.getMysqlMetaFetcher().fetch(header.getSchemaName(), header.getTableName(), -9999);
-        for(MetaWrapper.MetaCell cell : metaWrapper.getColumns()) {
+        for (MetaWrapper.MetaCell cell : metaWrapper.getColumns()) {
             String columnName = cell.getColumnName();
             MetaWrapper.MetaCell sourceCell = sourceMetaWrapper.get(columnName);
             // 可能源端已经不存在该列了
-            if(sourceCell == null) continue;
+            if (sourceCell == null) continue;
             // TODO: 2017/9/22
             /**
              * dataType和precision如何设置

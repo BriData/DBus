@@ -21,12 +21,12 @@ const Option = Select.Option
 // 导入样式
 import styles from '../../../res/styles/index.less'
 import {SEARCH_TABLE_RESOURCES_COLUMNS_LIST_API} from '@/app/containers/ProjectManage/api/index.js'
-import Request, {setToken} from "@/app/utils/request";
+import Request, {getUserInfo} from "@/app/utils/request";
 
 export default class EncodeConfig extends Component {
   constructor (props) {
     super(props)
-    this.NomalTableWidth = ['10%', '10%', '12%', '18%', '18%', '18%', '8%', '9%']
+    this.NomalTableWidth = ['10%', '10%', '10%','10%','15%', '15%', '15%', '5%', '10%']
     this.state = {
       encodeOutputColumns: {},
       encodeSourceSelected: [],
@@ -50,6 +50,9 @@ export default class EncodeConfig extends Component {
             encodeOutputColumns = fromJS(encodes[tid].encodeOutputColumns)
           } else {
             const { payload } = res
+            if (payload && payload.length === 0) {
+              message.warn('该表无列信息', 2)
+            }
             let temporaryEncodeSource = {}
             Object.values(payload).map(item => {
               const es = item.encodeSource
@@ -81,7 +84,7 @@ export default class EncodeConfig extends Component {
         }
       })
       .catch(error => {
-        error.response.data && error.response.data.message
+        error.response && error.response.data && error.response.data.message
           ? message.error(error.response.data.message)
           : message.error(error.message)
       })
@@ -283,7 +286,7 @@ export default class EncodeConfig extends Component {
     return (
       <div
         title={`${hoverText}`}
-        style={{maxWidth: `${parseFloat(width) / 100 * 1000}px`, ...style}}
+
         className={styles.ellipsis}
       >
         {text}
@@ -300,7 +303,7 @@ export default class EncodeConfig extends Component {
     }
     switch (str) {
       case '0':
-        return <span>源端脱敏</span>
+        return <span>DBA脱敏</span>
       case '1':
         return <span>项目级脱敏</span>
       default:
@@ -326,6 +329,29 @@ export default class EncodeConfig extends Component {
     }
   };
 
+  renderSpecialApprove = width => (text, record, index) => {
+    const userInfo = getUserInfo()
+    return (
+      <div
+        title={text}
+
+      >
+        <Switch
+          checked={
+            text === 1
+          }
+          size="small"
+          checkedChildren={<Icon type="check"/>}
+          unCheckedChildren={<Icon type="cross"/>}
+          disabled={userInfo.roleType !== "admin"}
+          onChange={value =>
+            this.handleChangeEncode(Number(value), record.cid, 'specialApprove')
+          }
+        />
+      </div>
+    )
+  }
+
   /**
    * @description encodeConfig的脱敏插件
    */
@@ -342,7 +368,7 @@ export default class EncodeConfig extends Component {
     const showComponent = encodeSource !== '3'
     return (
       <div
-        style={{ maxWidth: `${parseFloat(width) / 100 * 1000}px` }}
+
         className={styles.ellipsis}
       >
         {showComponent ? (
@@ -411,7 +437,7 @@ export default class EncodeConfig extends Component {
 
     return (
       <div
-        style={{ maxWidth: `${parseFloat(width) / 100 * 1000}px` }}
+
         className={styles.ellipsis}
       >
         {showComponent ? (
@@ -463,7 +489,7 @@ export default class EncodeConfig extends Component {
         }
       })
     return (
-      <div style={{ maxWidth: `${parseFloat(width) / 100 * 1000}px` }}>
+      <div>
         {showComponent ? (
           <Input
             disabled={this.handleFilterEncodeType(record.cid)}
@@ -495,7 +521,7 @@ export default class EncodeConfig extends Component {
     return (
       <div
         title={text}
-        style={{ maxWidth: `${parseFloat(width) / 100 * 1000}px` }}
+
       >
         {showComponent ? (
           <Switch
@@ -520,10 +546,13 @@ export default class EncodeConfig extends Component {
    * @description table的 Operating render
    */
 
-  renderOperating = (text, record, index) => {
+  renderOperating = width => (text, record, index) => {
     const { outputListType } = this.state
     return (
-      <div>
+      <div
+        title={text}
+
+      >
         <a
           onClick={e => this.handleDelEncode(e, record.cid)}
           disabled={outputListType === '0'}
@@ -589,15 +618,29 @@ export default class EncodeConfig extends Component {
       {
         title: (
           <FormattedMessage
+            id="app.components.projectManage.projectHome.tabs.resource.specialApprove"
+            defaultMessage="特批不脱敏"
+          />
+        ),
+        width: this.NomalTableWidth[2],
+        dataIndex: 'specialApprove',
+        key: 'specialApprove',
+        render: this.renderComponent(
+          this.renderSpecialApprove(this.NomalTableWidth[2])
+        )
+      },
+      {
+        title: (
+          <FormattedMessage
             id="app.components.projectManage.projectHome.tabs.resource.encodeNeed"
             defaultMessage="脱敏要求"
           />
         ),
-        width: this.NomalTableWidth[2],
+        width: this.NomalTableWidth[3],
         dataIndex: 'encodeSource',
         key: 'encodeSource',
         render: this.renderComponent(
-          this.renderEncodeNeed(this.NomalTableWidth[2])
+          this.renderEncodeNeed(this.NomalTableWidth[3])
         )
       },
       {
@@ -607,11 +650,11 @@ export default class EncodeConfig extends Component {
             defaultMessage="脱敏插件"
           />
         ),
-        width: this.NomalTableWidth[3],
+        width: this.NomalTableWidth[4],
         dataIndex: 'encodePluginId',
         key: 'encodePluginId',
         render: this.renderComponent(
-          this.renderEncodePlugin(this.NomalTableWidth[3])
+          this.renderEncodePlugin(this.NomalTableWidth[4])
         )
       },
       {
@@ -621,11 +664,11 @@ export default class EncodeConfig extends Component {
             defaultMessage="脱敏规则"
           />
         ),
-        width: this.NomalTableWidth[4],
+        width: this.NomalTableWidth[5],
         dataIndex: 'encodeType',
         key: 'encodeType',
         render: this.renderComponent(
-          this.renderEncodeType(this.NomalTableWidth[4])
+          this.renderEncodeType(this.NomalTableWidth[5])
         )
       },
       {
@@ -635,11 +678,11 @@ export default class EncodeConfig extends Component {
             defaultMessage="脱敏参数"
           />
         ),
-        width: this.NomalTableWidth[5],
+        width: this.NomalTableWidth[6],
         dataIndex: 'encodeParam',
         key: 'encodeParam',
         render: this.renderComponent(
-          this.renderEncodeParam(this.NomalTableWidth[5])
+          this.renderEncodeParam(this.NomalTableWidth[6])
         )
       },
       {
@@ -649,11 +692,11 @@ export default class EncodeConfig extends Component {
             defaultMessage="截取"
           />
         ),
-        width: this.NomalTableWidth[6],
+        width: this.NomalTableWidth[7],
         dataIndex: 'truncate',
         key: 'truncate',
         render: this.renderComponent(
-          this.renderTruncate(this.NomalTableWidth[6])
+          this.renderTruncate(this.NomalTableWidth[7])
         )
       },
       {
@@ -661,7 +704,9 @@ export default class EncodeConfig extends Component {
           <FormattedMessage id="app.common.operate" defaultMessage="操作" />
         ),
         width: this.NomalTableWidth[7],
-        render: this.renderComponent(this.renderOperating)
+        render: this.renderComponent(
+          this.renderOperating(this.NomalTableWidth[7])
+        )
       }
     ]
     return (
@@ -715,7 +760,17 @@ export default class EncodeConfig extends Component {
                 >
                   {encodesAsyn.map(item => (
                     <Option value={`${item.cid}`} key={`${item.cid}`}>
-                      {item.columnName}
+                      {item.encodeType ?
+                        <span
+                          title={item.encodeSource === 0 ? 'DBA脱敏' : '项目级脱敏'}
+                        >
+                          {item.columnName}
+                          <Icon
+                            type="lock"
+                            style={item.encodeSource === 0 ? { color: "red"}: { color: "#00c1de"}}
+                          />
+                        </span>
+                        : item.columnName}
                     </Option>
                   ))}
                 </Select>
@@ -742,7 +797,7 @@ export default class EncodeConfig extends Component {
             columns={columns}
             loading={loading}
             pagination={false}
-            scroll={{ y: 370 }}
+            scroll={{ x: true, y: 370 }}
           />
         </div>
       </div>

@@ -46,7 +46,7 @@ public class SaveAsRule implements IRule {
                 grammarMap.get(Integer.parseInt(rg.getRuleScope())).add(rg);
             }
         }
-        for (int idx = 0; idx < data.size(); idx++) {
+        for (int idx = 0; idx < grammar.size(); idx++) {
             if (grammarMap.containsKey(idx)) {
                 for (RuleGrammar rg : grammarMap.get(idx)) {
                     Field field = new Field();
@@ -60,6 +60,31 @@ public class SaveAsRule implements IRule {
             }
         }
         return ret;
+    }
+
+    public static void main(String[] args) throws Exception {
+        List<String> data = new ArrayList<>();
+        data.add("a");
+        data.add("b");
+        data.add("c");
+        data.add("d");
+
+        List<RuleGrammar> ruleGrammars = new ArrayList<>();
+        for(int i = 0; i < 5; i++)
+        {
+            RuleGrammar rg = new RuleGrammar();
+            rg.setRuleScope(String.valueOf(i));
+            rg.setName("col_" + i);
+            rg.setType("STRING");
+            ruleGrammars.add(rg);
+        }
+
+
+        SaveAsRule saveAsRule = new SaveAsRule();
+        List<String> results = saveAsRule.transform(data, ruleGrammars, Rules.SAVEAS);
+        System.out.println(results.toString());
+
+
     }
 
 }

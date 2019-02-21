@@ -3,6 +3,7 @@ package com.creditease.dbus.ogg.auto;
 import com.creditease.dbus.ogg.handler.IHandler;
 import com.creditease.dbus.ogg.handler.impl.DeployExtractParamHandler;
 import com.creditease.dbus.ogg.handler.impl.LoadExtractConfigHandler;
+import com.creditease.dbus.ogg.utils.FileUtil;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedWriter;
@@ -14,13 +15,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
+
 /**
  * User: 王少楠
  * Date: 2018-08-29
- * Desc:
+ * Desc:ogg源端
  */
 public class OGGDeploy {
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws Exception {
         List<IHandler> handlers = new ArrayList<>();
         handlers.add(new LoadExtractConfigHandler());
         handlers.add(new DeployExtractParamHandler());
@@ -39,21 +42,22 @@ public class OGGDeploy {
             fos = new FileOutputStream(file);
             osw = new OutputStreamWriter(fos);
             bw = new BufferedWriter(osw);
+            FileUtil.init(bw);
+
+            writeAndPrint("************************************** OGG DEPLOY BEGIN  ************************************");
+
             for (IHandler handler : handlers) {
-                if(!handler.process(bw)){
-                    throw new RuntimeException("fail.");
-                }
+                handler.process(bw);
             }
-            bw.write("************ success ************");
-            bw.newLine();
-            System.out.println("************ success ************");
+            writeAndPrint("************************************ OGG DEPLOY SUCCESS *************************************");
+
 
         } catch (Exception e) {
-            bw.write("************ fail! ************");
-            bw.newLine();
-            System.out.println("************ fail! ************");
+            e.printStackTrace();
+            writeAndPrint("************************************* OGG DEPLOY FAIL ***************************************");
+
         } finally {
-            if(bw != null) {
+            if (bw != null) {
                 bw.flush();
             }
             IOUtils.closeQuietly(bw);

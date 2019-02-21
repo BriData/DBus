@@ -5,7 +5,12 @@ import com.creditease.dbus.ogg.container.ExtractConfigContainer;
 import com.creditease.dbus.ogg.handler.AbstractHandler;
 import com.creditease.dbus.ogg.utils.FileUtil;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
 
 /**
  * User: 王少楠
@@ -21,31 +26,21 @@ public class DeployExtractParamHandler extends AbstractHandler {
     private void deployExtractParam(BufferedWriter bw) throws Exception {
         ExtractConfigBean extractConfig = ExtractConfigContainer.getInstance().getExtrConfig();
         String extractName = extractConfig.getExtrName();
-        System.out.println("============================================");
-        System.out.println("开始部署extract 配置文件: " + extractName + ".prm");
-        bw.write("============================================");
-        bw.newLine();
-        bw.write("开始部署extract 配置文件: " + extractName + ".prm");
-        bw.newLine();
+        writeAndPrint( "********************************** EXTRACT DEPLOY START *************************************");
+        writeAndPrint( "extract 配置文件: " + extractName + ".prm");
+
         try {
             if (extractConfig.getAppendTables() == null) {
                 doDeployNewParamFile(extractConfig);
             } else {
                 doDeployAppendParamFile(extractConfig);
             }
-            System.out.println("部署成功:");
-            bw.write("部署成功:");
-            bw.newLine();
-
-            //部署成功，在前台打印出结果
-            String file = extractConfig.getOggHome() + "/dirprm/"+extractConfig.getExtrName() + ".prm";
-            FileUtil.readFile(file,bw);
+            String file = extractConfig.getOggHome() + "/dirprm/" + extractConfig.getExtrName() + ".prm";
+            FileUtil.readFile(file, bw);
+            writeAndPrint( "********************************* EXTRACT DEPLOY SUCCESS ************************************");
         } catch (Exception e) {
-            System.out.println("部署失败！！！");
-            bw.write("部署失败！！！");
-            bw.newLine();
-        } finally {
-
+            writeAndPrint( "*********************************** EXTRACT DEPLOY FAIL *************************************");
+            throw e;
         }
     }
 
@@ -55,10 +50,10 @@ public class DeployExtractParamHandler extends AbstractHandler {
         try {
             File paramFile = new File(extractConfig.getOggHome() + "/dirprm", extractName + ".prm");
             //如果存在的话，不覆盖，值添加table
-            if(paramFile.exists()){
+            if (paramFile.exists()) {
                 extractConfig.setAppendTables(extractConfig.getTables());
                 doDeployAppendParamFile(extractConfig);
-            }else {
+            } else {
                 paramFile.createNewFile();
                 prmWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(paramFile)));
                 prmWriter.write("EXTRACT " + extractName.toUpperCase());
@@ -69,7 +64,7 @@ public class DeployExtractParamHandler extends AbstractHandler {
                 prmWriter.newLine();
                 prmWriter.write("RMTHOST " + extractConfig.getRmHost() + ", MGRPORT " + extractConfig.getMgrPort());
                 prmWriter.newLine();
-                prmWriter.write("rmttrail " +  extractConfig.getExtractFile());
+                prmWriter.write("rmttrail " + extractConfig.getExtractFile());
                 prmWriter.newLine();
                 prmWriter.write("DDL INCLUDE MAPPED");
                 prmWriter.newLine();

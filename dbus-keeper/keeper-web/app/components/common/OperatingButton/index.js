@@ -90,7 +90,7 @@ export default class OperatingButton extends Component {
       </Menu>
     )
     return (
-      <Dropdown overlay={menuMap} placement="bottomLeft">
+      <Dropdown trigger={['click']} overlay={menuMap} placement="bottomLeft">
         <Button icon={icon} shape="circle" className={styles.button} />
       </Dropdown>
     )

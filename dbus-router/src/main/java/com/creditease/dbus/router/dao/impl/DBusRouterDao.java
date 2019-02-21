@@ -277,12 +277,13 @@ public class DBusRouterDao implements IDBusRouterDao {
         sql.append("    AND tpt.`id` = tptt.`topo_id`                        ");
         sql.append("    AND tpt.`project_id` = tptt.`project_id`             ");
         sql.append("    AND tptt.`id` = tptteoc.`project_topo_table_id`      ");
+        sql.append("    AND tptteoc.`special_approve` = 0                    ");
         if (projectTopoTableId != null) {
             sql.append("    AND tptt.`id` = ?                                ");
         } else {
             sql.append("    AND tptt.`status` in ('running','changed')       ");
         }
-        sql.append("    AND tptteoc.`encode_source` in (1, 2)                ");
+        //sql.append("    AND tptteoc.`encode_source` in (0, 1, 2)           ");
 
         return sql.toString();
     }

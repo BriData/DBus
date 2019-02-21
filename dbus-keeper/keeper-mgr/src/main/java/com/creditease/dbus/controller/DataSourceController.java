@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.commons.IZkService;
+import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.service.DataSourceService;
@@ -73,20 +74,41 @@ public class DataSourceController extends BaseController {
 
     @PostMapping("")
     public ResultEntity addOne(@RequestBody DataSource newOne) {
-        return service.insertOne(newOne);
+        try {
+            //插入数据库
+            ResultEntity resultEntity = service.insertOne(newOne);
+            if (resultEntity.getStatus() != 0) {
+                return resultEntity;
+            }
+            //自动部署ogg或者canal
+            Integer dsId = resultEntity.getPayload(Integer.class);
+            return resultEntityBuilder().status(service.autoAddOggCanalLine(newOne)).payload(dsId).build();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
     }
 
     @GetMapping("/delete/{id}")
     public ResultEntity deleteById(@PathVariable Integer id) {
-        int size = service.countActiveTables(id);
-        if(size != 0){
-            return resultEntityBuilder().status(MessageCode.DATASOURCE_ALREADY_BE_USING).build();
+        try {
+            int size = service.countActiveTables(id);
+            if (size != 0) {
+                return resultEntityBuilder().status(MessageCode.DATASOURCE_ALREADY_BE_USING).build();
+            }
+            ResultEntity resultEntity = service.delete(id);
+            if (resultEntity.getMessage() == null) {
+                return resultEntityBuilder().status(resultEntity.getStatus()).build();
+            }
+            return resultEntity;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
-        return service.delete(id);
     }
 
     @PostMapping("/update")
-    public ResultEntity updateById(@RequestBody DataSource updateOne) throws Exception{
+    public ResultEntity updateById(@RequestBody DataSource updateOne) throws Exception {
         return service.update(updateOne);
     }
 
@@ -114,6 +136,7 @@ public class DataSourceController extends BaseController {
 
     /**
      * 检验数据源的能否连通
+     *
      * @param map {"dsType":"","masterURL":"","slaverURL":"","user":"","password":""}
      * @return
      */
@@ -148,9 +171,9 @@ public class DataSourceController extends BaseController {
         }
 
         try {
-			if (!StormToplogyOpHelper.inited) {
-				StormToplogyOpHelper.init(zkService);
-			}
+            if (!StormToplogyOpHelper.inited) {
+                StormToplogyOpHelper.init(zkService);
+            }
             String killResult = StormToplogyOpHelper.killTopology(topologyId, waitTime);
             if (StringUtils.isNotBlank(killResult) && killResult.equals(StormToplogyOpHelper.OP_RESULT_SUCCESS)) {
                 return new ResultEntity(ResultEntity.SUCCESS, ResultEntity.OK);
@@ -183,7 +206,7 @@ public class DataSourceController extends BaseController {
             @ApiImplicitParam(name = "dsId", value = "dataSource id", dataType = "Integer")
     })
     @GetMapping("/paths")
-    public ResultEntity getPath(HttpServletRequest request){
+    public ResultEntity getPath(HttpServletRequest request) {
         return service.getPath(request.getQueryString());
     }
 
@@ -194,6 +217,7 @@ public class DataSourceController extends BaseController {
 
     /**
      * 数据线级别别拖回重跑,对整条数据线均有影响
+     *
      * @param dsId
      * @param dsName
      * @param offset
@@ -205,7 +229,7 @@ public class DataSourceController extends BaseController {
             int result = service.rerun(dsId, dsName, offset);
             return resultEntityBuilder().status(result).build();
         } catch (Exception e) {
-            logger.error("Exception encountered while rerun datasource ({})",dsName, e);
+            logger.error("Exception encountered while rerun datasource ({})", dsName, e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

@@ -37,7 +37,7 @@ public class ProjectTopoTableMetaVersion {
 
     private String dataType;
 
-    private Integer dataLength;
+    private Long dataLength;
 
     private Date updateTime;
 
@@ -113,11 +113,11 @@ public class ProjectTopoTableMetaVersion {
         this.dataType = dataType;
     }
 
-    public Integer getDataLength() {
+    public Long getDataLength() {
         return dataLength;
     }
 
-    public void setDataLength(Integer dataLength) {
+    public void setDataLength(Long dataLength) {
         this.dataLength = dataLength;
     }
 

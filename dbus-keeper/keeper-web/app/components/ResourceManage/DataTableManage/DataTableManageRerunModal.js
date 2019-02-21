@@ -57,7 +57,7 @@ export default class DataTableManageRerunModal extends Component {
         Request(DATA_TABLE_RERUN_API, {
           params: {
             dsId: record.dsId,
-            dsName: record.name,
+            dsName: record.dsName,
             schemaId: record.schemaId,
             schemaName: record.schemaName,
             tableId: record.id,
@@ -121,7 +121,8 @@ export default class DataTableManageRerunModal extends Component {
                       message: 'Offset不能为空'
                     },
                     {
-                      pattern: /^(\d+|start|end)$/,
+                      // pattern: /^(\d+|start|end)$/,
+                      pattern: /^(\d+)$/,
                       message: '请输入正确的Offset'
                     }
                   ]
@@ -133,10 +134,10 @@ export default class DataTableManageRerunModal extends Component {
                     末尾Offset（不包含）：{endOffset}
                   </font>
                 </div>
-                <div>
+                {/*<div>
                   <Button onClick={() => this.props.form.setFieldsValue({offset: 'start'})}>Start</Button>
                   <Button onClick={() => this.props.form.setFieldsValue({offset: 'end'})} style={{marginLeft: 10}}>End</Button>
-                </div>
+                </div>*/}
               </FormItem>
             </Form>
         </Modal>

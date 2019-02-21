@@ -2,6 +2,7 @@ package com.creditease.dbus.ogg.auto;
 
 import com.creditease.dbus.ogg.handler.IHandler;
 import com.creditease.dbus.ogg.handler.impl.*;
+import com.creditease.dbus.ogg.utils.FileUtil;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedWriter;
@@ -13,15 +14,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.creditease.dbus.ogg.utils.FileUtil.writeAndPrint;
+
 /**
  * User: 王少楠
  * Date: 2018-08-24
- * Desc:
+ * Desc:ogg目标端
  */
 public class Start {
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws Exception {
         List<IHandler> actionEvents = new ArrayList<>();
-        actionEvents.add(0,new LoadConfigFileHandler());
+        actionEvents.add(0, new LoadConfigFileHandler());
         actionEvents.add(new CheckKafkaHandler());
         actionEvents.add(new CheckDBHandler());
         actionEvents.add(new DeployPropsFileHandler());
@@ -41,21 +44,22 @@ public class Start {
             fos = new FileOutputStream(file);
             osw = new OutputStreamWriter(fos);
             bw = new BufferedWriter(osw);
+            FileUtil.init(bw);
+
             for (IHandler handler : actionEvents) {
-                if(!handler.process(bw)){
-                    throw new RuntimeException("fail.");
-                }
+                handler.process(bw);
+
             }
-            bw.write("************ success ************");
-            bw.newLine();
+            writeAndPrint("************ success ************");
+
             System.out.println("************ success ************");
 
         } catch (Exception e) {
-            bw.write("************ fail! ************");
-            bw.newLine();
+            writeAndPrint("************ fail! ************");
+
             System.out.println("************ fail! ************");
         } finally {
-            if(bw != null) {
+            if (bw != null) {
                 bw.flush();
             }
             IOUtils.closeQuietly(bw);

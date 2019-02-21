@@ -32,13 +32,12 @@ import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.utils.DelZookeeperNodesTemplate;
 import com.creditease.dbus.utils.OrderedProperties;
+import com.creditease.dbus.utils.SSHUtils;
 import com.creditease.dbus.utils.StormToplogyOpHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+import com.github.pagehelper.PageInfo;
 import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +45,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import java.util.*;
 
@@ -71,6 +68,8 @@ public class DataSourceService {
     private TableService tableService;
     @Autowired
     private ToolSetService toolSetService;
+    @Autowired
+    private AutoDeployDataLineService autoDeployDataLineService;
 
     private static final String KEEPER_SERVICE = ServiceNames.KEEPER_SERVICE;
 
@@ -89,7 +88,26 @@ public class DataSourceService {
             queryString = URLDecoder.decode(queryString, "UTF-8");
             result = sender.get(KEEPER_SERVICE, "/datasource/search", queryString);
         }
-        return result.getBody();
+        ResultEntity body = result.getBody();
+        PageInfo<Map<String, Object>> dataSourceList = body.getPayload(new TypeReference<PageInfo<Map<String, Object>>>() {
+        });
+        for (Map<String, Object> ds : dataSourceList.getList()) {
+            String dsName = (String) ds.get("name");
+            if (ds.get("type").equals("mysql")) {
+                JSONObject canalConf = autoDeployDataLineService.getCanalConf(dsName);
+                ds.put("oggOrCanalHost",canalConf.getString(KeeperConstants.HOST));
+                ds.put("oggOrCanalPath",canalConf.getString(KeeperConstants.CANAL_PATH));
+            }
+            if (ds.get("type").equals("oracle")) {
+                JSONObject oggConf = autoDeployDataLineService.getOggConf(dsName);
+                ds.put("oggOrCanalHost",oggConf.getString(KeeperConstants.HOST));
+                ds.put("oggOrCanalPath",oggConf.getString(KeeperConstants.OGG_PATH));
+                ds.put("oggReplicatName",oggConf.getString(KeeperConstants.REPLICAT_NAME));
+                ds.put("oggTrailName",oggConf.getString(KeeperConstants.TRAIL_NAME));
+            }
+        }
+        body.setPayload(dataSourceList);
+        return body;
     }
 
     public ResultEntity getById(Integer id) {
@@ -124,7 +142,7 @@ public class DataSourceService {
         return count + tables.size();
     }
 
-    public ResultEntity delete(Integer id) {
+    public ResultEntity delete(Integer id) throws Exception {
         DataSource dataSource = this.getById(id).getPayload(DataSource.class);
         String dsName = dataSource.getDsName();
         //删除zk节点
@@ -135,7 +153,14 @@ public class DataSourceService {
             logger.error(e.getMessage(), e);
         }
         //级联删除相关表数据
-        return sender.get(KEEPER_SERVICE, "/datasource/delete/{id}", id).getBody();
+        ResultEntity body = sender.get(KEEPER_SERVICE, "/datasource/delete/{id}", id).getBody();
+        if (body.getStatus() != 0) {
+            return body;
+        }
+        //自动删除ogg或者canal
+        ResultEntity resultEntity = new ResultEntity();
+        resultEntity.setStatus(autoDeleteOggCanalLine(dataSource));
+        return resultEntity;
     }
 
     public ResultEntity getDataSourceByName(String name) {
@@ -277,12 +302,9 @@ public class DataSourceService {
         // String sshCmd = "ssh -p " + port + " " + stormSshUser + "@" + hostIp + " " + "'" + cmd + "'";
 
         logger.info("Topology Start Command:{}", cmd);
-        return StormToplogyOpHelper.execute(env.getProperty("pubKeyPath"), stormSshUser, hostIp, Integer.parseInt(port), cmd);
+        return SSHUtils.executeCommand(stormSshUser, hostIp, Integer.parseInt(port), env.getProperty("pubKeyPath"), cmd, null);
     }
 
-    public static void main(String[] args) {
-        // System.out.println(startTopology("testByccSSH","./0.4.x/splitter_puller/20180201_094712/","dbus-fullpuller_1.3-0.4.0-jar-with-dependencies.jar","splitter-puller"));
-    }
 
     private void delDsZkConf(String[] nodes, String dsName) throws Exception {
         for (String confFilePath : nodes) {
@@ -306,20 +328,27 @@ public class DataSourceService {
         if (!StormToplogyOpHelper.inited) {
             StormToplogyOpHelper.init(zkService);
         }
-        String runningInfo = StormToplogyOpHelper.getTopoRunningInfoById(topologyId);
+
         Properties globalConf = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
         String stormHomePath = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_HOME_PATH);
         //String host = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
         String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
         String user = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
 
+        String runningInfo = StormToplogyOpHelper.getTopoRunningInfoById(topologyId);
+        if(StringUtils.isBlank(runningInfo)){
+            Map resultMap = new HashMap<>();
+            resultMap.put("runningInfo", runningInfo);
+            resultMap.put("execResult", "");
+            return resultMap;
+        }
         String[] split = runningInfo.split(":");
         String command = "tail -300 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log.creditease";
 
-        String execResult = executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command);
-        if(StringUtils.isBlank(execResult)){
+        String execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
+        if (StringUtils.isBlank(execResult)) {
             command = "tail -300 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log";
-            execResult = executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command);
+            execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
         }
         Map resultMap = new HashMap<>();
         resultMap.put("runningInfo", runningInfo);
@@ -327,52 +356,64 @@ public class DataSourceService {
         return resultMap;
     }
 
-    private String executeCommand(String username, String host, int port, String pubKeyPath, String command) {
-        String result = "";
-        Session session = null;
-        ChannelExec channel = null;
-        try {
-            JSch jsch = new JSch();
-            jsch.addIdentity(pubKeyPath);
 
-            session = jsch.getSession(username, host, port);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
-            channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand(command);
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(channel.getInputStream()));
-            channel.connect();
-            String msg;
-            StringBuilder sb = new StringBuilder();
-            while ((msg = in.readLine()) != null) {
-                sb.append(msg).append("\n");
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return result;
-        } finally {
-            if (channel != null) {
-                channel.disconnect();
-            }
-            if (session != null) {
-                session.disconnect();
-            }
-        }
-    }
-
-    public int rerun(Integer dsId,String dsName, Long offset) throws Exception {
+    public int rerun(Integer dsId, String dsName, Long offset) throws Exception {
         String path = "/DBus/Topology/" + dsName + "-dispatcher/dispatcher.raw.topics.properties";
         byte[] data = zkService.getData(path);
         OrderedProperties orderedProperties = new OrderedProperties(new String(data));
         Object value = orderedProperties.get("dbus.dispatcher.offset");
-        if(StringUtils.isNotBlank(value.toString())){
+        if (value != null && StringUtils.isNotBlank(value.toString()) && StringUtils.isNumeric(value.toString())) {
             return MessageCode.PLEASE_TRY_AGAIN_LATER;
         }
         orderedProperties.put("dbus.dispatcher.offset", offset);
         zkService.setData(path, orderedProperties.toString().getBytes());
-        toolSetService.reloadConfig(dsId,dsName,"DISPATCHER_RELOAD_CONFIG");
+        toolSetService.reloadConfig(dsId, dsName, "DISPATCHER_RELOAD_CONFIG");
         return 0;
     }
+
+    /**
+     * 自动部署ogg或者canal
+     *
+     * @param newOne
+     */
+    public int autoAddOggCanalLine(DataSource newOne) throws Exception {
+        String dsType = newOne.getDsType();
+        String dsName = newOne.getDsName();
+        if (dsType.equalsIgnoreCase("mysql")) {
+            if (autoDeployDataLineService.isAutoDeployCanal(dsName)) {
+                return autoDeployDataLineService.addCanalLine(dsName, newOne.getCanalUser(), newOne.getCanalPass());
+            }
+        } else if (dsType.equalsIgnoreCase("oracle")) {
+            if (autoDeployDataLineService.isAutoDeployOgg(dsName)) {
+                return autoDeployDataLineService.addOracleLine(dsName);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * 自动部署ogg或者canal
+     *
+     * @param newOne
+     */
+    public int autoDeleteOggCanalLine(DataSource newOne) throws Exception {
+        String dsType = newOne.getDsType();
+        String dsName = newOne.getDsName();
+        if (dsType.equalsIgnoreCase("mysql")) {
+            if (autoDeployDataLineService.isAutoDeployCanal(dsName)) {
+                return autoDeployDataLineService.delCanalLine(dsName);
+            }
+        } else if (dsType.equalsIgnoreCase("oracle")) {
+            if (autoDeployDataLineService.isAutoDeployOgg(dsName)) {
+                return autoDeployDataLineService.deleteOracleLine(dsName);
+            }
+        }
+        return 0;
+    }
+
+    public DataSource getDataSourceByDsName(String dsName) {
+        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/getByName", "?dsName=" + dsName);
+        return result.getBody().getPayload(DataSource.class);
+    }
+
 }

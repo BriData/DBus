@@ -21,18 +21,21 @@
 package com.creditease.dbus.domain.model;
 import java.util.Date;
 
+/**
+ * 对应t_table_meta表
+ */
 public class TableMeta {
-    private Long id;
-    private Long verId;
+    private Integer id;
+    private Integer verId;
     private String columnName;
     private String originalColumnName;
     private Integer columnId;
     private Integer internalColumnId;
     private String hiddenColumn;
     private String virtualColumn;
-    private Long originalSer;
+    private Integer originalSer;
     private String dataType;
-    private Integer dataLength;
+    private Long dataLength;
     private Integer dataPrecision;
     private Integer dataScale;
     private Integer charLength;
@@ -94,19 +97,19 @@ public class TableMeta {
         this.defaultValue = defaultValue;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public Long getVerId() {
+    public Integer getVerId() {
         return verId;
     }
 
-    public void setVerId(Long verId) {
+    public void setVerId(Integer verId) {
         this.verId = verId;
     }
 
@@ -142,11 +145,11 @@ public class TableMeta {
         this.internalColumnId = internalColumnId;
     }
 
-    public Long getOriginalSer() {
+    public Integer getOriginalSer() {
         return originalSer;
     }
 
-    public void setOriginalSer(Long originalSer) {
+    public void setOriginalSer(Integer originalSer) {
         this.originalSer = originalSer;
     }
 
@@ -158,11 +161,11 @@ public class TableMeta {
         this.dataType = dataType;
     }
 
-    public Integer getDataLength() {
+    public Long getDataLength() {
         return dataLength;
     }
 
-    public void setDataLength(Integer dataLength) {
+    public void setDataLength(Long dataLength) {
         this.dataLength = dataLength;
     }
 

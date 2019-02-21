@@ -20,14 +20,16 @@
 
 package com.creditease.dbus.service.table;
 
-import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.DataSource;
+import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.TableMeta;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -38,26 +40,39 @@ public class MongoTableFetcher{
     }
 
     public List<DataTable> fetchTable(String schemaName) throws Exception {
-        MongoClientURI uri = new MongoClientURI(ds.getMasterUrl());
-        MongoClient client = new MongoClient(uri);
-        MongoDatabase database = client.getDatabase(schemaName);
 
+        MongoClient client = null;
+        List<DataTable> list;
+        try {
+            String url = ds.getMasterUrl();
+            String user = ds.getDbusUser();
+            String password = ds.getDbusPwd();
+            MongoCredential credential = MongoCredential.createCredential(user, "admin", password.toCharArray());
+            ArrayList<ServerAddress> serverAddresses = new ArrayList<>();
+            for (String urlOne : url.split(",")) {
+                String[] host_port = urlOne.split(":");
+                serverAddresses.add(new ServerAddress(host_port[0], Integer.parseInt(host_port[1])));
+            }
+            client = new MongoClient(serverAddresses, Arrays.asList(credential));
+            MongoDatabase database = client.getDatabase(schemaName);
 
-        List<DataTable> list = new ArrayList<>();
-        DataTable table;
+            list = new ArrayList<>();
+            DataTable table;
 
-        for (String name : database.listCollectionNames()) {
-            table = new DataTable();
-            table.setTableName(name);
-            table.setPhysicalTableRegex(name);
-            table.setVerId(null);
-            table.setStatus("ok");
-            table.setCreateTime(new java.util.Date());
-            list.add(table);
+            for (String name : database.listCollectionNames()) {
+                table = new DataTable();
+                table.setTableName(name);
+                table.setPhysicalTableRegex(name);
+                table.setVerId(null);
+                table.setStatus("ok");
+                table.setCreateTime(new java.util.Date());
+                list.add(table);
+            }
+        } finally {
+            if (client != null) {
+                client.close();
+            }
         }
-
-        client.close();
-
         return list;
     }
 

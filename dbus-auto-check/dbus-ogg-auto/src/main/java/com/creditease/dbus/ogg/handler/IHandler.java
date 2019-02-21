@@ -8,5 +8,5 @@ import java.io.BufferedWriter;
  * Desc:
  */
 public interface IHandler {
-    boolean process(BufferedWriter bw);
+    void process(BufferedWriter bw) throws Exception;
 }

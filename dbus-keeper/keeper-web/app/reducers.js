@@ -36,12 +36,14 @@ import {
 import {
   ControlMessageReducer,
   GlobalFullpullReducer,
-  KafkaReaderReducer
+  KafkaReaderReducer,
+  BatchRestartTopoReducer
 } from 'containers/toolSet/redux'
 
 import {
   ZKManageReducer,
-  GlobalConfigReducer
+  GlobalConfigReducer,
+  DBAEncodeConfigReducer
 } from 'containers/ConfigManage/redux'
 
 const routeInitialState = fromJS({
@@ -89,6 +91,7 @@ export default function createReducer (asyncReducers) {
     KafkaReaderReducer,
     ZKManageReducer,
     GlobalConfigReducer,
+    DBAEncodeConfigReducer,
     ...asyncReducers
   })
 }

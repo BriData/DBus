@@ -75,7 +75,7 @@ public class ToolSetService {
         try {
             if (dataTable.getDsType().equalsIgnoreCase("mysql")) {
                 connection = createDBConnection(dataTable);
-            } else if (dataTable.getDsType().equalsIgnoreCase("oracle")){
+            } else if (dataTable.getDsType().equalsIgnoreCase("oracle")) {
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 connection = createDBConnection(dataTable);
             }
@@ -120,7 +120,7 @@ public class ToolSetService {
             if (dataTable.getDsType().equalsIgnoreCase("mysql")) {
                 connection = createDBConnection(dataTable);
                 sql = "select " + cols + " from " + dataTable.getSchemaName() + "." + dataTable.getTableName() + " limit ?";
-            } else if (dataTable.getDsType().equalsIgnoreCase("oracle")){
+            } else if (dataTable.getDsType().equalsIgnoreCase("oracle")) {
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 connection = createDBConnection(dataTable);
                 sql = "select " + cols + " from " + dataTable.getSchemaName() + "." + dataTable.getTableName() + " where rownum < ?";
@@ -143,14 +143,29 @@ public class ToolSetService {
                     String columnName = rsmd.getColumnName(i);
                     Object obj = rs.getObject(i);
                     String columnType = map.get(columnName);
-                    if (KeeperConstants.SPLIT_COL_TYPE_PK.equals(columnType)) {
-                        columnType = "PK";
-                    } else if (KeeperConstants.SPLIT_COL_TYPE_UK.equals(columnType)) {
-                        columnType = "UK";
-                    } else {
-                        columnType = "COMMON_INDEX";
+                    String type = null;
+                    if (columnType.contains(KeeperConstants.SPLIT_COL_TYPE_PK)) {
+                        if (type != null) {
+                            type = type + "," + "PK";
+                        } else {
+                            type = "PK";
+                        }
                     }
-                    columns.put(columnName + "(" + columnType + ")", obj != null ? obj.toString() : null);
+                    if (columnType.contains(KeeperConstants.SPLIT_COL_TYPE_UK)) {
+                        if (type != null) {
+                            type = type + "," + "UK";
+                        } else {
+                            type = "UK";
+                        }
+                    }
+                    if (columnType.contains(KeeperConstants.SPLIT_COL_TYPE_COMMON_INDEX)) {
+                        if (type != null) {
+                            type = type + "," + "COMMON_INDEX";
+                        } else {
+                            type = "COMMON_INDEX";
+                        }
+                    }
+                    columns.put(columnName + "(" + type + ")", obj != null ? obj.toString() : null);
                 }
                 columnList.add(columns);
             }
@@ -277,9 +292,13 @@ public class ToolSetService {
             rset = pStmt.executeQuery();
 
             while (rset.next()) {
-                if (dataBaseType == DbusDatasourceType.ORACLE
-                        || dataBaseType == DbusDatasourceType.MYSQL){
-                    result.put(rset.getString(1), indexType);
+                if (dataBaseType == DbusDatasourceType.ORACLE || dataBaseType == DbusDatasourceType.MYSQL) {
+                    String columnName = rset.getString(1);
+                    if (result.containsKey(columnName)) {
+                        result.put(rset.getString(1), result.get(columnName) + "," + indexType);
+                    } else {
+                        result.put(rset.getString(1), indexType);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -333,13 +352,13 @@ public class ToolSetService {
         map.put("driverClassName", environment.getProperty("spring.datasource.driver-class-name"));
         map.put("zkServers", environment.getProperty("zk.str"));
         Properties properties = null;
-        if(zkService.isExists("/DBusInit")){
+        if (zkService.isExists("/DBusInit")) {
             properties = zkService.getProperties("/DBusInit");
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
             map.put(GLOBAL_CONF_KEY_INFLUXDB_URL, properties.getProperty(GLOBAL_CONF_KEY_INFLUXDB_URL));
             map.put(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS, properties.getProperty(GLOBAL_CONF_KEY_INFLUXDB_URL_DBUS));
-        }else if(zkService.isExists("/DBus")){
+        } else if (zkService.isExists("/DBus")) {
             properties = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
             map.put(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION, properties.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS_VERSION));
