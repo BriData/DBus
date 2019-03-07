@@ -94,7 +94,7 @@ export default class BasicInfoForm extends Component {
     const localeMessage = intlMessage(this.props.locale, this.formMessage)
     const placeholder = this.handlePlaceholder(localeMessage)
     const formItemLayout = {
-      labelCol: { span: 4 },
+      labelCol: { span: 2 },
       wrapperCol: { span: 12 }
     }
     console.info('basicInfo',basicInfo)

@@ -32,6 +32,28 @@ input:-webkit-autofill {
   padding: 6px 50px;
 }
 /*modal*/
+.ant-modal {
+  padding-bottom: 0;
+  transition: width 0.5s, top 0.5s;
+}
+.ant-modal-wrap{
+  height:100%;
+}
+.ant-modal .ant-modal-content {
+  max-height: 86vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ant-modal .ant-modal-body {
+  flex: 1;
+  overflow: auto;
+}
+
+.ant-modal-90 .ant-modal-content {
+  max-height: 92vh;
+}
+
 /*居中显示弹窗*/
 .vertical-center-modal {
   text-align: center;
@@ -39,7 +61,7 @@ input:-webkit-autofill {
 }
 
 .vertical-center-modal:before {
-  content: '';
+  content: "";
   display: inline-block;
   height: 100%;
   vertical-align: middle;
@@ -51,6 +73,28 @@ input:-webkit-autofill {
   vertical-align: middle;
   top: 0;
   text-align: left;
+}
+
+/*全屏弹窗*/
+.full-modal {
+  height: 90% !important;
+  width: 90% !important;
+  top: 5% !important;
+}
+.full-modal .ant-modal-content {
+  height: 100%;
+  max-height: 100%;
+}
+
+/*全屏展示*/
+.ant-modal-max {
+  width: 100% !important;
+  top: 0 !important;
+}
+.ant-modal-max .ant-modal-content {
+  max-height: 100vh;
+  height: 100vh;
+  border-radius: 0;
 }
 
 /* login style */
@@ -127,12 +171,15 @@ input:-webkit-autofill {
   border-right:0;
 }
 /* ProjectManage Modal Tabs title */
+.project-modal-tabs {
+  margin-top: -10px;
+}
 .project-modal-tabs .ant-tabs-extra-content {
   float: left !important;
   padding: 2px 0;
 }
-.project-modal-tabs .ant-tabs-bar{
-    margin-bottom:12px;
+.project-modal-tabs .ant-tabs-bar {
+  margin-bottom: 15px;
 }
 /*tabs modal title*/
 .modal-min-height .ant-modal-body{

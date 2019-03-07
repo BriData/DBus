@@ -62,10 +62,10 @@ public class AddLine {
         FileUtil.WriteProperties(userDir + "/conf/replicate.properties", updateProps, proFilePath);
         //新增param.prm文件
         newParamFile();
-        if (StringUtils.isNotBlank(schemaName)) {
-            addSchemaToParamFile();
-            System.out.println("add schema." + schemaName);
-        }
+        //if (StringUtils.isNotBlank(schemaName)) {
+        //    addSchemaToParamFile();
+        //    System.out.println("add schema." + schemaName);
+        //}
         if (StringUtils.isNotBlank(tableNames)) {
             System.out.println("add tables." + tableNames);
             addTableToParamFile();
@@ -105,9 +105,10 @@ public class AddLine {
             sb.append("GROUPTRANSOPS 500\n");
             sb.append("MAXTRANSOPS 1000\n\n");
             sb.append("MAP DBUS.TEST_TABLE, TARGET DBUS.TEST_TABLE;\n");
-            sb.append("MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = 'DBUS');\n");
-            sb.append("MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE(SCHEMA_NAME = 'DBUS');\n");
-            sb.append("MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = 'DBUS');\n\n");
+            sb.append("MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS;\n");
+            sb.append("MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR;\n");
+            sb.append("MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT;\n\n");
+
             bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(paramFile)));
             bw.write(sb.toString());
             bw.flush();
@@ -136,8 +137,8 @@ public class AddLine {
                 br.close();
             }
             ArrayList<String> output = new ArrayList<>(input);
+            boolean flag = false;
             for (int i = 0; i < input.size(); i++) {
-                boolean flag = false;
                 String s = input.get(i);
                 if (s.contains("DBUS.DB_FULL_PULL_REQUESTS")) {
                     flag = true;
@@ -149,11 +150,11 @@ public class AddLine {
                     s = s.substring(0, s.lastIndexOf(")"));
                     s += " OR SCHEMA_NAME = '" + schemaName + "');";
                     output.set(i, s);
+                    flag = false;
                     break;
                 }
             }
             for (int i = 0; i < input.size(); i++) {
-                boolean flag = false;
                 String s = input.get(i);
                 if (s.contains("DBUS.DB_HEARTBEAT_MONITOR")) {
                     flag = true;
@@ -165,11 +166,11 @@ public class AddLine {
                     s = s.substring(0, s.lastIndexOf(")"));
                     s += " OR SCHEMA_NAME = '" + schemaName + "');";
                     output.set(i, s);
+                    flag = false;
                     break;
                 }
             }
             for (int i = 0; i < input.size(); i++) {
-                boolean flag = false;
                 String s = input.get(i);
                 if (s.contains("DBUS.META_SYNC_EVENT")) {
                     flag = true;

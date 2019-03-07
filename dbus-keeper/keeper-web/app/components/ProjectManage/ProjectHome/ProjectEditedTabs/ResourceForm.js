@@ -30,18 +30,18 @@ export default class ResourceForm extends Component {
     }
     this.NomalTableWidth = [
       '10%',
-      '12%',
       '10%',
-      '12%',
       '10%',
+      '22%',
       '8%',
-      '15%',
-      '15%'
+      '8%',
+      '13%',
+      '20%'
     ]
-    this.SelectTableWidth = ['29%', '8%', '8%', '18%', '15%', '9%']
+    this.SelectTableWidth = ['38%', '8%', '8%', '12%', '15%', '9%']
     this.initParams = {
       pageNum: 1,
-      pageSize: 5
+      pageSize: 8
     }
   }
   componentWillMount () {
@@ -754,14 +754,14 @@ export default class ResourceForm extends Component {
             rowKey={record => record.id}
             dataSource={selectDataSource}
             columns={slectColumns}
-            pagination={{pageSize: 5}}
+            pagination={{pageSize: 20}}
             // scroll={{ y: selectedTableScrollY }}
           />
         </div>
         <Modal
           visible={visble}
           className="small-modal modal-min-height"
-          style={{ top: 60 }}
+          style={{top: 60}}
           title={
             <span>
               <FormattedMessage
@@ -778,7 +778,7 @@ export default class ResourceForm extends Component {
           key={modalkey}
           onOk={this.handleEncodeSubmit}
           onCancel={this.handleEncodeCancel}
-          width="1000px"
+          width="75%"
         >
           <EncodeConfig
             locale={locale}

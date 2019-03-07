@@ -333,7 +333,7 @@
     select count(1) from t_project_topo_table where table_id = #{tableId}
   </select>
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
-    delete from t_project_topo_table t where t.project_id = #{projectId}
+    delete from t_project_topo_table where project_id = #{projectId}
   </delete>
   <select id="selectBySourceTableId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     SELECT *

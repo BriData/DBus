@@ -20,11 +20,11 @@ export default class UserForm extends Component {
       emailVisible: false,
       mobileVisible: false
     }
-    this.NomalTableWidth = ['18%', '20%', '15%', '40%']
+    this.NomalTableWidth = ['25%', '25%', '25%', '21%']
     this.SelectTableWidth = ['16%', '15%', '20%', '30%', '10%']
     this.initParams = {
       pageNum: 1,
-      pageSize: 5
+      pageSize: 8
     }
     // 临时存储选择的用户列表
     this.dataSource = {}

@@ -241,7 +241,7 @@ export default class ProjectHome extends Component {
     )
     temporaryData['sinks'] = sinks
     // resources
-    resources = Object.values(params['resource']).map(
+    resources = params['resource'] && Object.values(params['resource']).map(
       item =>
         projectId
           ? {
@@ -313,7 +313,8 @@ export default class ProjectHome extends Component {
     return (
       <Modal
         key={modalKey}
-        className="tabs-modal modal-min-height"
+        // className="tabs-modal modal-min-height"
+        className="full-modal modal-min-height"
         visible={modalVisibal}
         maskClosable={false}
         width={this.modalWidth}

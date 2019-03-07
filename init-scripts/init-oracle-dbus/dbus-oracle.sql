@@ -1,4 +1,4 @@
-﻿create table DBUS.TABLE_META_HIS
+create table DBUS.TABLE_META_HIS
 (
   owner              VARCHAR2(32) not null,
   table_name         VARCHAR2(32) not null,

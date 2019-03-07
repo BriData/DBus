@@ -13,7 +13,7 @@ CREATE TABLE `t_avro_schema` (
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_schema_name` (`full_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='解析消息的avro schema表';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='解析消息的avro schema表';
 
 -- ----------------------------
 -- Table structure for t_data_schema
@@ -30,7 +30,7 @@ CREATE TABLE `t_data_schema` (
   `description` varchar(128) DEFAULT NULL COMMENT 'schema描述信息',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_dsid_sname` (`ds_id`,`schema_name`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_data_tables
@@ -61,7 +61,7 @@ CREATE TABLE `t_data_tables` (
   `is_auto_complete` tinyint(4) DEFAULT '0' COMMENT 'mongoDB的表是否补全数据；如果开启，增量中更新操作会回查并补全数据',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_sid_tabname` (`schema_id`,`table_name`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_dba_encode_columns
@@ -79,7 +79,7 @@ CREATE TABLE `t_dba_encode_columns` (
   `override` tinyint(4) DEFAULT NULL COMMENT '是否覆盖当前脱敏配置(0:不覆盖,1:覆盖)',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_dbus_datasource
@@ -105,7 +105,7 @@ CREATE TABLE `t_dbus_datasource` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uidx_ds_name` (`ds_name`),
   UNIQUE KEY `ds_name` (`ds_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='dbus数据源配置表';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='dbus数据源配置表';
 
 -- ----------------------------
 -- Table structure for t_ddl_event
@@ -124,7 +124,7 @@ CREATE TABLE `t_ddl_event` (
   `ddl` varchar(3000) NOT NULL,
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_encode_plugins
@@ -139,7 +139,7 @@ CREATE TABLE `t_encode_plugins` (
   `status` varchar(32) DEFAULT NULL COMMENT '状态',
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_fullpull_history
@@ -195,7 +195,7 @@ CREATE TABLE `t_meta_version` (
   `comments` varchar(128) DEFAULT NULL COMMENT '表注释',
   PRIMARY KEY (`id`),
   KEY `idx_event_offset` (`event_offset`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='t_table_meta的版本信息';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='t_table_meta的版本信息';
 
 -- ----------------------------
 -- Table structure for t_plain_log_rule_group
@@ -209,7 +209,7 @@ CREATE TABLE `t_plain_log_rule_group` (
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `json_extract_rule_xml_pack` longtext,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_plain_log_rule_group_version
@@ -223,7 +223,7 @@ CREATE TABLE `t_plain_log_rule_group_version` (
   `ver_id` int(11) NOT NULL,
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_plain_log_rule_type
@@ -234,7 +234,7 @@ CREATE TABLE `t_plain_log_rule_type` (
   `rule_type_name` varchar(16) NOT NULL,
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_plain_log_rules
@@ -248,7 +248,7 @@ CREATE TABLE `t_plain_log_rules` (
   `rule_grammar` mediumtext NOT NULL,
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_plain_log_rules_version
@@ -262,7 +262,7 @@ CREATE TABLE `t_plain_log_rules_version` (
   `rule_grammar` varchar(20480) NOT NULL,
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project
@@ -296,7 +296,7 @@ CREATE TABLE `t_project` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `project_display_name` (`project_display_name`) USING BTREE,
   UNIQUE KEY `project_name` (`project_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='剩余时间，给前端判断颜色，同时标识是否发送了通知邮件';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='剩余时间，给前端判断颜色，同时标识是否发送了通知邮件';
 
 -- ----------------------------
 -- Table structure for t_project_encode_hint
@@ -314,7 +314,7 @@ CREATE TABLE `t_project_encode_hint` (
   `truncate` int(1) DEFAULT '0' COMMENT '1:当字符串类型字段值脱敏后超出源表字段长度时按照源表字段长度截取 0:不做截取操作',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project_resource
@@ -328,7 +328,7 @@ CREATE TABLE `t_project_resource` (
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_projectid_tableid` (`project_id`,`table_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project_sink
@@ -340,7 +340,7 @@ CREATE TABLE `t_project_sink` (
   `sink_id` varchar(64) NOT NULL,
   `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project_topo
@@ -358,7 +358,7 @@ CREATE TABLE `t_project_topo` (
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_status_toponame` (`status`,`topo_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project_topo_table
@@ -383,7 +383,7 @@ CREATE TABLE `t_project_topo_table` (
   `fullpull_condition` varchar(500) DEFAULT NULL COMMENT '全量拉取条件,例如id>100',
   PRIMARY KEY (`id`),
   KEY `idx_projectid_tableid_topoid` (`project_id`,`table_id`,`topo_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project_topo_table_encode_output_columns
@@ -408,7 +408,7 @@ CREATE TABLE `t_project_topo_table_encode_output_columns` (
   `schema_change_comment` varchar(1024) DEFAULT '' COMMENT '记录变更过程',
   `special_approve` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否经过特批(0:未特批,1:特批(特批过的不用脱敏))',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='存储topo表中输出列的信息，如果某些列配置了脱敏信息，则会显示脱敏信息；';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='存储topo表中输出列的信息，如果某些列配置了脱敏信息，则会显示脱敏信息；';
 
 -- ----------------------------
 -- Table structure for t_project_topo_table_meta_version
@@ -429,7 +429,7 @@ CREATE TABLE `t_project_topo_table_meta_version` (
   `data_scale` int(11) DEFAULT '0' COMMENT '小数部分长度',
   `schema_change_comment` varchar(1024) DEFAULT '' COMMENT '记录变更过程',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_project_user
@@ -442,7 +442,7 @@ CREATE TABLE `t_project_user` (
   `user_level` varchar(32) NOT NULL DEFAULT 'full' COMMENT '用户在项目中的权限：full 或者 readonly',
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_query_rule_group
@@ -465,7 +465,7 @@ CREATE TABLE `t_query_rule_group` (
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_query_rule_ver_id` (`ver_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
 
 -- ----------------------------
 -- Table structure for t_sink
@@ -480,7 +480,7 @@ CREATE TABLE `t_sink` (
   `update_time` datetime DEFAULT NULL,
   `is_global` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_table_action
@@ -525,7 +525,7 @@ CREATE TABLE `t_table_meta` (
   `default_value` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_table_meta` (`ver_id`,`column_name`,`original_ser`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='抓取的源表数据meta信息';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='抓取的源表数据meta信息';
 
 -- ----------------------------
 -- Table structure for t_user
@@ -542,4 +542,4 @@ CREATE TABLE `t_user` (
   `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_user_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
