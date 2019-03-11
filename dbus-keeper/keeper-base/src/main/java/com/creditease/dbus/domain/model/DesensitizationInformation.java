@@ -24,7 +24,7 @@ import java.util.Date;
 
 /**
  * 表相关脱敏信息
- * 对应表t_encode_columns
+ * 对应表t_dba_encode_columns
  */
 public class DesensitizationInformation {
     private Integer id;

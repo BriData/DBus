@@ -49,7 +49,7 @@
   </select>
   <select id="numberOfPluginUse" resultType="java.lang.Integer">
     select a.num + b.num + c.num from
-    (SELECT COUNT(1) num FROM t_encode_columns where plugin_id = #{id}) a,
+    (SELECT COUNT(1) num FROM t_dba_encode_columns where plugin_id = #{id}) a,
     (SELECT COUNT(1) num FROM t_project_encode_hint where encode_plugin_id = #{id}) b,
     (SELECT COUNT(1) num FROM t_project_topo_table_encode_output_columns where encode_plugin_id = #{id})c
   </select>

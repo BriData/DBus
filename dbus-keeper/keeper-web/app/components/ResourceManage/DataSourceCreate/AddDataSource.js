@@ -185,6 +185,7 @@ export default class AddDataSource extends Component {
           replicatName: values.replicatName,
           trailName: values.trailName,
           dsName: values.dsName,
+          NLS_LANG: values.NLS_LANG
         }
         api = DATA_SOURCE_SET_OGG_CONF_API
       } else if (values.dsType === 'mysql') {

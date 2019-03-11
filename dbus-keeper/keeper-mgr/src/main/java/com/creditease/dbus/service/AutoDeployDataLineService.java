@@ -32,11 +32,18 @@ public class AutoDeployDataLineService {
     private Environment env;
 
 
-    public JSONObject getOggConf(String dsName) throws Exception {
-        JSONObject oggConfJson = new JSONObject();
-        if (zkService.isExists(Constants.OGG_PROPERTIES_ROOT)) {
-            oggConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.OGG_PROPERTIES_ROOT), KeeperConstants.UTF8));
+    private JSONObject getZKNodeData(String path) throws Exception {
+        JSONObject json = new JSONObject();
+        if (zkService.isExists(path)) {
+            byte[] data = zkService.getData(path);
+            if (data != null && data.length > 0) {
+                json = JSONObject.parseObject(new String(data, KeeperConstants.UTF8));
+            }
         }
+        return json;
+    }
+    public JSONObject getOggConf(String dsName) throws Exception {
+        JSONObject oggConfJson = getZKNodeData(Constants.OGG_PROPERTIES_ROOT);
         JSONObject dsOggConf = oggConfJson.getJSONObject(KeeperConstants.DS_OGG_CONF);
         if (dsOggConf != null) {
             JSONObject oggConf = dsOggConf.getJSONObject(dsName);
@@ -53,10 +60,7 @@ public class AutoDeployDataLineService {
     public void setOggConf(Map<String, String> map) throws Exception {
         String dsName = map.get("dsName");
 
-        JSONObject oggConfJson = new JSONObject();
-        if (zkService.isExists(Constants.OGG_PROPERTIES_ROOT)) {
-            oggConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.OGG_PROPERTIES_ROOT), KeeperConstants.UTF8));
-        }
+        JSONObject oggConfJson = getZKNodeData(Constants.OGG_PROPERTIES_ROOT);
         String host = map.get(KeeperConstants.HOST);
         String hosts = oggConfJson.getString(KeeperConstants.HOSTS);
         if (StringUtils.isNotBlank(hosts) && !hosts.contains(host)) {
@@ -93,10 +97,7 @@ public class AutoDeployDataLineService {
     }
 
     public String getOggTrailName() throws Exception {
-        JSONObject oggConfJson = new JSONObject();
-        if (zkService.isExists(Constants.OGG_PROPERTIES_ROOT)) {
-            oggConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.OGG_PROPERTIES_ROOT), KeeperConstants.UTF8));
-        }
+        JSONObject oggConfJson = getZKNodeData(Constants.OGG_PROPERTIES_ROOT);
         JSONObject dsOggConf = oggConfJson.getJSONObject(KeeperConstants.DS_OGG_CONF);
         HashSet<String> trailNames = new HashSet<>();
         if (dsOggConf != null) {
@@ -118,10 +119,7 @@ public class AutoDeployDataLineService {
     }
 
     public JSONObject getCanalConf(String dsName) throws Exception {
-        JSONObject canalConfJson = new JSONObject();
-        if (zkService.isExists(Constants.CANAL_PROPERTIES_ROOT)) {
-            canalConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.CANAL_PROPERTIES_ROOT), KeeperConstants.UTF8));
-        }
+        JSONObject canalConfJson = getZKNodeData(Constants.CANAL_PROPERTIES_ROOT);
         JSONObject dsCanalConf = canalConfJson.getJSONObject(KeeperConstants.DS_CANAL_CONF);
         if (dsCanalConf != null) {
             JSONObject canalConf = dsCanalConf.getJSONObject(dsName);
@@ -135,10 +133,7 @@ public class AutoDeployDataLineService {
 
     public void setCanalConf(Map<String, String> map) throws Exception {
         String dsName = map.get("dsName");
-        JSONObject canalConfJson = new JSONObject();
-        if (zkService.isExists(Constants.CANAL_PROPERTIES_ROOT)) {
-            canalConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.CANAL_PROPERTIES_ROOT), KeeperConstants.UTF8));
-        }
+        JSONObject canalConfJson = getZKNodeData(Constants.CANAL_PROPERTIES_ROOT);
         String hosts = canalConfJson.getString(KeeperConstants.HOST);
         String host = map.get(KeeperConstants.HOST);
         if (StringUtils.isNotBlank(hosts) && !hosts.contains(host)) {
@@ -172,7 +167,7 @@ public class AutoDeployDataLineService {
         if (!zkService.isExists(Constants.OGG_PROPERTIES_ROOT)) {
             return false;
         }
-        JSONObject oggConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.OGG_PROPERTIES_ROOT), KeeperConstants.UTF8));
+        JSONObject oggConfJson = getZKNodeData(Constants.OGG_PROPERTIES_ROOT);
         JSONObject oggConf = oggConfJson.getJSONObject(KeeperConstants.DS_OGG_CONF).getJSONObject(dsName);
         if (oggConf != null) {
             return true;
@@ -185,7 +180,7 @@ public class AutoDeployDataLineService {
         if (!zkService.isExists(Constants.CANAL_PROPERTIES_ROOT)) {
             return false;
         }
-        JSONObject canalConfJson = JSONObject.parseObject(new String(zkService.getData(Constants.CANAL_PROPERTIES_ROOT), KeeperConstants.UTF8));
+        JSONObject canalConfJson = getZKNodeData(Constants.CANAL_PROPERTIES_ROOT);
         JSONObject canalConf = canalConfJson.getJSONObject(KeeperConstants.DS_CANAL_CONF).getJSONObject(dsName);
         if (canalConf != null) {
             return true;

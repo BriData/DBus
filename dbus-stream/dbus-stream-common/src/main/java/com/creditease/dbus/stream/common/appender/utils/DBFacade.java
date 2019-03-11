@@ -1164,7 +1164,7 @@ public class DBFacade {
     public List<EncodeColumn> getEncodeColumns(long tableId) {
         String sql = "select c.*, m.data_length\n" +
                 "from\n" +
-                "    t_encode_columns c,\n" +
+                "    t_dba_encode_columns c,\n" +
                 "    t_data_tables t,\n" +
                 "    t_table_meta m\n" +
                 "where\n" +

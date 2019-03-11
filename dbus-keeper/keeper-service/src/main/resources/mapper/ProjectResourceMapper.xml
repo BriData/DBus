@@ -212,7 +212,7 @@
     WHERE
     dt.ver_id = tm.ver_id AND
     dt.id = #{id, jdbcType=INTEGER}) t_wk
-    LEFT JOIN t_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
+    LEFT JOIN t_dba_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
   </select>
   <select id="getDSNames" parameterType="java.lang.Integer" resultType="java.util.Map">
     SELECT DISTINCT
