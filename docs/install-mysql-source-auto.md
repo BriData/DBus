@@ -41,7 +41,7 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 2. **canal部署**
 3. **加线和查看结果**
 
-   ​
+   
 
 ## 1 数据库源端配置
 
@@ -297,7 +297,13 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 **（2） 填写数据源基本信息 （master和slave jdbc连接串信息）**
 
-其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。 
+其中mysql-master是mysql数据源主库，Dbus中用于接受心跳检测数据，以便监测数据表数据是否正常流转。mysql-slave是mysql数据源备库，用于全量拉取数据，以便降低对主库正常业务数据查询影响。
+
+**重要:** 
+
+jdbc链接示例 jdbc:MySQL://localhost:3306/**dbus**?**useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&noAccessToProcedureBodies=true&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false**
+
+数据库必须填写dbus，后缀建议和我们的示例保持一致，尤其是最后两个参数。
 
 ![数据基本信息填写标注](img/install-mysql/mysql-add-ds.png)
 
