@@ -233,9 +233,10 @@ public abstract class MessageProcessor {
 
     //统计信息并插入到stat的kafka中
     public void statMeter(String schemaName, String tableName, long checkpointMS, long txTimeMS) {
-        StatMessage message = statMap.logMeter(schemaName, tableName, checkpointMS, txTimeMS);
-        sendTableStatInfo (message);
-        message.cleanUp();
+        statMap.logMeter(schemaName, tableName, checkpointMS, txTimeMS).forEach(message -> {
+            sendTableStatInfo(message);
+            message.cleanUp();
+        });
     }
 
     //统计计数

@@ -22,11 +22,15 @@ package com.creditease.dbus.stream.common.appender.cache;
 
 import com.creditease.dbus.stream.common.Constants.CacheNames;
 import com.creditease.dbus.stream.common.appender.bean.AvroSchema;
+import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.appender.bean.TabSchema;
 import com.creditease.dbus.stream.common.appender.utils.DBFacade;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Created by Shrimp on 16/8/17.
@@ -49,12 +53,20 @@ public class DbusCacheLoader implements LocalCacheLoader {
                 case CacheNames.DATA_TABLES:
                     logger.info("Query tables from database with parameter:{}", key);
                     st = SchemaTable.parse(key);
-                    result = db.queryDataTable(dsId, st.schema, st.table);
+                    TabSchema s = db.queryDataSchema(dsId, st.schema);
+                    List<DataTable> tables = db.queryDataTables(s.getId());
+                    result = tables.stream().filter(t -> st.table.matches(t.getPhysicalTableRegex()))
+                            .findFirst().orElse(null);
                     break;
                 case CacheNames.META_VERSION_CACHE:
                     logger.info("Query meta version from database with parameter:{}", key);
                     st = SchemaTable.parse(key);
-                    result = db.queryMetaVersion(dsId, st.schema, st.table);
+                    TabSchema ds = db.queryDataSchema(dsId, st.schema);
+                    List<DataTable> ts = db.queryDataTables(ds.getId());
+                    DataTable dt = ts.stream().filter(t -> st.table.matches(t.getPhysicalTableRegex()))
+                            .findFirst().orElse(null);
+                    String t = dt != null ? dt.getTableName() : st.table;
+                    result = db.queryMetaVersion(dsId, st.schema, t);
                     break;
                 case CacheNames.AVRO_SCHEMA_CACHE:
                     logger.info("Query avro schema from database with parameter:{}", key);

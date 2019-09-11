@@ -967,6 +967,10 @@ public class DBFacade {
 
     public MetaVersion queryMetaVersion(long dsId, String schemaName, String tableName) {
         DataTable tab = queryDataTable(dsId, schemaName, tableName);
+        if (tab == null) {
+            logger.warn("Can not find data table schema: {}, table: {}", schemaName, tableName);
+            return  null;
+        }
         String sql = "select * from t_meta_version t where id = ?";
 
         Map<String, Object> map = queryUnique(sql, tab.getVerId());
