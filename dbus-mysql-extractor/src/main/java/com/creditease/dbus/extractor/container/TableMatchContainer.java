@@ -51,9 +51,10 @@ public class TableMatchContainer {
 	}
 
 	public String getLocalTable(String table){
-		for(Map.Entry<String, String> entry : map.entrySet()){
-			if(!table.contains(entry.getKey()))
-				continue;
+        // TODO: 19-9-18 这里还有一个隐藏的缺陷
+        // 一个MySQL实例下有多个schema分表 例如 schema db_share_\d+, table t_share_\d+
+        // 因为tableRegex是按照dsName去查找,所以可能出现冲突
+        for(Map.Entry<String, String> entry : map.entrySet()){
 			if(table.matches(entry.getValue())){
 				return entry.getKey();
 			}
