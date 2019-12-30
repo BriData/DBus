@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,17 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.resource.local;
+
+import com.creditease.dbus.heartbeat.resource.AbstractConfigResource;
+import com.creditease.dbus.heartbeat.util.IOUtil;
+import org.apache.commons.lang.SystemUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
-
-import org.apache.commons.lang.SystemUtils;
-
-import com.creditease.dbus.heartbeat.resource.AbstractConfigResource;
-import com.creditease.dbus.heartbeat.util.IOUtil;
 
 public abstract class FileConfigResource<T> extends AbstractConfigResource<T> {
 

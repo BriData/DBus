@@ -11,12 +11,7 @@ const GlobalConfigModel = () => createSelector(
   (state) => state.toJS()
 )
 
-const DBAEncodeConfigModel = () => createSelector(
-  (state) => state.get('DBAEncodeConfigReducer'),
-  (state) => state.toJS()
-)
 export {
   ZKManageModel,
-  GlobalConfigModel,
-  DBAEncodeConfigModel
+  GlobalConfigModel
 }

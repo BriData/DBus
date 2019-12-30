@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
 import com.creditease.dbus.commons.DBusConsumerRecord;
@@ -26,7 +27,6 @@ import com.creditease.dbus.stream.common.appender.enums.Command;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -36,8 +36,10 @@ import java.util.concurrent.Future;
 public interface RecordProcessListener {
 
     String getListenerId();
+
     /**
      * 标识重新加载数据
+     *
      * @param record kafka consumer record
      */
     void markReloading(DBusConsumerRecord<String, byte[]> record, Map<String, Object> params);

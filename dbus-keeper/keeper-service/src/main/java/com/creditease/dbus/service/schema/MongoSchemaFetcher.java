@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.schema;
 
 import com.creditease.dbus.domain.model.DataSchema;
@@ -30,8 +31,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MongoSchemaFetcher{
+public class MongoSchemaFetcher {
     private DataSource ds;
+
     public MongoSchemaFetcher(DataSource ds) {
         this.ds = ds;
     }

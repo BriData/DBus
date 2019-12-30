@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.table;
 
 import com.creditease.dbus.commons.SupportedMysqlDataType;
 import com.creditease.dbus.commons.SupportedOraDataType;
-import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.DataSource;
+import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.TableMeta;
+import com.creditease.dbus.enums.DbusDatasourceType;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +45,11 @@ public abstract class TableFetcher {
     }
 
     public abstract String buildQuery(Object... args);
+
     public abstract String fillParameters(PreparedStatement statement, Map<String, Object> params) throws Exception;
+
     public abstract String buildTableFieldQuery(Object... args);
+
     public abstract String fillTableParameters(PreparedStatement statement, Map<String, Object> params) throws Exception;
 
     public List<DataTable> fetchTable(Map<String, Object> params) throws Exception {
@@ -57,6 +61,8 @@ public abstract class TableFetcher {
                 return buildResultMySQL(resultSet);
             } else if (ds.getDsType().equals("oracle")) {
                 return buildResultOracle(resultSet);
+            } else if (ds.getDsType().equals("db2")) {
+                return buildResultDB2(resultSet);
             }
             return null;
         } finally {
@@ -67,7 +73,46 @@ public abstract class TableFetcher {
     }
 
     /**
+     * 为了解决加表提交的tableName大小写与源端库查询的结果不一致的问题
+     * 该方法返回一个map
+     * map的key是tableName.toUpperCase()
+     * map的value是tableName的实际值
      *
+     * @return
+     * @throws Exception
+     */
+    public Map<String, String> getSourceTableName(Map<String, Object> params) throws Exception {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = conn.prepareStatement(buildQuery(params));
+            fillParameters(statement, params);
+            resultSet = statement.executeQuery();
+            return buildTableNameResult(resultSet);
+        } finally {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (statement != null) {
+                statement.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
+    public Map<String, String> buildTableNameResult(ResultSet resultSet) throws Exception {
+        HashMap<String, String> map = new HashMap<>();
+        String tableName;
+        while (resultSet.next()) {
+            tableName = resultSet.getString("TABLE_NAME");
+            map.put(tableName.toUpperCase(), tableName);
+        }
+        return map;
+    }
+
+    /**
      * @param params
      * @return table所有字段
      * @throws Exception
@@ -81,10 +126,12 @@ public abstract class TableFetcher {
             tableNames.add(String.valueOf(map.get("tableName")));
         }
         List<List<TableMeta>> ret = null;
-        if(ds.getDsType().equals("mysql")){
+        if (ds.getDsType().equals("mysql")) {
             ret = tableFieldMysql(tableNames, resultSet);
-        }else if(ds.getDsType().equals("oracle")){
+        } else if (ds.getDsType().equals("oracle")) {
             ret = tableFieldOracle(tableNames, resultSet);
+        } else if (ds.getDsType().equals("db2")) {
+            ret = tableFieldDB2(tableNames, resultSet);
         }
         resultSet.close();
         statement.close();
@@ -103,6 +150,10 @@ public abstract class TableFetcher {
             case ORACLE:
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 fetcher = new OracleTableFetcher(ds);
+                break;
+            case DB2:
+                Class.forName("com.ibm.db2.jcc.DB2Driver");
+                fetcher = new DB2TableFetcher(ds);
                 break;
             default:
                 throw new IllegalArgumentException();
@@ -131,6 +182,20 @@ public abstract class TableFetcher {
         return list;
     }
 
+    protected List<DataTable> buildResultDB2(ResultSet rs) throws SQLException {
+        List<DataTable> list = new ArrayList<>();
+        DataTable table;
+        while (rs.next()) {
+            table = new DataTable();
+            table.setTableName(rs.getString("TABNAME"));
+            table.setPhysicalTableRegex(rs.getString("TABNAME"));
+            table.setVerId(null);
+            table.setStatus("ok");
+            table.setCreateTime(new java.util.Date());
+            list.add(table);
+        }
+        return list;
+    }
 
     /**
      * @param tableNames
@@ -159,18 +224,36 @@ public abstract class TableFetcher {
     }
 
 
+    protected List<List<TableMeta>> tableFieldDB2(List<String> tableNames, ResultSet rs) throws SQLException {
+        Map<String, List<TableMeta>> tableToMeta = new HashMap<>();
+        for (String tableName : tableNames) {
+            tableToMeta.put(tableName, new ArrayList<>());
+        }
+        while (rs.next()) {
+            TableMeta tableMeta = new TableMeta();
+            tableMeta.setColumnName(rs.getString("COLNAME"));
+            tableMeta.setDataType(rs.getString("TYPENAME"));
+            if (!SupportedMysqlDataType.isSupported(rs.getString("TYPENAME")))
+                if (tableToMeta.containsKey(rs.getString("TABNAME")))
+                    tableToMeta.get(rs.getString("TABNAME")).add(tableMeta);
+        }
+        List<List<TableMeta>> ret = new ArrayList<>();
+        for (String tableName : tableNames) {
+            ret.add(tableToMeta.get(tableName));
+        }
+        return ret;
+    }
 
     /**
      * 判断是否不兼容
      */
-    protected boolean isIncompatibleCol(String str)
-    {
-        if("Anydata".equals(str)||"Anytype".equals(str)||"XMLType".equals(str))
-        {
+    protected boolean isIncompatibleCol(String str) {
+        if ("Anydata".equals(str) || "Anytype".equals(str) || "XMLType".equals(str)) {
             return true;
         }
         return false;
     }
+
     /**
      * @param tableNames
      * @param rs
@@ -216,25 +299,32 @@ public abstract class TableFetcher {
 
     public List<Map<String, Object>> fetchTableColumn(Map<String, Object> params) throws Exception {
         try {
+            int number = 100;
+            Object limit = params.get("limit");
+            if (limit != null) {
+                number = Integer.parseInt(limit.toString());
+            }
 
             String sql = params.get("sql").toString();
 
-            if(StringUtils.containsIgnoreCase(sql,"DDL_TIME")) {
+            if (StringUtils.containsIgnoreCase(sql, "DDL_TIME")) {
                 sql += " order by DDL_TIME desc";
-            } else if(StringUtils.containsIgnoreCase(sql,"SEQNO")) {
+            } else if (StringUtils.containsIgnoreCase(sql, "SEQNO")) {
                 sql += " order by SEQNO desc";
-            } else if(StringUtils.containsIgnoreCase(sql,"CREATE_TIME")) {
+            } else if (StringUtils.containsIgnoreCase(sql, "CREATE_TIME")) {
                 sql += " order by CREATE_TIME desc";
-            } else if(StringUtils.containsIgnoreCase(sql,"SERNO")) {
+            } else if (StringUtils.containsIgnoreCase(sql, "SERNO")) {
                 sql += " order by SERNO desc";
-            } else if(StringUtils.containsIgnoreCase(sql,"ID")) {
+            } else if (StringUtils.containsIgnoreCase(sql, "ID")) {
                 sql += " order by ID desc";
             }
 
             if (StringUtils.equalsIgnoreCase(params.get("dsType").toString(), "oracle")) {
-                sql = "select * from ("+ sql +") where rownum <= 100";
+                sql = "select * from (" + sql + ") where rownum <= " + number;
             } else if (StringUtils.equalsIgnoreCase(params.get("dsType").toString(), "mysql")) {
-                sql = sql + " limit 100";
+                sql = sql + " limit " + number;
+            } else if (StringUtils.equalsIgnoreCase(params.get("dsType").toString(), "db2")) {
+                sql = sql + " limit " + number;
             }
 
             logger.info("查询源库的SQL语句为: {}", sql);
@@ -263,7 +353,7 @@ public abstract class TableFetcher {
             }
             resultSet.close();
             statement.close();
-            //表为空，取不到结果集结构，所以将sql语句中的列名取出
+            //表为空,取不到结果集结构,所以将sql语句中的列名取出
             if (!(flag)) {
                 String columns = sql.substring(sql.indexOf("select") + 6, sql.indexOf("from"));
                 String[] column = columns.split(",");
@@ -292,6 +382,8 @@ public abstract class TableFetcher {
                 sql = " SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH DATA_LENGTH, NUMERIC_PRECISION DATA_PRECISION, NUMERIC_SCALE DATA_SCALE FROM information_schema.`COLUMNS` t_col " +
                         " WHERE t_col.TABLE_SCHEMA = '" + tableInformation.getSchemaName() +
                         "' AND t_col.TABLE_NAME = '" + tableInformation.getTableName() + "'";
+            } else if (tableInformation.getDsType().equals("db2")) {
+                sql = "select COLNAME as COLUMN_NAME, TYPENAME as DATA_TYPE,STRINGUNITSLENGTH as DATA_LENGTH, LENGTH as DATA_PRECISION, SCALE as DATA_SCALE from syscat.COLUMNS where TABSCHEMA= '" + tableInformation.getSchemaName() + "' and TABNAME='" + tableInformation.getTableName() + "'";
             }
 
             PreparedStatement statement = conn.prepareStatement(sql);
@@ -310,18 +402,18 @@ public abstract class TableFetcher {
             }
             resultSet.close();
             statement.close();
-            for(Map<String, Object> column: list) {
+            for (Map<String, Object> column : list) {
                 Object dataType = column.get("DATA_TYPE");
                 Object dataLength = column.get("DATA_LENGTH");
                 Object dataPrecision = column.get("DATA_PRECISION");
                 Object dataScale = column.get("DATA_SCALE");
 
-                if(dataLength != null) {
-                    column.put("DATA_TYPE", dataType.toString()+"("+ dataLength.toString() +")");
-                } else if(dataPrecision!=null || dataScale!=null) {
-                    if(dataPrecision == null) dataPrecision = "";
-                    if(dataScale == null) dataScale = "";
-                    column.put("DATA_TYPE", dataType.toString()+"("+ dataPrecision.toString() +","+dataScale.toString() +")");
+                if (dataLength != null) {
+                    column.put("DATA_TYPE", dataType.toString() + "(" + dataLength.toString() + ")");
+                } else if (dataPrecision != null || dataScale != null) {
+                    if (dataPrecision == null) dataPrecision = "";
+                    if (dataScale == null) dataScale = "";
+                    column.put("DATA_TYPE", dataType.toString() + "(" + dataPrecision.toString() + "," + dataScale.toString() + ")");
                 }
             }
             //在DATA_TYPE中添加是否主键
@@ -335,24 +427,26 @@ public abstract class TableFetcher {
         }
     }
 
-    private void fetchTableColumnsPrimaryKey(DataTable tableInformation, List<Map<String, Object>> columnsInfomation) throws SQLException  {
+    private void fetchTableColumnsPrimaryKey(DataTable tableInformation, List<Map<String, Object>> columnsInfomation) throws SQLException {
         try {
             String sql = "";
             if (tableInformation.getDsType().equals("oracle")) {
-                sql = "select COLUMN_NAME from all_cons_columns cu, all_constraints au where cu.constraint_name = au.constraint_name and au.constraint_type = 'P' and cu.table_name='"+ tableInformation.getTableName() +"'";
+                sql = "select COLUMN_NAME from all_cons_columns cu, all_constraints au where cu.constraint_name = au.constraint_name and au.constraint_type = 'P' and cu.table_name='" + tableInformation.getTableName() + "'";
             } else if (tableInformation.getDsType().equals("mysql")) {
-                sql = "select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='"+tableInformation.getTableName()+"' and COLUMN_KEY='PRI'";
+                sql = "select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='" + tableInformation.getTableName() + "' and COLUMN_KEY='PRI'";
+            } else if (tableInformation.getDsType().equals("db2")) {
+                sql = "select COLNAME AS COLUMN_NAME from syscat.COLUMNS where TABNAME = '" + tableInformation.getTableName() + "' AND KEYSEQ is not null";
             }
 
             PreparedStatement statement = conn.prepareStatement(sql);
             ResultSet resultSet = statement.executeQuery();
 
-            for(Map<String, Object> column: columnsInfomation) {
+            for (Map<String, Object> column : columnsInfomation) {
                 column.put("IS_PRIMARY", "NO");
             }
             while (resultSet.next()) {
-                for(Map<String, Object> column: columnsInfomation) {
-                    if(column.get("COLUMN_NAME").toString().equals(resultSet.getString("COLUMN_NAME"))) {
+                for (Map<String, Object> column : columnsInfomation) {
+                    if (column.get("COLUMN_NAME").toString().equals(resultSet.getString("COLUMN_NAME"))) {
                         column.put("IS_PRIMARY", "YES");
                         break;
                     }
@@ -395,12 +489,12 @@ public abstract class TableFetcher {
 
     private void createSqlTable(int maxColumn) {
         StringBuilder sb = new StringBuilder("c1 varchar(512)");
-        for(int i=2;i<=maxColumn;i++) {
+        for (int i = 2; i <= maxColumn; i++) {
             sb.append(",c");
             sb.append(i);
             sb.append(" varchar(512)");
         }
-        String sql="create temporary table temp ("+sb.toString()+")DEFAULT CHARSET=utf8;";
+        String sql = "create temporary table temp (" + sb.toString() + ")DEFAULT CHARSET=utf8;";
         try {
             PreparedStatement statement = conn.prepareStatement(sql);
             statement.execute();
@@ -416,7 +510,7 @@ public abstract class TableFetcher {
         }
     }
 
-    private void insertSqlData(List<List<String>> data,int maxColumn) {
+    private void insertSqlData(List<List<String>> data, int maxColumn) {
         Statement statement = null;
         try {
             statement = conn.createStatement();
@@ -431,19 +525,19 @@ public abstract class TableFetcher {
             }
         }
         StringBuilder sb = new StringBuilder();
-        for(List<String> list: data) {
+        for (List<String> list : data) {
             sb.setLength(0);
-            for(int i=1;i<=maxColumn;i++) {
+            for (int i = 1; i <= maxColumn; i++) {
                 sb.append('\'');
-                if(i<=list.size() && list.get(i-1)!=null){
-                    sb.append(list.get(i-1));
+                if (i <= list.size() && list.get(i - 1) != null) {
+                    sb.append(list.get(i - 1));
                 }
                 sb.append('\'');
                 sb.append(',');
             }
-            sb.deleteCharAt(sb.length()-1);
+            sb.deleteCharAt(sb.length() - 1);
             try {
-                statement.addBatch("insert into temp values("+sb.toString()+");");
+                statement.addBatch("insert into temp values(" + sb.toString() + ");");
             } catch (SQLException e) {
                 e.printStackTrace();
                 try {
@@ -478,7 +572,7 @@ public abstract class TableFetcher {
             List<List<String>> result = new ArrayList<>();
             while (resultSet.next()) {
                 List<String> list = new ArrayList<>();
-                for(int i=1;i<=metaData.getColumnCount();i++) {
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     list.add(resultSet.getString(i));
                 }
                 result.add(list);
@@ -515,7 +609,7 @@ public abstract class TableFetcher {
     }
 
     /**
-     * @return 构造listTable的返回信息，表中包含SchemaName和TableName
+     * @return 构造listTable的返回信息, 表中包含SchemaName和TableName
      * @throws SQLException
      */
 
@@ -533,6 +627,7 @@ public abstract class TableFetcher {
 
     /**
      * 将新的表的信息插入到源端
+     *
      * @throws Exception
      */
     public int insertTable(Map<String, Object> params) throws Exception {
@@ -547,4 +642,23 @@ public abstract class TableFetcher {
             }
         }
     }
+
+    public Long fetchTableDataRows(String schemaName, String tableName) throws Exception {
+        try {
+            PreparedStatement statement = conn.prepareStatement(buildDataRowsQuery(schemaName, tableName));
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Long num = resultSet.getLong("num");
+                return num;
+            }
+            return null;
+        } finally {
+            if (!conn.isClosed()) {
+                conn.close();
+            }
+        }
+    }
+
+    protected abstract String buildDataRowsQuery(String schemaName, String tableName);
+
 }

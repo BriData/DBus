@@ -1,28 +1,12 @@
-/*-
- * <<
- * DBus
- * ==
- * Copyright (C) 2016 - 2018 Bridata
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * >>
- */
+
 
 
 package com.creditease.dbus.log.processor.bolt;
 
 import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.commons.*;
+import com.creditease.dbus.commons.ControlType;
+import com.creditease.dbus.commons.DbusMessage;
+import com.creditease.dbus.commons.DbusMessageBuilder;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.log.processor.base.LogProcessorBase;
 import com.creditease.dbus.log.processor.util.Constants;
@@ -42,7 +26,9 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
 public class LogProcessorHeartbeatBolt extends BaseRichBolt {
@@ -93,10 +79,14 @@ public class LogProcessorHeartbeatBolt extends BaseRichBolt {
                     for (Element e : swiList) {
                         hbwi = (HeartBeatWindowInfo) e;
                         hbwi.setDbusMessage(buildUms(hbwi));
-                        collector.emit(input, new Values(hbwi.getOutputTopic(), hbwi, Constants.EMIT_DATA_TYPE_HEARTBEAT));
+                        collector.emit("heartbeatStream", input, new Values(hbwi.getOutputTopic(), hbwi, Constants.EMIT_DATA_TYPE_HEARTBEAT));
                     }
                     break;
-                default :
+                case Constants.EMIT_DATA_TYPE_NORMAL: {
+                    collector.emit("umsStream", input, input.getValues());
+                    break;
+                }
+                default:
                     break;
             }
             collector.ack(input);
@@ -109,7 +99,8 @@ public class LogProcessorHeartbeatBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("outputTopic", "value", "emitDataType"));
+        declarer.declareStream("heartbeatStream", new Fields("outputTopic", "value", "emitDataType"));
+        declarer.declareStream("umsStream", new Fields("outputTopic", "table", "value", "emitDataType"));
     }
 
     @Override
@@ -123,7 +114,7 @@ public class LogProcessorHeartbeatBolt extends BaseRichBolt {
             ControlType cmd = ControlType.getCommand(JSONObject.parseObject(json).getString("type"));
             switch (cmd) {
                 case LOG_PROCESSOR_RELOAD_CONFIG:
-                    logger.info("LogProcessorHeartbeatBolt-{} 收到reload消息！Type: {}, Values: {} " , context.getThisTaskId(), cmd, json);
+                    logger.info("LogProcessorHeartbeatBolt-{} 收到reload消息！Type: {}, Values: {} ", context.getThisTaskId(), cmd, json);
                     inner.close(true);
                     init();
                     inner.zkHelper.saveReloadStatus(json, "LogProcessorHeartbeatBolt-" + context.getThisTaskId(), true);
@@ -143,7 +134,7 @@ public class LogProcessorHeartbeatBolt extends BaseRichBolt {
         String[] vals = StringUtils.split(hbwi.getNamespace(), "|");
         DbusMessageBuilder builder = new DbusMessageBuilder();
         String host = null;
-        if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
+        if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
             host = hbwi.getUmsSource();
         } else {
             host = StringUtils.replaceChars(hbwi.getHost(), ".", "_");

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.bean;
+
+import org.apache.kafka.common.TopicPartition;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.kafka.common.TopicPartition;
 
 /**
  * Created by Administrator on 2018/7/9.

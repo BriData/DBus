@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons.log.processor.rule.impl;
 
@@ -33,35 +34,39 @@ import java.util.regex.Pattern;
 
 public class RegexExtractRule implements IRule {
 
-    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception{
-        List<String> ret = new LinkedList<>(data);
-        List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
-        for (ParseResult pr : prList) {
-            for (int col : pr.getScope()) {
-                String value;
-                if (col >= data.size()) {
-                    value = "";
-                } else {
-                    value = data.get(col);
-                    ret.remove(col);
-                }
-                Matcher matcher = Pattern.compile(pr.getParamter()).matcher(value);
-                List<String> extractRet =  new ArrayList<>();
-                if (matcher.find()) {
-                    for (int i = 1; i <= matcher.groupCount(); i++) {
-                        extractRet.add(matcher.group(i));
+    public List<List<String>> transform(List<List<String>> datas, List<RuleGrammar> grammar, Rules ruleType) throws Exception {
+        List<List<String>> retVal = new ArrayList<>();
+        for (List<String> data : datas) {
+            List<String> row = new LinkedList<>(data);
+            List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
+            for (ParseResult pr : prList) {
+                for (int col : pr.getScope()) {
+                    String value;
+                    if (col >= data.size()) {
+                        value = "";
+                    } else {
+                        value = data.get(col);
+                        row.remove(col);
                     }
-                    ret.addAll(col, extractRet);
+                    Matcher matcher = Pattern.compile(pr.getParamter()).matcher(value);
+                    List<String> extractRet = new ArrayList<>();
+                    if (matcher.find()) {
+                        for (int i = 1; i <= matcher.groupCount(); i++) {
+                            extractRet.add(matcher.group(i));
+                        }
+                        row.addAll(col, extractRet);
+                    }
                 }
             }
+            retVal.add(row);
         }
-        return ret;
+        return retVal;
     }
 
     public static void main(String[] args) {
         String value = "2017年11月zl1313546";
         Matcher matcher = Pattern.compile("(\\d{4}年\\d{1,2}月)([a-z]+)\\d*").matcher(value);
-        List<String> extractRet =  new ArrayList<>();
+        List<String> extractRet = new ArrayList<>();
 
         if (matcher.find()) {
             System.out.println(matcher.group(1));
@@ -69,7 +74,7 @@ public class RegexExtractRule implements IRule {
         }
 
         if (matcher.matches()) {
-            for (int i=0; i<=matcher.groupCount(); i++) {
+            for (int i = 0; i <= matcher.groupCount(); i++) {
                 extractRet.add(matcher.group(i));
             }
 

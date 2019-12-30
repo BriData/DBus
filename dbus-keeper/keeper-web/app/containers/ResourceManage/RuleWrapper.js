@@ -303,6 +303,7 @@ export default class RuleWrapper extends Component {
             }, () => {
               const {rules} = this.state
               if (rules.length) return
+              if (this.query.dsType === 'log_json') return
               // flattenUms
               if (this.query.dsType === 'log_ums') {
                 rules.push({
@@ -407,6 +408,9 @@ export default class RuleWrapper extends Component {
     if (position >= rules.length) return true;
 
     let dsType = this.query.dsType;
+    if (dsType === 'log_json') {
+      return true
+    }
     let curType = rules[position].ruleTypeName;
     let preType = position > 0 ? rules[position - 1].ruleTypeName : null;
     /**
@@ -464,8 +468,7 @@ export default class RuleWrapper extends Component {
         }
       }
     }
-    if (!this.checkRuleLegal(rules, position + 1)) return false;
-    return true;
+    return this.checkRuleLegal(rules, position + 1);
   }
 
   handleSaveAllRules = () => {

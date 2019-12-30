@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.annotation;
 
 
@@ -29,7 +30,7 @@ import java.lang.annotation.Target;
 /**
  * User: 王少楠
  * Date: 2018-06-29
- * Desc: 该注解表示需要对对用户输入的projectId校验； admin用户不进行校验
+ * Desc: 该注解表示需要对对用户输入的projectId校验, admin用户不进行校验
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

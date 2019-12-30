@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,19 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.facade;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.text.MessageFormat;
-import java.util.Properties;
-
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.CtlMessageResult;
-import com.creditease.dbus.commons.CtlMessageResultSender;
-import com.creditease.dbus.commons.IZkService;
-import com.creditease.dbus.commons.ZkService;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.router.util.DBusRouterConstants;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.text.MessageFormat;
+import java.util.Properties;
 
 import static com.creditease.dbus.commons.Constants.ROUTER;
 
@@ -139,7 +129,7 @@ public class ZKFacade {
     }
 
     public Properties loadMySqlConf() throws Exception {
-        String path = Constants.COMMON_ROOT + "/"  + Constants.MYSQL_PROPERTIES;
+        String path = Constants.COMMON_ROOT + "/" + Constants.MYSQL_PROPERTIES;
         try {
             return zkService.getProperties(path);
         } catch (Exception e) {
@@ -162,14 +152,14 @@ public class ZKFacade {
     public void createNode(String path) {
         try {
             if (zkService.isExists(path)) {
-                logger.info("zk path [{0}] already exists.", path);
+                logger.info("zk path [{}] already exists.", path);
                 zkService.setData(path, new byte[0]);
             } else {
                 zkService.createNode(path, new byte[0]);
-                logger.info("create zk path [{0}] success.", path);
+                logger.info("create zk path [{}] success.", path);
             }
         } catch (Exception e) {
-            logger.error(MessageFormat.format("create zk path [{0}] error.", path), e);
+            logger.error(MessageFormat.format("create zk path [{}] error.", path), e);
         }
     }
 
@@ -177,10 +167,10 @@ public class ZKFacade {
         try {
             if (zkService.isExists(path)) {
                 zkService.deleteNode(path);
-                logger.info("delete zk path [{0}] success.", path);
+                logger.info("delete zk path [{}] success.", path);
             }
         } catch (Exception e) {
-            logger.error(MessageFormat.format("delete zk path [{0}] error.", path), e);
+            logger.error(MessageFormat.format("delete zk path [{}] error.", path), e);
         }
     }
 
@@ -192,7 +182,7 @@ public class ZKFacade {
                 logger.warn("zk node [{}] not exit don't set data.", path);
             }
         } catch (Exception e) {
-            logger.error(MessageFormat.format("set data for path [{0}] error.", path), e);
+            logger.error(MessageFormat.format("set data for path [{}] error.", path), e);
         }
     }
 
@@ -205,10 +195,25 @@ public class ZKFacade {
                 logger.warn("zk node [{}] not exit don't get data.", path);
             }
         } catch (Exception e) {
-            logger.error(MessageFormat.format("get data for path [{0}] error.", path), e);
+            logger.error(MessageFormat.format("get data for path [{}] error.", path), e);
         }
         return data;
     }
+
+    public String getSecurityConf() {
+        String security = "none";
+        String path = Constants.COMMON_ROOT + "/" + Constants.GLOBAL_SECURITY_CONF;
+        try {
+            if (zkService.isExists(path)) {
+                Properties properties = zkService.getProperties(path);
+                security = properties.getProperty("AuthenticationAndAuthorization");
+            }
+        } catch (Exception e) {
+            logger.error(MessageFormat.format("get security config for path [{}] error.", path), e);
+        }
+        return security;
+    }
+
     public void close() {
         try {
             zkService.close();

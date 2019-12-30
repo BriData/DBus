@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.table;
 
 import com.creditease.dbus.domain.model.DataSource;
@@ -25,14 +26,14 @@ import com.creditease.dbus.domain.model.DataSource;
 import java.sql.PreparedStatement;
 import java.util.Map;
 
-public class MySqlTableFetcher extends TableFetcher{
+public class MySqlTableFetcher extends TableFetcher {
     public MySqlTableFetcher(DataSource ds) {
         super(ds);
     }
 
     @Override
     public String buildQuery(Object... args) {
-        String sql ="select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = ?";
+        String sql = "select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = ?";
         return sql;
     }
 
@@ -46,22 +47,27 @@ public class MySqlTableFetcher extends TableFetcher{
         return map.get(key).toString();
     }
 
-/*
-    查询table字段的sql语句
- */
+    /**
+     * 查询table字段的sql语句
+     */
     @Override
     public String buildTableFieldQuery(Object... args) {
-        String sql ="select TABLE_NAME,COLUMN_NAME,DATA_TYPE from information_schema.COLUMNS where table_schema = ?";
+        String sql = "select TABLE_NAME,COLUMN_NAME,DATA_TYPE from information_schema.COLUMNS where table_schema = ?";
         return sql;
     }
 
-    /*
-        填充sql查询字段，schemaName和tableName
+    /**
+     * 填充sql查询字段,schemaName和tableName
      */
     @Override
     public String fillTableParameters(PreparedStatement statement, Map<String, Object> params) throws Exception {
         statement.setString(1, get(params, "schemaName"));
         return null;
+    }
+
+    @Override
+    protected String buildDataRowsQuery(String schemaName, String tableName) {
+        return "select table_rows num from information_schema.tables where table_schema = '" + schemaName + "' and table_name = '" + tableName + "'";
     }
 
 }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.msgencoder;
 
 import com.creditease.dbus.commons.DbusMessage;
@@ -30,6 +31,7 @@ import java.nio.charset.Charset;
 @Deprecated
 public abstract class HashStrategy implements EncodeStrategy {
     public static final Charset UTF8 = Charset.forName("UTF-8");
+
     @Override
     public Object encode(DbusMessage.Field field, Object value, EncodeColumn col) {
         if (value == null) return null;
@@ -37,7 +39,7 @@ public abstract class HashStrategy implements EncodeStrategy {
             case DECIMAL:
                 return String.format("%.1f", hash(value, col).asLong() / 3.0);
             case LONG:
-                return hash(value, col).asLong() + "";
+                return hash(value, col).asLong();
             case INT:
                 return hash(value, col).asInt();
             case DOUBLE:

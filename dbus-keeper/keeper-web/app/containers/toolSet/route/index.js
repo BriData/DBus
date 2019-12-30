@@ -5,10 +5,11 @@
 
 // 导入自定义组件
 import App from '@/app/containers/App'
-import ControlMessageWrapper from '@/app/containers/ToolSet/ControlMessageWrapper'
-import GlobalFullpullWrapper from '@/app/containers/ToolSet/GlobalFullpullWrapper'
-import KafkaReaderWrapper from '@/app/containers/ToolSet/KafkaReaderWrapper'
-import BatchRestartTopo from '@/app/containers/ToolSet/BatchRestartTopoWrapper'
+import ControlMessageWrapper from '@/app/containers/toolSet/ControlMessageWrapper'
+import GlobalFullpullWrapper from '@/app/containers/toolSet/GlobalFullpullWrapper'
+import KafkaReaderWrapper from '@/app/containers/toolSet/KafkaReaderWrapper'
+import BatchRestartTopo from '@/app/containers/toolSet/BatchRestartTopoWrapper'
+import OggCanalDeployWrapper from '@/app/containers/toolSet/OggCanalDeployWrapper'
 // HOCFactory({'siderHidden': true})(App)
 // 导出路由
 export default (store) => [
@@ -40,6 +41,10 @@ export default (store) => [
       {
         path: '/tool-set/batch-restart-topo',
         component: BatchRestartTopo
+      },
+      {
+        path: '/tool-set/deploy-info',
+        component: OggCanalDeployWrapper
       }
     ]
   }

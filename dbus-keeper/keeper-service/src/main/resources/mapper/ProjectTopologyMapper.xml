@@ -11,6 +11,7 @@
     <result column="topo_comment" jdbcType="VARCHAR" property="topoComment" />
     <result column="project_id" jdbcType="INTEGER" property="projectId" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="alias" jdbcType="VARCHAR" property="alias" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     DELETE pt,tt,en,v FROM
@@ -23,7 +24,7 @@
     WHERE
         pt.id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTopology">
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTopology" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
       SELECT LAST_INSERT_ID()
     </selectKey>
@@ -69,11 +70,12 @@
       tpt.status status,
       tpt.topo_comment topoComment,
       tpt.project_id projectId,
+      ifnull(tpt.alias, '') alias,
       tpt.update_time updateTime,
       tp.project_name projectName,
       tp.project_display_name projectDisplayName
     from
-      t_project_topo tpt,
+      (select tpt.*, tnam.alias from t_project_topo tpt left JOIN t_name_alias_mapping tnam ON tpt.id = tnam.name_id) tpt,
       t_project tp
     <where>
       tpt.project_id = tp.id
@@ -123,5 +125,23 @@
       tptt.topo_id = #{topoId, jdbcType=INTEGER}
     GROUP BY
       tdt.output_topic
+  </select>
+  <select id="selectByIds" resultType="java.util.Map">
+    SELECT
+      pt.*,
+      p.project_name,
+      am.alias
+    FROM
+      t_project_topo pt,
+      t_project p,
+      t_name_alias_mapping am
+    WHERE
+      pt.project_id = p.id
+      AND pt.topo_name = am.NAME
+      AND pt.id = am.name_id
+      AND am.type = 1
+      <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
   </select>
 </mapper>

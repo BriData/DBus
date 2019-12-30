@@ -6,12 +6,11 @@
 
     <groupId>com.creditease.dbus</groupId>
     <artifactId>dbus-main</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
     <packaging>pom</packaging>
 
-
-
     <properties>
+        <project.version>0.6.0</project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scope.provided>provided</scope.provided>
         <!--<scope.provided>compile</scope.provided>-->
@@ -30,8 +29,10 @@
         <module>dbus-keeper</module>
         <module>encoder-plugins</module>
         <module>dbus-router</module>
+        <module>dbus-sinker</module>
+        <module>dbus-auto-check</module>
+        <module>deployer</module>
     </modules>
-
 
     <!--这里配置的依赖，在子模块中可以有选择的引用-->
     <dependencyManagement>
@@ -40,13 +41,13 @@
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>encoder-base</artifactId>
-                <version>0.5.0</version>
+                <version>0.6.0</version>
             </dependency>
 
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>dbus-commons</artifactId>
-                <version>0.5.0</version>
+                <version>0.6.0</version>
             </dependency>
 
             <dependency>
@@ -58,11 +59,6 @@
                     <exclusion>
                         <groupId>com.codahale.metrics</groupId>
                         <artifactId>metrics-core</artifactId>
-                    </exclusion>
-                    <!-- 以下部分如果调试不过可以删除exclusions -->
-                    <exclusion>
-                        <groupId>org.clojure</groupId>
-                        <artifactId>clojure</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -87,17 +83,32 @@
                 <scope>${scope.provided}</scope>
             </dependency>
 
-
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
-                <version>1.2.29</version>
+                <version>1.2.62</version>
             </dependency>
 
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>druid</artifactId>
                 <version>1.0.19</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.9.9</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>2.9.9</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.9.9.1</version>
             </dependency>
 
             <!-- 注意guava版本，必须使用20.0否则无法使用脱敏的插件机制 -->
@@ -236,7 +247,7 @@
         <!--以下查件子模块自动继承，不必引入-->
         <plugins>
 
-	    <!--  自动生成licence 包 -->
+            <!--  自动生成licence 包 -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
@@ -248,13 +259,29 @@
                     <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
                     <useMissingFile>true</useMissingFile>
                     <missingFile>${project.basedir}/THIRD-PARTY.properties</missingFile>
-                    <aggregateMissingLicensesFile>${project.basedir}/THIRD-PARTY.properties</aggregateMissingLicensesFile>
+                    <aggregateMissingLicensesFile>${project.basedir}/THIRD-PARTY.properties
+                    </aggregateMissingLicensesFile>
                     <licenseMerges>
-                        <licenseMerge>Apache 2.0|ASL, version 2|http://www.apache.org/licenses/LICENSE-2.0.txt|http://asm.ow2.org/license.html|The Apache License, Version 2.0|Apache License|Apache License Version 2|Apache License Version 2.0|Apache Software License - Version 2.0|Apache 2.0 License|Apache License 2.0|ASL|Apache 2|Apache-2.0|the Apache License, ASL Version 2.0|The Apache Software License, Version 2.0|Apache License, Version 2.0|Apache Public License 2.0</licenseMerge>
-                        <licenseMerge>BSD|BSD-like|The BSD 3-Clause License|The BSD License|Modified BSD License|New BSD License|New BSD license|Two-clause BSD-style license|BSD licence|BSD New|The New BSD License|BSD 3-Clause|BSD 3-clause</licenseMerge>
+                        <licenseMerge>Apache 2.0|ASL, version
+                            2|http://www.apache.org/licenses/LICENSE-2.0.txt|http://asm.ow2.org/license.html|The Apache
+                            License, Version 2.0|Apache License|Apache License Version 2|Apache License Version
+                            2.0|Apache Software License - Version 2.0|Apache 2.0 License|Apache License 2.0|ASL|Apache
+                            2|Apache-2.0|the Apache License, ASL Version 2.0|The Apache Software License, Version
+                            2.0|Apache License, Version 2.0|Apache Public License 2.0
+                        </licenseMerge>
+                        <licenseMerge>BSD|BSD-like|The BSD 3-Clause License|The BSD License|Modified BSD License|New BSD
+                            License|New BSD license|Two-clause BSD-style license|BSD licence|BSD New|The New BSD
+                            License|BSD 3-Clause|BSD 3-clause
+                        </licenseMerge>
                         <licenseMerge>MIT|MIT License|The MIT License</licenseMerge>
-                        <licenseMerge>LGPL|LGPL, version 2.1|GNU Library or Lesser General Public License (LGPL) V2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public License, Version 2.1|LGPL 2.1</licenseMerge>
-                        <licenseMerge>CDDL|CDDL+GPL|CDDL+GPL License|CDDL + GPLv2 with classpath exception|CDDL License|CDDL 1.0|CDDL 1.1|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0|Common Development and Distribution License (CDDL) v1.0</licenseMerge>
+                        <licenseMerge>LGPL|LGPL, version 2.1|GNU Library or Lesser General Public License (LGPL)
+                            V2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public
+                            License, Version 2.1|LGPL 2.1
+                        </licenseMerge>
+                        <licenseMerge>CDDL|CDDL+GPL|CDDL+GPL License|CDDL + GPLv2 with classpath exception|CDDL
+                            License|CDDL 1.0|CDDL 1.1|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version
+                            1.0|Common Development and Distribution License (CDDL) v1.0
+                        </licenseMerge>
                         <licenseMerge>EPL|Eclipse Public License - Version 1.0</licenseMerge>
                         <licenseMerge>GPL|GPL2 w/ CPE|GPLv2+CE|GNU General Public Library</licenseMerge>
                         <licenseMerge>MPL|MPL 1.1</licenseMerge>
@@ -320,7 +347,6 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -331,30 +357,5 @@
             </plugin>
         </plugins>
 
-        <!--&lt;!&ndash;以下配置中的插件可以供子模块选择使用&ndash;&gt;-->
-        <!--<pluginManagement>-->
-            <!--<plugins>-->
-                <!--&lt;!&ndash; 将依赖的全打进去 &ndash;&gt;-->
-                <!--<plugin>-->
-                    <!--<groupId>org.apache.maven.plugins</groupId>-->
-                    <!--<artifactId>maven-assembly-plugin</artifactId>-->
-                    <!--<version>2.2.1</version>-->
-                    <!--<configuration>-->
-                        <!--<descriptorRefs>-->
-                            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
-                        <!--</descriptorRefs>-->
-                    <!--</configuration>-->
-                    <!--<executions>-->
-                        <!--<execution>-->
-                            <!--<id>make-assembly</id>-->
-                            <!--<phase>package</phase>-->
-                            <!--<goals>-->
-                                <!--<goal>assembly</goal>-->
-                            <!--</goals>-->
-                        <!--</execution>-->
-                    <!--</executions>-->
-                <!--</plugin>-->
-            <!--</plugins>-->
-        <!--</pluginManagement>-->
     </build>
 </project>

@@ -1,0 +1,16 @@
+server.port: ${register.server.port}
+
+spring:
+  application:
+    version: v1
+    cnname: dbus注册中心-v1
+    name: dbus-keeper-registry-${spring.application.version}
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: ${register.server.url}

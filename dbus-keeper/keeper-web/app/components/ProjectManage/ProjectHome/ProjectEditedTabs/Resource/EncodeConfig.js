@@ -164,10 +164,9 @@ export default class EncodeConfig extends Component {
    * @description encodeConfig的脱敏插件
    */
   renderEncodePlugin = width => (text, record, index) => {
-    console.info('record',record)
-    const { locale, encodeTypeList } = this.props
-    const { result, loading } = encodeTypeList
-    const plugins = result.plugins || []
+    console.info('record', record)
+    const {locale, encodeTypeList} = this.props
+    const {result, loading} = encodeTypeList
     const localeMessage = intlMessage(locale)
     const placeholder = this.handlePlaceholder(localeMessage)
     return (
@@ -190,7 +189,7 @@ export default class EncodeConfig extends Component {
           value={text || null}
           size="small"
         >
-          {plugins.map(item => (
+          {Object.values(result || []).map(item => (
             <Option value={item.id} key={item.id}>
               {item.name}
             </Option>
@@ -205,28 +204,18 @@ export default class EncodeConfig extends Component {
    * @description encodeConfig的脱敏类型|脱敏规则
    */
   renderEncodeType = width => (text, record, index) => {
-    const { locale } = this.props
-    const { result, loading } = this.props.encodeTypeList
-    const defaultEncoders = result.defaultEncoders || []
-    const plugins = result.plugins || []
+    const {locale} = this.props
+    const {result, loading} = this.props.encodeTypeList
     const localeMessage = intlMessage(locale)
     const placeholder = this.handlePlaceholder(localeMessage)
     const renderOptions = () => {
-      if (!record.encodePluginId) {
-        return defaultEncoders.map(item => (
-          <Option value={item} key={item}>
-            {item}
-          </Option>
-        ))
-      } else {
-        const plugin = plugins.filter(plugin => plugin.id === record.encodePluginId)[0] || {}
-        const encoderString = plugin.encoders || ""
-        return encoderString.split(",").map(item => (
-          <Option value={item} key={item}>
-            {item}
-          </Option>
-        ))
-      }
+      const plugin = Object.values(result || []).filter(plugin => plugin.id === record.encodePluginId)[0] || {}
+      const encoderString = plugin.encoders || ''
+      return encoderString.split(',').map(item => (
+        <Option value={item} key={item}>
+          {item}
+        </Option>
+      ))
     }
     return (
       <div
@@ -448,7 +437,7 @@ export default class EncodeConfig extends Component {
             {encodesAsyn.map(item => (
               <Option value={`${item.cid}`} key={`${item.cid}`}>
                 {item.encodeType ?
-                  <span title='DBA脱敏'>
+                  <span title='源端脱敏'>
                     {item.columnName}
                     <Icon type="lock" style={{ color: "red"}} />
                   </span>

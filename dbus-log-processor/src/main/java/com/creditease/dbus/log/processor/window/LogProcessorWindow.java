@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.log.processor.window;
 
@@ -57,8 +58,8 @@ public class LogProcessorWindow {
     public List<Element> deliver() {
         List<String> okKeys = new ArrayList<>();
         List<Element> okValues = new ArrayList<>();
-        for(Map.Entry<String, Element> entry : cache.entrySet()) {
-            if(entry.getValue().getOk()) {
+        for (Map.Entry<String, Element> entry : cache.entrySet()) {
+            if (entry.getValue().getOk()) {
                 okKeys.add(entry.getKey());
                 okValues.add(entry.getValue());
             }
@@ -66,7 +67,7 @@ public class LogProcessorWindow {
         for (String key : okKeys) {
             cache.remove(key);
         }
-        if(cache.size() > width) {
+        if (cache.size() > width) {
             logger.error("cache.size: {}, cache overflow!", cache.size());
         }
         return okValues;

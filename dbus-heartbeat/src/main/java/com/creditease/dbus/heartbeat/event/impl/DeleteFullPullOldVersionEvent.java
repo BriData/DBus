@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,23 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+
 /**
- *
- *
- *
  * @author Liang.Ma
  * @version 1.0
  */
@@ -66,7 +58,7 @@ public class DeleteFullPullOldVersionEvent extends AbstractEvent {
                 Map<String, List<String>> map = new HashMap<String, List<String>>();
                 List<String> list = new ArrayList<String>();
                 getChildrenPath(curator, list, hbConf.getMonitorFullPullPath());
-           //     List<String> list = curator.getChildren().forPath(hbConf.getMonitorFullPullPaht());
+                //     List<String> list = curator.getChildren().forPath(hbConf.getMonitorFullPullPaht());
                 if (CollectionUtils.isNotEmpty(list)) {
                     for (String item : list) {
                         String key = StringUtils.substringBeforeLast(item, "/");
@@ -85,9 +77,9 @@ public class DeleteFullPullOldVersionEvent extends AbstractEvent {
                         if (wkList.size() < fullPullOldVersionCnt)
                             continue;
                         Collections.sort(entry.getValue(), new VersionComparator());
-                        for (int i=fullPullOldVersionCnt; i<wkList.size(); i++) {
+                        for (int i = fullPullOldVersionCnt; i < wkList.size(); i++) {
                             LoggerFactory.getLogger().info("delete full pull old version: {}", wkList.get(i));
-                         //   String path = StringUtils.join(new String[] {hbConf.getMonitorFullPullPaht(), wkList.get(i)},  "/");
+                            //   String path = StringUtils.join(new String[] {hbConf.getMonitorFullPullPaht(), wkList.get(i)},  "/");
                             String path = wkList.get(i);
                             curator.delete().forPath(path);
                         }
@@ -102,12 +94,12 @@ public class DeleteFullPullOldVersionEvent extends AbstractEvent {
         }
     }
 
-    private void getChildrenPath(CuratorFramework curator, List<String> lst, String parent) throws Exception{
+    private void getChildrenPath(CuratorFramework curator, List<String> lst, String parent) throws Exception {
         List<String> lstPath = curator.getChildren().forPath(parent);
-        for(String path:lstPath){
-            getChildrenPath(curator,lst,parent+"/"+path);
+        for (String path : lstPath) {
+            getChildrenPath(curator, lst, parent + "/" + path);
         }
-        if(lstPath.size()==0)
+        if (lstPath.size() == 0)
             lst.add(parent);
     }
 

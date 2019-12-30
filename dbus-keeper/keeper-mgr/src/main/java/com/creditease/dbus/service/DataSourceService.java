@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service;
 
@@ -47,6 +48,8 @@ import org.springframework.stereotype.Service;
 
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * User: 王少楠
@@ -65,15 +68,19 @@ public class DataSourceService {
     @Autowired
     private ZkConfService zkConfService;
     @Autowired
-    private TableService tableService;
+    private FlowLineCheckService flowLineCheckService;
     @Autowired
     private ToolSetService toolSetService;
     @Autowired
     private AutoDeployDataLineService autoDeployDataLineService;
+    @Autowired
+    private StormToplogyOpHelper stormTopoHelper;
+    @Autowired
+    private TableService tableService;
 
     private static final String KEEPER_SERVICE = ServiceNames.KEEPER_SERVICE;
 
-    private final String OBEJCT_COLUMN = "--------";//查询的dbusData不是table，是存储过程时对应的column位置的值
+    private final String OBEJCT_COLUMN = "--------";//查询的dbusData不是table,是存储过程时对应的column位置的值
 
     /**
      * datasource首页的搜索
@@ -95,15 +102,18 @@ public class DataSourceService {
             String dsName = (String) ds.get("name");
             if (ds.get("type").equals("mysql")) {
                 JSONObject canalConf = autoDeployDataLineService.getCanalConf(dsName);
-                ds.put("oggOrCanalHost",canalConf.getString(KeeperConstants.HOST));
-                ds.put("oggOrCanalPath",canalConf.getString(KeeperConstants.CANAL_PATH));
+                ds.put("oggOrCanalHost", canalConf.getString(KeeperConstants.HOST));
+                ds.put("oggOrCanalPath", canalConf.getString(KeeperConstants.CANAL_PATH));
+                ds.put("slaveAddress", canalConf.getString(KeeperConstants.CANAL_ADD));
+                ds.put("slaveId", canalConf.getString(KeeperConstants.SLAVE_ID));
             }
             if (ds.get("type").equals("oracle")) {
                 JSONObject oggConf = autoDeployDataLineService.getOggConf(dsName);
-                ds.put("oggOrCanalHost",oggConf.getString(KeeperConstants.HOST));
-                ds.put("oggOrCanalPath",oggConf.getString(KeeperConstants.OGG_PATH));
-                ds.put("oggReplicatName",oggConf.getString(KeeperConstants.REPLICAT_NAME));
-                ds.put("oggTrailName",oggConf.getString(KeeperConstants.TRAIL_NAME));
+                ds.put("oggOrCanalHost", oggConf.getString(KeeperConstants.HOST));
+                ds.put("oggOrCanalPath", oggConf.getString(KeeperConstants.OGG_PATH));
+                ds.put("oggReplicatName", oggConf.getString(KeeperConstants.REPLICAT_NAME));
+                ds.put("oggTrailName", oggConf.getString(KeeperConstants.TRAIL_NAME));
+                ds.put("mgrReplicatPort", oggConf.getString(KeeperConstants.MGR_REPLICAT_PORT));
             }
         }
         body.setPayload(dataSourceList);
@@ -225,12 +235,12 @@ public class DataSourceService {
         for(int i=0;i<resultList.size();i++){
             String[] columnInfo = resultList.get(i).split("/");// "tablename/columnname, type"
             if(i==0){
-                tableName = columnInfo[0];//表名，起始进行初始化
+                tableName = columnInfo[0];//表名,起始进行初始化
             }
-            if(StringUtils.equals(tableName,columnInfo[0])){//当前列表名与之前一致，添加到当前table信息中
+            if(StringUtils.equals(tableName,columnInfo[0])){//当前列表名与之前一致,添加到当前table信息中
                 columnsInfo.append(" ").append(columnInfo[1]);
-            }else {//当前列表名与之前不一致，说明该表信息添加完毕
-                //初始化表的基本信息，如果是存储过程，后面直接更新"type"的值
+            }else {//当前列表名与之前不一致,说明该表信息添加完毕
+                //初始化表的基本信息,如果是存储过程,后面直接更新"type"的值
                 JSONObject tableMsg = new JSONObject();
                 tableMsg.put("type","表");
                 tableMsg.put("name",tableName);
@@ -288,23 +298,30 @@ public class DataSourceService {
         return result.getBody();
     }
 
-    public String startTopology(String dsName, String jarPath, String jarName, String topologyType) throws Exception {
+    public String startTopology(String dsName, String jarPath, String topologyType) throws Exception {
         Properties globalConf = zkService.getProperties(KeeperConstants.GLOBAL_CONF);
 
         String hostIp = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
-        String stormBaseDir = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_HOME_PATH);
-        String stormSshUser = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+        String stormBaseDir = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOME_PATH);
+        String stormSshUser = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
 
         String cmd = "cd " + stormBaseDir + "/" + KeeperConstants.STORM_JAR_DIR + ";";
         cmd += " ./dbus_startTopology.sh " + stormBaseDir + " " + topologyType + " " + env.getProperty("zk.str");
-        cmd += " " + dsName + " " + jarPath + " " + jarName;
-        // String sshCmd = "ssh -p " + port + " " + stormSshUser + "@" + hostIp + " " + "'" + cmd + "'";
+        cmd += " " + dsName + " " + jarPath;
 
         logger.info("Topology Start Command:{}", cmd);
         return SSHUtils.executeCommand(stormSshUser, hostIp, Integer.parseInt(port), env.getProperty("pubKeyPath"), cmd, null);
     }
 
+    public Integer stopTopology(String topologyId, Integer waitTime) throws Exception {
+        String killResult = stormTopoHelper.stopTopology(topologyId, waitTime, env.getProperty("pubKeyPath"));
+        if ("ok".equals(killResult)) {
+            return ResultEntity.SUCCESS;
+        } else {
+            return MessageCode.DATASOURCE_KILL_TOPO_FAILED;
+        }
+    }
 
     private void delDsZkConf(String[] nodes, String dsName) throws Exception {
         for (String confFilePath : nodes) {
@@ -324,35 +341,39 @@ public class DataSourceService {
     }
 
     public Map viewLog(String topologyId) throws Exception {
-        // 获取Topology运行所在worker及port
-        if (!StormToplogyOpHelper.inited) {
-            StormToplogyOpHelper.init(zkService);
-        }
-
         Properties globalConf = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
-        String stormHomePath = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_HOME_PATH);
-        //String host = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
-        String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_PORT);
-        String user = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_SSH_USER);
+        String port = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+        String user = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+        String logPath = globalConf.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_LOG_PATH);
 
-        String runningInfo = StormToplogyOpHelper.getTopoRunningInfoById(topologyId);
-        if(StringUtils.isBlank(runningInfo)){
-            Map resultMap = new HashMap<>();
-            resultMap.put("runningInfo", runningInfo);
+        String topoInfo = stormTopoHelper.getTopoRunningInfoById(topologyId);
+        Map resultMap = new HashMap<>();
+        if (StringUtils.isBlank(topoInfo) || topoInfo.split(":").length != 2) {
+            resultMap.put("runningInfo", "");
             resultMap.put("execResult", "");
             return resultMap;
         }
-        String[] split = runningInfo.split(":");
-        String command = "tail -300 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log.creditease";
 
+        logger.info("{},{}", topologyId, topoInfo);
+        String[] split = topoInfo.split(":");
+        String command = String.format("tail -500 %s/workers-artifacts/%s/%s/worker.log.creditease", logPath, topologyId, split[1]);
         String execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
-        if (StringUtils.isBlank(execResult)) {
-            command = "tail -300 " + stormHomePath + "/logs/workers-artifacts/" + split[1] + "/worker.log";
-            execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
+        if (StringUtils.isNotBlank(execResult)) {
+            resultMap.put("execResult", execResult);
+            resultMap.put("runningInfo", String.format("%s%s/workers-artifacts/%s/%s/worker.log.creditease", split[0], logPath, topologyId, split[1]));
+            return resultMap;
         }
-        Map resultMap = new HashMap<>();
-        resultMap.put("runningInfo", runningInfo);
-        resultMap.put("execResult", execResult);
+
+        command = String.format("tail -500 %s/workers-artifacts/%s/%s/worker.log", logPath, topologyId, split[1]);
+        execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
+        if (StringUtils.isNotBlank(execResult)) {
+            resultMap.put("execResult", execResult);
+            resultMap.put("runningInfo", String.format("%s%s/workers-artifacts/%s/%s/worker.log", split[0], logPath, topologyId, split[1]));
+            return resultMap;
+        }
+
+        resultMap.put("runningInfo", String.format("%s%s/workers-artifacts/%s/%s/worker.log", split[0], logPath, topologyId, split[1]));
+        resultMap.put("execResult", "");
         return resultMap;
     }
 
@@ -368,6 +389,41 @@ public class DataSourceService {
         orderedProperties.put("dbus.dispatcher.offset", offset);
         zkService.setData(path, orderedProperties.toString().getBytes());
         toolSetService.reloadConfig(dsId, dsName, "DISPATCHER_RELOAD_CONFIG");
+        toolSetService.reloadConfig(dsId, dsName, "APPENDER_RELOAD_CONFIG");
+        return 0;
+    }
+
+
+    /**
+     * 自动部署ogg或者canal
+     *
+     * @param dsName
+     */
+    public int autoAddOggCanalLine(String dsName, String canalUser, String canalPass) throws Exception {
+        DataSource dataSource = getDataSourceByDsName(dsName);
+        dataSource.setCanalUser(canalUser);
+        dataSource.setCanalPass(canalPass);
+        int i = autoAddOggCanalLine(dataSource);
+        if (i != 0) return i;
+        List<DataTable> tables = tableService.getTablesByDsId(dataSource.getId());
+        ConcurrentMap<String, List<DataTable>> tableMap = tables.stream().collect(Collectors.groupingByConcurrent(DataTable::getSchemaName));
+
+        HashMap<String, String> param = new HashMap<>();
+        for (Map.Entry<String, List<DataTable>> entry : tableMap.entrySet()) {
+            String schema = entry.getKey();
+            List<DataTable> tableList = entry.getValue();
+            if (schema.equalsIgnoreCase("dbus")) {
+                continue;
+            }
+            StringBuilder tableNames = new StringBuilder();
+            tableList.forEach(dataTable -> {
+                tableNames.append(dataTable.getTableName()).append(",");
+            });
+            param.put("dsName", dsName);
+            param.put("schemaName", schema);
+            param.put("tableNames", tableNames.substring(0, tableNames.length() - 1).toString());
+            autoDeployDataLineService.addOracleSchema(param);
+        }
         return 0;
     }
 
@@ -377,14 +433,25 @@ public class DataSourceService {
      * @param newOne
      */
     public int autoAddOggCanalLine(DataSource newOne) throws Exception {
+        JSONObject result = new JSONObject();
+
         String dsType = newOne.getDsType();
         String dsName = newOne.getDsName();
+
         if (dsType.equalsIgnoreCase("mysql")) {
             if (autoDeployDataLineService.isAutoDeployCanal(dsName)) {
+                flowLineCheckService.checkCanalOrOgg(dsName, result, dsType);
+                if (!result.getString("canalPid").contains("ERROR")) {
+                    return 0;
+                }
                 return autoDeployDataLineService.addCanalLine(dsName, newOne.getCanalUser(), newOne.getCanalPass());
             }
         } else if (dsType.equalsIgnoreCase("oracle")) {
             if (autoDeployDataLineService.isAutoDeployOgg(dsName)) {
+                flowLineCheckService.checkCanalOrOgg(dsName, result, dsType);
+                if (!result.getString("oggStatus").contains("ERROR")) {
+                    return 0;
+                }
                 return autoDeployDataLineService.addOracleLine(dsName);
             }
         }
@@ -411,9 +478,14 @@ public class DataSourceService {
         return 0;
     }
 
+    /**
+     * 精确查询
+     *
+     * @param dsName
+     * @return
+     */
     public DataSource getDataSourceByDsName(String dsName) {
         ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/getByName", "?dsName=" + dsName);
         return result.getBody().getPayload(DataSource.class);
     }
-
 }

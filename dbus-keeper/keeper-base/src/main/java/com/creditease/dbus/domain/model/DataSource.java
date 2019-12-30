@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.model;
 
@@ -38,6 +39,8 @@ public class DataSource {
     private Integer id;
 
     private String dsName;
+
+    private String dsNameAlias;
 
     private String dsType;
 
@@ -85,6 +88,14 @@ public class DataSource {
 
     public void setDsName(String dsName) {
         this.dsName = dsName;
+    }
+
+    public String getDsNameAlias() {
+        return dsNameAlias;
+    }
+
+    public void setDsNameAlias(String dsNameAlias) {
+        this.dsNameAlias = dsNameAlias;
     }
 
     public String getDsType() {

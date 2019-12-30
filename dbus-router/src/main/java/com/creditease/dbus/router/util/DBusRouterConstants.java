@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.router.util;
 
@@ -37,7 +38,6 @@ public class DBusRouterConstants {
     public static final String TOPIC_OFFSET = "router.topic.offset";
 
     /**
-     *
      * # stat config
      * stat.topic=dbus_statistic
      * stat.url=dbus-kafka1.jishu.idc:9092,dbus-kafka2.jishu.idc:9092,dbus-kafka3.jishu.idc:9092
@@ -57,6 +57,7 @@ public class DBusRouterConstants {
     public static final String STORM_MESSAGE_TIMEOUT = "storm.message.timeout";
     public static final String STORM_MAX_SPOUT_PENDING = "storm.max.spout.pending";
     public static final String STORM_NUM_WORKS = "storm.num.workers";
+    public static final String STORM_TOPOLOGY_WORKER_CHILDOPTS = "storm.topology.worker.childopts";
     public static final String STORM_KAFKA_READ_SPOUT_PARALLEL = "storm.kafka.read.spout.parallel";
     public static final String STORM_ENCODE_BOLT_PARALLEL = "storm.encode.bolt.parallel";
     public static final String STORM_KAFKA_WREIT_BOLT_PARALLEL = "storm.kafka.write.bolt.parallel";

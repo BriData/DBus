@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.canal.auto;
 
 import com.creditease.dbus.canal.bean.DeployPropsBean;
@@ -66,6 +87,7 @@ public class AutoDeployStart {
             writeAndPrint("备库地址: " + deployProps.getSlavePath());
             writeAndPrint("canal 用户名: " + deployProps.getCanalUser());
             writeAndPrint("canal 密码: " + deployProps.getCanalPwd());
+            writeAndPrint("canal slave id: " + deployProps.getCanalSlaveId());
 
             //1.检测canal账号可用性（与源端db的连通性）
             DBUtils.checkDBAccount(deployProps);
@@ -172,6 +194,7 @@ public class AutoDeployStart {
 
         writeAndPrint("instance file path " + instancePropsPath);
 
+        writeProperties(instancePropsPath, "canal.instance.mysql.slaveId", "canal.instance.mysql.slaveId = " + deployProps.getCanalSlaveId());
         writeProperties(instancePropsPath, "canal.instance.master.address", "canal.instance.master.address = " + deployProps.getSlavePath());
         writeProperties(instancePropsPath, "canal.instance.dbUsername", "canal.instance.dbUsername = " + deployProps.getCanalUser());
         writeProperties(instancePropsPath, "canal.instance.dbPassword", "canal.instance.dbPassword = " + deployProps.getCanalPwd());

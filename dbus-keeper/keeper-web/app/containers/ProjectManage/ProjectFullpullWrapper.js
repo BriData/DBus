@@ -26,22 +26,22 @@ import {
     searchAllFullpullProject: param => dispatch(searchAllFullpullProject.request(param)),
     searchAllFullpullDsName: param => dispatch(searchAllFullpullDsName.request(param)),
     getFullpullList: param => dispatch(searchAllFullpull.request(param)),
-    setFullpullParams: param => dispatch(setAllFullpullParams(param)),
+    setFullpullParams: param => dispatch(setAllFullpullParams(param))
   })
 )
 export default class ProjectFullpullWrapper extends Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = {
       modalVisible: false,
       modalRecord: {},
       modalKey: 'modalKey',
-      query: {},
+      query: {}
 
     }
     this.tableWidth = [
       '8%',
-      '8%',
+      '20%',
       '7%',
       '10%',
       '8%',
@@ -53,6 +53,11 @@ export default class ProjectFullpullWrapper extends Component {
       '8%',
       '8%',
       '8%',
+      '8%',
+      '8%',
+      '8%',
+      '8%',
+      '10%',
       '10%'
     ]
     this.initParams = {
@@ -62,7 +67,7 @@ export default class ProjectFullpullWrapper extends Component {
     }
   }
 
-  componentWillMount() {
+  componentWillMount () {
     let query = {}
     // 用户身份，需要从属性中获取query
     if (this.props.query) {
@@ -84,7 +89,7 @@ export default class ProjectFullpullWrapper extends Component {
       projectName: query.projectName,
       dsName: query.dsName,
       schemaName: query.schemaName,
-      tableName: query.tableName,
+      tableName: query.tableName
     }
     delete this.initParams.projectDisplayName
     this.handleSearch(this.initParams, true)
@@ -110,9 +115,9 @@ export default class ProjectFullpullWrapper extends Component {
     if (params.id === 'null') delete params.id
     if (params.orderBy === 'null') delete params.orderBy
     if (params.targetSinkTopic === 'null') delete params.targetSinkTopic
-  
+
     getFullpullList(params)
-  };
+  }
 
   /**
    * @param key 传入一个key type:[Object String]  默认:空
@@ -121,7 +126,7 @@ export default class ProjectFullpullWrapper extends Component {
   handleRandom = key =>
     `${Math.random()
       .toString(32)
-      .substr(3, 8)}${key || ''}`;
+      .substr(3, 8)}${key || ''}`
 
   /**
    * @param page 跳转页码 type:[object Number]
@@ -132,7 +137,7 @@ export default class ProjectFullpullWrapper extends Component {
     const {fullpullParams} = projectFullpullData
     // 分页查询并存储参数
     this.handleSearch({...fullpullParams, pageNum: page}, true)
-  };
+  }
 
   /**
    * @param current 当前页码 type:[object Number]
@@ -150,7 +155,7 @@ export default class ProjectFullpullWrapper extends Component {
 
   handleOpenModifyModal = (record) => {
     this.setState({
-      modalKey: this.handleRandom("modalKey"),
+      modalKey: this.handleRandom('modalKey'),
       modalRecord: record,
       modalVisible: true
     })
@@ -165,7 +170,7 @@ export default class ProjectFullpullWrapper extends Component {
     })
   }
 
-  render() {
+  render () {
     const {locale, projectFullpullData, setFullpullParams} = this.props
     const {
       fullpullList,

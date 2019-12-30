@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons;
 
@@ -33,7 +34,7 @@ import java.io.Serializable;
  * A key/value pair to be received from Kafka. This consists of a topic name and a partition number, from which the
  * record is being received and an offset that points to the record in a Kafka partition.
  */
-public final class DBusConsumerRecord<K, V> implements Serializable{
+public final class DBusConsumerRecord<K, V> implements Serializable {
     public static final long NO_TIMESTAMP = -1;
     public static final int NULL_SIZE = -1;
     public static final int NULL_CHECKSUM = -1;
@@ -64,22 +65,22 @@ public final class DBusConsumerRecord<K, V> implements Serializable{
 
     public DBusConsumerRecord(ConsumerRecord<K, V> record) {
         this(record.topic(), record.partition(), record.offset(), record.timestamp(), record.timestampType(),
-                record.checksum(), record.serializedKeySize(), record.serializedKeySize(), record.key(), record.value());
+                record.checksum(), record.serializedKeySize(), record.serializedValueSize(), record.key(), record.value());
     }
 
     /**
      * Creates a record to be received from a specified topic and partition
      *
-     * @param topic The topic this record is received from
-     * @param partition The partition of the topic this record is received from
-     * @param offset The offset of this record in the corresponding Kafka partition
-     * @param timestamp The timestamp of the record.
-     * @param timestampType The timestamp type
-     * @param checksum The checksum (CRC32) of the full record
-     * @param serializedKeySize The length of the serialized key
+     * @param topic               The topic this record is received from
+     * @param partition           The partition of the topic this record is received from
+     * @param offset              The offset of this record in the corresponding Kafka partition
+     * @param timestamp           The timestamp of the record.
+     * @param timestampType       The timestamp type
+     * @param checksum            The checksum (CRC32) of the full record
+     * @param serializedKeySize   The length of the serialized key
      * @param serializedValueSize The length of the serialized value
-     * @param key The key of the record, if one exists (null is allowed)
-     * @param value The record contents
+     * @param key                 The key of the record, if one exists (null is allowed)
+     * @param value               The record contents
      */
     public DBusConsumerRecord(String topic,
                               int partition,
@@ -182,7 +183,7 @@ public final class DBusConsumerRecord<K, V> implements Serializable{
     public String toString() {
         return "ConsumerRecord(topic = " + topic() + ", partition = " + partition() + ", offset = " + offset()
                 + ", " + timestampType + " = " + timestamp + ", checksum = " + checksum
-                + ", serialized key size = "  + serializedKeySize
+                + ", serialized key size = " + serializedKeySize
                 + ", serialized value size = " + serializedValueSize
                 + ", key = " + key + ", value = " + value + ")";
     }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.spout;
 
@@ -308,7 +309,7 @@ public class DbusKafkaSpout extends BaseRichSpout implements RecordProcessListen
                 consumer.syncOffset(commitPoint);
                 msgQueueMgr.committed(commitPoint);
             }
-            logger.info("[dbus-spout-ack] topic: {}, offset: {}, key: {}, size:{}, sync-kafka-offset:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize(), commitPoint != null? commitPoint.offset(): -1);
+            logger.info("[dbus-spout-ack] topic: {}, offset: {}, key: {}, size:{}, sync-kafka-offset:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize(), commitPoint != null ? commitPoint.offset() : -1);
         } else {
             logger.info("[dbus-spout-ack] receive ack message[{}]", msgId.getClass().getName());
         }

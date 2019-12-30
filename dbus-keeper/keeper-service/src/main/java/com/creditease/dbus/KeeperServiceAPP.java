@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus;
 
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.commons.ZkService;
-
+import com.creditease.dbus.utils.StormToplogyOpHelper;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -40,9 +41,9 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Created by zhangyf on 2018/3/7.
  */
-@SpringBootApplication(exclude = {MongoAutoConfiguration.class,MongoDataAutoConfiguration.class})
+@SpringBootApplication
 @EnableDiscoveryClient
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @MapperScan("com.creditease.dbus.domain.mapper")
 @EnableEurekaClient
 @EnableScheduling
@@ -59,6 +60,11 @@ public class KeeperServiceAPP {
     @Bean
     IZkService zkService() throws Exception {
         return new ZkService(env.getProperty("zk.str"));
+    }
+
+    @Bean
+    StormToplogyOpHelper stormTopoHelper() throws Exception {
+        return new StormToplogyOpHelper(new ZkService(env.getProperty("zk.str")));
     }
 
     public static void main(String[] args) {

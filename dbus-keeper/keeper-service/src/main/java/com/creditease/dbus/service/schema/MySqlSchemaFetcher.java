@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,19 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.schema;
 
 import com.creditease.dbus.domain.model.DataSource;
 
-import java.sql.PreparedStatement;
-import java.util.Map;
-
-public class MySqlSchemaFetcher extends SchemaFetcher{
+public class MySqlSchemaFetcher extends SchemaFetcher {
     public MySqlSchemaFetcher(DataSource ds) {
         super(ds);
     }
 
     @Override
     public String buildQuery() {
-        String sql ="select distinct(TABLE_SCHEMA) schemaname from information_schema.TABLES";
+        String sql = "select distinct(TABLE_SCHEMA) schemaname from information_schema.TABLES";
         return sql;
     }
 

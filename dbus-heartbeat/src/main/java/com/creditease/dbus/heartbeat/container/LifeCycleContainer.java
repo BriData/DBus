@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.container;
+
+import com.creditease.dbus.heartbeat.event.IEvent;
 
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.creditease.dbus.heartbeat.event.IEvent;
 
 public class LifeCycleContainer {
 

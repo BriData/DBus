@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.controller;
 
@@ -43,27 +44,29 @@ public class FullPullHistoryController extends BaseController {
     private FullPullHistoryService service;
     @Autowired
     private ProjectResourceService resService;
+
     @GetMapping("/search")
-    public ResultEntity search(HttpServletRequest request) throws Exception{
-        return service.search(URLDecoder.decode(request.getQueryString(),"UTF-8"));
+    public ResultEntity search(HttpServletRequest request) throws Exception {
+        return service.search(URLDecoder.decode(request.getQueryString(), "UTF-8"));
     }
 
     @GetMapping("/project-names")
-    public ResultEntity queryProjectFullpullHistory(HttpServletRequest request) throws Exception{
+    public ResultEntity queryProjectFullpullHistory(HttpServletRequest request) throws Exception {
         return service.queryProjectNames(request.getQueryString());
     }
 
     @GetMapping("/dsNames")
-    public ResultEntity getDSNames(HttpServletRequest request) throws Exception{
+    public ResultEntity getDSNames(HttpServletRequest request) throws Exception {
         return service.getDSNames(request.getQueryString());
     }
 
     @PostMapping("/dsNames")
-    public ResultEntity updata(HttpServletRequest request) throws Exception{
+    public ResultEntity updata(HttpServletRequest request) throws Exception {
         return service.getDSNames(request.getQueryString());
     }
+
     @PostMapping("/update")
-    public ResultEntity update(@RequestBody FullPullHistory fullPullHistory) throws Exception{
+    public ResultEntity update(@RequestBody FullPullHistory fullPullHistory) throws Exception {
         return service.update(fullPullHistory);
     }
 

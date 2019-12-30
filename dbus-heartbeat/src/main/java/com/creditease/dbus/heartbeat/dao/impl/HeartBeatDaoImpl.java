@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.dao.impl;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLRecoverableException;
-import java.util.Map;
+package com.creditease.dbus.heartbeat.dao.impl;
 
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
@@ -40,13 +33,16 @@ import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DBUtil;
 import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.vo.HeartBeatMonitorVo;
+import com.creditease.dbus.heartbeat.vo.MysqlMasterStatusVo;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-
 import org.apache.commons.lang.StringUtils;
 import org.bson.Document;
+
+import java.sql.*;
+import java.util.Map;
 
 public class HeartBeatDaoImpl implements IHeartBeatDao {
 
@@ -66,6 +62,13 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return sql.toString();
     }
 
+    private String getSendPacketSql2DB2() {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" insert into ");
+        sql.append("     dbus.db_heartbeat_monitor (DS_NAME, SCHEMA_NAME, TABLE_NAME, PACKET, CREATE_TIME, UPDATE_TIME)");
+        sql.append(" values (?, ?, ?, ?, CURRENT TIMESTAMP, CURRENT TIMESTAMP)");
+        return sql.toString();
+    }
 
     private String getMaxID() {
         return "select max(id) as maxID from db_heartbeat_monitor";
@@ -80,6 +83,9 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return "delete from db_heartbeat_monitor where id < ?";
     }
 
+    private String getDeleteOldHeartBeat2DB2() {
+        return "delete from dbus.db_heartbeat_monitor where id < ?";
+    }
 
     @Override
     public int sendPacket(String key, String dsName, String schemaName, String tableName, String packet, String dsType) {
@@ -87,8 +93,9 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         if (DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.MONGO)) {
             cnt = sendNoSqlPacket(key, dsName, schemaName, tableName, packet, dsType);
         } else if (DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.MYSQL) ||
-                   DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.ORACLE)
-                ) {
+                DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.ORACLE)
+                || DbusDatasourceType.stringEqual(dsType, DbusDatasourceType.DB2)
+        ) {
             cnt = sendRdbmsPacket(key, dsName, schemaName, tableName, packet, dsType);
         }
         return cnt;
@@ -107,7 +114,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             record.put("CREATE_TIME", DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
             record.put("UPDATE_TIME", DateUtil.convertLongToStr4Date(System.currentTimeMillis()));
             if (dbusMongoClient.getShardMongoClients() != null &&
-                dbusMongoClient.getShardMongoClients().size() > 0) {
+                    dbusMongoClient.getShardMongoClients().size() > 0) {
                 if (dbusMongoClient.isShardCollection(schemaName, tableName)) {
                     for (Map.Entry<String, MongoClient> client : dbusMongoClient.getShardMongoClients().entrySet()) {
                         MongoDatabase db = client.getValue().getDatabase("dbus");
@@ -139,9 +146,9 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             LoggerFactory.getLogger().error("[db-HeartBeatDao]", e);
         }
         if (cnt >= 1) {
-             LoggerFactory.getLogger().info("[db-HeartBeatDao] 数据源: " + key + ", 插入心跳包成功. " + packet);
+            LoggerFactory.getLogger().info("[db-HeartBeatDao] 数据源: " + key + ", 插入心跳包成功. " + packet);
         } else {
-             LoggerFactory.getLogger().error("[db-HeartBeatDao]: 数据源: " + key + ", 插入心跳包失败!" + packet);
+            LoggerFactory.getLogger().error("[db-HeartBeatDao]: 数据源: " + key + ", 插入心跳包失败!" + packet);
         }
         return cnt;
     }
@@ -169,10 +176,16 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
                 ps.setString(2, schemaName);
                 ps.setString(3, tableName);
                 ps.setString(4, packet);
+            } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_DB2, dsType)) {
+                ps = conn.prepareStatement(getSendPacketSql2DB2());
+                ps.setString(1, dsName);
+                ps.setString(2, schemaName);
+                ps.setString(3, tableName);
+                ps.setString(4, packet);
             }
 
             Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
-            if (queryTimeout == null) queryTimeout = 2;
+            if (queryTimeout == null) queryTimeout = 5;
             ps.setQueryTimeout(queryTimeout);
 
             beginStmt = System.currentTimeMillis();
@@ -208,6 +221,42 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return cnt;
     }
 
+    public MysqlMasterStatusVo queryMasterStatus(String key) {
+        MysqlMasterStatusVo statusVo = null;
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        // 生成备库连接key
+        String keyWk = StringUtils.join(new String[]{key, "slave"}, "_");
+        try {
+            // show master status;
+            // | File | Position  | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+            conn = DataSourceContainer.getInstance().getConn(keyWk);
+            if (conn != null) {
+                ps = conn.prepareStatement("show master status");
+                rs = ps.executeQuery();
+                if (rs.next()) {
+                    statusVo = new MysqlMasterStatusVo();
+                    statusVo.setFile(rs.getString("File"));
+                    statusVo.setPosition(rs.getLong("Position"));
+                    statusVo.setBinlogDoDB(rs.getString("Binlog_Do_DB"));
+                    statusVo.setBinlogIgnoreDB(rs.getString("Binlog_Ignore_DB"));
+                    // statusVo.setExecutedGtidSet(rs.getString("Executed_Gtid_Set"));
+                }
+            } else {
+                LoggerFactory.getLogger().error("[db-HeartBeatDao]: 没有发现数据源: " + keyWk + "的连接!");
+            }
+
+        } catch (Exception e) {
+            LoggerFactory.getLogger().error("[db-HeartBeatDao]: 查询数据源: " + keyWk + "的master status信息发生错误!", e);
+        } finally {
+            DBUtil.close(rs);
+            DBUtil.close(ps);
+            DBUtil.close(conn);
+        }
+        return statusVo;
+    }
+
     @Override
     public int deleteOldHeartBeat(String key, String dsType) {
         Connection conn = null;
@@ -220,7 +269,16 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             conn = DataSourceContainer.getInstance().getConn(key);
 
             //select maxID
+            if (StringUtils.equals(Constants.CONFIG_DB_TYPE_DB2, dsType)) {
+                ps = conn.prepareStatement(getMaxID2DB2());
+            } else {
                 ps = conn.prepareStatement(getMaxID());
+            }
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             while (rs.next()) {
                 //read max id
@@ -230,7 +288,14 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             DBUtil.close(ps);
 
             //delete old heartbeat record
+            if (StringUtils.equals(Constants.CONFIG_DB_TYPE_DB2, dsType)) {
+                ps2 = conn.prepareStatement(getDeleteOldHeartBeat2DB2());
+            } else {
                 ps2 = conn.prepareStatement(getDeleteOldHeartBeat());
+            }
+
+            ps2.setQueryTimeout(queryTimeout);
+
             ps2.setLong(1, maxID - 10000);
             cnt = ps2.executeUpdate();
             LoggerFactory.getLogger().info("[db-HeartBeatDao] 数据源: " + key + ", 删除旧心跳包成功. 条数=" + cnt);
@@ -245,6 +310,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
 
         return cnt;
     }
+
 
     public static void main(String[] args) {
         //脱敏
@@ -261,7 +327,6 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
             stmt.setQueryTimeout(2);
 
 
-
             System.out.println("begin ...");
 //            int i = stmt.executeUpdate();
             rs = stmt.executeQuery();
@@ -273,7 +338,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                if (e instanceof SQLException && ((SQLException)(e)).getNextException() instanceof SQLRecoverableException) {
+                if (e instanceof SQLException && ((SQLException) (e)).getNextException() instanceof SQLRecoverableException) {
                     SQLException sqle = (SQLException) e;
                     if (sqle.getNextException() instanceof SQLRecoverableException) {
                         SQLRecoverableException sqlre = (SQLRecoverableException) sqle.getNextException();
@@ -282,7 +347,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
                         }
                     }
                 }
-            }catch (Exception innere) {
+            } catch (Exception innere) {
                 innere.getCause();
             }
 
@@ -295,7 +360,7 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
                 }
             }
 
-            if (stmt  != null) {
+            if (stmt != null) {
                 try {
                     stmt.close();
                 } catch (Exception e) {
@@ -329,6 +394,22 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
         return sql.toString();
     }
 
+    private String getQueryHeartbeatSql2DB2() {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" select ");
+        sql.append("     DS_NAME,");
+        sql.append("     SCHEMA_NAME,");
+        sql.append("     CREATE_TIME");
+        sql.append(" from");
+        sql.append("     dbus.db_heartbeat_monitor");
+        sql.append(" where");
+        sql.append("     DS_NAME = ? and");
+        sql.append("     SCHEMA_NAME = ?");
+        sql.append(" order by");
+        sql.append("     CREATE_TIME desc");
+        sql.append(" fetch first 1 rows only");
+        return sql.toString();
+    }
 
     private String getQueryHeartbeatSql2Oracle() {
         StringBuilder sql = new StringBuilder();
@@ -364,9 +445,15 @@ public class HeartBeatDaoImpl implements IHeartBeatDao {
                 ps = conn.prepareStatement(getQueryHeartbeatSql2Mysql());
             } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_ORA, dsType)) {
                 ps = conn.prepareStatement(getQueryHeartbeatSql2Oracle());
+            } else if (StringUtils.equals(Constants.CONFIG_DB_TYPE_DB2, dsType)) {
+                ps = conn.prepareStatement(getQueryHeartbeatSql2DB2());
             }
             ps.setString(1, dsName);
             ps.setString(2, schemaName);
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
 
             rs = ps.executeQuery();
             if (rs.next()) {

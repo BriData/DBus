@@ -125,10 +125,11 @@ export default class DataTableManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onRerun, onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal,onOpenRuleImportModal,
+    const {onRerun, onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal,onOpenRuleImportModal,onOpenNormalFullPullModal,
       onHandleDownload} = this.props
     const dsType = record.dsType
     const notLog = dsType === 'mysql' || dsType === 'oracle' || dsType === 'mongo'
+      || dsType === 'db2'
     let menus
     if (notLog) {
       menus = [
@@ -215,7 +216,7 @@ export default class DataTableManageGrid extends Component {
         {
           text: <FormattedMessage
             id="app.components.resourceManage.dataTable.sourceEncode"
-            defaultMessage="DBA脱敏"
+            defaultMessage="源端脱敏"
           />,
           icon: 'lock',
           onClick: () => this.handleEncode(record)
@@ -229,22 +230,8 @@ export default class DataTableManageGrid extends Component {
             defaultMessage="拖回重跑"
           />,
           icon: 'reload',
-          disabled: record.dsType !== 'db2',
-          onClick: () => onRerun(record),
-        },
-        {
-          text: <FormattedMessage
-            id="app.components.resourceManage.dataTable.originalFullpull"
-            defaultMessage="阻塞式拉全量"
-          />,
-          icon: 'export',
-          onClick: () => this.handleFullPull(record),
-          confirmText: <div>
-            <FormattedMessage
-              id="app.components.resourceManage.dataTable.originalFullpull"
-              defaultMessage="阻塞式拉全量"
-            />?
-          </div>
+          // disabled: record.dsType !== 'db2',
+          onClick: () => onRerun(record)
         },
         {
           text: <FormattedMessage
@@ -262,6 +249,20 @@ export default class DataTableManageGrid extends Component {
           icon: 'check-circle-o',
           onClick: () => onCheckDataLine(record)
         },
+        {
+          text: <FormattedMessage
+            id="app.components.resourceManage.dataTable.reInitTableMeta"
+            defaultMessage="更新表结构"
+          />,
+          icon: 'reload',
+          onClick: () => this.handleReInitTableMeta(record),
+          confirmText: <div>
+            <FormattedMessage
+              id="app.components.resourceManage.dataTable.reInitTableMeta"
+              defaultMessage="更新表结构"
+            />?
+          </div>
+        }
       ]
       return (
         <div>
@@ -441,16 +442,11 @@ export default class DataTableManageGrid extends Component {
     onOpenIndependentFullPullModal(record)
   }
 
-  handleFullPull = record => {
-    const {startApi, onRequest} = this.props
+  handleReInitTableMeta = record => {
+    const {reInitMeta, onRequest} = this.props
     onRequest({
-      api: `${startApi}/${record.id}`,
-      data: {
-        id: record.id,
-        version: record.version,
-        type: "load-data"
-      },
-      method: 'post'
+      api: `${reInitMeta}/${record.id}`,
+      method: 'get'
     })
   }
 
@@ -561,18 +557,18 @@ export default class DataTableManageGrid extends Component {
         key: 'physicalTableRegex',
         render: this.renderComponent(this.renderNomal)
       },
-      {
-        title: (
-          <FormattedMessage
-            id="app.components.resourceManage.dataTableNameAlias"
-            defaultMessage="模板表"
-          />
-        ),
-        width: this.tableWidth[2],
-        dataIndex: 'tableNameAlias',
-        key: 'tableNameAlias',
-        render: this.renderComponent(this.renderNomal)
-      },
+      // {
+      //   title: (
+      //     <FormattedMessage
+      //       id="app.components.resourceManage.dataTableNameAlias"
+      //       defaultMessage="模板表"
+      //     />
+      //   ),
+      //   width: this.tableWidth[2],
+      //   dataIndex: 'tableNameAlias',
+      //   key: 'tableNameAlias',
+      //   render: this.renderComponent(this.renderNomal)
+      // },
       {
         title: (
           <FormattedMessage

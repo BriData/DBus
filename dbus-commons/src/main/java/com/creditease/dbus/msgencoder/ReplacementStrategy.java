@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.msgencoder;
 
@@ -47,7 +48,7 @@ public class ReplacementStrategy implements EncodeStrategy {
     @Override
     public Object encode(DbusMessage.Field field, Object value, EncodeColumn col) {
         if (value == null) return null;
-        if(col.getEncodeParam() == null || col.getEncodeParam().trim().equals("")) {
+        if (col.getEncodeParam() == null || col.getEncodeParam().trim().equals("")) {
             return errorStrategy.encode(field, value, col);
         }
         try {
@@ -79,9 +80,9 @@ public class ReplacementStrategy implements EncodeStrategy {
 
     private void parse(String datetimeStr) throws Exception {
         int length = datetimeStr.length();
-        if(length == 19) {
+        if (length == 19) {
             dtf1.parse(datetimeStr);
-        } else if(length == 23) {
+        } else if (length == 23) {
             dtf2.parse(datetimeStr);
         }
     }

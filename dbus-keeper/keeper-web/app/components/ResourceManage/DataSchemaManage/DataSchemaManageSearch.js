@@ -24,6 +24,10 @@ export default class DataSchemaManageSearch extends Component {
     })
   }
 
+  handleReset = () => {
+    this.props.form.resetFields();
+  }
+
   render () {
     const {dataSourceIdTypeName} = this.props
     const { getFieldDecorator } = this.props.form
@@ -71,6 +75,18 @@ export default class DataSchemaManageSearch extends Component {
                   <FormattedMessage
                     id="app.common.search"
                     defaultMessage="查询"
+                  />
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  type="primary"
+                  icon="reload"
+                  onClick={this.handleReset}
+                >
+                  <FormattedMessage
+                    id="app.components.configCenter.mgrConfig.reset"
+                    defaultMessage="重置"
                   />
                 </Button>
               </FormItem>

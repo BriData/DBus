@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.dispatcher;
 
@@ -48,39 +49,47 @@ public class PairWrapper<K, V> {
     public void addProperties(K key, V value) {
         map.put(key, value);
     }
+
     public V getProperties(K key) {
         return map.get(key);
     }
+
     public V removeProperties(K key) {
         return map.remove(key);
     }
+
     public void addPair(Pair<K, V> pair) {
         index.put(pair.getKey(), pairs.size());
         pairs.add(pair);
     }
+
     public Pair<K, V>[] pairs2array() {
         Pair<K, V>[] arr = new Pair[0];
         return pairs.toArray(arr);
     }
+
     public List<Pair<K, V>> getPairs() {
         return pairs;
     }
+
     public void removePairsByKey(K key) {
         Integer index = this.index.get(key);
         pairs.remove(index);
     }
+
     public Pair<K, V> getPair(K key) {
-        if(!index.containsKey(key)) return null;
+        if (!index.containsKey(key)) return null;
         return pairs.get(index.get(key));
     }
 
     public V getPairValue(K key) {
         Pair<K, V> p = getPair(key);
-        if(p != null) {
+        if (p != null) {
             return p.getValue();
         }
         return null;
     }
+
     public Map<K, V> pairs2map() {
         for (Pair<K, V> pair : pairs) {
             map.put(pair.getKey(), pair.getValue());

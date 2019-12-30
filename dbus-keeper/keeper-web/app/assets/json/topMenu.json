@@ -3,7 +3,7 @@
         { "name": "resource-manage", "id": "app.components.navigator.resourceManage","text":"数据源管理","icon": "hdd"},
         { "name": "project-manage", "id": "app.components.navigator.projectManage","text":"项目管理","icon": "appstore-o"},
         { "name": "config-manage", "id": "app.components.navigator.configManage","text":"配置管理","icon": "setting"},
-        { "name": "sink-manage", "id": "app.components.navigator.sinkManage","text":"Sink管理","icon": "usb","href":"/sink-manage/list"},
+        { "name": "sink-manage", "id": "app.components.navigator.sinkManage","text":"Sink管理","icon": "usb"},
         { "name": "user-manage", "id": "app.components.navigator.userManage","text":"用户管理" ,"icon": "user","href":"/user-manage/list"},
         { "name": "monitor-manage", "id": "app.components.navigator.sourceMonitor","text":"贴源监控","icon": "area-chart","href":"/monitor-manage/list" },
         { "name": "tool-set", "id": "app.components.navigator.toolMonitor","text":"小工具集","icon": "tool" },

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,17 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.utils;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.MetaWrapper;
 import com.creditease.dbus.msgencoder.EncodeColumn;
 import com.creditease.dbus.stream.common.appender.bean.*;
 import com.creditease.dbus.stream.common.appender.exception.RuntimeSQLException;
 import com.google.common.collect.Lists;
+import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,6 +187,32 @@ public class DBFacade {
         }
     }
 
+    public boolean checkDdlEvent(DdlEvent ddlEvent) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            conn = ds.getConnection();
+            String sql;
+
+            sql = "select * from t_ddl_event where event_id = ? and ds_id = ? and schema_name = ? and table_name = ?";
+            ps = conn.prepareStatement(sql);
+
+            ps.setLong(1, ddlEvent.getEventId());
+            ps.setLong(2, ddlEvent.getDsId());
+            ps.setString(3, ddlEvent.getSchemaName());
+            ps.setString(4, ddlEvent.getTableName());
+            rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            logger.error("insert into t_ddl_event error", e);
+            e.printStackTrace();
+        } finally {
+            DbUtils.closeQuietly(conn, ps, rs);
+        }
+        return false;
+    }
+
     public void insertDdlEvent(DdlEvent ddlEvent) {
         Connection conn = null;
         PreparedStatement ps = null;
@@ -243,7 +272,7 @@ public class DBFacade {
             conn.setAutoCommit(false);
             String sql;
 
-            sql = "insert into t_meta_version(db_name,schema_name,table_name,version,inner_version,update_time,ds_id,event_offset, event_pos,table_id,comments) values(?,?,?,?,?,?,?,?,?,?,?)";
+            sql = "insert into t_meta_version(db_name,schema_name,table_name,version,inner_version,schema_hash,update_time,ds_id,event_offset, event_pos,table_id,comments) values(?,?,?,?,?,?,?,?,?,?,?,?)";
             // 生成version信息
             ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
@@ -252,18 +281,21 @@ public class DBFacade {
             ps.setString(3, version.getTable());
             ps.setInt(4, version.getVersion());
             ps.setInt(5, version.getInnerVersion());
-            ps.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-            ps.setLong(7, Utils.getDatasource().getId());
-            ps.setLong(8, version.getOffset());
-            ps.setLong(9, version.getTrailPos());
-            ps.setLong(10, version.getTableId());
-            ps.setString(11, version.getComments());
+            ps.setObject(6, version.getSchemaHash());
+            ps.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
+            ps.setLong(8, Utils.getDatasource().getId());
+            ps.setLong(9, version.getOffset());
+            ps.setLong(10, version.getTrailPos());
+            ps.setLong(11, version.getTableId());
+            ps.setString(12, version.getComments());
             ps.executeUpdate();
 
             // 获取自动生成的ID
             ResultSet idSet = ps.getGeneratedKeys();
             idSet.next();
             long verId = idSet.getLong("generated_key");
+            DbUtils.close(idSet);
+            DbUtils.close(ps);
 
             // 更新version
             version.setId(verId);
@@ -588,6 +620,8 @@ public class DBFacade {
                 t.setMetaChangeFlg(rs.getInt("meta_change_flg"));
                 t.setBatchId(rs.getInt("batch_id"));
                 t.setOutputBeforeUpdateFlg(rs.getInt("output_before_update_flg"));
+                t.setIsOpen(rs.getInt("is_open"));
+                t.setIsAutocomplete(rs.getBoolean("is_auto_complete"));
                 if (ts != null) {
                     t.setCreateTime(new Date(ts.getTime()));
                 }
@@ -623,6 +657,8 @@ public class DBFacade {
                 t.setMetaChangeFlg(rs.getInt("meta_change_flg"));
                 t.setBatchId(rs.getInt("batch_id"));
                 t.setOutputBeforeUpdateFlg(rs.getInt("output_before_update_flg"));
+                t.setIsOpen(rs.getInt("is_open"));
+                t.setIsAutocomplete(rs.getBoolean("is_auto_complete"));
                 if (ts != null) {
                     t.setCreateTime(new Date(ts.getTime()));
                 }
@@ -729,6 +765,31 @@ public class DBFacade {
     }
 
 
+
+    public void updateOraMetaVersion(long tableId, int schemaHash) throws SQLException {
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = ds.getConnection();
+            String sql = "update t_meta_version set schema_hash=? where table_id = ? and schema_hash is null order by id desc limit 1";
+            ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, schemaHash);
+            ps.setLong(2, tableId);
+
+            ps.executeUpdate();
+
+        } finally {
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
     public void updateVersionPos(MetaVersion ver) throws SQLException {
         Connection conn = null;
         PreparedStatement ps = null;
@@ -752,7 +813,6 @@ public class DBFacade {
             }
         }
     }
-
 
 
     public void updateVersion(MetaVersion ver) throws Exception {
@@ -877,6 +937,23 @@ public class DBFacade {
     }
 
     //根据table id
+    public MetaVersion queryOraMetaVersion(long tableId, int schemaHash) {
+        String sql = "select * from t_meta_version t where (t.abandon is null or t.abandon = 0) and t.table_id=? and t.schema_hash=? order by id desc limit 1";
+        Map<String, Object> map = queryFirstRow(sql, tableId, schemaHash);
+
+        if (map == null) {
+            return null;
+        } else {
+            MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+            MetaVersion ver = MetaVersion.parse(map);
+            ver.setMeta(wrapper);
+
+            return ver;
+        }
+
+    }
+
+    //根据table id
     public MetaVersion queryMetaVersion(long tableId, long pos) {
         String sql = "select * from t_meta_version t where t.table_id=? and t.event_pos=? order by t.event_pos desc";
         Map<String, Object> map = queryFirstRow(sql, tableId, pos);
@@ -901,16 +978,16 @@ public class DBFacade {
         Map<String, Object> map = null;
         MetaVersion version = null;
         long lag = Long.MAX_VALUE;
-        for(int i = 0; i < rows.size(); i++) {
+        for (int i = 0; i < rows.size(); i++) {
             version = MetaVersion.parse(rows.get(i));
-            if((offset - version.getOffset()) < lag ) {
+            if ((offset - version.getOffset()) < lag) {
                 lag = offset - version.getOffset();
                 map = rows.get(i);
             }
         }
 
         if (map == null) {
-           logger.info("没有找到距离 {} 最近的版本！", offset);
+            logger.info("没有找到距离 {} 最近的版本！", offset);
             return null;
         }
 
@@ -942,12 +1019,11 @@ public class DBFacade {
         String sql = "select DISTINCT(event_pos) from t_meta_version t where t.table_id=?";
         List<Map<String, Object>> rows = query(sql, tableId);
 
-        for(int i = 0; i < rows.size(); i++) {
-            posLists.add((Long)rows.get(i).get("event_pos"));
+        for (int i = 0; i < rows.size(); i++) {
+            posLists.add((Long) rows.get(i).get("event_pos"));
         }
         return posLists;
     }
-
 
 
     public MetaVersion queryLatestMetaVersion(long tableId) {
@@ -996,6 +1072,21 @@ public class DBFacade {
         return ver;
     }
 
+    public List<MetaVersion> queryAllMetaVersion(long tableId) {
+        String sql = "select * from t_meta_version t where (t.abandon is null or t.abandon = 0) and t.table_id=?";
+        List<Map<String, Object>> list = query(sql, tableId);
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        List<MetaVersion> versions = new ArrayList<>();
+        for(Map<String, Object> map: list) {
+            MetaWrapper wrapper = queryMeta((Long) map.get("id"));
+            MetaVersion ver = MetaVersion.parse(map);
+            ver.setMeta(wrapper);
+            versions.add(ver);
+        }
+        return versions;
+    }
     /**
      * 初始化data table
      *
@@ -1164,7 +1255,7 @@ public class DBFacade {
     public List<EncodeColumn> getEncodeColumns(long tableId) {
         String sql = "select c.*, m.data_length\n" +
                 "from\n" +
-                "    t_dba_encode_columns c,\n" +
+                "    t_encode_columns c,\n" +
                 "    t_data_tables t,\n" +
                 "    t_table_meta m\n" +
                 "where\n" +
@@ -1213,5 +1304,161 @@ public class DBFacade {
             }
             return plugins;
         });
+    }
+
+    public NameAliasMapping getNameMapping(Long name_id) {
+        String sql = "select * from t_name_alias_mapping where name_id = ? and type= ?";
+        return query(sql, new Object[]{name_id, 2}, rs -> {
+            NameAliasMapping m = null;
+            if (rs.next()) {
+                m = new NameAliasMapping();
+                m.setId(rs.getLong("id"));
+                m.setAlias(rs.getString("alias"));
+                m.setNameId(rs.getLong("name_id"));
+                m.setType(rs.getInt("type"));
+                m.setName(rs.getString("name"));
+                m.setTs(rs.getTimestamp("update_time"));
+                return m;
+            }
+            return m;
+        });
+    }
+
+    public void markVersionDeleted(long verId) throws SQLException {
+        Connection conn = null;
+        Statement stmt = null;
+        try {
+            conn = ds.getConnection();
+            stmt = conn.createStatement();
+            stmt.execute("update `t_meta_version` set abandon = 1 where id = " + verId);
+            logger.info("标记删除旧版本verId:{}成功", verId);
+        } catch (Exception e) {
+            logger.error("标记删除旧版本verId:{}失败", verId, e);
+            throw new SQLException(e);
+        } finally {
+            DbUtils.closeQuietly(conn, stmt, null);
+        }
+    }
+
+    public void updateVersionInfo(MetaVersion version, List<Long> oldVersionIds, DdlEvent ddlEvent) throws SQLException {
+        Connection conn = null;
+        Statement stmt = null;
+        PreparedStatement ps = null;
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            // create Meta Version
+            String sql;
+            sql = "insert into t_meta_version(db_name,schema_name,table_name,version,inner_version,schema_hash,update_time,ds_id,event_offset, event_pos,table_id,comments) values(?,?,?,?,?,?,?,?,?,?,?,?)";
+            // 生成version信息
+            ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, Utils.getDatasource().getDsName());
+            ps.setString(2, version.getSchema());
+            ps.setString(3, version.getTable());
+            ps.setInt(4, version.getVersion());
+            ps.setInt(5, version.getInnerVersion());
+            ps.setObject(6, version.getSchemaHash());
+            ps.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
+            ps.setLong(8, Utils.getDatasource().getId());
+            ps.setLong(9, version.getOffset());
+            ps.setLong(10, version.getTrailPos());
+            ps.setLong(11, version.getTableId());
+            ps.setString(12, version.getComments());
+            ps.executeUpdate();
+            // 获取自动生成的ID
+            ResultSet idSet = ps.getGeneratedKeys();
+            idSet.next();
+            long verId = idSet.getLong("generated_key");
+            DbUtils.close(idSet);
+            DbUtils.close(ps);
+
+            // 更新version
+            version.setId(verId);
+
+            if (version.getMeta() != null && !version.getMeta().isEmpty()) {
+                // 生成meta信息
+                sql = "insert into t_table_meta(ver_id,column_name,column_id,original_ser,data_type,data_length,data_precision," +
+                        "data_scale,nullable,is_pk,pk_position,alter_time,char_length,char_used,internal_column_id, " +
+                        "hidden_column, virtual_column, original_column_name, comments, default_value) " +
+                        "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+                ps = conn.prepareStatement(sql);
+                List<MetaWrapper.MetaCell> columns = version.getMeta().getColumns();
+                for (MetaWrapper.MetaCell column : columns) {
+                    ps.setLong(1, verId);
+                    ps.setString(2, column.getColumnName());
+                    ps.setInt(3, column.getColumnId());
+                    ps.setInt(4, version.getInnerVersion());
+                    ps.setString(5, column.getDataType());
+                    ps.setLong(6, column.getDataLength());
+                    ps.setInt(7, column.getDataPrecision());
+                    ps.setInt(8, column.getDataScale());
+                    ps.setString(9, column.getNullAble());
+                    ps.setString(10, column.getIspk());
+                    ps.setInt(11, column.getPkPosition());
+                    ps.setTimestamp(12, column.getDdlTime());
+                    ps.setInt(13, column.getCharLength());
+                    ps.setString(14, column.getCharUsed());
+                    ps.setInt(15, column.getInternalColumnId());
+                    ps.setString(16, column.getHiddenColumn());
+                    ps.setString(17, column.getVirtualColumn());
+                    ps.setString(18, column.getOriginalColumnName());
+                    ps.setString(19, column.getComments());
+                    ps.setString(20, column.getDefaultValue());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+                DbUtils.close(ps);
+            }
+
+            logger.info("创建新版本id为:{}", verId);
+
+            updateTableVerHistoryNotice(conn, version.getTableId());
+
+            ps = conn.prepareStatement("update t_data_tables set ver_id = ? where id = ?");
+            ps.setLong(1, verId);
+            ps.setLong(2, version.getTableId());
+            ps.executeUpdate();
+            DbUtils.close(ps);
+
+            // Mark Version Deleted
+
+            stmt = conn.createStatement();
+            for(Long id: oldVersionIds) {
+                stmt.addBatch("update `t_meta_version` set abandon = 1 where id = " + id);
+            }
+            stmt.executeBatch();
+            DbUtils.close(stmt);
+            logger.info("设置旧版本废弃标志:{}", JSON.toJSONString(oldVersionIds));
+
+            ddlEvent.setVerId(version.getId());
+            // insert ddl event
+            sql = "insert into t_ddl_event(event_id,ds_id,schema_name,table_name,column_name,ver_id,trigger_ver,ddl_type,ddl) values(?,?,?,?,?,?,?,?,?)";
+            ps = conn.prepareStatement(sql);
+
+            ps.setLong(1, ddlEvent.getEventId());
+            ps.setLong(2, ddlEvent.getDsId());
+            ps.setString(3, ddlEvent.getSchemaName());
+            ps.setString(4, ddlEvent.getTableName());
+            ps.setString(5, ddlEvent.getColumnName());
+            ps.setLong(6, ddlEvent.getVerId());
+            ps.setString(7, ddlEvent.getTriggerVer());
+            ps.setString(8, ddlEvent.getDdlType());
+            ps.setString(9, ddlEvent.getDdl());
+
+            ps.executeUpdate();
+            DbUtils.close(ps);
+            conn.commit();
+
+            logger.info("创建DDL EVENT完成:{}", JSON.toJSONString(ddlEvent));
+            logger.info("完成版本更新");
+        } catch (Exception e) {
+            logger.error("版本更新失败, 回滚所有操作", e);
+            DbUtils.rollback(conn);
+            throw new SQLException(e);
+        } finally {
+            DbUtils.closeQuietly(conn, stmt, null);
+        }
     }
 }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,20 @@
  * >>
  */
 
-package com.creditease.dbus.msgencoder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.msgencoder;
 
 import com.creditease.dbus.commons.DataType;
 import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.encoders.ExtEncodeStrategy;
 import com.creditease.dbus.enums.MessageEncodeType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by zhangyf on 16/11/9.
@@ -96,15 +96,15 @@ public class MessageEncoder implements UmsEncoder {
             Map<String, String> messageMap = MessageEncodeType.getMap();
             boolean flag = true;
             //判断是否是内置的加密类型
-            for(Map.Entry<String, String> entry : messageMap.entrySet()) {
+            for (Map.Entry<String, String> entry : messageMap.entrySet()) {
                 String value = entry.getValue();
-                if(type.equals(value.toLowerCase())) {
+                if (type.equals(value.toLowerCase())) {
                     flag = false;
                 }
             }
 
             //当脱敏类型为第三方提供时
-            if(flag) {
+            if (flag) {
                 //当全量或者增量初始化时，会扫描classpath，将扫描到的信息存入map，
                 //当有数据需要第三方脱敏时，直接从map中获取
                 Map<String, Class<ExtEncodeStrategy>> map = ExternalEncoders.get();

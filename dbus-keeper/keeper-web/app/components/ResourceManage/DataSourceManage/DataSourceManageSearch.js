@@ -24,9 +24,13 @@ export default class DataSourceManageSearch extends Component {
     })
   }
 
+  handleReset = () => {
+    this.props.form.resetFields();
+  }
+
   render () {
-    const { getFieldDecorator } = this.props.form
-    const {onCreateDataSource, onBatchAddTable, onPreProcess, onGenerateOggTrailName} = this.props
+    const {getFieldDecorator} = this.props.form
+    const {onCreateDataSource, onGenerateAddTableSql, onGenerateOggTrailName, onOpenSearchDatasourceExist, onDownload} = this.props
     const dsTypeList = [
       null,
       'mysql',
@@ -37,7 +41,9 @@ export default class DataSourceManageSearch extends Component {
       'log_ums',
       'log_flume',
       'log_filebeat',
+      'log_json',
       'jsonlog',
+      'db2'
     ]
     return (
       <div className="form-search">
@@ -61,10 +67,34 @@ export default class DataSourceManageSearch extends Component {
               </FormItem>
               <FormItem>
                 <Button
+                  onClick={onOpenSearchDatasourceExist}
+                  type="primary"
+                >
+                  查询数据线
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
                   onClick={onGenerateOggTrailName}
                   type="primary"
                 >
                   生成OGG Trail前缀
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  type="primary"
+                  onClick={onDownload}
+                >
+                  加表模板下载
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  onClick={onGenerateAddTableSql}
+                  type="primary"
+                >
+                  生成加表脚本
                 </Button>
               </FormItem>
             </Col>
@@ -107,6 +137,18 @@ export default class DataSourceManageSearch extends Component {
                   <FormattedMessage
                     id="app.common.search"
                     defaultMessage="查询"
+                  />
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  type="primary"
+                  icon="reload"
+                  onClick={this.handleReset}
+                >
+                  <FormattedMessage
+                    id="app.components.configCenter.mgrConfig.reset"
+                    defaultMessage="重置"
                   />
                 </Button>
               </FormItem>

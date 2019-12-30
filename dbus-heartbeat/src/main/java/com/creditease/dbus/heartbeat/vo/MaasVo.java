@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.heartbeat.vo;
 
@@ -33,32 +34,34 @@ public class MaasVo implements Serializable {
      */
     private static final long serialVersionUID = 1L;
 
-    /** maas配置信息  */
+    /**
+     * maas配置信息
+     */
     private Properties configProp;
     private Properties consumerProp;
     private Properties producerProp;
 
-    public Properties getConfigProp(){
+    public Properties getConfigProp() {
         return configProp;
     }
 
-    public void setConfigProp(Properties configProp){
+    public void setConfigProp(Properties configProp) {
         this.configProp = configProp;
     }
 
-    public Properties getConsumerProp(){
+    public Properties getConsumerProp() {
         return consumerProp;
     }
 
-    public void setConsumerProp(Properties consumerProp){
+    public void setConsumerProp(Properties consumerProp) {
         this.consumerProp = consumerProp;
     }
 
-    public Properties getProducerProp(){
+    public Properties getProducerProp() {
         return producerProp;
     }
 
-    public void setProducerProp(Properties producerProp){
+    public void setProducerProp(Properties producerProp) {
         this.producerProp = producerProp;
     }
 }

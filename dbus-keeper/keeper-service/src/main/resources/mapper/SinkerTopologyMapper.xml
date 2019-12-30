@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.SinkerTopologyMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.SinkerTopology">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="sinker_name" jdbcType="VARCHAR" property="sinkerName" />
+    <result column="sinker_conf" jdbcType="VARCHAR" property="sinkerConf" />
+    <result column="jar_id" jdbcType="INTEGER" property="jarId" />
+    <result column="jar_name" jdbcType="VARCHAR" property="jarName" />
+    <result column="jar_path" jdbcType="VARCHAR" property="jarPath" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_sinker_topo
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.SinkerTopology">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_sinker_topo (sinker_name, sinker_conf, jar_id,
+      status, description, update_time
+      )
+    values (#{sinkerName,jdbcType=VARCHAR}, #{sinkerConf,jdbcType=VARCHAR}, #{jarId,jdbcType=INTEGER},
+      #{status,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.SinkerTopology">
+    update t_sinker_topo
+    set sinker_name = #{sinkerName,jdbcType=VARCHAR},
+      sinker_conf = #{sinkerConf,jdbcType=VARCHAR},
+      jar_id = #{jarId,jdbcType=INTEGER},
+      status = #{status,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select t.id, t.sinker_name, t.sinker_conf, t.jar_id, t.status, t.description, t.update_time, j.name jar_name ,j.path jar_path
+    from t_sinker_topo t join t_topology_jar j on t.jar_id = j.id
+    where t.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select t.id, t.sinker_name, t.sinker_conf, t.jar_id, t.status, t.description, t.update_time, j.name jar_name ,j.path jar_path
+    from t_sinker_topo t join t_topology_jar j on t.jar_id = j.id
+  </select>
+  <select id="search"  resultMap="BaseResultMap">
+    select t.id, t.sinker_name, t.sinker_conf, t.jar_id, t.status, t.description, t.update_time, j.name jar_name ,j.path jar_path
+    from t_sinker_topo t left join t_topology_jar j on t.jar_id = j.id
+    <where>
+      <if test="sinkerName != null">and t.sinker_name like "%"#{sinkerName}"%"</if>
+    </where>
+    <if test="sortby != null">
+      order by ${sortby} <if test="order != null">${order}</if>
+    </if>
+  </select>
+  <select id="searchBySinkerName" resultMap="BaseResultMap">
+    select t.id, t.sinker_name, t.sinker_conf, t.jar_id, t.status, t.description, t.update_time, j.name jar_name ,j.path jar_path
+    from t_sinker_topo t left join t_topology_jar j on t.jar_id = j.id
+    where t.sinker_name = #{sinkerName}
+  </select>
+</mapper>

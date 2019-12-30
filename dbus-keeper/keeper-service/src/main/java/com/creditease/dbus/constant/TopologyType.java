@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.constant;
 
@@ -38,12 +39,17 @@ public enum TopologyType {
     SPLITTER("splitter"),
 
     LOG_PROCESSOR("log_processor"),
-    MYSQL_EXTRACTOR("mysql_extractor");
+    MYSQL_EXTRACTOR("mysql_extractor"),
 
+    ROUTER("router"),
+
+    SINKER("sinker");
 
     private String value;
 
-    TopologyType(String value){this.value = value;}
+    TopologyType(String value) {
+        this.value = value;
+    }
 
     public String getValue() {
         return value;

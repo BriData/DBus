@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.dispatcher.bout;
 
@@ -85,20 +86,20 @@ public class DispatcherBout extends BaseRichBolt {
 
     /**
      * print log in logger
+     *
      * @param props
      */
     private void printSchemaProps(Properties props) {
         logger.info(String.format("All schemas and topics as:"));
 
-        Iterator it=props.entrySet().iterator();
-        while(it.hasNext()){
-            Map.Entry entry=(Map.Entry)it.next();
+        Iterator it = props.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
             logger.info(String.format("%s=%s", entry.getKey(), entry.getValue()));
         }
     }
 
     /**
-     *
      * @param reloadJson: reload control msg json
      */
     private void reloadConfig(String reloadJson) {
@@ -144,7 +145,7 @@ public class DispatcherBout extends BaseRichBolt {
         }
     }
 
-    public MessageProcessor getMessageProcessor (DataSourceInfo dsInfo, String statTopic, Properties statProps, TableStatMap statMap, Properties schemaTopicProps) throws Exception {
+    public MessageProcessor getMessageProcessor(DataSourceInfo dsInfo, String statTopic, Properties statProps, TableStatMap statMap, Properties schemaTopicProps) throws Exception {
         if (dsInfo.getDbSourceType().equals("oracle")) {
 
             Class clazz = Class.forName("com.creditease.dbus.stream.oracle.dispatcher.OracleMessageProcessor");
@@ -183,8 +184,7 @@ public class DispatcherBout extends BaseRichBolt {
     }
 
 
-
-    private void processControlCommand(DBusConsumerRecord<String, byte[]>  record, Tuple input) {
+    private void processControlCommand(DBusConsumerRecord<String, byte[]> record, Tuple input) {
         try {
             String key = record.key();
             String json = new String(record.value(), "utf-8");
@@ -271,7 +271,7 @@ public class DispatcherBout extends BaseRichBolt {
 
         } catch (Exception ex) {
             // Print something in the log
-            logger.error(String.format("FAIL! Dispatcher bolt fails at offset (%s).", currentOffset.toString()),ex);
+            logger.error(String.format("FAIL! Dispatcher bolt fails at offset (%s).", currentOffset.toString()), ex);
             // Call fail
             this.collector.fail(input);
 
@@ -287,8 +287,7 @@ public class DispatcherBout extends BaseRichBolt {
                 processor.cleanup();
                 processor = null;
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             // NOTE: Handle the failure
             logger.error("DispatcherBout cleanup():", ex);
             collector.reportError(ex);

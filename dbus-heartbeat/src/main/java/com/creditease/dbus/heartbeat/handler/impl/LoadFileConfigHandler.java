@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.handler.impl;
 
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
@@ -25,11 +26,14 @@ import com.creditease.dbus.heartbeat.container.DataSourceContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.resource.IResource;
+import com.creditease.dbus.heartbeat.resource.local.CommonConfigResource;
 import com.creditease.dbus.heartbeat.resource.local.JdbcFileConfigResource;
 import com.creditease.dbus.heartbeat.resource.local.KafkaFileConfigResource;
 import com.creditease.dbus.heartbeat.resource.local.ZkFileConfigResource;
+import com.creditease.dbus.heartbeat.vo.CommonConfigVo;
 import com.creditease.dbus.heartbeat.vo.JdbcVo;
 import com.creditease.dbus.heartbeat.vo.ZkVo;
+
 import java.util.List;
 import java.util.Properties;
 
@@ -51,6 +55,8 @@ public class LoadFileConfigHandler extends AbstractHandler {
         loadKafkaProducer();
         //加载consumer.properties
         loadKafkaConsumer();
+        // 加载config.properties
+        loadConfig();
     }
 
     private void loadJdbc() {
@@ -78,6 +84,12 @@ public class LoadFileConfigHandler extends AbstractHandler {
         IResource<Properties> resource = new KafkaFileConfigResource("consumer.properties");
         Properties consumer = resource.load();
         HeartBeatConfigContainer.getInstance().setKafkaConsumerConfig(consumer);
+    }
+
+    private void loadConfig() {
+        IResource<CommonConfigVo> resource = new CommonConfigResource("config.properties");
+        CommonConfigVo configVo = resource.load();
+        HeartBeatConfigContainer.getInstance().setConmmonConfig(configVo);
     }
 
 }

@@ -1,23 +1,16 @@
-import React, {PropTypes, Component} from 'react'
+import React, {Component, PropTypes} from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
-import {Row, Col,message} from 'antd'
-import {
-  Bread,
-  HeartbeatConfigTabs
-} from '@/app/components'
+import {message} from 'antd'
+import {Bread, HeartbeatConfigTabs} from '@/app/components'
 import Request from "@/app/utils/request";
 import {ZKManageModel} from './selectors'
 import {DataSchemaModel} from '../ResourceManage/selectors'
-import {
-  readZkData,
-  saveZkData
-} from "./redux"
-import {
-  searchAllDataSchema
-} from '../ResourceManage/redux'
+import {SEND_MAIL_TEST_API} from './api/index.js'
+import {readZkData, saveZkData} from "./redux"
+import {searchAllDataSchema} from '../ResourceManage/redux'
 
 const ZK_PATH = '/DBus/HeartBeat/Config/heartbeat_config.json'
 
@@ -67,6 +60,25 @@ export default class HeartbeatConfigWrapper extends Component {
     })
   }
 
+  handleSendMailTest = content => {
+    Request(SEND_MAIL_TEST_API, {
+      data: JSON.parse(content),
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0 && res.payload) {
+          message.success()
+        } else {
+          message.warn("请检查邮件配置")
+        }
+      })
+      .catch(error => {
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+  }
+
   render() {
     const breadSource = [
       {
@@ -98,6 +110,7 @@ export default class HeartbeatConfigWrapper extends Component {
           config={config}
           allDataSchemaList={allDataSchemaList}
           onSave={this.handleSave}
+          onSendMailTest={this.handleSendMailTest}
         />
       </div>
     )

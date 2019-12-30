@@ -96,48 +96,49 @@ create table DBUS.DB_HEARTBEAT_MONITOR
 alter table DBUS.DB_HEARTBEAT_MONITOR
   add constraint PK_HEART_MONITOR_ID primary key (ID);
 
-create table DBUS.DB_FULL_PULL_REQUESTS
-(
-  seqno                NUMBER not null,
-  schema_name          VARCHAR2(32),
-  table_name           VARCHAR2(50) not null,
-  scn_no               NUMBER,
-  split_col            VARCHAR2(50),
-  split_bounding_query VARCHAR2(512),
-  pull_target_cols     VARCHAR2(512),
-  pull_req_create_time TIMESTAMP(6) not null,
-  pull_start_time      TIMESTAMP(6),
-  pull_end_time        TIMESTAMP(6),
-  pull_status          VARCHAR2(16),
-  pull_remark          VARCHAR2(1024)
-)
-;
-comment on column DBUS.DB_FULL_PULL_REQUESTS.seqno
-  is '主键';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.schema_name
-  is '待拉取的schema名称';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.table_name
-  is '表名';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.scn_no
-  is 'scn号';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.split_col
-  is '分片列名称';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.split_bounding_query
-  is '分片查询';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_target_cols
-  is '目标列';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_req_create_time
-  is '创建时间';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_start_time
-  is '开始时间';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_end_time
-  is '结束时间';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_status
-  is '状态';
-comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_remark
-  is '备注';
-alter table DBUS.DB_FULL_PULL_REQUESTS
-  add primary key (SEQNO);
+--0.6.0不再支持阻塞式全量,废弃该表
+-- create table DBUS.DB_FULL_PULL_REQUESTS
+-- (
+--   seqno                NUMBER not null,
+--   schema_name          VARCHAR2(32),
+--   table_name           VARCHAR2(50) not null,
+--   scn_no               NUMBER,
+--   split_col            VARCHAR2(50),
+--   split_bounding_query VARCHAR2(512),
+--   pull_target_cols     VARCHAR2(512),
+--   pull_req_create_time TIMESTAMP(6) not null,
+--   pull_start_time      TIMESTAMP(6),
+--   pull_end_time        TIMESTAMP(6),
+--   pull_status          VARCHAR2(16),
+--   pull_remark          VARCHAR2(1024)
+-- )
+-- ;
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.seqno
+--   is '主键';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.schema_name
+--   is '待拉取的schema名称';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.table_name
+--   is '表名';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.scn_no
+--   is 'scn号';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.split_col
+--   is '分片列名称';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.split_bounding_query
+--   is '分片查询';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_target_cols
+--   is '目标列';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_req_create_time
+--   is '创建时间';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_start_time
+--   is '开始时间';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_end_time
+--   is '结束时间';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_status
+--   is '状态';
+-- comment on column DBUS.DB_FULL_PULL_REQUESTS.pull_remark
+--   is '备注';
+-- alter table DBUS.DB_FULL_PULL_REQUESTS
+--   add primary key (SEQNO);
 
 create table DBUS.DBUS_TABLES
 (

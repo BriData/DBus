@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.rule.impl;
 
 import com.creditease.dbus.commons.Constants;
@@ -27,31 +28,37 @@ import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
 import com.creditease.dbus.commons.log.processor.rule.IRule;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class TrimRule implements IRule {
 
-    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception{
-        List<String> ret = new LinkedList<>(data);
-        List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
-        for (ParseResult pr : prList) {
-            for(int col : pr.getScope()) {
-                if (col >= data.size()) continue;
-                String value = data.get(col);
-                ret.remove(col);
-                if(StringUtils.equals(pr.getOperate(), Constants.TRIM_LEFT)) {
-                    ret.add(col, StringUtils.stripStart(value, pr.getParamter()));
-                } else if(StringUtils.equals(pr.getOperate(), Constants.TRIM_RIGHT)) {
-                    ret.add(col, StringUtils.stripEnd(value, pr.getParamter()));
-                } else if(StringUtils.equals(pr.getOperate(), Constants.TRIM_BOTH)) {
-                    ret.add(col, StringUtils.strip(value, pr.getParamter()));
-                } else {
-                    ret.add(col, StringUtils.replaceChars(value, pr.getParamter(), ""));
+    public List<List<String>> transform(List<List<String>> datas, List<RuleGrammar> grammar, Rules ruleType) throws Exception {
+        List<List<String>> retVal = new ArrayList<>();
+        for (List<String> data : datas) {
+            List<String> row = new LinkedList<>(data);
+            List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
+            for (ParseResult pr : prList) {
+                for (int col : pr.getScope()) {
+                    if (col >= data.size())
+                        continue;
+                    String value = data.get(col);
+                    row.remove(col);
+                    if (StringUtils.equals(pr.getOperate(), Constants.TRIM_LEFT)) {
+                        row.add(col, StringUtils.stripStart(value, pr.getParamter()));
+                    } else if (StringUtils.equals(pr.getOperate(), Constants.TRIM_RIGHT)) {
+                        row.add(col, StringUtils.stripEnd(value, pr.getParamter()));
+                    } else if (StringUtils.equals(pr.getOperate(), Constants.TRIM_BOTH)) {
+                        row.add(col, StringUtils.strip(value, pr.getParamter()));
+                    } else {
+                        row.add(col, StringUtils.replaceChars(value, pr.getParamter(), ""));
+                    }
                 }
             }
+            retVal.add(row);
         }
-        return ret;
+        return retVal;
     }
 
     public static void main(String[] args) {

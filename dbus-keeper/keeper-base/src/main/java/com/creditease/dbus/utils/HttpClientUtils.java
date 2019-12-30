@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,9 @@
  * >>
  */
 
+
 package com.creditease.dbus.utils;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -40,12 +35,19 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class HttpClientUtils {
 
     private static Logger logger = LoggerFactory.getLogger(HttpClientUtils.class);
 
-
-    public static String httpPostWithAuthorization(String url, String authorization, String obj) {
+    public static String httpPostWithAuthorization(String url, String authorization, String obj) throws IOException {
         CloseableHttpClient httpclient = null;
         InputStream input = null;
         BufferedReader br = null;
@@ -66,10 +68,11 @@ public class HttpClientUtils {
             while ((line = br.readLine()) != null) {
                 data.append(line);
             }
+            logger.info(line);
             return data.toString();
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
-            return "";
+            throw e;
         } finally {
             close(httpclient, input, br);
         }
@@ -95,7 +98,6 @@ public class HttpClientUtils {
             while ((line = br.readLine()) != null) {
                 data.append(line);
             }
-            logger.info(data.toString());
             return statusCode;
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
@@ -105,7 +107,33 @@ public class HttpClientUtils {
         }
     }
 
-    public static String httpGet(String s) {
+    public static String httpGet(String url) throws Exception {
+        HttpURLConnection connection = null;
+        BufferedReader br = null;
+        StringBuilder responseBuilder = new StringBuilder();
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(5000);
+            br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            while ((line = br.readLine()) != null) {
+                responseBuilder.append(line);
+            }
+            return responseBuilder.toString();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return "error";
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            if (br != null) {
+                br.close();
+            }
+        }
+    }
+
+    public static String httpGetForCode(String s) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(s);
@@ -118,7 +146,7 @@ public class HttpClientUtils {
             }
             return "200";
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
             return "error";
         } finally {
             if (connection != null) {
@@ -143,16 +171,38 @@ public class HttpClientUtils {
         }
     }
 
+    public static String httpGetForResult(String s) throws Exception {
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
+        StringBuilder responseBuilder = new StringBuilder();
+        try {
+            URL url = new URL(s);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            connection.setConnectTimeout(5000);
+            int code = connection.getResponseCode();
+            if (code != 200) {
+                return "error";
+            }
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                responseBuilder.append(line).append("\n");
+            }
 
-    /**
-     * grafana utils
-     *
-     * @param serverUrl
-     * @param method
-     * @param param
-     * @param token
-     * @return
-     */
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            if (reader != null) {
+                reader.close();
+            }
+        }
+        return responseBuilder.toString();
+    }
+
     public static List<Object> send(String serverUrl, String method, String param, String token) {
         List<Object> ret = new ArrayList<>();
         ret.add(-1);
@@ -160,7 +210,7 @@ public class HttpClientUtils {
         StringBuilder response = new StringBuilder();
         BufferedReader reader = null;
         BufferedWriter writer = null;
-        URL url = null;
+        URL url;
         try {
             url = new URL(serverUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();

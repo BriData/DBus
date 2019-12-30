@@ -54,19 +54,19 @@
   <!--更新DataSchema信息-->
   <update id="update">
     update t_data_schema set
-    <if test="dsId != 0">ds_id = #{dsId},</if>
+    <if test="dsId != null">ds_id = #{dsId},</if>
     <if test="schemaName != null">schema_name = #{schemaName},</if>
     <if test="status != null">status = #{status},</if>
     <if test="srcTopic  != null">src_topic = #{srcTopic},</if>
     <if test="targetTopic != null">target_topic = #{targetTopic},</if>
     <if test="description != null">description = #{description},</if>
     create_time = current_timestamp()
-    where ds_id =#{dsId} and schema_name = #{schemaName}
+    where id =#{id}
   </update>
   <delete id="deleteBySchemaId">
     delete ts,tt,tc,tv,tm from t_data_schema ts
     left join t_data_tables tt on ts.id = tt.schema_id
-    left join t_dba_encode_columns tc on tt.id=tc.table_id
+    left join t_encode_columns tc on tt.id=tc.table_id
     left join t_meta_version tv on tt.id = tv.table_id
     left join t_table_meta tm on tv.id = tm.ver_id
     where ts.id = #{id}

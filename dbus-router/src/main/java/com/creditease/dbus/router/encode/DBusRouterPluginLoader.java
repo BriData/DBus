@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
  * >>
  */
 
-package com.creditease.dbus.router.encode;
 
-import java.util.List;
+package com.creditease.dbus.router.encode;
 
 import com.creditease.dbus.encoders.EncodePlugin;
 import com.creditease.dbus.encoders.PluginLoader;
 import com.creditease.dbus.router.facade.DBFacade;
+
+import java.util.List;
 
 /**
  * Created by mal on 2018/5/28.

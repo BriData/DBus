@@ -1,9 +1,29 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.canal.utils;
 
 import com.creditease.dbus.canal.bean.DeployPropsBean;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.BufferedWriter;
 import java.sql.*;
 
 import static com.creditease.dbus.canal.utils.FileUtils.writeAndPrint;
@@ -19,17 +39,17 @@ public class DBUtils {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            writeAndPrint( "*************************** CHECK DATABASE CANAL ACCOUNT  BEGIN *****************************");
-            writeAndPrint( "canal user: " + deployProps.getCanalUser());
-            writeAndPrint( "canal pwd: " + deployProps.getCanalPwd());
+            writeAndPrint("*************************** CHECK DATABASE CANAL ACCOUNT  BEGIN *****************************");
+            writeAndPrint("canal user: " + deployProps.getCanalUser());
+            writeAndPrint("canal pwd: " + deployProps.getCanalPwd());
 
             String url = "jdbc:mysql://" + deployProps.getSlavePath() + "/dbus?characterEncoding=utf-8";
-            writeAndPrint( "slave url: " + url);
+            writeAndPrint("slave url: " + url);
 
             conn = getConn(url, deployProps.getCanalUser(), deployProps.getCanalPwd());
             if (!conn.isClosed()) {
-                writeAndPrint( "数据库连接成功...");
-                writeAndPrint( "检查blog format: show variables like '%bin%'");
+                writeAndPrint("数据库连接成功...");
+                writeAndPrint("检查blog format: show variables like '%bin%'");
                 ps = conn.prepareStatement("show variables like '%bin%'");
                 rs = ps.executeQuery();
 
@@ -44,24 +64,24 @@ public class DBUtils {
                     }
                 }
                 if (binlogFormat == null) {
-                    writeAndPrint( "检查失败，请确认bin format及同步模式");
+                    writeAndPrint("检查失败，请确认bin format及同步模式");
                     throw new Exception();
                 } else {
-                    writeAndPrint( "binlog_format : " + binlogFormat);
+                    writeAndPrint("binlog_format : " + binlogFormat);
                     if (!"ROW".equals(binlogFormat.trim())) {
-                        writeAndPrint( "检查失败，请确认bin format及同步模式");
+                        writeAndPrint("检查失败，请确认bin format及同步模式");
                         throw new Exception();
                     }
                 }
-                writeAndPrint( "****************************** CHECK DATABASE CANAL ACCOUNT SUCCESS *************************");
+                writeAndPrint("****************************** CHECK DATABASE CANAL ACCOUNT SUCCESS *************************");
             } else {
-                writeAndPrint( "数据库检查连接失败，请检查canal用户名、密码以及源端库备库地址！");
+                writeAndPrint("数据库检查连接失败，请检查canal用户名、密码以及源端库备库地址！");
                 throw new Exception();
             }
         } catch (Exception e) {
-            writeAndPrint( "数据库检查失败，请确认以下配置");
-            writeAndPrint( "1.canal用户名、密码以及源端库备库地址。2.canal用户的授权。3.源端库主库和备库binlog相关设置");
-            writeAndPrint( "****************************** CHECK DATABASE CANAL ACCOUNT FAIL ****************************");
+            writeAndPrint("数据库检查失败，请确认以下配置");
+            writeAndPrint("1.canal用户名、密码以及源端库备库地址。2.canal用户的授权。3.源端库主库和备库binlog相关设置");
+            writeAndPrint("****************************** CHECK DATABASE CANAL ACCOUNT FAIL ****************************");
             throw e;
         } finally {
             closeAll(conn, ps, rs);
@@ -77,10 +97,10 @@ public class DBUtils {
             Connection conn = DriverManager.getConnection(url, user, pwd);
             return conn;
         } catch (ClassNotFoundException e) {
-            writeAndPrint( "[jdbc ]get connection error");
+            writeAndPrint("[jdbc ]get connection error");
             throw e;
         } catch (SQLException e) {
-            writeAndPrint( "[jdbc ]get connection error");
+            writeAndPrint("[jdbc ]get connection error");
             throw e;
         }
     }
@@ -97,7 +117,7 @@ public class DBUtils {
                 conn.close();
             }
         } catch (SQLException e) {
-            writeAndPrint( "[jdbc ]close error");
+            writeAndPrint("[jdbc ]close error");
             throw e;
         }
     }

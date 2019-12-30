@@ -1,12 +1,12 @@
-import React, { PropTypes, Component } from 'react'
-import {Form, message, Select, Input, Button, Row, Col, Popconfirm} from 'antd'
-import { FormattedMessage } from 'react-intl'
+import React, {Component} from 'react'
+import {Button, Col, Form, Input, message, Popconfirm, Row, Select} from 'antd'
+import {FormattedMessage} from 'react-intl'
 import dateFormat from 'dateformat'
 // 导入样式
 import styles from './res/styles/index.less'
-import Request from "@/app/utils/request";
+import Request from '@/app/utils/request'
 import {SEND_CONTROL_MESSAGE_API} from '@/app/containers/toolSet/api/index.js'
-import {PROJECT_TABLE_BATCH_START_API} from "@/app/containers/ProjectManage/api";
+
 const FormItem = Form.Item
 const Option = Select.Option
 
@@ -14,7 +14,11 @@ const Option = Select.Option
 export default class DataTableManageSearch extends Component {
   constructor (props) {
     super(props)
+    this.state = {
+      selectDatasource: false
+    }
   }
+
   componentWillMount () {
   }
 
@@ -22,11 +26,16 @@ export default class DataTableManageSearch extends Component {
     const {onSearch, params} = this.props
     this.props.form.validateFields((err, values) => {
       if (!err) {
-        onSearch({...params, ...values})
+        const {schemaId} = values
+        onSearch({...params, ...values, schemaId: schemaId})
       }
     })
   }
 
+  handleReset = () => {
+    this.props.form.resetFields()
+    this.setState({selectDatasource: false})
+  }
 
   handleBatchReloadExtractor = selectedRows => {
     const filterdRowsMap = {}
@@ -34,7 +43,7 @@ export default class DataTableManageSearch extends Component {
       if (row.dsType === 'mysql') filterdRowsMap[row.dsName] = row
     })
     const dsNameList = Object.keys(filterdRowsMap)
-    if (!dsNameList.length) return;
+    if (!dsNameList.length) return
     Promise.all(dsNameList.map(dsName => {
       const date = new Date()
       const json = {
@@ -76,20 +85,92 @@ export default class DataTableManageSearch extends Component {
     })
   }
 
-  render () {
-    const { getFieldDecorator } = this.props.form
-    const { dataSourceIdTypeName } = this.props
-    const { onAllStart,onAllStop,onBatchFullPull } = this.props
+  handleGetSchemaList = dsId => {
+    const {params} = this.props
+    this.props.form.setFieldsValue({
+      schemaId: null
+    })
+    if (dsId === null) {
+      this.setState({selectDatasource: false})
+    } else {
+      this.setState({selectDatasource: true})
+    }
+    const {onGetSchemaList} = this.props
+    onGetSchemaList(dsId)
+  }
 
-    const dataSource = [{dsId: null, dsTypeName: <FormattedMessage
+  render () {
+    const {getFieldDecorator} = this.props.form
+    const {dataSourceIdTypeName, schemaList, onMoveTables} = this.props
+    const {onAllStart, onAllStop, onBatchFullPull} = this.props
+    const {selectDatasource} = this.state
+
+    const dataSource = [{
+      dsId: null, dsTypeName: <FormattedMessage
         id="app.components.resourceManage.dataSchema.selectDatasource"
         defaultMessage="请选择数据源"
-      />}, ...Object.values(dataSourceIdTypeName.result)]
+      />
+    }, ...Object.values(dataSourceIdTypeName.result)]
+
     return (
       <div className="form-search">
-        <Form autoComplete="off" layout="inline" className={styles.searchForm} onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
+        <Form autoComplete="off" layout="inline" className={styles.searchForm}
+              onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
-            <Col span={24} className={styles.formRight}>
+            <Col span={10} className={styles.formLeft}>
+              <FormItem>
+                <Button
+                  type="primary"
+                  icon="car"
+                  onClick={onMoveTables}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchMoveTopoTables"
+                    defaultMessage="批量迁移"
+                  />
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}
+                            okText="Yes" cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="export"
+                    size="large"
+                  >
+                    <FormattedMessage
+                      id="app.components.resourceManage.dataTable.batchFullPull"
+                      defaultMessage="批量拉全量"
+                    />
+                  </Button>
+                </Popconfirm>
+              </FormItem>
+              <FormItem>
+                <Button
+                  type="primary"
+                  icon="caret-right"
+                  onClick={onAllStart}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchStart"
+                    defaultMessage="批量启动"
+                  />
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  type="primary"
+                  icon="pause"
+                  onClick={onAllStop}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchStop"
+                    defaultMessage="批量停止"
+                  />
+                </Button>
+              </FormItem>
+            </Col>
+            <Col span={14} className={styles.formRight}>
               <FormItem>
                 {getFieldDecorator('dsId', {
                   initialValue: null
@@ -99,6 +180,7 @@ export default class DataTableManageSearch extends Component {
                     optionFilterProp='children'
                     className={styles.select}
                     placeholder="select a data source"
+                    onChange={this.handleGetSchemaList}
                   >
                     {dataSource.map(item => (
                       <Option
@@ -111,15 +193,37 @@ export default class DataTableManageSearch extends Component {
                   </Select>
                 )}
               </FormItem>
-              <FormItem>
-                {getFieldDecorator('schemaName', {
+              {(selectDatasource && <FormItem>
+                {getFieldDecorator('schemaId', {
                   initialValue: null
-                })(<Input className={styles.input} placeholder="data schema name" />)}
-              </FormItem>
+                })(
+                  <Select
+                    showSearch
+                    optionFilterProp='children'
+                    className={styles.input}
+                    placeholder="select a data source"
+                  >
+                    {schemaList.map(item => (
+                      <Option
+                        value={item.id ? `${item.id}` : null}
+                        key={`${item.id ? item.id : 'id'}`}
+                      >
+                        {item.schemaName}
+                      </Option>
+                    ))}
+                  </Select>
+                )}
+              </FormItem>)}
+              {(!selectDatasource && <FormItem>
+                  {getFieldDecorator('schemaName', {
+                    initialValue: null
+                  })(<Input className={styles.input} placeholder="data schema name"/>)}
+                </FormItem>
+              )}
               <FormItem>
                 {getFieldDecorator('tableName', {
                   initialValue: null
-                })(<Input className={styles.input} placeholder="data table name" />)}
+                })(<Input className={styles.input} placeholder="data table name"/>)}
               </FormItem>
               <FormItem>
                 <Button
@@ -134,38 +238,14 @@ export default class DataTableManageSearch extends Component {
                 </Button>
               </FormItem>
               <FormItem>
-                <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}
-                            okText="Yes" cancelText="No">
-                  <Button
-                    icon="export"
-                    size="large"
-                  >
-                    <FormattedMessage
-                      id="app.components.resourceManage.dataTable.batchFullPull"
-                      defaultMessage="批量拉全量"
-                    />
-                  </Button>
-                </Popconfirm>
-              </FormItem>
-              <FormItem>
                 <Button
-                  icon="caret-right"
-                  onClick={onAllStart}
+                  type="primary"
+                  icon="reload"
+                  onClick={this.handleReset}
                 >
                   <FormattedMessage
-                    id="app.components.resourceManage.dataTable.batchStart"
-                    defaultMessage="批量启动"
-                  />
-                </Button>
-              </FormItem>
-              <FormItem>
-                <Button
-                  icon="pause"
-                  onClick={onAllStop}
-                >
-                  <FormattedMessage
-                    id="app.components.resourceManage.dataTable.batchStop"
-                    defaultMessage="批量停止"
+                    id="app.components.configCenter.mgrConfig.reset"
+                    defaultMessage="重置"
                   />
                 </Button>
               </FormItem>
@@ -177,5 +257,4 @@ export default class DataTableManageSearch extends Component {
   }
 }
 
-DataTableManageSearch.propTypes = {
-}
+DataTableManageSearch.propTypes = {}

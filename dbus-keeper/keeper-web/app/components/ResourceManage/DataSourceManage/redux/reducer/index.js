@@ -18,7 +18,8 @@ import {
   DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID,
   DATA_SOURCE_GET_SCHEMA_TABLE_LIST,
   DATA_SOURCE_CLEAN_SCHEMA_TABLE,
-  DATA_SOURCE_CLEAR_FULLPULL_ALARM
+  DATA_SOURCE_CLEAR_FULLPULL_ALARM,
+  OGG_CANAL_CONF_GET_BY_DS_NAME
 } from '../action/types'
 
 const initialState = fromJS({
@@ -73,6 +74,11 @@ const initialState = fromJS({
     result: {}
   },
   clearFullPullAlarmResult: {
+    loading: false,
+    loaded: false,
+    result: {}
+  },
+  oggCanalConfDsName: {
     loading: false,
     loaded: false,
     result: {}
@@ -218,6 +224,18 @@ export default (state = initialState, action) => {
     // DataSource 清除schema 和 schema table数据
     case DATA_SOURCE_CLEAN_SCHEMA_TABLE:
       return state.setIn(['schemaTableResult', 'result'], {})
+    case OGG_CANAL_CONF_GET_BY_DS_NAME.LOAD:
+      return state.setIn(['oggCanalConfDsName','loading'],true)
+    case OGG_CANAL_CONF_GET_BY_DS_NAME.SUCCESS:
+      return state
+        .setIn(['oggCanalConfDsName', 'loading'], false)
+        .setIn(['oggCanalConfDsName', 'loaded'], true)
+        .setIn(['oggCanalConfDsName', 'result'], action.result)
+    case OGG_CANAL_CONF_GET_BY_DS_NAME.FAIL:
+      return state
+        .setIn(['oggCanalConfDsName', 'loading'], false)
+        .setIn(['oggCanalConfDsName', 'loaded'], true)
+        .setIn(['oggCanalConfDsName', 'result'], action.result)
     default:
       return state
   }

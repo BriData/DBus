@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.handler.impl;
 
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+package com.creditease.dbus.heartbeat.handler.impl;
 
 import com.creditease.dbus.heartbeat.container.EventContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
@@ -31,8 +27,12 @@ import com.creditease.dbus.heartbeat.event.IEvent;
 import com.creditease.dbus.heartbeat.event.impl.*;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.vo.DsVo;
-
 import org.apache.commons.lang.StringUtils;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class EventControlHandler extends AbstractHandler {
 
@@ -52,9 +52,10 @@ public class EventControlHandler extends AbstractHandler {
         int checkPointPerHeartBeatCnt = HeartBeatConfigContainer.getInstance().getHbConf().getCheckPointPerHeartBeatCnt();
         List<DsVo> dsVos = HeartBeatConfigContainer.getInstance().getDsVos();
         CountDownLatch cdl = new CountDownLatch(dsVos.size());
+        LOG.info("[event-control-handler] count down latch size: {}", dsVos.size());
         for (DsVo ds : dsVos) {
             IEvent hbEvent = new EmitHeartBeatEvent(heartbeatInterval, cdl, checkPointPerHeartBeatCnt, ds.getKey());
-            Thread hbt = new Thread(hbEvent, StringUtils.join(new String[] {"emit-heartbeat-event", ds.getKey()}, "-"));
+            Thread hbt = new Thread(hbEvent, StringUtils.join(new String[]{"emit-heartbeat-event", ds.getKey()}, "-"));
             hbt.start();
             EventContainer.getInstances().put(hbEvent, hbt);
         }
@@ -68,8 +69,8 @@ public class EventControlHandler extends AbstractHandler {
 
         //2.1 启动 keeper的ZK心跳线程
         long keeperCheckInterval = HeartBeatConfigContainer.getInstance().getHbConf().getCheckInterval();
-        IEvent checkProjectEvent = new ProjectCheckHeartBeatEvent(keeperCheckInterval,cdl);
-        Thread chpkt = new Thread(checkProjectEvent,"check-project-heartbeat-event");
+        IEvent checkProjectEvent = new ProjectCheckHeartBeatEvent(keeperCheckInterval, cdl);
+        Thread chpkt = new Thread(checkProjectEvent, "check-project-heartbeat-event");
         chpkt.start();
         EventContainer.getInstances().put(checkProjectEvent, chpkt);
 
@@ -106,6 +107,19 @@ public class EventControlHandler extends AbstractHandler {
         Thread cmsdEvent = new Thread(checkMasterSlaveDelayEvent, "check-master-slave-delay-event");
         cmsdEvent.start();
         EventContainer.getInstances().put(checkMasterSlaveDelayEvent, cmsdEvent);
+
+        //8 启动 检测mysql binlog文件号 线程
+        long checkMysqlBinlogInterval = HeartBeatConfigContainer.getInstance().getHbConf().getCheckMysqlBinlogInterval();
+        IEvent checkBinlogNumberEvent = new CheckBinlogNumberEvent(checkMysqlBinlogInterval);
+        Thread cbnEvent = new Thread(checkBinlogNumberEvent, "check-mysql-binlog-event");
+        cbnEvent.start();
+        EventContainer.getInstances().put(checkBinlogNumberEvent, cbnEvent);
+
+        //9 启动 检测sinker 超时线程
+        IEvent checkSinkerHeartBeatEvent = new CheckSinkerHeartBeatEvent(5L);
+        Thread sinkerEvent = new Thread(checkSinkerHeartBeatEvent, "check-sinker-heartbeat-event");
+        sinkerEvent.start();
+        EventContainer.getInstances().put(checkSinkerHeartBeatEvent, sinkerEvent);
     }
 
 }

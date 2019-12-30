@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,8 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
-
-import java.net.URLDecoder;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.annotation.ProjectAuthority;
@@ -35,27 +31,20 @@ import com.creditease.dbus.domain.model.Project;
 import com.creditease.dbus.domain.model.Sink;
 import com.creditease.dbus.domain.model.User;
 import com.creditease.dbus.service.ProjectService;
-
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang.StringUtils;
+import io.swagger.annotations.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.NumberUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import java.net.URLDecoder;
+import java.util.Map;
 
 import static com.creditease.dbus.constant.MessageCode.PROJECT_NOT_ALLOWED_DELETED;
 
 /**
  * Created by zhangyf on 2018/3/7.
- *
  */
 @RestController
 @RequestMapping("/projects")
@@ -64,7 +53,7 @@ public class ProjectController extends BaseController {
     @Autowired
     private ProjectService service;
 
-    @ApiOperation(value="search projects", notes="search projects by userId, roleType")
+    @ApiOperation(value = "search projects", notes = "search projects by userId, roleType")
     @ApiResponses({
             @ApiResponse(code = 200, message = "OK", response = Map[].class)
     })
@@ -82,17 +71,12 @@ public class ProjectController extends BaseController {
         return service.queryUserRelationProjects(userId, roleType);
     }
 
-    @GetMapping("/encoders")
-    public ResultEntity queryEncoderRules() {
-        return service.queryEncoderRules();
-    }
-
-    @ApiOperation(value="search users", notes="search users by conditions")
+    @ApiOperation(value = "search users", notes = "search users by conditions")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "email", value = "email.", dataType = "String"),
             @ApiImplicitParam(name = "userName", value = "user name.", dataType = "String"),
             @ApiImplicitParam(name = "phoneNum", value = "phone num.", dataType = "String"),
-            @ApiImplicitParam(name = "pageNum", value = "page num",  dataType = "int"),
+            @ApiImplicitParam(name = "pageNum", value = "page num", dataType = "int"),
             @ApiImplicitParam(name = "pageSize", value = "page size", dataType = "int"),
             @ApiImplicitParam(name = "sortby", value = "sort by field", dataType = "String"),
             @ApiImplicitParam(name = "order", value = "order: asc/desc", dataType = "String")
@@ -108,7 +92,7 @@ public class ProjectController extends BaseController {
                                    Integer pageNum,
                                    Integer pageSize,
                                    String sortby,
-                                   String order) throws Exception{
+                                   String order) throws Exception {
         User user = new User();
         user.setUserName(userName);
         user.setPhoneNum(phoneNum);
@@ -117,11 +101,11 @@ public class ProjectController extends BaseController {
         return service.queryUsers(user, pageNum, pageSize, sortby, order);
     }
 
-    @ApiOperation(value="search sinks", notes="search sinks by conditions")
+    @ApiOperation(value = "search sinks", notes = "search sinks by conditions")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sinkName", value = "sink name.", dataType = "String"),
             @ApiImplicitParam(name = "url", value = "sink url.", dataType = "String"),
-            @ApiImplicitParam(name = "pageNum", value = "page num",  dataType = "int"),
+            @ApiImplicitParam(name = "pageNum", value = "page num", dataType = "int"),
             @ApiImplicitParam(name = "pageSize", value = "page size", dataType = "int"),
             @ApiImplicitParam(name = "sortby", value = "sort by field", dataType = "String"),
             @ApiImplicitParam(name = "order", value = "order: asc/desc", dataType = "String")
@@ -131,15 +115,15 @@ public class ProjectController extends BaseController {
     })
     @GetMapping("/sinks")
     public ResultEntity querySinks(HttpServletRequest req) throws Exception {
-        return service.querySinks(URLDecoder.decode(req.getQueryString(),"UTF-8"));
+        return service.querySinks(URLDecoder.decode(req.getQueryString(), "UTF-8"));
     }
 
-    @ApiOperation(value="search resources", notes="search resources by conditions")
+    @ApiOperation(value = "search resources", notes = "search resources by conditions")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "dsName", value = "data source name.", dataType = "String"),
             @ApiImplicitParam(name = "schemaName", value = "schema name.", dataType = "String"),
             @ApiImplicitParam(name = "tableName", value = "table name.", dataType = "String"),
-            @ApiImplicitParam(name = "pageNum", value = "page num",  dataType = "int"),
+            @ApiImplicitParam(name = "pageNum", value = "page num", dataType = "int"),
             @ApiImplicitParam(name = "pageSize", value = "page size", dataType = "int"),
             @ApiImplicitParam(name = "sortby", value = "sort by field", dataType = "String"),
             @ApiImplicitParam(name = "order", value = "order: asc/desc", dataType = "String")
@@ -149,10 +133,10 @@ public class ProjectController extends BaseController {
     })
     @GetMapping("/resources")
     public ResultEntity queryResources(HttpServletRequest req) throws Exception {
-        return service.queryResources(URLDecoder.decode(req.getQueryString(),"UTF-8"));
+        return service.queryResources(URLDecoder.decode(req.getQueryString(), "UTF-8"));
     }
 
-    @ApiOperation(value="search Columns", notes="search Columns by conditions")
+    @ApiOperation(value = "search Columns", notes = "search Columns by conditions")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "tableId", value = "table id.", dataType = "int"),
     })
@@ -161,20 +145,17 @@ public class ProjectController extends BaseController {
     })
     @GetMapping("/columns")
     public ResultEntity queryColumns(HttpServletRequest req) throws Exception {
-        return service.queryColumns(URLDecoder.decode(req.getQueryString(),"UTF-8"));
+        return service.queryColumns(URLDecoder.decode(req.getQueryString(), "UTF-8"));
     }
 
     /**
-     *
-     *
-     * @param bean
-     *     {
-     *      "project":{"id":1, "projectName":"test"},
-     *      "users":[{"userId":1}, {"userId":2}],
-     *      "sinks":[{"sinkId":1},{"sinkId":1}]，
-     *      "resources":[{"tableId":1},{"tableId":2}],
-     *      "encodes":{"1":[{"fieldName":"aaa"},{"fieldName":"bbb"}], "2":[{"fieldName":"ccc"}, {"fieldName":"ddd"}]}
-     *     }
+     * @param bean {
+     *             "project":{"id":1, "projectName":"test"},
+     *             "users":[{"userId":1}, {"userId":2}],
+     *             "sinks":[{"sinkId":1},{"sinkId":1}],
+     *             "resources":[{"tableId":1},{"tableId":2}],
+     *             "encodes":{"1":[{"fieldName":"aaa"},{"fieldName":"bbb"}], "2":[{"fieldName":"ccc"}, {"fieldName":"ddd"}]}
+     *             }
      * @return
      */
     @PostMapping(value = "/add", consumes = "application/json")
@@ -183,7 +164,7 @@ public class ProjectController extends BaseController {
         return service.addProject(bean);
     }
 
-    @ApiOperation(value="search project", notes="search project by project id")
+    @ApiOperation(value = "search project", notes = "search project by project id")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "id", value = "project id.", dataType = "int"),
     })
@@ -199,10 +180,10 @@ public class ProjectController extends BaseController {
     @PostMapping(value = "/update", consumes = "application/json")
     public ResultEntity updateProject(@RequestBody ProjectBean bean) {
         ResultEntity updateResult = service.updateProject(bean);
-        //自定义返回的信息，需要在这里重新构造，才能读取i18n中的message信息。
-        if(updateResult.getStatus() == MessageCode.PROJECT_RESOURCE_IS_USING){
+        //自定义返回的信息,需要在这里重新构造,才能读取i18n中的message信息。
+        if (updateResult.getStatus() == MessageCode.PROJECT_RESOURCE_IS_USING) {
             return resultEntityBuilder().status(MessageCode.PROJECT_RESOURCE_IS_USING).build();
-        }else {
+        } else {
             return updateResult;
         }
     }
@@ -212,7 +193,7 @@ public class ProjectController extends BaseController {
     public ResultEntity deleteById(@PathVariable("id") int id) {
         try {
             //判断能否直接删除project
-            if(service.getRunningTopoTables(id) != 0){
+            if (service.getRunningTopoTables(id) != 0) {
                 return resultEntityBuilder().status(PROJECT_NOT_ALLOWED_DELETED).build();
             }
             return service.deleteProject(id);
@@ -228,17 +209,18 @@ public class ProjectController extends BaseController {
     }
 
     @GetMapping("/getPrincipal/{id}")
-    public ResultEntity getPrincipal(@PathVariable("id") int id){
+    public ResultEntity getPrincipal(@PathVariable("id") int id) {
         return service.getPrincipal(id);
     }
 
-	/**
-	 * 参数 Integer dsId, Integer tableId, Integer sinkId 任传其一
-	 * @param request
-	 * @return
-	 */
-	@GetMapping("/getMountedProjrct")
-    public ResultEntity getMountedProjrct(HttpServletRequest request){
+    /**
+     * 参数 Integer dsId, Integer tableId, Integer sinkId 任传其一
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/getMountedProjrct")
+    public ResultEntity getMountedProjrct(HttpServletRequest request) {
         return service.getMountedProjrct(request.getQueryString());
     }
 
@@ -248,7 +230,7 @@ public class ProjectController extends BaseController {
     }
 
     @GetMapping("/getAllResourcesByQuery")
-    public ResultEntity getAllResourcesByQuery(HttpServletRequest request) throws Exception{
+    public ResultEntity getAllResourcesByQuery(HttpServletRequest request) throws Exception {
         return service.getAllResourcesByQuery(request.getQueryString());
     }
 

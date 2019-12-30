@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,26 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.rule.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.log.processor.parse.Field;
 import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
 import com.creditease.dbus.commons.log.processor.rule.IRule;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by Administrator on 2017/10/12.
  */
 public class SaveAsRule implements IRule {
 
-    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception{
-        List<String> ret = new ArrayList<>();
+    public List<List<String>> transform(List<List<String>> datas, List<RuleGrammar> grammar, Rules ruleType) throws Exception {
         Map<Integer, List<RuleGrammar>> grammarMap = new HashMap<>();
         for (RuleGrammar rg : grammar) {
             if (StringUtils.isNoneBlank(rg.getRuleScope()) && StringUtils.isNumeric(rg.getRuleScope())) {
@@ -46,20 +47,26 @@ public class SaveAsRule implements IRule {
                 grammarMap.get(Integer.parseInt(rg.getRuleScope())).add(rg);
             }
         }
-        for (int idx = 0; idx < grammar.size(); idx++) {
-            if (grammarMap.containsKey(idx)) {
-                for (RuleGrammar rg : grammarMap.get(idx)) {
-                    Field field = new Field();
-                    field.setEncoded(false);
-                    field.setNullable(false);
-                    field.setValue(idx >= data.size() ? "" : data.get(idx));
-                    field.setName(rg.getName());
-                    field.setType(rg.getType());
-                    ret.add(JSON.toJSONString(field));
+
+        List<List<String>> retVal = new ArrayList<>();
+        for (List<String> data : datas) {
+            List<String> row = new ArrayList<>();
+            for (int idx = 0; idx < grammar.size(); idx++) {
+                if (grammarMap.containsKey(idx)) {
+                    for (RuleGrammar rg : grammarMap.get(idx)) {
+                        Field field = new Field();
+                        field.setEncoded(false);
+                        field.setNullable(false);
+                        field.setValue(idx >= data.size() ? "" : data.get(idx));
+                        field.setName(rg.getName());
+                        field.setType(rg.getType());
+                        row.add(JSON.toJSONString(field));
+                    }
                 }
             }
+            retVal.add(row);
         }
-        return ret;
+        return retVal;
     }
 
     public static void main(String[] args) throws Exception {
@@ -70,8 +77,7 @@ public class SaveAsRule implements IRule {
         data.add("d");
 
         List<RuleGrammar> ruleGrammars = new ArrayList<>();
-        for(int i = 0; i < 5; i++)
-        {
+        for (int i = 0; i < 5; i++) {
             RuleGrammar rg = new RuleGrammar();
             rg.setRuleScope(String.valueOf(i));
             rg.setName("col_" + i);
@@ -80,9 +86,9 @@ public class SaveAsRule implements IRule {
         }
 
 
-        SaveAsRule saveAsRule = new SaveAsRule();
+        /*SaveAsRule saveAsRule = new SaveAsRule();
         List<String> results = saveAsRule.transform(data, ruleGrammars, Rules.SAVEAS);
-        System.out.println(results.toString());
+        System.out.println(results.toString());*/
 
 
     }

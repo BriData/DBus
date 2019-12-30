@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service;
 
@@ -26,7 +27,7 @@ import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.DataTable;
 import com.creditease.dbus.domain.model.ProjectTopoTable;
 import com.creditease.dbus.service.explain.SqlExplainFetcher;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,22 @@ public class FullPullService {
         }
         if (result) {
             mapper.updateByPrimaryKey(projectTopoTable);
+        } else {
+            return MessageCode.FULL_PULL_CODITION_ERROR;
+        }
+        return 0;
+    }
+
+    public int updateSourceFullpullCondition(DataTable dataTable) throws Exception {
+        String codition = dataTable.getFullpullCondition();
+        DataSource dataSource = dataSourceService.getById(dataTable.getDsId());
+        SqlExplainFetcher sqlExplainFetcher = SqlExplainFetcher.getFetcher(dataSource);
+        boolean result = true;
+        if (StringUtils.isNotBlank(codition)) {
+            result = sqlExplainFetcher.sqlExplain(dataTable, codition);
+        }
+        if (result) {
+            tableService.update(dataTable);
         } else {
             return MessageCode.FULL_PULL_CODITION_ERROR;
         }

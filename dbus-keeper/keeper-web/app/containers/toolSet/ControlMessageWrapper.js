@@ -10,22 +10,25 @@ import {
 } from '@/app/components'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
 import {ControlMessageModel} from './selectors'
+import {ProjectTableModel} from '../ProjectManage/selectors'
 import {
   searchDataSourceList,
   sendControlMessage,
-  readReloadInfo
+  readReloadInfo,
+  getTopologyList
 } from '@/app/containers/toolSet/redux'
 // 链接reducer和action
 @connect(
   createStructuredSelector({
     ControlMessageData: ControlMessageModel(),
+    TopologyTableData: ProjectTableModel(),
     locale: makeSelectLocale()
   }),
   dispatch => ({
     searchDataSourceList: param => dispatch(searchDataSourceList.request(param)),
     sendControlMessage: param => dispatch(sendControlMessage.request(param)),
-
     readReloadInfo: param => dispatch(readReloadInfo.request(param)),
+    getTopologyList: param => dispatch(getTopologyList.request(param)),
   })
 )
 export default class ControlMessageWrapper extends Component {
@@ -38,8 +41,9 @@ export default class ControlMessageWrapper extends Component {
   }
 
   componentWillMount() {
-    const {searchDataSourceList} = this.props
+    const {searchDataSourceList, getTopologyList} = this.props
     searchDataSourceList()
+    getTopologyList()
   }
 
   handleSend = data => {
@@ -73,14 +77,16 @@ export default class ControlMessageWrapper extends Component {
 
   render() {
     console.info(this.props)
-    const {ControlMessageData} = this.props
+    const {ControlMessageData, TopologyTableData} = this.props
     const {dataSourceList} = ControlMessageData
+    const {topologyList} = TopologyTableData
     const {zkModalKey, zkModalVisible} = this.state
     const zkData = JSON.stringify(ControlMessageData.reloadInfo.result.payload || {}, null, '\t')
     return (
       <div>
         <ControlMessageForm
           dataSourceList={dataSourceList && dataSourceList.result && dataSourceList.result.payload}
+          topologyList={topologyList && topologyList.result}
           onSend={this.handleSend}
           onReadZk={this.handleOpenZkModal}
         />

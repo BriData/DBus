@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,70 +18,73 @@
  * >>
  */
 
+
 package com.creditease.dbus.domain.mapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.creditease.dbus.domain.model.DataTable;
-
 import org.apache.ibatis.annotations.Param;
+
+import java.util.*;
 
 public interface DataTableMapper {
     int insert(DataTable record);
 
     int updateByPrimaryKey(DataTable record);
 
-    int confirmVerChange(int tableId);
+    int confirmVerChange(Integer tableId);
 
-    int updateVerId(@Param("verId") int verId, @Param("tableId") int tableId);
+    int updateVerId(@Param("verId") Integer verId, @Param("tableId") int tableId);
 
-    List<DataTable> findTables(@Param("dsId") Integer dsID, @Param("schemaName") String schemaName, @Param("tableName") String tableName);
+    /**
+     * schemaName,tableName模糊查询
+     *
+     * @param dsId
+     * @param schemaId
+     * @param tableName
+     * @return
+     */
+    List<DataTable> findTables(@Param("dsId") Integer dsId, @Param("schemaId") Integer schemaId,
+                               @Param("schemaName") String schemaName, @Param("tableName") String tableName);
 
-    DataTable findById(int id);
+    DataTable findById(Integer id);
 
     List<DataTable> findByStatus(String status);
 
-    List<DataTable> findByDsID(int dsID);
-
-    List<DataTable> findBySchemaID(int schemaID);
+    List<DataTable> findBySchemaID(Integer schemaID);
 
     List<DataTable> findByDsIdAndSchemaName(@Param("dsID") Integer dsID, @Param("schemaName") String schemaName);
 
-    List<DataTable> findTablesNoVer(int schemaId);
-
-    int changeStatus(@Param("id") Long id, @Param("status") String status);
-
-    int deleteByTableId(int id);
+    int deleteByTableId(Integer id);
 
     List<Map<String, Object>> getDSList();
 
     DataTable getByDsSchemaTableName(@Param("dsName") String dsName, @Param("schemaName") String schemaName,
                                      @Param("tableName") String tableName);
-    DataTable findBySchemaIdTableName(@Param("schemaId") int schemaId,@Param("tableName") String tableName);
+
+    DataTable findBySchemaIdTableName(@Param("schemaId") Integer schemaId, @Param("tableName") String tableName);
 
     Map<String, Object> getFlowLineCheckInfo(Integer tableId);
 
     List<DataTable> findAllTables();
 
-    List<HashMap<String,Object>> findTablesByUserId(Integer userId);
+    List<HashMap<String, Object>> findTablesByUserId(Integer userId);
 
     void inactiveTableByDsId(Integer dsId);
 
     void inactiveTableBySchemaId(Integer schemaId);
 
-    List<DataTable> findActiveTablesByDsId(int dsId);
+    List<DataTable> findActiveTablesByDsId(Integer dsId);
 
-    List<DataTable> findActiveTablesBySchemaId(int schemaId);
+    List<DataTable> findActiveTablesBySchemaId(Integer schemaId);
 
     int startOrStopTableByTableIds(@Param("list") ArrayList<Integer> ids, @Param("status") String status);
-
-    List<Map<String, Object>> isExistByTableName(@Param("tables") String tables,
-                                                 @Param("dsIds") String dsIds);
 
     List<Map<String, Object>> getDataSourcesByTableIds(ArrayList<Integer> ids);
 
     List<DataTable> searchTableByIds(@Param("list") ArrayList<Integer> ids);
+
+    void updateByTableIds(@Param("dsId") Integer dsId, @Param("schemaId") Integer schemaId, @Param("schemaName") String schemaName,
+                          @Param("outputTopic") String outputTopic, @Param("ids") List<Integer> tableIds);
+
+    List<DataTable> findTablesByDsNames(@Param("set") Set<String> dsNames);
 }

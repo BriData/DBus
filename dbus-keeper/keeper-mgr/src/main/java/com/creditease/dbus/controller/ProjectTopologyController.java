@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,32 +18,22 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
-
-import java.io.IOException;
-import java.util.Map;
-
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
 
 import com.creditease.dbus.annotation.ProjectAuthority;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.domain.model.ProjectTopology;
 import com.creditease.dbus.service.ProjectTopologyService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.websocket.*;
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/4/12.
@@ -133,7 +123,7 @@ public class ProjectTopologyController extends BaseController {
     @GetMapping("/rerun-init/{projectId}/{topoId}")
     @ProjectAuthority
     public ResultEntity rerunInit(@PathVariable Integer projectId,
-                                @PathVariable Integer topoId) throws Exception {
+                                  @PathVariable Integer topoId) throws Exception {
         return service.rerunInit(projectId, topoId);
     }
 
@@ -177,6 +167,17 @@ public class ProjectTopologyController extends BaseController {
     public void onClose(Session session) throws IOException {
         logger.info("close connection.");
         session.close();
+    }
+
+    /**
+     * 根据源拓扑Id获取可以迁移的目标router拓扑列表
+     *
+     * @param topoId
+     * @return
+     */
+    @GetMapping("/getTopoAlias/{topoId}")
+    public ResultEntity getTopoAlias(@PathVariable Integer topoId) {
+        return service.getTopoAlias(topoId);
     }
 
 }

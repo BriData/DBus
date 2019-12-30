@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.dispatcher.bout;
 
@@ -96,7 +97,7 @@ public class KafkaProducerBout extends BaseRichBolt {
             logger.error("KafkaProducerBout reloadConfig():", ex);
             collector.reportError(ex);
             throw new RuntimeException(ex);
-        }finally {
+        } finally {
             if (zkHelper != null) {
                 zkHelper.close();
             }
@@ -122,7 +123,7 @@ public class KafkaProducerBout extends BaseRichBolt {
     @Override
     public void execute(Tuple input) {
 
-        DispatcherPackage subPackage = (DispatcherPackage)input.getValueByField("subPackage");
+        DispatcherPackage subPackage = (DispatcherPackage) input.getValueByField("subPackage");
         String toTopic = subPackage.getToTopic();
         String key = subPackage.getKey();
         byte[] message = subPackage.getContent();
@@ -137,7 +138,7 @@ public class KafkaProducerBout extends BaseRichBolt {
 
         try {
 
-            Callback  callback = new Callback() {
+            Callback callback = new Callback() {
                 @Override
                 public void onCompletion(RecordMetadata ignored, Exception e) {
                     synchronized (collector) {
@@ -149,6 +150,7 @@ public class KafkaProducerBout extends BaseRichBolt {
                     }
 
                     if (e != null) {
+                        logger.error(e.getMessage(), new RuntimeException(e));
                         logger.error(String.format("Send FAIL: toTopic=%s, currentOffset=%s", toTopic, currentOffset.toString()));
                     } else {
                         logger.debug(String.format("  Send successful: currentOffset=%s, toTopic=%s, key=(%s)", currentOffset.toString(), toTopic, key));
@@ -157,7 +159,7 @@ public class KafkaProducerBout extends BaseRichBolt {
                 }
             };
 
-            logger.info(String.format("  Sending: currentOffset=%s, toTopic=%s, key=(%s), msgCount=%d",currentOffset.toString(), toTopic, key, msgCount));
+            logger.info(String.format("  Sending: currentOffset=%s, toTopic=%s, key=(%s), msgCount=%d", currentOffset.toString(), toTopic, key, msgCount));
             Future<RecordMetadata> result = producer.send(new ProducerRecord<>(toTopic, key, message), callback);
 
         } catch (Exception ex) {

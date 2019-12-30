@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.heartbeat.vo;
 
@@ -83,32 +84,40 @@ public class ZkVo implements Serializable {
         return configPath;
     }
 
-    public String getLeaderPath(){return leaderPath;}
+    public String getLeaderPath() {
+        return leaderPath;
+    }
 
     public void setConfigPath(String configPath) {
         this.configPath = configPath;
     }
 
-    public void setLeaderPath(String leaderPath){
+    public void setLeaderPath(String leaderPath) {
         this.leaderPath = leaderPath;
     }
 
-    public String getMaas_configPath(){
+    public String getMaas_configPath() {
         return maas_configPath;
     }
 
-    public  void setMaas_configPath(String maas_configPath){this.maas_configPath = maas_configPath;}
+    public void setMaas_configPath(String maas_configPath) {
+        this.maas_configPath = maas_configPath;
+    }
 
-    public String getMaas_consumerPath(){
+    public String getMaas_consumerPath() {
         return maas_consumerPath;
     }
 
-    public void setMaas_consumerPath(String maas_consumerPath){ this.maas_consumerPath = maas_consumerPath;}
+    public void setMaas_consumerPath(String maas_consumerPath) {
+        this.maas_consumerPath = maas_consumerPath;
+    }
 
-    public String getMaas_producerPath(){
+    public String getMaas_producerPath() {
         return maas_producerPath;
     }
 
-    public void setMaas_producerPath(String maas_producerPath){ this.maas_producerPath = maas_producerPath;}
+    public void setMaas_producerPath(String maas_producerPath) {
+        this.maas_producerPath = maas_producerPath;
+    }
 
 }

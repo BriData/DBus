@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.container;
+
+import com.creditease.dbus.heartbeat.event.impl.KafkaConsumerEvent;
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import org.apache.kafka.clients.consumer.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,20 +33,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.kafka.clients.consumer.Consumer;
-
-import com.creditease.dbus.heartbeat.event.impl.KafkaConsumerEvent;
-import com.creditease.dbus.heartbeat.log.LoggerFactory;
-
 public class KafkaConsumerContainer {
 
     private static KafkaConsumerContainer container;
 
-    private  ExecutorService es;
-    
+    private ExecutorService es;
+
     private ConcurrentHashMap<String, Consumer<String, String>> consumerMap = new ConcurrentHashMap<String, Consumer<String, String>>();
-    
+
     private List<KafkaConsumerEvent> kafkaConsumerEvent = Collections.synchronizedList(new ArrayList<KafkaConsumerEvent>());
+
     private KafkaConsumerContainer() {
     }
 
@@ -54,18 +55,19 @@ public class KafkaConsumerContainer {
         }
         return container;
     }
-    
-    public void putConsumer(String key, Consumer<String, String> consumer){
-    	consumerMap.put(key, consumer);
+
+    public void putConsumer(String key, Consumer<String, String> consumer) {
+        consumerMap.put(key, consumer);
     }
-    
-    public Consumer<String, String> getConsumer(String key){
-    	return consumerMap.get(key);
+
+    public Consumer<String, String> getConsumer(String key) {
+        return consumerMap.get(key);
     }
-    
+
     public void initThreadPool(int size) {
-        es = Executors.newFixedThreadPool(size + 1);
-        LoggerFactory.getLogger().info("[kafka-consumer-container] initThreadPool size = " + (size+1));
+        int poolSize = size + 10;
+        es = Executors.newFixedThreadPool(poolSize);
+        LoggerFactory.getLogger().info("[kafka-consumer-container] initThreadPool size = " + poolSize);
     }
 
     public void submit(KafkaConsumerEvent event) {

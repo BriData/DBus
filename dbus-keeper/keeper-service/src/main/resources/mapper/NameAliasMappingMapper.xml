@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.NameAliasMappingMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.NameAliasMapping">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="type" jdbcType="INTEGER" property="type" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="name_id" jdbcType="INTEGER" property="nameId" />
+    <result column="alias" jdbcType="VARCHAR" property="alias" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_name_alias_mapping
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.NameAliasMapping">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_name_alias_mapping (type, name, name_id,
+      alias, update_time)
+    values (#{type,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{nameId,jdbcType=INTEGER},
+      #{alias,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.NameAliasMapping">
+    update t_name_alias_mapping
+    set type = #{type,jdbcType=INTEGER},
+      name = #{name,jdbcType=VARCHAR},
+      name_id = #{nameId,jdbcType=INTEGER},
+      alias = #{alias,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, type, name, name_id, alias, update_time
+    from t_name_alias_mapping
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+    <select id="selectByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select id, type, name, name_id, alias, update_time
+    from t_name_alias_mapping
+    where name_id = #{nameId,jdbcType=INTEGER} AND name = #{name,jdbcType=VARCHAR} AND type = #{type,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, type, name, name_id, alias, update_time
+    from t_name_alias_mapping
+  </select>
+  <select id="selectByNameId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select * from t_name_alias_mapping
+    where name_id = #{nameId} and type = #{type}
+  </select>
+  <select id="getTargetTopoByTopoId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select tm2.* from t_name_alias_mapping tm1,t_name_alias_mapping tm2
+    where tm1.alias = tm2.alias
+    and tm2.name_id != tm1.name_id
+    and tm1.name_id = #{nameId}
+  </select>
+</mapper>

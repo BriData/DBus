@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons.meta;
 
@@ -38,7 +39,7 @@ public abstract class AbstractMetaComparator implements MetaComparator {
         List<MetaCell> m2cells = filter(receivedMeta.getColumns());
 
         MetaCompareResult result;
-        if(m1cells.size() > m2cells.size()) {
+        if (m1cells.size() > m2cells.size()) {
             result = compare(receivedMeta, m1cells, FiledCompareResult.DROP_FIELD);
         } else {
             result = compare(originalMeta, m2cells, FiledCompareResult.ADD_FIELD);

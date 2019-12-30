@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.appender.utils;
 
 import com.alibaba.fastjson.JSON;
@@ -32,9 +33,10 @@ public class JsonNodeOperator extends ZKNodeOperator {
     public JsonNodeOperator(IZkService zk, String node) {
         super(zk, node);
     }
+
     @Override
     public Map<String, Object> convert(byte[] data) {
-       return (Map<String, Object>)JSON.parse(data);
+        return (Map<String, Object>) JSON.parse(data);
     }
 
     public static void main(String[] args) {

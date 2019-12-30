@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,12 @@
  * >>
  */
 
-package com.creditease.dbus;
 
-import java.util.concurrent.Executor;
+package com.creditease.dbus;
 
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.commons.ZkService;
-
+import com.creditease.dbus.utils.StormToplogyOpHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -45,10 +44,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
+import java.util.concurrent.Executor;
+
 /**
  * Created by zhangyf on 2018/3/7.
  */
-@SpringBootApplication(exclude={DataSourceAutoConfiguration.class,HibernateJpaAutoConfiguration.class,MongoAutoConfiguration.class,MongoDataAutoConfiguration.class})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @EnableDiscoveryClient
 @EnableCircuitBreaker
 @EnableEurekaClient
@@ -86,6 +87,11 @@ class KeeperMgrAPPConfig {
     @Bean
     IZkService zkService() throws Exception {
         return new ZkService(env.getProperty("zk.str"));
+    }
+
+    @Bean
+    StormToplogyOpHelper stormTopoHelper() throws Exception {
+        return new StormToplogyOpHelper(new ZkService(env.getProperty("zk.str")));
     }
 
     @Bean

@@ -13,7 +13,7 @@ export EncodeManagerReducer from '@/app/components/ResourceManage/EncodeManager/
 export DataTableReducer from '@/app/components/ResourceManage/DataTableManage/redux/reducer'
 export RuleGroupReducer from '@/app/components/RuleManage/RuleGroup/redux/reducer'
 export DataSourceCreateReducer from '@/app/components/ResourceManage/DataSourceCreate/redux/reducer'
-
+export Oggc from '@/app/components/ResourceManage/DataSchemaManage/redux/reducer'
 /** ************导出action*******************/
 
 // 异步请求的action
@@ -40,7 +40,8 @@ export {
   getSchemaListByDsId,
   getSchemaTableList,
   cleanSchemaTable,
-  clearFullPullAlarm
+  clearFullPullAlarm,
+  getOggCanalConfByDsName
 } from '@/app/components/ResourceManage/DataSourceManage/redux/action'
 
 
@@ -99,3 +100,5 @@ export {
 export {
   searchEncodeList
 } from '@/app/components/ResourceManage/EncodeManager/redux/action'
+
+

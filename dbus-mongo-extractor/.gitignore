@@ -1,0 +1,9 @@
+*.pyc
+*~
+.DS_Store
+/test/data
+/test/logs
+/dist
+# IDE settings folders
+.idea/
+.vscode/

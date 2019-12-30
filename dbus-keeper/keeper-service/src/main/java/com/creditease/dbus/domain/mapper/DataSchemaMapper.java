@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.domain.model.DataSchema;
@@ -27,19 +28,19 @@ import java.util.List;
 import java.util.Map;
 
 public interface DataSchemaMapper {
-    List<Map<String,Object>> searchSchemaAndDs(Map<String, Object> param);
+    List<Map<String, Object>> searchSchemaAndDs(Map<String, Object> param);
 
-    List<DataSchema> searchSchema(@Param("schemaId") Long schemaId, @Param("dsId") Long dsId, @Param("schemaName") String schemaName);
+    List<DataSchema> searchSchema(@Param("schemaId") Integer schemaId, @Param("dsId") Integer dsId, @Param("schemaName") String schemaName);
 
     int insert(DataSchema record);
 
     int update(DataSchema record);
 
-    int deleteBySchemaId(Long id);
+    int deleteBySchemaId(Integer id);
 
     int updateSchemaStatusByPrimaryKey(Map<String, Object> param);
 
-    DataSchema selectById(Long id);
+    DataSchema selectById(Integer id);
 
     DataSchema findByDsIdAndSchemaName(@Param("dsId") Integer dsId, @Param("schemaName") String schemaName);
 

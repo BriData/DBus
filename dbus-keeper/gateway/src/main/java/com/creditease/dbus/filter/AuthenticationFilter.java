@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,18 @@
  * >>
  */
 
+
 package com.creditease.dbus.filter;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-
-import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.base.ResultEntityBuilder;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.utils.JWTUtils;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,15 +39,15 @@ import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants;
 import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import static com.creditease.dbus.constant.KeeperConstants.PARAMETER_KEY_EMAIL;
-import static com.creditease.dbus.constant.KeeperConstants.PARAMETER_KEY_ROLE;
-import static com.creditease.dbus.constant.KeeperConstants.PARAMETER_KEY_USER;
+import static com.creditease.dbus.constant.KeeperConstants.*;
 
 /**
  * Created by zhangyf on 2018/3/8.
@@ -87,7 +82,9 @@ public class AuthenticationFilter extends ZuulFilter {
         return !request.getRequestURI().endsWith("/users/create")
                 && !request.getRequestURI().endsWith("/configCenter/isInitialized")
                 && !request.getRequestURI().endsWith("/configCenter/getBasicConf")
-                && !request.getRequestURI().endsWith("/configCenter/updateBasicConf");
+                && !request.getRequestURI().endsWith("/configCenter/updateBasicConf")
+                && !request.getRequestURI().endsWith("/accessDbusPreTreated/check/1")
+                && !request.getRequestURI().endsWith("/accessDbusPreTreated/downloadExcleModel");
 
     }
 
@@ -139,7 +136,7 @@ public class AuthenticationFilter extends ZuulFilter {
             }
             return null;
         } catch (Exception e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             return null;
         } finally {
             try {
@@ -147,7 +144,7 @@ public class AuthenticationFilter extends ZuulFilter {
                     br.close();
                 }
             } catch (IOException e) {
-                logger.error(e.getMessage(),e);
+                logger.error(e.getMessage(), e);
             }
         }
     }

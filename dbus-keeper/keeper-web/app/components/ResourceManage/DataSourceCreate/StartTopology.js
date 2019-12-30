@@ -179,13 +179,6 @@ export default class StartTopology extends Component {
         render: this.renderComponent(this.renderStatus(this.tableWidth[3]))
       },
       {
-        title: 'Storm Path',
-        width: this.tableWidth[4],
-        dataIndex: 'stormPath',
-        key: 'stormPath',
-        render: this.renderComponent(this.renderNomal(this.tableWidth[4]))
-      },
-      {
         title: 'Jar Path',
         width: this.tableWidth[5],
         dataIndex: 'jarPath',

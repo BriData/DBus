@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -43,10 +38,11 @@ import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+
+import java.util.*;
 
 
 public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
@@ -114,12 +110,11 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             JSONObject jsonObjectvalue = JSONObject.parseObject(value);
                             String compareResult = HTMLUtil.globalControlEmailJsonVo2HTML(jsonObjectvalue);
                             String compatibleText = HTMLUtil.isVersionChangeCompatible(jsonObjectvalue.getJSONObject("payload"));
-                            String subject = "DBus表结构"+compatibleText+"变更通知 ";
+                            String subject = "DBus表结构" + compatibleText + "变更通知 ";
                             String contents = MsgUtil.format(Constants.MAIL_SCHEMA_CHANGE,
-                                    "表结构"+compatibleText+"变更通知", datasource, schema, table,
+                                    "表结构" + compatibleText + "变更通知", datasource, schema, table,
                                     DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
                                     IMail.ENV, compareResult);
-
 
 
                             String email = getSchemaChangeEmail(datasource + "/" + schema);
@@ -178,7 +173,7 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
 
                             boolean ret = mail.send(msg);
                             LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件", ret == true ? "成功" : "失败");
-                        }else  if (ControlType.KEEPER_PROJECT_EXPIRE.toString().equals(key)) {
+                        } else if (ControlType.KEEPER_PROJECT_EXPIRE.toString().equals(key)) {
                             ControlMessage controlMessage = JSON.parseObject(value, ControlMessage.class);
                             Map<String, Object> payload = controlMessage.getPayload();
 
@@ -189,21 +184,21 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             String expireTime = payload.get("expire_time") == null ? "" : payload.get("expire_time").toString();
                             String remainTime = payload.get("remain_time") == null ? "" : payload.get("remain_time").toString();
                             String offlineTime = payload.get("offline_time") == null ? "" : payload.get("offline_time").toString();
-                            if(emails==null || emails.size()==0){
+                            if (emails == null || emails.size() == 0) {
                                 LOG.warn("[Global-Control-kafka-Consumer-event] 项目到期告警：邮箱地址有误");
                                 continue;
                             }
-                            LOG.info("[Global-Control-kafka-Consumer-event] 收到项目到期消息，emails:{}",emails);
+                            LOG.info("[Global-Control-kafka-Consumer-event] 收到项目到期消息，emails:{}", emails);
                             //"项目临到期"还是"项目下线"
                             String type = payload.get("type") == null ? "" : payload.get("type").toString();
-                            String warn = StringUtils.equals(type,"项目下线") ? "该项目已于"+offlineTime+"下线" :
+                            String warn = StringUtils.equals(type, "项目下线") ? "该项目已于" + offlineTime + "下线" :
                                     "项目有效期余额不足";
 
-                            String subject = "DBus-Keeper"+type+"告警";
-                            String content = MsgUtil.format(Constants.PROJECT_EXPIRE_TIME,type,projectName,expireTime,
-                                    remainTime,IMail.ENV,warn);
+                            String subject = "DBus-Keeper" + type + "告警";
+                            String content = MsgUtil.format(Constants.PROJECT_EXPIRE_TIME, type, projectName, expireTime,
+                                    remainTime, IMail.ENV, warn);
 
-                            String email = StringUtils.join(emails,",");
+                            String email = StringUtils.join(emails, ",");
                             Message msg = new Message();
                             msg.setAddress(email);
                             msg.setContents(content);
@@ -216,7 +211,7 @@ public class GlobalControlKafkaConsumerEvent extends KafkaConsumerEvent {
                             msg.setPassword(hbConf.getAlarmMailPass());
                             msg.setFromAddress(hbConf.getAlarmSendEmail());
 
-                            LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件，emails:{}",emails);
+                            LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件，emails:{}", emails);
                             boolean ret = mail.send(msg);
                             LOG.info("[Global-Control-kafka-Consumer-event] 发送邮件", ret == true ? "成功" : "失败");
 

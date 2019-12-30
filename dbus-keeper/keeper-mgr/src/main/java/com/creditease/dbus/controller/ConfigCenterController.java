@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.controller;
 
@@ -44,15 +45,11 @@ public class ConfigCenterController extends BaseController {
 
     /**
      * 修改 globalConf 配置
-     *
-     * @param map
-     * @return
      */
     @PostMapping(path = "updateGlobalConf", consumes = "application/json")
     public ResultEntity updateGlobalConf(@RequestBody LinkedHashMap<String, String> map) {
         try {
-            Integer result = configCenterService.updateGlobalConf(map);
-            return resultEntityBuilder().status(result).build();
+            return configCenterService.updateGlobalConf(map);
         } catch (Exception e) {
             logger.error("Exception encountered while send updateGlobalConf with param ( map:{})}", map, e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
@@ -61,18 +58,11 @@ public class ConfigCenterController extends BaseController {
 
     /**
      * 修改 MgrDB 配置
-     *
-     * @param map
-     * @return
      */
     @PostMapping(path = "updateMgrDB", consumes = "application/json")
     public ResultEntity updateMgrDB(@RequestBody Map<String, String> map) {
         try {
-            Integer result = configCenterService.updateMgrDB(map);
-            if (result != null) {
-                return resultEntityBuilder().status(result).build();
-            }
-            return resultEntityBuilder().build();
+            return configCenterService.updateMgrDB(map);
         } catch (Exception e) {
             logger.error("Exception encountered while send updateMgrDB with param ( map:{})}", map, e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
@@ -81,8 +71,6 @@ public class ConfigCenterController extends BaseController {
 
     /**
      * 获取基础配置,包括zk,kafka,mgrDB地址
-     *
-     * @return
      */
     @GetMapping("/getBasicConf")
     public ResultEntity getBasicConf() {
@@ -95,63 +83,20 @@ public class ConfigCenterController extends BaseController {
     }
 
     /**
-     * web初始化
-     *
-     * @param map
-     * @return
-     */
-    @PostMapping(path = "/updateBasicConf", consumes = "application/json")
-    public ResultEntity updateBasicConf(@RequestBody LinkedHashMap<String, String> map) {
-        try {
-            int i = configCenterService.updateBasicConf(map);
-            if (i != 0) {
-                configCenterService.rollBackBasicConf();
-            }
-            return resultEntityBuilder().status(i).build();
-        } catch (Exception e) {
-            try {
-                configCenterService.rollBackBasicConf();
-            } catch (Exception e1) {
-                logger.error("Exception encountered while rollBackBasicConf ", e1);
-            }
-            logger.error("Exception encountered while updateBasicConf ", e);
-            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
-        }
-    }
-
-    /**
+     * 该功能不建议使用,太危险!!!!
      * 重置mgr数据库表结构
-     *
-     * @param map
-     * @return
      */
-    @PostMapping(path = "/ResetMgrDB", consumes = "application/json")
-    public ResultEntity ResetMgrDB(@RequestBody LinkedHashMap<String, String> map) {
-        try {
-            int i = configCenterService.ResetMgrDB(map);
-            return resultEntityBuilder().status(i).build();
-        } catch (Exception e) {
-            logger.error("Exception encountered while ResetMgrDB ", e);
-            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
-        }
-    }
+    //@PostMapping(path = "/ResetMgrDB", consumes = "application/json")
+    //public ResultEntity ResetMgrDB(@RequestBody LinkedHashMap<String, String> map) {
+    //    try {
+    //        int i = configCenterService.ResetMgrDB(map);
+    //        return resultEntityBuilder().status(i).build();
+    //    } catch (Exception e) {
+    //        logger.error("Exception encountered while ResetMgrDB ", e);
+    //        return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+    //    }
+    //}
 
-    /**
-     * 根据勾选web部分初始化
-     *
-     * @param map
-     * @return
-     */
-    @PostMapping(path = "/updateBasicConfByOption", consumes = "application/json")
-    public ResultEntity updateBasicConfByOption(@RequestBody LinkedHashMap<String, String> map, String options) {
-        try {
-            int i = configCenterService.updateBasicConfByOption(map, options);
-            return resultEntityBuilder().status(i).build();
-        } catch (Exception e) {
-            logger.error("Exception encountered while updateBasicConfByOption ", e);
-            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
-        }
-    }
 
     /**
      * 环境是否已经初始化过,根据zookeeper有无/DBus节点判断
@@ -164,6 +109,16 @@ public class ConfigCenterController extends BaseController {
             return resultEntityBuilder().payload(configCenterService.isInitialized()).build();
         } catch (Exception e) {
             logger.error("Exception encountered while isInitialized ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping(path = "/sendMailTest")
+    public ResultEntity sendMailTest(@RequestBody Map<String, Object> map) {
+        try {
+            return resultEntityBuilder().payload(configCenterService.sendMailTest(map)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while sendMailTest ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

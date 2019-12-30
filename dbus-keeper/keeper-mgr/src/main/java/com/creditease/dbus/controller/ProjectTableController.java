@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.annotation.AdminPrivilege;
@@ -28,8 +29,10 @@ import com.creditease.dbus.bean.ProjectTableOffsetBean;
 import com.creditease.dbus.bean.TableBean;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.service.ProjectTableService;
-import io.swagger.annotations.*;
-import org.apache.commons.lang.StringUtils;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA
@@ -97,21 +101,21 @@ public class ProjectTableController extends BaseController {
         if (StringUtils.equalsIgnoreCase(role, "admin")
                 || StringUtils.isNotEmpty(request.getParameter("projectId"))) {
             return service.queryDSNames(request.getQueryString());
-        }else {
+        } else {
             return resultEntityBuilder().status(MessageCode.PROJECT_ID_EMPTY).build();
         }
 
     }
 
-    @ApiOperation(value = "getResroucesInProject",notes = "分页获取该project中某topology下可用的resource信息")
+    @ApiOperation(value = "getResroucesInProject", notes = "分页获取该project中某topology下可用的resource信息")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "dsName",value = "data source name",dataType = "String", paramType = "query"),
-            @ApiImplicitParam(name = "schemaName",value = "schema 的 name",dataType = "String", paramType = "query"),
-            @ApiImplicitParam(name = "tableName",value = "table name",dataType = "String", paramType = "query"),
-            @ApiImplicitParam(name = "projectId",value = "当前项目的id",dataType = "Integer", paramType = "query",required = true),
-            @ApiImplicitParam(name = "topoId",value = "topology的id",dataType = "Integer", paramType = "query",required = true),
-            @ApiImplicitParam(name = "pageNum",value = "分页信息：页码",dataType = "Integer", paramType = "query",required = true),
-            @ApiImplicitParam(name = "pageSize",value = "分页信息：page size",dataType = "Integer", paramType = "query",required = true)
+            @ApiImplicitParam(name = "dsName", value = "data source name", dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "schemaName", value = "schema 的 name", dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "tableName", value = "table name", dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "projectId", value = "当前项目的id", dataType = "Integer", paramType = "query", required = true),
+            @ApiImplicitParam(name = "topoId", value = "topology的id", dataType = "Integer", paramType = "query", required = true),
+            @ApiImplicitParam(name = "pageNum", value = "分页信息：页码", dataType = "Integer", paramType = "query", required = true),
+            @ApiImplicitParam(name = "pageSize", value = "分页信息：page size", dataType = "Integer", paramType = "query", required = true)
     })
     @GetMapping("/project-resources")
     @ProjectAuthority
@@ -119,39 +123,31 @@ public class ProjectTableController extends BaseController {
         return service.queryProjectResources(URLDecoder.decode(request.getQueryString(), "UTF-8"));
     }
 
-    @ApiOperation(value = "get columns", notes = "table下columns的信息，包括admin添加的脱敏信息")
+    @ApiOperation(value = "get columns", notes = "table下columns的信息,包括admin添加的脱敏信息")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "projectId", value = "project id", dataType = "Integer"),
             @ApiImplicitParam(name = "tableId", value = "table id", dataType = "Integer"),
     })
     @GetMapping("/columns")
-    @ProjectAuthority
-    public ResultEntity getColumns(HttpServletRequest request) throws Exception {
-        if (request == null) {
-            return resultEntityBuilder().status(MessageCode.PROJECT_ID_OR_TABLE_ID_EMPTY).build();
-        }
-        String rowQueryString = request.getQueryString();
-        if (StringUtils.isEmpty(request.getParameter("projectId"))
-                ||StringUtils.isEmpty(request.getParameter("tableId"))) {
-            return resultEntityBuilder().status(MessageCode.PROJECT_ID_OR_TABLE_ID_EMPTY).build();
-        }
-        return service.getEncodeColumns(URLDecoder.decode(rowQueryString, "UTF-8"));
+    //@ProjectAuthority
+    public ResultEntity getColumns(@RequestParam Integer projectId, @RequestParam Integer tableId) {
+        return service.getEncodeColumns(projectId, tableId);
     }
 
     /**
-     {
-     "status": 0,
-     "message": "ok"payload": {,
-     "
-        "14": [
-            "cdc_target_test_01.T.commitstream"
-        ],
-        "25": [
-            "testdb.test.test_rule"
-        ]
-     }
-     }
-     * */
+     * {
+     * "status": 0,
+     * "message": "ok"payload": {,
+     * "
+     * "14": [
+     * "cdc_target_test_01.T.commitstream"
+     * ],
+     * "25": [
+     * "testdb.test.test_rule"
+     * ]
+     * }
+     * }
+     */
     @ApiOperation(value = "get topic list", notes = "获取选中sink 的topic list")
     @GetMapping("/topics")
     @ProjectAuthority
@@ -177,17 +173,17 @@ public class ProjectTableController extends BaseController {
                 return resultEntityBuilder().status(MessageCode.TABLE_ADD_LACK_MSG).build();
             }
             return result;
-        }catch (Exception e){
-            logger.error("[add table]添加table 异常： ",e);
+        } catch (Exception e) {
+            logger.error("[add table]添加table 异常： ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }
 
     /**
-     * 根据projectId和获取table信息，包括：
+     * 根据projectId和获取table信息,包括：
      * resource: dsName和schemaName等信息
      * sink：sink信息
-     * encodes：table下column信息，包括脱敏信息
+     * encodes：table下column信息,包括脱敏信息
      */
     @GetMapping("/{projectId}/{projectTableId}")
     @ProjectAuthority
@@ -198,7 +194,7 @@ public class ProjectTableController extends BaseController {
     /**
      * 获取table下column信息,包括源端脱敏信息
      */
-    @ApiOperation(value = "source Columns", notes = "table下所有columns，包括源端的脱敏信息")
+    @ApiOperation(value = "source Columns", notes = "table下所有columns,包括源端的脱敏信息")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "tableId", value = "table id.", dataType = "int")
     })
@@ -215,11 +211,11 @@ public class ProjectTableController extends BaseController {
     @PostMapping(value = "/update", consumes = "application/json")
     public ResultEntity updateTable(@RequestBody TableBean newTable) {
         ResultEntity updateResult = service.updateTable(newTable);
-        if(updateResult.getStatus() == ResultEntity.SUCCESS){
-            //成功直接返回，
+        if (updateResult.getStatus() == ResultEntity.SUCCESS) {
+            //成功直接返回,
             return updateResult;
-        }else {
-            // 错误的话，根据Service层的错误码，重新构造返回信息，用来读取message的信息
+        } else {
+            // 错误的话,根据Service层的错误码,重新构造返回信息,用来读取message的信息
             return resultEntityBuilder().status(updateResult.getStatus()).build();
         }
 
@@ -255,7 +251,7 @@ public class ProjectTableController extends BaseController {
         try {
             service.start(offsets);
             return resultEntityBuilder().build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return resultEntityBuilder().status(MessageCode.TABLE_PARAM_FORMAT_ERROR).build();
         }
 
@@ -265,7 +261,7 @@ public class ProjectTableController extends BaseController {
     public ResultEntity batchStartTopoTables(@RequestBody ArrayList<Integer> topoTableIds) {
         try {
             return resultEntityBuilder().status(service.batchStartTopoTables(topoTableIds)).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.error("Exception when batch start topo tables ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
@@ -276,9 +272,9 @@ public class ProjectTableController extends BaseController {
     public ResultEntity stopTable(@RequestParam("tableId") Integer projectTopoTableId,
                                   @RequestParam("topoName") String topoName) {
         try {
-            service.stop(projectTopoTableId,topoName);
+            service.stop(projectTopoTableId, topoName);
             return resultEntityBuilder().build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return resultEntityBuilder().status(MessageCode.TABLE_NOT_FOUND).build();
         }
     }
@@ -287,7 +283,7 @@ public class ProjectTableController extends BaseController {
     public ResultEntity batchStopTopoTables(@RequestBody ArrayList<Integer> topoTableIds) {
         try {
             return resultEntityBuilder().status(service.batchStopTopoTables(topoTableIds)).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.error("Exception when batch stop topo tables ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
@@ -297,9 +293,9 @@ public class ProjectTableController extends BaseController {
     public ResultEntity reloadTable(@RequestParam("tableId") Integer projectTopoTableId,
                                     @RequestParam("topoName") String topoName) {
         try {
-            service.reloadTopoTable(projectTopoTableId,topoName);
+            service.reloadTopoTable(projectTopoTableId, topoName);
             return resultEntityBuilder().build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return resultEntityBuilder().status(MessageCode.TABLE_NOT_FOUND).build();
         }
     }
@@ -330,6 +326,7 @@ public class ProjectTableController extends BaseController {
 
     /**
      * 租户拉全量入口
+     *
      * @param projectTableId
      * @param outputTopic
      * @param fullpullCondition
@@ -347,7 +344,7 @@ public class ProjectTableController extends BaseController {
 
     @GetMapping("/encoders")
     @ProjectAuthority
-    public ResultEntity getAllEncoders(@RequestParam int projectId){
+    public ResultEntity getAllEncoders(@RequestParam int projectId) {
         return service.getAllEncoders(projectId);
     }
 
@@ -357,8 +354,34 @@ public class ProjectTableController extends BaseController {
         return service.getAllResourcesByQuery(request.getQueryString());
     }
 
+    @GetMapping("/batchAddAclTopic")
+    @ProjectAuthority
+    public ResultEntity batchAddAclTopic(HttpServletRequest request) {
+        try {
+            service.batchAddAclTopic(request.getQueryString());
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception happend when batchAddAclTopic", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
     @GetMapping("/getProjectTableById")
-    public ResultEntity getProjectTableById(@RequestParam int projectTopoTableId){
+    public ResultEntity getProjectTableById(@RequestParam int projectTopoTableId) {
         return resultEntityBuilder().payload(service.getTableById(projectTopoTableId)).build();
+    }
+
+    @PostMapping("/moveTopoTables")
+    public ResultEntity moveTopoTables(@RequestBody Map<String, Object> map) {
+        try {
+            ResultEntity resultEntity = service.moveTopoTables(map);
+            if (resultEntity.getMessage() == null) {
+                return resultEntityBuilder().status(resultEntity.getStatus()).build();
+            }
+            return resultEntity;
+        } catch (Exception e) {
+            logger.error("Exception when batch moveTopoTables topo tables ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
     }
 }

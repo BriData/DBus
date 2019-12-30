@@ -1,7 +1,7 @@
---- ´´½¨canalÓÃ»§£¬ÓÉdbaÖ¸¶¨ÃÜÂë
-CREATE USER canal IDENTIFIED BY 'canal';    
+--- åˆ›å»ºcanalç”¨æˆ·ï¼Œç”±dbaæŒ‡å®šå¯†ç 
+CREATE USER canal IDENTIFIED BY 'canal';
 
---  ÕâÀïÊÇ¸øcanal ÊÚÈ¨Îª¿ÉÒÔ¸´ÖÆlogµÄÓÃ»§
+--  è¿™é‡Œæ˜¯ç»™canal æŽˆæƒä¸ºå¯ä»¥å¤åˆ¶logçš„ç”¨æˆ·
 GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
 GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
 

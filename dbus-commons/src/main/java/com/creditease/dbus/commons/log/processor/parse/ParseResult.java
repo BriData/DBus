@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.parse;
 
 import java.io.Serializable;
@@ -28,34 +29,54 @@ import java.util.List;
  */
 public class ParseResult implements Serializable {
 
-    /** 适用于所有算子表示索引 */
+    /**
+     * 适用于所有算子表示索引
+     */
     private List<Integer> scope;
 
-    /** filter算子表示包含 */
+    /**
+     * filter算子表示包含
+     */
     private Boolean isEq;
 
-    /** sub算子截取开始位置 */
+    /**
+     * sub算子截取开始位置
+     */
     private String start;
 
-    /** sub算子截取结束位置 */
+    /**
+     * sub算子截取结束位置
+     */
     private String end;
 
-    /** sub算子截取开始类型 */
+    /**
+     * sub算子截取开始类型
+     */
     private String startType;
 
-    /** sub算子截取结束类型 */
+    /**
+     * sub算子截取结束类型
+     */
     private String endType;
 
-    /** 适用于filter和sub以外算子 */
+    /**
+     * 适用于filter和sub以外算子
+     */
     private String paramter;
 
-    /** replace算子替换字段 */
+    /**
+     * replace算子替换字段
+     */
     private String operate;
 
-    /** 表示规则类型是字符串、正则表达式或索引*/
+    /**
+     * 表示规则类型是字符串、正则表达式或索引
+     */
     private String ruleType;
 
-    /** 表示keyFilter算子中的key*/
+    /**
+     * 表示keyFilter算子中的key
+     */
     private String filterKey;
 
     public List<Integer> getScope() {
@@ -114,6 +135,7 @@ public class ParseResult implements Serializable {
     public void setParamter(String paramter) {
         this.paramter = paramter;
     }
+
     public String getOperate() {
         return operate;
     }

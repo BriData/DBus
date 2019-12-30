@@ -19,7 +19,8 @@ import {
   DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID,
   DATA_SOURCE_GET_SCHEMA_TABLE_LIST,
   DATA_SOURCE_CLEAN_SCHEMA_TABLE,
-  DATA_SOURCE_CLEAR_FULLPULL_ALARM
+  DATA_SOURCE_CLEAR_FULLPULL_ALARM,
+  OGG_CANAL_CONF_GET_BY_DS_NAME
 } from './types'
 
 // 设置项目基本信息
@@ -113,4 +114,11 @@ export function cleanSchemaTable () {
   return {
     type: DATA_SOURCE_CLEAN_SCHEMA_TABLE,
   }
+}
+
+// oggCanalConf查询
+export const getOggCanalConfByDsName = {
+  request: params => createAction(OGG_CANAL_CONF_GET_BY_DS_NAME.LOAD, { ...params }),
+  success: data => createAction(OGG_CANAL_CONF_GET_BY_DS_NAME.SUCCESS, { ...data }),
+  fail: error => createAction(OGG_CANAL_CONF_GET_BY_DS_NAME.FAIL, { ...error })
 }

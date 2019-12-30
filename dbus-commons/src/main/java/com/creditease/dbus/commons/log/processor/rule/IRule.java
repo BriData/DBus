@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.rule;
 
 import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
@@ -27,6 +28,6 @@ import java.util.List;
 
 public interface IRule {
 
-    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception;
+    List<List<String>> transform(List<List<String>> datas, List<RuleGrammar> grammar, Rules ruleType) throws Exception;
 
 }

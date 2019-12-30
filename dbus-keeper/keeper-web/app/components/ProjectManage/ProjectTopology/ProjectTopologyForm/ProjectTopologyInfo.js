@@ -3,18 +3,18 @@
  * @description  基本信息设置
  */
 
-import React, { PropTypes, Component } from 'react'
-import { message, Form, Input, Select } from 'antd'
+import React, {PropTypes, Component} from 'react'
+import {message, Form, Input, Select} from 'antd'
 import Request from '@/app/utils/request'
-import { FormattedMessage } from 'react-intl'
-import { intlMessage } from '@/app/i18n'
+import {FormattedMessage} from 'react-intl'
+import {intlMessage} from '@/app/i18n'
 import styles from '../res/styles/index.less'
 // 导入API
-import { IS_TOPOLOGY_TOPONAME_TRUE_API } from '@/app/containers/ProjectManage/api'
+import {IS_TOPOLOGY_TOPONAME_TRUE_API} from '@/app/containers/ProjectManage/api'
 
 const FormItem = Form.Item
 const Option = Select.Option
-@Form.create({ warppedComponentRef: true })
+@Form.create({warppedComponentRef: true})
 export default class ProjectTopologyInfo extends Component {
   constructor (props) {
     super(props)
@@ -38,22 +38,24 @@ export default class ProjectTopologyInfo extends Component {
       }
     }
     this.formItemLayout = {
-      labelCol: { span: 3 },
-      wrapperCol: { span: 19 }
+      labelCol: {span: 3},
+      wrapperCol: {span: 19}
     }
   }
+
   componentWillMount = () => {
-    const { topologyInfo, onGetJarVersions } = this.props
+    const {topologyInfo, onGetJarVersions} = this.props
     // 获取Jar版本信息
     onGetJarVersions({version: topologyInfo.jarVersion})
 
     const {modalStatus, getTopologyTemplateApi} = this.props
     if (modalStatus === 'create') {
       Request(getTopologyTemplateApi, {
-        method: 'get' })
+        method: 'get'
+      })
         .then(res => {
           if (res && res.status === 0) {
-            this.props.form.setFieldsValue({topoConfig:res.payload})
+            this.props.form.setFieldsValue({topoConfig: res.payload})
           } else {
             message.warn(res.message)
           }
@@ -64,15 +66,15 @@ export default class ProjectTopologyInfo extends Component {
             : message.error(error.message)
         })
     }
-  };
+  }
   /**
    * @description 获取Jar包列表
    */
   handleGetPackages = value => {
-    const { onGetJarPackages } = this.props
+    const {onGetJarPackages} = this.props
     // 获取jar包
-    onGetJarPackages({ version: value })
-  };
+    onGetJarPackages({version: value})
+  }
 
   /**
    * @description topoName blur 校验是否存在此TopoName
@@ -94,7 +96,7 @@ export default class ProjectTopologyInfo extends Component {
         console.error(error)
         this.handleValidateError('topoName', value, 'Topo名称校验不通过')
       })
-  };
+  }
   /**
    * @param  name [object String] 控件名称
    * @param  value [object String] 控件的值
@@ -102,14 +104,14 @@ export default class ProjectTopologyInfo extends Component {
    * @description 给控件添加错误信息
    */
   handleValidateError = (name, value, error) => {
-    const { setFields } = this.props.form
+    const {setFields} = this.props.form
     setFields({
       [name]: {
         value: value,
         errors: [new Error(`${error}`)]
       }
     })
-  };
+  }
   /**
    * @deprecated input placeholder
    */
@@ -117,13 +119,15 @@ export default class ProjectTopologyInfo extends Component {
     fun({
       id: 'app.components.input.placeholder',
       valus: {
-        name: fun({ id })
+        name: fun({id})
       }
-    });
+    })
+
   render () {
-    const {initialTopoNameText, initialTopoNamePrefix} = this.props
-    const { getFieldDecorator } = this.props.form
-    const { topologyInfo, modalStatus, packages, versions } = this.props
+    const {initialTopoNameText, initialTopoNamePrefix, initialAliasText, initialAliasPrefix} = this.props
+    console.log(initialTopoNameText, initialTopoNamePrefix, initialAliasText, initialAliasPrefix)
+    const {getFieldDecorator} = this.props.form
+    const {topologyInfo, modalStatus, packages, versions} = this.props
     const localeMessage = intlMessage(this.props.locale, this.formMessage)
     const placeholder = this.handlePlaceholder(localeMessage)
     const topology = modalStatus === 'modify' ? topologyInfo : {}
@@ -131,7 +135,7 @@ export default class ProjectTopologyInfo extends Component {
     const packagesMap = Object.values(packages.result)
     return (
       <Form autoComplete="off" layout="horizontal">
-        <FormItem label={<FormattedMessage id="app.common.topo" defaultMessage="拓扑" />} {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.common.topo" defaultMessage="拓扑"/>} {...this.formItemLayout}>
           {getFieldDecorator('topoName', {
             initialValue: initialTopoNameText,
             rules: [
@@ -154,13 +158,36 @@ export default class ProjectTopologyInfo extends Component {
             />
           )}
         </FormItem>
+        <FormItem label={<FormattedMessage id="app.common.alias" defaultMessage="拓扑别名"/>} {...this.formItemLayout}>
+          {getFieldDecorator('alias', {
+            initialValue: initialAliasText,
+            rules: [
+              {
+                required: true,
+                message: '仅支持字母、数字、下划线'
+              },
+              {
+                pattern: /^[a-zA-Z0-9_]+$/,
+                message: '仅支持字母、数字、下划线'
+              }
+            ]
+          })(
+            <Input
+              type="text"
+              addonBefore={initialAliasPrefix}
+              placeholder={'别名仅支持字母、数字、下划线'}
+            />
+          )}
+        </FormItem>
         {/* topoName,topoName,jarVersion,jarFilePath,status,topoComment,projectId */}
-        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.config" defaultMessage="配置项" />} {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.config"
+                                           defaultMessage="配置项"/>} {...this.formItemLayout}>
           {getFieldDecorator('topoConfig', {
             initialValue: (topology && topology.topoConfig) || ''
-          })(<Input type="textarea" wrap='off' autosize={{minRows: 2, maxRows: 5}} placeholder={'请输入配置项'} />)}
+          })(<Input type="textarea" wrap='off' autosize={{minRows: 2, maxRows: 5}} placeholder={'请输入配置项'}/>)}
         </FormItem>
-        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.jarVersion" defaultMessage="Jar版本" />} {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.jarVersion"
+                                           defaultMessage="Jar版本"/>} {...this.formItemLayout}>
           {getFieldDecorator('jarVersion', {
             initialValue: topology && topology.jarVersion || versionsMap[0] || '暂无数据可选'
           })(
@@ -177,7 +204,8 @@ export default class ProjectTopologyInfo extends Component {
             </Select>
           )}
         </FormItem>
-        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.jarName" defaultMessage="Jar包" />} {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.jarName"
+                                           defaultMessage="Jar包"/>} {...this.formItemLayout}>
           {getFieldDecorator('jarFilePath', {
             initialValue: topology && topology.jarFilePath || packagesMap[0] || '暂无数据可选'
           })(
@@ -198,10 +226,10 @@ export default class ProjectTopologyInfo extends Component {
             </Select>
           )}
         </FormItem>
-        <FormItem label={<FormattedMessage id="app.common.user.backup" defaultMessage="备注" />} {...this.formItemLayout}>
+        <FormItem label={<FormattedMessage id="app.common.user.backup" defaultMessage="备注"/>} {...this.formItemLayout}>
           {getFieldDecorator('topoComment', {
             initialValue: (topology && topology.topoComment) || ''
-          })(<Input type="textarea" rows="2" placeholder={'请输入备注信息'} />)}
+          })(<Input type="textarea" rows="2" placeholder={'请输入备注信息'}/>)}
         </FormItem>
       </Form>
     )

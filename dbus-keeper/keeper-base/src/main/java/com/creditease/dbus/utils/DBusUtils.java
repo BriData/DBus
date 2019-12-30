@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.utils;
 
@@ -35,11 +36,13 @@ public class DBusUtils {
     public static String md5(String oriStr) {
         return md5(oriStr, "");
     }
+
     public static String md5(String oriStr, String salt) {
         return Hashing.md5()
                 .hashString(oriStr + salt, Charset.forName("utf-8"))
                 .toString();
     }
+
     public static <T> T map2bean(Map<String, Object> map, Class<T> clazz) {
         try {
             T t = clazz.newInstance();
@@ -63,6 +66,7 @@ public class DBusUtils {
 
     /**
      * 将驼峰格式的输入转换为下划线方式
+     *
      * @param input
      * @return
      */

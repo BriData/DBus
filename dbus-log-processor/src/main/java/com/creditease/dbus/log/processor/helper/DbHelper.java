@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.log.processor.helper;
 
 import com.creditease.dbus.commons.log.processor.rule.impl.Rules;
@@ -26,12 +27,14 @@ import com.creditease.dbus.log.processor.dao.impl.ProcessorLogDao;
 import com.creditease.dbus.log.processor.util.Constants;
 import com.creditease.dbus.log.processor.vo.DBusDataSource;
 import com.creditease.dbus.log.processor.vo.RuleInfo;
-
-import java.util.*;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DbHelper {
 
@@ -53,7 +56,7 @@ public class DbHelper {
         for (RuleInfo ri : ruleInfos) {
             if (!ruleTableInfo.containsKey(ri.getTableId())) {
                 // 当groupId等于-1时，表示只有table没有配置规则
-                if(ri.getGroupId() != -1 && ri.getOrderId() != -1) {
+                if (ri.getGroupId() != -1 && ri.getOrderId() != -1) {
                     Map<Long, List<RuleInfo>> ruleGroupInfo = new TreeMap<>();
                     List<RuleInfo> rules = new ArrayList<>();
                     rules.add(ri);

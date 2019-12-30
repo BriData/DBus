@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,11 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.Lists;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
@@ -42,6 +37,12 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 public class ZkService implements IZkService {
     // 0.4.0 秘钥
     private static final String auth = "DBus:CHEOi@TSeyLfSact";
@@ -54,10 +55,10 @@ public class ZkService implements IZkService {
     private HashMap<String, Long> cache;
 
 
-
     /**
      * 创建ZK连接
-     * @param connectString  ZK服务器地址列表
+     *
+     * @param connectString ZK服务器地址列表
      */
     public ZkService(String connectString) throws Exception {
         this(connectString, 30000);
@@ -65,8 +66,9 @@ public class ZkService implements IZkService {
 
     /**
      * 创建ZK连接
+     *
      * @param connectString  ZK服务器地址列表
-     * @param sessionTimeout   Session超时时间
+     * @param sessionTimeout Session超时时间
      */
     public ZkService(String connectString, int sessionTimeout) throws Exception {
         CuratorFrameworkFactory.Builder builder;
@@ -79,7 +81,7 @@ public class ZkService implements IZkService {
 
         client = builder.build();
         client.start();
-        if(!client.blockUntilConnected(20, TimeUnit.SECONDS)) {
+        if (!client.blockUntilConnected(20, TimeUnit.SECONDS)) {
             throw new Exception("zookeeper connected failed!");
         }
 
@@ -89,6 +91,7 @@ public class ZkService implements IZkService {
 
     /**
      * 获得节点状态值
+     *
      * @param path
      * @return
      * @throws Exception
@@ -101,6 +104,7 @@ public class ZkService implements IZkService {
 
     /**
      * 获得节点ACL信息
+     *
      * @param path
      * @return
      * @throws Exception
@@ -110,14 +114,15 @@ public class ZkService implements IZkService {
         ACL acl = client.getACL().forPath(path).get(0);
         Id id = acl.getId();
         HashMap<String, Object> map = new HashMap<>();
-        map.put("perms",acl.getPerms());
-        map.put("id",id.getId());
-        map.put("scheme",id.getScheme());
+        map.put("perms", acl.getPerms());
+        map.put("id", id.getId());
+        map.put("scheme", id.getScheme());
         return map;
     }
 
     /**
      * 获得节点的version号，如果节点不存在，返回 -1
+     *
      * @param path
      * @return
      * @throws Exception
@@ -134,6 +139,7 @@ public class ZkService implements IZkService {
 
     /**
      * 节点是否存在
+     *
      * @param path 节点path
      */
     @Override
@@ -148,21 +154,23 @@ public class ZkService implements IZkService {
 
 
     /**
-     *  创建节点
-     * @param path 节点path
+     * 创建节点
+     *
+     * @param path    节点path
      * @param payload 初始数据内容
      * @return
      */
     @Override
     public void createNode(String path, byte[] payload) throws Exception {
         client.create().creatingParentsIfNeeded().forPath(path, payload);
-        logger.info("节点创建成功, Path: " + path );
+        logger.info("节点创建成功, Path: " + path);
     }
 
 
     /**
      * createNodeWithACL
      * Create a node under ACL mode
+     *
      * @param path
      * @param payload
      * @throws Exception
@@ -180,32 +188,35 @@ public class ZkService implements IZkService {
 
     /**
      * 删除指定节点
+     *
      * @param path 节点path
      */
     @Override
     public void deleteNode(String path) throws Exception {
         client.delete().forPath(path);
-        logger.info("节点删除成功, Path: " + path );
+        logger.info("节点删除成功, Path: " + path);
     }
 
     /**
      * 删除指定节点
+     *
      * @param path 节点path
      */
     @Override
     public void rmr(String path) throws Exception {
         client.delete().deletingChildrenIfNeeded().forPath(path);
-        logger.info("节点删除成功, Path: " + path );
+        logger.info("节点删除成功, Path: " + path);
     }
 
     /**
      * 读取指定节点数据内容
+     *
      * @param path 节点path
      * @return
      */
     @Override
     public byte[] getData(String path) throws Exception {
-        byte[] data =  client.getData().forPath(path);
+        byte[] data = client.getData().forPath(path);
         //logger.info("获取数据成功，path：" + path );
         return data;
     }
@@ -213,8 +224,9 @@ public class ZkService implements IZkService {
 
     /**
      * 更新指定节点数据内容
-     * @param path 节点path
-     * @param payload  数据内容
+     *
+     * @param path    节点path
+     * @param payload 数据内容
      * @return
      */
     @Override
@@ -224,15 +236,16 @@ public class ZkService implements IZkService {
             //logger.info("设置数据成功，path：" + path );
             return true;
         } else {
-            logger.error("设置数据失败，path：" + path );
+            logger.error("设置数据失败，path：" + path);
             return false;
         }
     }
 
     /**
      * CAS更新指定节点数据内容
-     * @param path  节点path
-     * @param payload  数据内容
+     *
+     * @param path    节点path
+     * @param payload 数据内容
      * @param version 版本号
      * @return
      * @throws Exception
@@ -240,7 +253,7 @@ public class ZkService implements IZkService {
     @Override
     public int setDataWithVersion(String path, byte[] payload, int version) throws Exception {
         try {
-            Stat stat = null;
+            Stat stat;
             if (version != -1) {
                 stat = client.setData().withVersion(version).forPath(path, payload);
             } else {
@@ -257,12 +270,12 @@ public class ZkService implements IZkService {
             logger.error("CAS设置数据失败，path : {},error msg : {}", path, ex.getMessage());
             return -1;
         }
-
     }
 
     /**
      * 获得properties
-     * @param path  节点path
+     *
+     * @param path 节点path
      */
     @Override
     public Properties getProperties(String path) throws Exception {
@@ -274,6 +287,7 @@ public class ZkService implements IZkService {
 
     /**
      * 设置properties
+     *
      * @param path  节点path
      * @param props properties
      */
@@ -290,6 +304,7 @@ public class ZkService implements IZkService {
 
     /**
      * 获得下一个值
+     *
      * @param dbName
      * @param schemaName
      * @param tableName
@@ -298,22 +313,23 @@ public class ZkService implements IZkService {
      * @throws Exception
      */
     @Override
-    public long nextValue(String dbName, String schemaName, String tableName, String version) throws Exception  {
+    public long nextValue(String dbName, String schemaName, String tableName, String version) throws Exception {
         String nameSpace = String.format("%s.%s.%s.%s", dbName, schemaName, tableName, version);
         return nextValue(nameSpace);
     }
 
     /**
      * 获得下一个值
+     *
      * @param nameSpace
      * @return
      * @throws Exception
      */
     @Override
-    public long nextValue(String nameSpace) throws Exception  {
+    public long nextValue(String nameSpace) throws Exception {
         nameSpace = nameSpace.toUpperCase();
 
-        String [] arr = nameSpace.split("\\.");
+        String[] arr = nameSpace.split("\\.");
         if (arr.length != 4) {
             throw new IllegalArgumentException("格式错误！正确格式为: db.schema.table.version ");
         }
@@ -339,18 +355,18 @@ public class ZkService implements IZkService {
 
     /**
      * 只保存一个version的数据在map中和zk中
+     *
      * @param nameSpace
      */
-    private void updateCache(String nameSpace, long value) throws Exception{
+    private void updateCache(String nameSpace, long value) throws Exception {
         String[] arr = nameSpace.split("\\.");
         String table = String.format("%s.%s.%s", arr[0], arr[1], arr[2]);
         String version = arr[3];
         String oldVersion = tableVersions.get(table);
-        if(oldVersion == null) {
+        if (oldVersion == null) {
             tableVersions.put(table, version);
-        }
-        else {
-            if ( !oldVersion.equals(version)) {
+        } else {
+            if (!oldVersion.equals(version)) {
                 String oldNameSpace = table + "." + oldVersion;
                 cache.remove(oldNameSpace);
 
@@ -358,8 +374,8 @@ public class ZkService implements IZkService {
                 String path = Constants.NAMESPACE_ROOT + "/" + oldNameSpace.replace('.', '/');
                 try {
                     deleteNode(path);
-                }catch (Exception e) {
-                    logger.warn("Failed to delete zk node:"+path+"! Please confirm it exists.");
+                } catch (Exception e) {
+                    logger.warn("Failed to delete zk node:" + path + "! Please confirm it exists.");
                 }
                 tableVersions.put(table, version);
             }
@@ -370,6 +386,7 @@ public class ZkService implements IZkService {
 
     /**
      * 使用DistributedAtomicLong 在zk上创建节点或读取节点数据，数据为long值。
+     *
      * @param path
      * @return
      * @throws Exception
@@ -390,6 +407,7 @@ public class ZkService implements IZkService {
 
     /**
      * 获得当前值
+     *
      * @param dbName
      * @param schemaName
      * @param tableName
@@ -398,13 +416,14 @@ public class ZkService implements IZkService {
      * @throws Exception
      */
     @Override
-    public long currentValue(String dbName, String schemaName, String tableName, String version) throws Exception  {
+    public long currentValue(String dbName, String schemaName, String tableName, String version) throws Exception {
         String nameSpace = String.format("%s.%s.%s.%s", dbName, schemaName, tableName, version);
         return currentValue(nameSpace);
     }
 
     /**
      * 获得当前值
+     *
      * @param nameSpace
      * @return
      * @throws Exception
@@ -412,7 +431,7 @@ public class ZkService implements IZkService {
     @Override
     public long currentValue(String nameSpace) throws Exception {
         nameSpace = nameSpace.toUpperCase();
-        String [] arr = nameSpace.split("\\.");
+        String[] arr = nameSpace.split("\\.");
         if (arr.length != 4) {
             throw new IllegalArgumentException("格式错误！正确格式为: db.schema.table.version ");
         }
@@ -430,11 +449,12 @@ public class ZkService implements IZkService {
 
     /**
      * 获得ZK中的当前值,如果不存在，抛出异常
+     *
      * @param path
      * @return
      * @throws Exception
      */
-    private long currentValueFromZk (String path) throws Exception {
+    private long currentValueFromZk(String path) throws Exception {
         if (isExists(path)) {
             DistributedAtomicLong count = new DistributedAtomicLong(client, path, new RetryNTimes(10, 1000));
             AtomicValue<Long> val = count.get();
@@ -446,23 +466,26 @@ public class ZkService implements IZkService {
 
     /**
      * 获得当前值
+     *
      * @param path
      * @return
      * @throws Exception
      */
     @Override
     public List<String> getChildren(String path) throws Exception {
+        path = StringUtils.replaceAll(path, "//", "/");
         return client.getChildren().forPath(path);
     }
 
     /**
      * 获得分布式自增变量
+     *
      * @param path
      * @return
      * @throws Exception
      */
     public Long getIncrementValue(String path) throws Exception {
-        DistributedAtomicLong atomicId = new DistributedAtomicLong(client, path, new RetryNTimes(32,1000));
+        DistributedAtomicLong atomicId = new DistributedAtomicLong(client, path, new RetryNTimes(32, 1000));
         AtomicValue<Long> rc = atomicId.get();
         if (rc.succeeded()) {
             logger.debug("getIncrementValue({}) success! get: {}.", path, rc.postValue());
@@ -474,12 +497,13 @@ public class ZkService implements IZkService {
 
     /**
      * 自增并获得，自增后的变量
+     *
      * @param path
      * @return
      * @throws Exception
      */
     public Long incrementAndGetValue(String path) throws Exception {
-        DistributedAtomicLong atomicId = new DistributedAtomicLong(client, path, new RetryNTimes(32,1000));
+        DistributedAtomicLong atomicId = new DistributedAtomicLong(client, path, new RetryNTimes(32, 1000));
         AtomicValue<Long> rc = atomicId.increment();
         if (rc.succeeded()) {
             logger.info("incrementAndGetValue({}) success! before: {}, after: {}.", path, rc.preValue(), rc.postValue());
@@ -533,23 +557,22 @@ public class ZkService implements IZkService {
         }
         byte[] data = zkService.getData(newNode);
         System.out.println("GetData before setting:");
-        System.out.println (new String(data,"UTF-8"));
+        System.out.println(new String(data, "UTF-8"));
 
         zkService.setData(newNode, "Modified data".getBytes());
 
 
         data = zkService.getData(newNode);
         System.out.println("GetData after setting:");
-        System.out.println (new String(data,"UTF-8"));
+        System.out.println(new String(data, "UTF-8"));
 
 
         Properties props = PropertiesUtils.getProps("consumer.properties");
         zkService.setProperties(newNode, props);
 
         Properties props2 = zkService.getProperties(newNode);
-        for (Object obj : props2.keySet() )
-        {
-            String valueFor=(String)props2.get(obj);
+        for (Object obj : props2.keySet()) {
+            String valueFor = (String) props2.get(obj);
 
             System.out.println(obj + "=" + valueFor);
         }
@@ -564,7 +587,6 @@ public class ZkService implements IZkService {
         zkService.nextValue("db1.schema1.table1.v2");
         long val3 = zkService.currentValue("db1.schema1.table1.v1");
         System.out.printf("val3=%d\n", val3);
-
 
 
         zkService.close();

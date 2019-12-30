@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.spout.cmds;
 
 import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;

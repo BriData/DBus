@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.msgencoder;
 
@@ -47,7 +48,7 @@ public class ExternalEncoders {
     private static Logger logger = LoggerFactory.getLogger(ExternalEncoders.class);
     private static final Map<String, Class<ExtEncodeStrategy>> map = new HashMap<>();
     //private static final Map<String, Class<ExtEncodeStrategy>> map2 = new HashMap<>();
-    private static  ZkService zkService;
+    private static ZkService zkService;
 
 //    static {
 //        map.putAll(scan());
@@ -77,13 +78,13 @@ public class ExternalEncoders {
             builtInEncry.append(type.name().toLowerCase() + ",");
         }
         int lastIndex = builtInEncry.lastIndexOf(",");
-        String builtInEncryStr = builtInEncry.substring(0,lastIndex) + "\n";
+        String builtInEncryStr = builtInEncry.substring(0, lastIndex) + "\n";
 
         //扫描classpath，检测第三方加密类型
         ExternalEncoders.setMap();
         StringBuilder external = new StringBuilder();
         Map<String, Class<ExtEncodeStrategy>> extMap = ExternalEncoders.get();
-        for(Map.Entry<String, Class<ExtEncodeStrategy>> entry : extMap.entrySet()) {
+        for (Map.Entry<String, Class<ExtEncodeStrategy>> entry : extMap.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue().getName();
             external.append(value + "=" + key + "\n");
@@ -92,10 +93,10 @@ public class ExternalEncoders {
         String encoderTypeStr = builtInEncryStr + external.toString();
         //写zookeeper
         try {
-            if(zkService.isExists(path)) {
+            if (zkService.isExists(path)) {
                 zkService.setData(path, encoderTypeStr.getBytes());
             } else {
-                zkService.createNode(path,encoderTypeStr.getBytes());
+                zkService.createNode(path, encoderTypeStr.getBytes());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -105,7 +106,7 @@ public class ExternalEncoders {
     //其他线程从zk节点中读取脱敏类型，将第三方脱敏类型写入map
     public static void getEncoderTypeFromZk(String path) {
         try {
-            if(zkService.isExists(path)) {
+            if (zkService.isExists(path)) {
                 byte[] encoderTypes = zkService.getData(path);
                 Properties properties = new Properties();
                 InputStream is = new ByteArrayInputStream(encoderTypes);
@@ -114,9 +115,9 @@ public class ExternalEncoders {
                 for (String key : properties.stringPropertyNames()) {
                     //对于第三方脱敏类型，利用反射机制获取class，并将其加入map中
                     type = properties.getProperty(key);
-                    if(!StringUtils.equals(key,"BuiltInEncodeType")) {
-                        Class<?> clazz =  Class.forName(key);
-                        map.put(type, (Class<ExtEncodeStrategy>)clazz);
+                    if (!StringUtils.equals(key, "BuiltInEncodeType")) {
+                        Class<?> clazz = Class.forName(key);
+                        map.put(type, (Class<ExtEncodeStrategy>) clazz);
                     }
                     logger.info("key: " + key + "  value: " + type);
                 }
@@ -137,15 +138,10 @@ public class ExternalEncoders {
             if (map.containsKey(type)) {
                 throw new RuntimeException("encoder type[" + encoder.type() + "] exists.");
             }
-            map.put(type, (Class<ExtEncodeStrategy>)clazz);
+            map.put(type, (Class<ExtEncodeStrategy>) clazz);
         }
         return map;
     }
-
-
-
-
-
 
 
     public static void main(String[] args) {

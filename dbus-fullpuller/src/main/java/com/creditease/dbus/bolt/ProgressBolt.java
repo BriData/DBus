@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,21 @@
  * >>
  */
 
+
 package com.creditease.dbus.bolt;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
+import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.common.FullPullConstants;
+import com.creditease.dbus.common.bean.ProgressInfo;
+import com.creditease.dbus.common.bean.ProgressInfoParam;
+import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.commons.ZkService;
+import com.creditease.dbus.commons.exception.InitializationException;
+import com.creditease.dbus.helper.FullPullHelper;
+import com.creditease.dbus.utils.TimeUtils;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -33,227 +42,199 @@ import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
-import com.creditease.dbus.common.DataPullConstants;
-import com.creditease.dbus.common.FullPullHelper;
-import com.creditease.dbus.common.ProgressInfo;
-import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.Constants.ZkTopoConfForFullPull;
-import com.creditease.dbus.commons.ZkService;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Future;
 
 
 /**
  * 此bolt只能启一个
  */
 public class ProgressBolt extends BaseRichBolt {
-    private Logger LOG = LoggerFactory.getLogger(getClass());
+    private static final long serialVersionUID = -464903510457397266L;
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final String zkTopoRoot = Constants.TOPOLOGY_ROOT + "/" + Constants.FULL_PULLING_PROPS_ROOT;
+    private final String zkTopoRoot = FullPullConstants.TOPOLOGY_ROOT + "/" + FullPullConstants.FULL_PULLING_PROPS_ROOT;
 
     private OutputCollector collector;
     private String zkConnect;
     private String topologyId;
-    private boolean initialized = false;
-    //是否是独立拉全量
-    private boolean isGlobal;
-    private String zkMonitorRootNodePath;
     private String dsName;
-    ZkService zkService = null;
-    private Map<String,ProgressInfo> progressInfoMap = new HashMap<String,ProgressInfo>();
-    private Map confMap;
     private Properties commonProps;
+    private Producer byteProducer;
+    ZkService zkService = null;
+    //private Map<String, ProgressInfo> progressInfoMap = new HashMap<>();
+    private Map confMap;
+    private long lastReloadTime;
 
+    @Override
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
+        this.zkConnect = (String) conf.get(FullPullConstants.ZKCONNECT);
+        this.topologyId = (String) conf.get(FullPullConstants.FULL_PULLER_TOPOLOGY_ID);
+        this.dsName = (String) conf.get(FullPullConstants.DS_NAME);
 
-        this.zkConnect = (String) conf.get(Constants.StormConfigKey.ZKCONNECT);
-        this.topologyId = (String) conf.get(Constants.StormConfigKey.FULL_PULLER_TOPOLOGY_ID);
-
-        this.isGlobal = this.topologyId.toLowerCase().indexOf(ZkTopoConfForFullPull.GLOBAL_FULLPULLER_TOPO_PREFIX) != -1 ? true : false;
-        if (this.isGlobal) {
-            this.zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT_GLOBAL;
-        } else {
-            this.zkMonitorRootNodePath = Constants.FULL_PULL_MONITOR_ROOT;
-        }
-        //设置topo类型，用于获取配置信息路径
-        FullPullHelper.setTopologyType(Constants.FULL_PULLER_TYPE);
-
-        loadRunningConf(null);
-    }
-
-    public void execute(Tuple input) {
-        String dsKey = null;
-        String dataSourceInfo = null;
-        String progressInfoNodePath = null;
         try {
-            JSONObject jsonObj = (JSONObject) input.getValueByField("progressInfo");
-            dataSourceInfo = jsonObj.getString(DataPullConstants.DATA_SOURCE_INFO);
-            String cmdType = ((JSONObject)JSONObject.parse(dataSourceInfo)).getString("type");
-            if(null == cmdType) {
-                LOG.error("the type of request is null on PagedBatchDataFetchingBolt!");
-                collector.fail(input);
-                return;
-
-            } else if (cmdType.equals(DataPullConstants.COMMAND_FULL_PULL_STOP)) {
-                LOG.error("Impossible to be here!!! the type of request is COMMAND_FULL_PULL_STOP on PagedBatchDataFetchingBolt!");
-                return;
-
-            } else if (cmdType.equals(DataPullConstants.COMMAND_FULL_PULL_RELOAD_CONF)) {
-                //处理reload事件
-                loadRunningConf(dataSourceInfo);
-                //command 不用ack, 不跟踪
-                return;
-            }
-
-            progressInfoNodePath = jsonObj.getString(DataPullConstants.DATA_MONITOR_ZK_PATH);
-            long dealRows = Long.parseLong(jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_ROWS));
-            long finishedCount = Long.parseLong(jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_FINISHED_COUNT));
-            String totalRows = jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_TOTAL_ROWS);
-            String startSecs = jsonObj.getString(DataPullConstants.ZkMonitoringJson.DB_NAMESPACE_NODE_START_SECS);
-            String totalPartitions = jsonObj.getString(DataPullConstants.DATA_CHUNK_COUNT);
-
-            dsKey = FullPullHelper.getDataSourceKey(JSONObject.parseObject(dataSourceInfo));
-            ProgressInfo objProgInfo = getProgressInfo(dsKey, progressInfoNodePath, totalRows, startSecs, totalPartitions);
-            setProgressInfo(dataSourceInfo, objProgInfo, dealRows, finishedCount);
-
-            if (isFinished(objProgInfo)) {
-                //如果取不到progress信息或者已经出现错误，跳过后来的tuple数据
-                ProgressInfo progressInfo = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
-                if (progressInfo.getErrorMsg() != null) {
-                    //如果出错的话，
-                    // 1 就不设置ending状态了, 写一下结束时间
-                    // 2 不发结束报告
-                    objProgInfo.setEndTime(FullPullHelper.getCurrentTimeStampString());
-                    FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
-                    JSONObject fullpullUpdateParams = new JSONObject();
-                    fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
-                    fullpullUpdateParams.put("status","abort");
-                    fullpullUpdateParams.put("end_time",FullPullHelper.getCurrentTimeStampString());
-                    fullpullUpdateParams.put("error_msg",progressInfo.getErrorMsg());
-                    FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
-                } else {
-                    //如果没有错误，就完成后续工作
-                    objProgInfo.setEndTime(FullPullHelper.getCurrentTimeStampString());
-                    objProgInfo.setStatus(Constants.FULL_PULL_STATUS_ENDING);
-                    FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
-                    FullPullHelper.finishPullReport(zkService, dataSourceInfo, objProgInfo.getEndTime(),
-                            Constants.DataTableStatus.DATA_STATUS_OK, null);
-                    FullPullHelper.updatePendingTasksTrackInfo(zkService, dsName, dataSourceInfo, DataPullConstants.FULLPULL_PENDING_TASKS_OP_REMOVE_WATCHING);
-
-                    // JSONObject fullpullUpdateParams = new JSONObject();
-                    // fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
-                    // fullpullUpdateParams.put("status","ok");
-                    // fullpullUpdateParams.put("end_time",FullPullHelper.getCurrentTimeStampString());
-                    // fullpullUpdateParams.put("error_msg","");
-                    // FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
-                    LOG.info("{}:此次全量拉取处理完成！", dsKey);
-                }
-                deleteProgressInfo(progressInfoNodePath);
-            } else {
-                FullPullHelper.updateMonitorFinishPartitionInfo(zkService, progressInfoNodePath, objProgInfo);
-            }
-            printProgressInfo(dsKey, objProgInfo);
-
-            collector.ack(input);
+            //设置topo类型，用于获取配置信息路径
+            FullPullHelper.setTopologyType(FullPullConstants.FULL_PULLER_TYPE);
+            loadRunningConf(null);
         } catch (Exception e) {
-            String errorMsg = dsKey + ":Exception happened when updating zookeeper split info: " + e.getMessage();
-            LOG.error(errorMsg, e);
-            FullPullHelper.finishPullReport(zkService, dataSourceInfo, FullPullHelper.getCurrentTimeStampString(),
-                    Constants.DataTableStatus.DATA_STATUS_ABORT, errorMsg);
-            deleteProgressInfo(progressInfoNodePath);
-            collector.fail(input);
+            logger.error(e.getMessage(), e);
+            throw new InitializationException();
         }
     }
 
-     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-         declarer.declare(new Fields("message"));
-     }
-
-    private ProgressInfo getProgressInfo(String dsKey, String progressInfoNodePath, String totalRows, String startSecs, String totalPartitions){
-        ProgressInfo progressObj = progressInfoMap.get(progressInfoNodePath);
-        if(progressObj == null) {
-            try {
-                progressObj = FullPullHelper.getMonitorInfoFromZk(zkService, progressInfoNodePath);
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                String errMsg = dsKey + "ProgressBolt get progress info from zk exception!";
-                LOG.error(errMsg, e);
-            }
-
-            if(startSecs != null && !startSecs.equals(progressObj.getStartSecs())) {
-                progressObj.setStartSecs(startSecs);
-            }
-            if(totalRows != null && !totalRows.equals(progressObj.getTotalRows())) {
-                progressObj.setTotalRows(totalRows);
-            }
-            if(totalPartitions != null && !totalPartitions.equals(progressObj.getTotalCount())) {
-                progressObj.setTotalCount(totalPartitions);
-            }
-            progressInfoMap.put(progressInfoNodePath, progressObj);
+    @Override
+    public void execute(Tuple input) {
+        JSONObject progressInfoJson = (JSONObject) input.getValueByField("progressInfo");
+        String reqString = progressInfoJson.getString(FullPullConstants.FULLPULL_REQ_PARAM);
+        JSONObject reqJson = JSONObject.parseObject(reqString);
+        String dataType = reqJson.getString(FullPullConstants.REQ_TYPE);
+        if (null == dataType) {
+            logger.error("the type of request is null on ProgressBolt!");
+            this.collector.fail(input);
+            return;
         }
-        return progressObj;
+        try {
+            if (dataType.equals(FullPullConstants.COMMAND_FULL_PULL_RELOAD_CONF)) {
+                logger.info("[progress bolt] receive config reloading request :{}", progressInfoJson);
+                //防止reload消息重复处理,10分钟内仅处理一次reload
+                if ((System.currentTimeMillis() - lastReloadTime) < 600000) {
+                    return;
+                }
+                destory();
+                loadRunningConf(reqString);
+                this.lastReloadTime = System.currentTimeMillis();
+                logger.info("[progress bolt] config for progress bolt is reloaded successfully!");
+            } else if (dataType.equals(FullPullConstants.COMMAND_FULL_PULL_FINISH_REQ)) {
+                return;
+            } else {
+                String progressInfoNodePath = null;
+                String dsKey = null;
+                try {
+                    progressInfoNodePath = progressInfoJson.getString(FullPullConstants.DATA_MONITOR_ZK_PATH);
+                    dsKey = FullPullHelper.getDataSourceKey(reqJson);
+                    long finishedRows = Long.parseLong(progressInfoJson.getString(FullPullConstants.DB_NAMESPACE_NODE_FINISHED_ROWS));
+                    long finishedCount = Long.parseLong(progressInfoJson.getString(FullPullConstants.DB_NAMESPACE_NODE_FINISHED_COUNT));
+                    ProgressInfo progressInfo = updateMonitorFinishPartitionInfo(reqString, progressInfoNodePath, finishedRows, finishedCount, dsKey);
+
+                    if (isFinished(progressInfo, reqJson)) {
+                        //如果取不到progress信息或者已经出现错误，跳过后来的tuple数据
+                        if (progressInfo.getErrorMsg() != null) {
+                            //如果出错的话，就不设置ending状态了, 写一下结束时间,不发结束报告
+                            ProgressInfoParam infoParam = new ProgressInfoParam();
+                            infoParam.setEndTime(TimeUtils.getCurrentTimeStampString());
+                            FullPullHelper.updateZkNodeInfoWithVersion(zkService, progressInfoNodePath, infoParam);
+                            FullPullHelper.finishPullReport(reqString, null, null);
+                            logger.info("[progress bolt] {}:此次全量拉取发生异常！{}", dsKey, progressInfo.getErrorMsg());
+                        } else {
+                            //如果没有错误，就完成后续工作
+                            ProgressInfoParam infoParam = new ProgressInfoParam();
+                            infoParam.setEndTime(TimeUtils.getCurrentTimeStampString());
+                            infoParam.setStatus(FullPullConstants.FULL_PULL_STATUS_ENDING);
+                            FullPullHelper.updateZkNodeInfoWithVersion(zkService, progressInfoNodePath, infoParam);
+                            FullPullHelper.finishPullReport(reqString, FullPullConstants.FULL_PULL_STATUS_ENDING, null);
+                            logger.info("[progress bolt] {}:此次全量拉取处理完成！", dsKey);
+                        }
+                        deleteProgressInfo(progressInfoNodePath);
+                        sendFinishMsgToSpout(reqJson);
+                    }
+                    this.collector.ack(input);
+                } catch (Exception e) {
+                    String errorMsg = dsKey + ":Exception happened when updating zookeeper split info: " + e.getMessage();
+                    logger.error(errorMsg, e);
+                    FullPullHelper.finishPullReport(reqString, null, errorMsg);
+                    deleteProgressInfo(progressInfoNodePath);
+                    this.collector.fail(input);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception happended on process bolt execute()", e);
+        }
     }
 
-    private void deleteProgressInfo(String progressInfoNodePath){
-        if (progressInfoNodePath != null) {
-            progressInfoMap.remove(progressInfoNodePath);
+    private void sendFinishMsgToSpout(JSONObject reqJson) throws Exception {
+        reqJson.put("type", FullPullConstants.COMMAND_FULL_PULL_FINISH_REQ);
+        JSONObject wrapperJson = new JSONObject();
+        wrapperJson.put(FullPullConstants.FULLPULL_REQ_PARAM, reqJson.toJSONString());
+        ProducerRecord record = new ProducerRecord<>(dsName + "_callback", FullPullConstants.COMMAND_FULL_PULL_FINISH_REQ, wrapperJson.toString().getBytes());
+        Future<RecordMetadata> future = byteProducer.send(record);
+        logger.info("send full pull finish msg to pull spout offset is {}", future.get().offset());
+    }
+
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+        declarer.declare(new Fields("message"));
+    }
+
+    private ProgressInfo getProgressInfo(String dsKey, String progressInfoNodePath) throws Exception {
+        return FullPullHelper.getMonitorInfoFromZk(this.zkService, progressInfoNodePath);
+        //ProgressInfo progressObj = progressInfoMap.get(progressInfoNodePath);
+        //if (progressObj == null || progressObj.getTotalCount() == null || progressObj.getTotalRows() == null) {
+        //    try {
+        //        progressObj = FullPullHelper.getMonitorInfoFromZk(this.zkService, progressInfoNodePath);
+        //    } catch (Exception e) {
+        //        String errMsg = dsKey + "ProgressBolt get progress info from zk exception!";
+        //        logger.error(errMsg, e);
+        //    }
+        //    this.progressInfoMap.put(progressInfoNodePath, progressObj);
+        //}
+        //return progressObj;
+    }
+
+    private void deleteProgressInfo(String progressInfoNodePath) {
+        //if (progressInfoNodePath != null) {
+        //    this.progressInfoMap.remove(progressInfoNodePath);
+        //}
+    }
+
+    private ProgressInfo updateMonitorFinishPartitionInfo(String reqString, String progressInfoNodePath, long finishedRows,
+                                                          long finishedCount, String dsKey) throws Exception {
+        ProgressInfoParam infoParam = new ProgressInfoParam();
+        infoParam.setFinishedRows(finishedRows);
+        infoParam.setFinishedCount(finishedCount);
+        infoParam.setStatus(FullPullConstants.FULL_PULL_STATUS_PULLING);
+        ProgressInfo progressInfo = FullPullHelper.updateZkNodeInfoWithVersion(zkService, progressInfoNodePath, infoParam);
+        FullPullHelper.updateStatusToFullPullHistoryTable(progressInfo, FullPullHelper.getSeqNo(reqString), null, null, null);
+        logger.info("[progress bolt] 更新处理进度信息: {}:总片数{}片，已完成{}片，总行数{}条，已完成{}条，耗时{}秒", dsKey,
+                progressInfo.getTotalCount(), progressInfo.getFinishedCount(), progressInfo.getTotalRows(), progressInfo.getFinishedRows(),
+                progressInfo.getConsumeSecs());
+        return progressInfo;
+    }
+
+    private boolean isFinished(ProgressInfo objProgInfo, JSONObject reqJson) throws Exception {
+        if (!Constants.FULL_PULL_STATUS_ENDING.equals(objProgInfo.getSplitStatus())) {
+            return false;
         }
-     }
+        long totalCount = Long.parseLong(objProgInfo.getTotalCount());
+        long finishedCount = Long.parseLong(objProgInfo.getFinishedCount());
+        if (finishedCount >= totalCount) {
+            return true;
+        }
+        return false;
+    }
 
-    private void setProgressInfo(String dataSourceInfo, ProgressInfo objProgInfo, long dealRows, long finishedCount) {
-        String currentTimeStampString = FullPullHelper.getCurrentTimeStampString();
-        long curSecs = System.currentTimeMillis() / 1000;
-        long startSecs = objProgInfo.getStartSecs() == null ? curSecs : Long.parseLong(objProgInfo.getStartSecs());
-        long consumeSecs = curSecs - startSecs;
-        long curDealRows = objProgInfo.getFinishedRows() == null ? dealRows : (dealRows + Long.parseLong(objProgInfo.getFinishedRows()));
-        long curFinishedCount = objProgInfo.getFinishedCount() == null ? finishedCount : (Long.parseLong(objProgInfo.getFinishedCount()) + finishedCount);
-        objProgInfo.setUpdateTime(currentTimeStampString);
-        objProgInfo.setFinishedRows(String.valueOf(curDealRows));
-        objProgInfo.setFinishedCount(String.valueOf(curFinishedCount));
-        objProgInfo.setConsumeSecs(String.valueOf(consumeSecs) + "s");
-
-        //更新分片完成百分比
-        JSONObject fullpullUpdateParams = new JSONObject();
-        fullpullUpdateParams.put("dataSourceInfo",dataSourceInfo);
-        fullpullUpdateParams.put("finished_partition_count",curFinishedCount);
-        fullpullUpdateParams.put("finished_row_count",curDealRows);
-        FullPullHelper.writeStatusToDbManager(fullpullUpdateParams);
-     }
-
-     private boolean isFinished(ProgressInfo objProgInfo) {
-         long totalCount = Long.parseLong(objProgInfo.getTotalCount());
-         long finishedCount = Long.parseLong(objProgInfo.getFinishedCount());
-         if(finishedCount >= totalCount) {
-             return true;
-         }
-         return false;
-     }
-
-     private void printProgressInfo(String dsKey, ProgressInfo objProgInfo) {
-         String totalRows = objProgInfo.getTotalRows();
-         String finishedRows = objProgInfo.getFinishedRows();
-         String totalCount = objProgInfo.getTotalCount();
-         String finishedCount = objProgInfo.getFinishedCount();
-         String consumeSecs = objProgInfo.getConsumeSecs();
-         LOG.info("更新处理进度信息: {}:总片数{}，已完成{}片，总行数{}，已完成{}行，耗时{}", dsKey, totalCount, finishedCount, totalRows, finishedRows, consumeSecs);
-     }
-
-
-
-    private void loadRunningConf(String reloadMsgJson) {
+    private void loadRunningConf(String reloadMsgJson) throws Exception {
         String notifyEvtName = reloadMsgJson == null ? "loaded" : "reloaded";
         try {
-            this.confMap = FullPullHelper.loadConfProps(zkConnect, topologyId, zkTopoRoot, null);
-            this.commonProps = (Properties) confMap.get(FullPullHelper.RUNNING_CONF_KEY_COMMON);
-            this.dsName = commonProps.getProperty(Constants.ZkTopoConfForFullPull.DATASOURCE_NAME);
-            this.zkService = (ZkService) confMap.get(FullPullHelper.RUNNING_CONF_KEY_ZK_SERVICE);
-
-            LOG.info("Running Config is " + notifyEvtName + " successfully for ProgressBolt!");
+            this.confMap = FullPullHelper.loadConfProps(this.zkConnect, this.topologyId, this.dsName, this.zkTopoRoot, "PullProcessBolt");
+            this.zkService = (ZkService) this.confMap.get(FullPullHelper.RUNNING_CONF_KEY_ZK_SERVICE);
+            this.commonProps = (Properties) this.confMap.get(FullPullHelper.RUNNING_CONF_KEY_COMMON);
+            this.byteProducer = (Producer) this.confMap.get(FullPullHelper.RUNNING_CONF_KEY_BYTE_PRODUCER);
+            logger.info("[progress bolt] Running Config is " + notifyEvtName + " successfully for ProgressBolt!");
         } catch (Exception e) {
-            LOG.error(notifyEvtName + "ing running configuration encountered Exception!", e);
+            logger.error(notifyEvtName + "ing running configuration encountered Exception!", e);
             throw e;
         } finally {
-            FullPullHelper.saveReloadStatus(reloadMsgJson, "pulling-progress-bolt", false, zkConnect);
+            FullPullHelper.saveReloadStatus(reloadMsgJson, "pulling-progress-bolt", false, this.zkConnect);
         }
+    }
+
+    private void destory() {
+        if (byteProducer != null) {
+            byteProducer.close();
+            byteProducer = null;
+        }
+        logger.info("close byteProducer");
     }
 }

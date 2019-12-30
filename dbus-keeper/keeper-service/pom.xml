@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dbus-keeper</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -58,7 +58,6 @@
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
         </dependency>
-
         <dependency>
             <groupId>commons-dbutils</groupId>
             <artifactId>commons-dbutils</artifactId>
@@ -74,31 +73,17 @@
             <artifactId>commons-net</artifactId>
             <version>3.6</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.7</version>
+        </dependency>
     </dependencies>
-    <profiles>
-        <!--<profile>
-            &lt;!&ndash; 测试环境 &ndash;&gt;
-            <id>test</id>
-            <properties>
-                <spring.cloud.config.profile>test</spring.cloud.config.profile>
-                <spring.cloud.config.label>master</spring.cloud.config.label>
-                <spring.cloud.config.uri>http://localhost:19001</spring.cloud.config.uri>
-            </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-
-        </profile>-->
-        <profile>
-            <!-- 生产环境 -->
-            <id>pro</id>
-            <properties>
-                <spring.cloud.config.profile>pro</spring.cloud.config.profile>
-                <spring.cloud.config.label>master</spring.cloud.config.label>
-                <spring.cloud.config.uri>http://gantry.config.creditease.corp</spring.cloud.config.uri>
-            </properties>
-        </profile>
-    </profiles>
 
     <build>
         <resources>
@@ -123,6 +108,11 @@
                 </configuration>
                 <dependencies>
                     <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>5.1.44</version>
+                    </dependency>
                 </dependencies>
             </plugin>
 

@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,17 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.router.spout;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+package com.creditease.dbus.router.spout;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -39,7 +30,8 @@ import com.creditease.dbus.router.base.DBusRouterBase;
 import com.creditease.dbus.router.bean.MonitorSpoutConfig;
 import com.creditease.dbus.router.bean.Packet;
 import com.creditease.dbus.router.bean.Sink;
-
+import com.creditease.dbus.router.cache.Cache;
+import com.creditease.dbus.router.cache.impl.PerpetualCache;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -54,6 +46,9 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichSpout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.Charset;
+import java.util.*;
 
 /**
  * Created by mal on 2018/7/09.
@@ -73,6 +68,8 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
     private Long baseFlushTime = 0L;
     private Long baseCommitTime = 0L;
 
+    private Cache aliasMappingCache = null;
+
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         try {
@@ -80,6 +77,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
             this.inner = new DBusRouterMonitorSpoutInner(conf);
             this.baseFlushTime = System.currentTimeMillis();
             this.baseCommitTime = System.currentTimeMillis();
+            this.aliasMappingCache = new PerpetualCache("monitor_cache");
             init();
             logger.info("monitor spout init completed.");
         } catch (Exception e) {
@@ -121,7 +119,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
             }
             if (isCtrl && !isReload)
                 urls = new HashSet<>(consumerMap.keySet());
-        }  catch (Exception e) {
+        } catch (Exception e) {
             logger.error("monitor spout next tuple error.", e);
         }
     }
@@ -181,6 +179,11 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
             isTableOK = false;
             logger.error("it should not be here. key:{}", key);
         }
+
+        if (StringUtils.isNotBlank((String) aliasMappingCache.getObject(dsName))) {
+            dsName = (String) aliasMappingCache.getObject(dsName);
+        }
+
         String schemaName = vals[3];
         String tableName = vals[4];
 
@@ -203,6 +206,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
 
         if (isTimeUp(baseFlushTime)) {
             baseFlushTime = System.currentTimeMillis();
+            logger.info("router update zk stat :{}", baseFlushTime);
             flushCache();
         }
     }
@@ -295,9 +299,13 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
                 isReload = true;
                 break;
             case ROUTER_TOPOLOGY_TABLE_START:
+                aliasMappingCache.clear();
+                inner.dbHelper.loadAliasMapping(inner.topologyId, aliasMappingCache);
                 startTopologyTable(jsonCtrl);
                 break;
             case ROUTER_TOPOLOGY_TABLE_STOP:
+                aliasMappingCache.clear();
+                inner.dbHelper.loadAliasMapping(inner.topologyId, aliasMappingCache);
                 stopTopologyTable(jsonCtrl);
                 break;
             default:
@@ -310,7 +318,7 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
         destroy();
         inner.close(true);
         init();
-        inner.zkHelper.saveReloadStatus(ctrl, "DBusRouterMonitorSpout-" + context.getThisTaskId() , true);
+        inner.zkHelper.saveReloadStatus(ctrl, "DBusRouterMonitorSpout-" + context.getThisTaskId(), true);
         logger.info("monitor spout reload completed.");
     }
 
@@ -396,6 +404,10 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
     private void init() throws Exception {
         this.inner.init();
         this.monitorSpoutConfig.setSinks(inner.dbHelper.loadSinks(inner.topologyId));
+
+        aliasMappingCache.clear();
+        inner.dbHelper.loadAliasMapping(inner.topologyId, aliasMappingCache);
+
         initConsumer(false);
     }
 
@@ -403,6 +415,8 @@ public class DBusRouterMonitorSpout extends BaseRichSpout {
         Map<String, Set<String>> urlTopicsMap = new HashMap<>();
         List<Sink> sinks = monitorSpoutConfig.getSinks();
         Properties consumerConf = inner.zkHelper.loadKafkaConsumerConf();
+        if (StringUtils.equals(inner.zkHelper.getSecurityConf(), Constants.SECURITY_CONFIG_TRUE_VALUE))
+            consumerConf.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
 
         String bootstrapServers = consumerConf.getProperty("bootstrap.servers");
 

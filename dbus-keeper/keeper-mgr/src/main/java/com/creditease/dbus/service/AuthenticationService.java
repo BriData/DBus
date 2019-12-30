@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.base.ResultEntityBuilder;
 import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
-import com.creditease.dbus.base.com.creditease.dbus.utils.URLBuilder;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.User;
 import org.slf4j.Logger;
@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Created by zhangyf on 2018/3/12.

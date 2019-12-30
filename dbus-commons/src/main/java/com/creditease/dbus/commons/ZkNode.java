@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons;
 
@@ -33,14 +34,16 @@ public class ZkNode {
     private String path;
     private String content;
     private List<ZkNode> children;
-    private boolean toggled=false;
-    private boolean existed=false;
+    private boolean toggled = false;
+    private boolean existed = false;
     private Stat stat;
     private Map<String, Object> acl;
 
-    public ZkNode(){}
-    public ZkNode(String name){
-        this.name=name;
+    public ZkNode() {
+    }
+
+    public ZkNode(String name) {
+        this.name = name;
     }
 
     public boolean isToggled() {
@@ -91,11 +94,11 @@ public class ZkNode {
         this.existed = existed;
     }
 
-    public boolean hasChild(String childName){
+    public boolean hasChild(String childName) {
         boolean has = false;
-        if(null != children){
-            for (ZkNode child:children) {
-                if(child.getName().equals(childName)){
+        if (null != children) {
+            for (ZkNode child : children) {
+                if (child.getName().equals(childName)) {
                     has = true;
                 }
             }
@@ -103,11 +106,11 @@ public class ZkNode {
         return has;
     }
 
-    public ZkNode getChildByName(String name){
-        if(null != children){
-            for (ZkNode child:children) {
-                if(child.getName().equals(name)){
-                   return child;
+    public ZkNode getChildByName(String name) {
+        if (null != children) {
+            for (ZkNode child : children) {
+                if (child.getName().equals(name)) {
+                    return child;
                 }
             }
         }

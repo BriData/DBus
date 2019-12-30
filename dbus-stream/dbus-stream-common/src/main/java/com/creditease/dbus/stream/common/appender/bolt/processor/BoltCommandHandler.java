@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
-import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.Constants.EmitFields;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.storm.task.OutputCollector;
@@ -40,10 +41,11 @@ public interface BoltCommandHandler {
     /**
      * 将data数组中的数据,按照groupField分组发送的一个bolt处理,
      * Grouping策略使用DbusGrouping实现
+     *
      * @param collector
-     * @param tuple 当前bolt接收到的数据
+     * @param tuple      当前bolt接收到的数据
      * @param groupField 分组字段
-     * @param data 要发送的数据
+     * @param data       要发送的数据
      */
     default void emit(OutputCollector collector, Tuple tuple, String groupField, EmitData data, Command cmd) {
         List<Object> values = Lists.newArrayList(groupField, data, cmd, EmitFields.EMIT_TO_BOLT);
@@ -52,8 +54,9 @@ public interface BoltCommandHandler {
 
     /**
      * 将tuple中的数据发送给下游所有的bolt
+     *
      * @param collector
-     * @param tuple 当前bolt接收到的数据
+     * @param tuple     当前bolt接收到的数据
      */
     default void emitToAll(OutputCollector collector, Tuple tuple, EmitData data, Command cmd) {
         List<Object> values = Lists.newArrayList(EmitData.NO_VALUE, data, cmd, EmitFields.EMIT_TO_ALL);
@@ -63,10 +66,11 @@ public interface BoltCommandHandler {
     /**
      * 将data数组中的数据,按照groupField分组发送的一个bolt处理,
      * Grouping策略使用DbusGrouping实现
+     *
      * @param collector
-     * @param tuple 当前bolt接收到的数据
+     * @param tuple      当前bolt接收到的数据
      * @param groupField 分组字段
-     * @param data 要发送的数据
+     * @param data       要发送的数据
      */
     default void emitHeartbeat(OutputCollector collector, Tuple tuple, String groupField, EmitData data, Command cmd) {
         List<Object> values = Lists.newArrayList(groupField, data, cmd, EmitFields.EMIT_HEARTBEAT);

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.handler.impl;
 
-import java.util.Set;
+package com.creditease.dbus.heartbeat.handler.impl;
 
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
-
 import org.apache.commons.lang.StringUtils;
+
+import java.util.Set;
 
 public class CreateZkNodeHandler extends AbstractHandler {
 
@@ -39,7 +39,7 @@ public class CreateZkNodeHandler extends AbstractHandler {
             String[] dsPartitions = StringUtils.splitByWholeSeparator(node.getDsPartition(), ",");
             for (String partition : dsPartitions) {
                 String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-                path = StringUtils.join(new String[] {path, node.getDsName(), node.getSchema(), node.getTableName(), partition}, "/");
+                path = StringUtils.join(new String[]{path, node.getDsName(), node.getSchema(), node.getTableName(), partition}, "/");
                 CuratorContainer.getInstance().createZkNode(path);
             }
         }

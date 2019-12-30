@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dbus-keeper</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
     </parent>
     <artifactId>keeper-mgr</artifactId>
 
@@ -18,6 +18,17 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.creditease.dbus</groupId>
+            <artifactId>dbus-mail-customize</artifactId>
+            <version>0.6.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>com.creditease.dbus</groupId>
             <artifactId>keeperboot-base</artifactId>
@@ -67,33 +78,15 @@
             <artifactId>pagehelper-spring-boot-starter</artifactId>
             <version>1.2.3</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>4.3.25.RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 
-    <profiles>
-        <!--<profile>
-            &lt;!&ndash; 测试环境 &ndash;&gt;
-            <id>test</id>
-            <properties>
-                <spring.cloud.config.profile>test</spring.cloud.config.profile>
-                <spring.cloud.config.label>master</spring.cloud.config.label>
-                <spring.cloud.config.uri>http://localhost:19001</spring.cloud.config.uri>
-            </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-
-        </profile>-->
-        <profile>
-            <!-- 生产环境 -->
-            <id>pro</id>
-            <properties>
-                <spring.cloud.config.profile>pro</spring.cloud.config.profile>
-                <spring.cloud.config.label>master</spring.cloud.config.label>
-                <spring.cloud.config.uri>http://gantry.config.creditease.corp</spring.cloud.config.uri>
-            </properties>
-        </profile>
-    </profiles>
     <build>
         <resources>
             <resource>

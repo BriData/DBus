@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.tools.common;
 
 import com.creditease.dbus.commons.Constants;
@@ -28,20 +29,20 @@ import java.net.URLEncoder;
 public class AbstractLauncher {
 
 
-	static {
+    static {
         // 设置log4j.xml配置文件位置
-    	String userDir = null;
-    	try {
-			userDir = new String(SystemUtils.USER_DIR.replaceAll("\\\\", "/").getBytes("UTF-8"));
-			userDir = URLEncoder.encode(userDir, "UTF-8");
-			System.out.println("UserDir=" +userDir);
-    		
-    	} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        String userDir = null;
+        try {
+            userDir = new String(SystemUtils.USER_DIR.replaceAll("\\\\", "/").getBytes("UTF-8"));
+            userDir = URLEncoder.encode(userDir, "UTF-8");
+            System.out.println("UserDir=" + userDir);
 
-    	System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + userDir + "/conf/log4j.xml");
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG, "file:" + userDir + "/conf/log4j.xml");
 //    	System.setProperty(Constants.SYS_PROPS_LOG4J2_CONFIG,"file:" + userDir + "/conf/log4j2.xml");
         
     /* // 获取存储log的基准path

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.vo;
 
-import java.util.List;
+package com.creditease.dbus.heartbeat.vo;
 
 /**
  * User: 王少楠
@@ -28,16 +27,24 @@ import java.util.List;
  * Desc: project报警策略的通知邮件地址
  */
 public class ProjectNotifyEmailsVO {
-    /** 表结构变更邮件通知地址 */
+    /**
+     * 表结构变更邮件通知地址
+     */
     private String[] schemaChangeEmails;
 
-    /** 全量报警邮件通知地址 */
+    /**
+     * 全量报警邮件通知地址
+     */
     private String[] fullPullerEmails;
 
-    /** Topology延时报警邮件通知地址 */
+    /**
+     * Topology延时报警邮件通知地址
+     */
     private String[] topologyDelayEmails;
 
-    /** 主备延时报警邮件通知地址 */
+    /**
+     * 主备延时报警邮件通知地址
+     */
     private String[] masterSlaveDelayEmails;
 
     public String[] getSchemaChangeEmails() {

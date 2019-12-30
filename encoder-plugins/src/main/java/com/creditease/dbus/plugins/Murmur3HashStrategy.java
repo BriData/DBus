@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.plugins;
 
 import com.creditease.dbus.encoders.Encoder;
@@ -27,7 +28,7 @@ import com.google.common.hash.Hashing;
 /**
  * Created by zhangyf on 16/11/18.
  */
-@Encoder(type="murmur3")
+@Encoder(type = "murmur3")
 public class Murmur3HashStrategy extends HashStrategy {
     @Override
     protected HashCode hash(Object str, EncoderConf conf) {

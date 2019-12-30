@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,18 @@
  * >>
  */
 
-package com.creditease.dbus.router.bolt;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.router.bolt;
 
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.router.base.DBusRouterBase;
-import com.creditease.dbus.router.bolt.stat.StatWindows;
 import com.creditease.dbus.router.bean.EmitWarp;
 import com.creditease.dbus.router.bean.Stat;
-
+import com.creditease.dbus.router.bolt.stat.StatWindows;
+import com.creditease.dbus.router.cache.Cache;
+import com.creditease.dbus.router.cache.impl.PerpetualCache;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -41,6 +40,9 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/6/6.
@@ -55,6 +57,8 @@ public class DBusRouterStatBolt extends BaseRichBolt {
     private Integer encodeBoltTaskIdSum = -1;
     private DBusRouterStatBoltInner inner = null;
 
+    private Cache cache = null;
+
     @Override
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         try {
@@ -63,6 +67,7 @@ public class DBusRouterStatBolt extends BaseRichBolt {
             this.statWindows = new StatWindows(true);
             this.encodeBoltTaskIdSum = computeTaskIdsSum(context.getComponentTasks("RouterEncodeBolt"));
             this.inner = new DBusRouterStatBoltInner(conf);
+            this.cache = new PerpetualCache("stat_cache");
             init();
             logger.info("stat bolt init completed.");
         } catch (Exception e) {
@@ -81,12 +86,19 @@ public class DBusRouterStatBolt extends BaseRichBolt {
             } else if (data.isStat()) {
                 String ns = StringUtils.joinWith(".", data.getNameSpace(), data.getHbTime());
                 statWindows.add(ns, (Stat) data.getData());
-                Stat statVo = statWindows.tryPoll(ns, encodeBoltTaskIdSum);
+                // 由于表采用的是分组分发,所有表的数据都到同一个encode bolt,所以在这里不需要进行汇总计算
+                // 拿到统计信息后直接发送就可以了,如果进行汇总在多个encode bolt的情况就出现没有统计的错误
+                /*Stat statVo = statWindows.tryPoll(ns, encodeBoltTaskIdSum);
                 if (statVo != null) {
+                    logger.info("encodeBoltTaskIdSum: {}, stat vo: {}", encodeBoltTaskIdSum, JSON.toJSONString(statVo));
                     String stat = obtainStatMessage(statVo);
+                    logger.info("emit stat data: {}", stat);
                     emitStatData(stat, ns, input);
-                }
+                }*/
+                String stat = obtainStatMessage((Stat) data.getData());
+                emitStatData(stat, ns, input, data.getOffset());
             }
+            logger.info("stat bolt ack {}", data.getOffset());
             collector.ack(input);
         } catch (Exception e) {
             collector.fail(input);
@@ -107,10 +119,11 @@ public class DBusRouterStatBolt extends BaseRichBolt {
         inner.close(false);
     }
 
-    private void emitStatData(String data, String ns, Tuple input) {
+    private void emitStatData(String data, String ns, Tuple input, long offset) {
         EmitWarp<String> emitData = new EmitWarp<>("stat");
         emitData.setNameSpace(ns);
         emitData.setData(data);
+        emitData.setOffset(offset);
         this.collector.emit("statStream", input, new Values(emitData));
     }
 
@@ -125,10 +138,14 @@ public class DBusRouterStatBolt extends BaseRichBolt {
             case ROUTER_TOPOLOGY_TABLE_START:
             case ROUTER_TOPOLOGY_TABLE_STOP:
                 statWindows.clear();
+                cache.clear();
+                inner.dbHelper.loadAliasMapping(inner.topologyId, cache);
                 logger.info("stat bolt start/stop topology table completed.");
                 break;
             case ROUTER_TOPOLOGY_RERUN:
                 statWindows.clear();
+                cache.clear();
+                inner.dbHelper.loadAliasMapping(inner.topologyId, cache);
                 logger.info("stat bolt rerun topology table completed.");
                 break;
             default:
@@ -140,12 +157,14 @@ public class DBusRouterStatBolt extends BaseRichBolt {
         destroy();
         inner.close(true);
         init();
-        inner.zkHelper.saveReloadStatus(ctrl, "DBusRouterStatBolt-" + context.getThisTaskId() , true);
+        inner.zkHelper.saveReloadStatus(ctrl, "DBusRouterStatBolt-" + context.getThisTaskId(), true);
         logger.info("stat bolt reload completed.");
     }
 
     private void init() throws Exception {
         inner.init();
+        cache.clear();
+        inner.dbHelper.loadAliasMapping(inner.topologyId, cache);
     }
 
     private void destroy() {
@@ -154,7 +173,11 @@ public class DBusRouterStatBolt extends BaseRichBolt {
 
     private String obtainStatMessage(Stat statVo) {
         String type = StringUtils.joinWith("_", "ROUTER_TYPE", inner.topologyId);
-        StatMessage sm = new StatMessage(statVo.getDsName(), statVo.getSchemaName(), statVo.getTableName(), type);
+        String dsName = statVo.getDsName();
+        if (StringUtils.isNotBlank((String) cache.getObject(dsName))) {
+            dsName = (String) cache.getObject(dsName);
+        }
+        StatMessage sm = new StatMessage(dsName, statVo.getSchemaName(), statVo.getTableName(), type);
         Long curTime = System.currentTimeMillis();
         sm.setCheckpointMS(statVo.getTime());
         sm.setTxTimeMS(statVo.getTxTime());

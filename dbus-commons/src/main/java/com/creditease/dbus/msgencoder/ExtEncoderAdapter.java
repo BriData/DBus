@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.msgencoder;
 
 import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.encoders.EncoderConf;
 import com.creditease.dbus.encoders.ExtEncodeStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -41,7 +40,7 @@ public class ExtEncoderAdapter implements EncodeStrategy {
 
     @Override
     public Object encode(DbusMessage.Field field, Object value, EncodeColumn col) {
-        if(value == null) return value;
+        if (value == null) return value;
         EncoderConf conf = new EncoderConf();
         conf.setDesc(col.getDesc());
         conf.setFieldType(field.getType());

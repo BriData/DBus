@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.controller;
 
@@ -36,18 +37,18 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/encode-plugins")
-public class EncodePluginsController extends BaseController{
+public class EncodePluginsController extends BaseController {
     @Autowired
     private EncodePluginsService service;
 
     @GetMapping("/project-plugins/{projectId}")
-    public ResultEntity getProjectEncodePlugins(@PathVariable Integer projectId){
+    public ResultEntity getProjectEncodePlugins(@PathVariable Integer projectId) {
         List<EncodePlugins> projectEncodePlugins = service.getProjectEncodePlugins(projectId);
         return resultEntityBuilder().payload(projectEncodePlugins).build();
     }
 
     @PostMapping(path = "create", consumes = "application/json")
-    public ResultEntity create(@RequestBody EncodePlugins encodePlugin){
+    public ResultEntity create(@RequestBody EncodePlugins encodePlugin) {
         service.create(encodePlugin);
         return resultEntityBuilder().build();
     }

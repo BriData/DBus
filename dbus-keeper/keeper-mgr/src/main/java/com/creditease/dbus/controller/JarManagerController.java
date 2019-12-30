@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,22 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
-
-import java.net.URLDecoder;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import com.creditease.dbus.annotation.ProjectAuthority;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
+import com.creditease.dbus.domain.model.TopologyJar;
 import com.creditease.dbus.service.JarManagerService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import java.net.URLDecoder;
+import java.util.List;
 
 /**
  * Created by mal on 2018/4/19.
@@ -60,13 +53,9 @@ public class JarManagerController extends BaseController {
         return service.uploads(category, version, type, jarFile);
     }
 
-    @GetMapping("/delete/{version}/{type}/{minorVersion}/{fileName}/{category}")
-    public ResultEntity delete(@PathVariable String version,
-                               @PathVariable String type,
-                               @PathVariable String minorVersion,
-                               @PathVariable String fileName,
-                               @PathVariable String category) {
-        return service.delete(category, version, type, minorVersion, fileName);
+    @GetMapping("/delete/{id}")
+    public ResultEntity delete(@PathVariable Integer id) {
+        return service.delete(id);
     }
 
     @GetMapping("/versions/{category}")
@@ -80,13 +69,23 @@ public class JarManagerController extends BaseController {
     }
 
     @PostMapping("/batch-delete")
-    public ResultEntity batchDelete(@RequestBody List<Map<String, String>> records) {
-        return resultEntityBuilder().payload(service.batchDelete(records)).build();
+    public ResultEntity batchDelete(@RequestBody List<Integer> ids) {
+        return resultEntityBuilder().payload(service.batchDelete(ids)).build();
     }
 
     @GetMapping("/infos")
     public ResultEntity queryJarInfos(HttpServletRequest req) throws Exception {
         return service.queryJarInfos(URLDecoder.decode(req.getQueryString(), "UTF-8"));
+    }
+
+    @GetMapping("/sync")
+    public ResultEntity syncJarInfos() throws Exception {
+        return service.syncJarInfos();
+    }
+
+    @PostMapping("/update")
+    public ResultEntity updateJar(@RequestBody TopologyJar jar) {
+        return resultEntityBuilder().payload(service.updateJar(jar)).build();
     }
 
     /**
@@ -119,12 +118,13 @@ public class JarManagerController extends BaseController {
 
     /**
      * 脱敏插件删除
+     *
      * @param id 插件id
      * @return
      * @throws Exception
      */
     @GetMapping(path = "/delete-encode-plugin/{id}")
-    public ResultEntity deleteEncodePlugin(@PathVariable Integer id)  {
+    public ResultEntity deleteEncodePlugin(@PathVariable Integer id) {
         return service.deleteEncodePlugin(id);
     }
 

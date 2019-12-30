@@ -1,6 +1,5 @@
 // 添加子路由
 import LoginRoute from '@/app/containers/Login/route'
-import InitializationRoute from '@/app/containers/Initialization/route'
 import ProjectManageRoute from '@/app/containers/ProjectManage/route'
 import RegisterRoute from '@/app/containers/Register/route'
 import ProjectRoute from '@/app/containers/Project/route'
@@ -8,7 +7,7 @@ import UserManageRoute from '@/app/containers/UserManage/route'
 import SinkManageRoute from '@/app/containers/SinkManage/route'
 import MonitorManageRoute from '@/app/containers/MonitorManage/route'
 import ResourceManageRoute from '@/app/containers/ResourceManage/route'
-import ToolSetRoute from '@/app/containers/ToolSet/route'
+import ToolSetRoute from '@/app/containers/toolSet/route'
 import SelfCheckRoute from '@/app/containers/SelfCheck/route'
 import ConfigManageRoute from '@/app/containers/ConfigManage/route'
 
@@ -24,8 +23,6 @@ export default function createRoutes(store) {
   return [
     // 登录
     ...LoginRoute(store),
-    // 初始化
-    ...InitializationRoute(store),
     // 注册
     ...RegisterRoute(store),
     // 项目管理

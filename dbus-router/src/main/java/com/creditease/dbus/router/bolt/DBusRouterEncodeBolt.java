@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.router.bolt;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package com.creditease.dbus.router.bolt;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -46,7 +39,6 @@ import com.creditease.dbus.router.bolt.stat.StatWindows;
 import com.creditease.dbus.router.encode.DBusRouterEncodeColumn;
 import com.creditease.dbus.router.encode.DBusRouterPluginLoader;
 import com.creditease.dbus.router.util.DBusRouterConstants;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.storm.task.OutputCollector;
@@ -59,6 +51,8 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 /**
  * Created by mal on 2018/5/22.
  */
@@ -70,16 +64,22 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
     private OutputCollector collector = null;
     private DBusRouterEncodeBoltInner inner = null;
 
-    /** 表脱敏相关配置缓存 */
+    /**
+     * 表脱敏相关配置缓存
+     */
     private Map<Long, List<DBusRouterEncodeColumn>> encodeConfigMap = null;
     private Map<Long, Map<String, DBusRouterEncodeColumn>> tableIdColumnNameEncodeCache = new HashMap<>();
 
-    /** 表固定列输出配置缓存 */
+    /**
+     * 表固定列输出配置缓存
+     */
     private Map<Long, Long> fixOutTableVersionMap = new HashMap<>();
     private Map<Long, Set<String>> fixOutTableColumnsMap = new HashMap<>();
     private Map<Long, Map<String, FixColumnOutPutMeta>> tableIdColumnNameMetaCache = new HashMap<>();
 
-    /** 统计窗口 */
+    /**
+     * 统计窗口
+     */
     private StatWindows statWindows = null;
 
     private long count = 100L;
@@ -107,17 +107,18 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                 String ctrl = new String(data.getData().value(), "UTF-8");
                 processCtrlMsg(ctrl);
                 if (context.getThisTaskIndex() == 0)
-                    emitCtrlData(data.getKey(), ctrl, input);
+                    emitCtrlData(data.getKey(), ctrl, input, data.getOffset());
             } else if (data.isHB()) {
                 String hb = new String(data.getData().value(), "UTF-8");
-                emitStatData(data, input);
-                emitData(data.getKey(), data.getTableId(), hb, input);
+                emitStatData(data, input, data.getOffset());
+                emitData(data.getKey(), data.getTableId(), hb, input, data.getOffset());
             } else if (data.isUMS()) {
                 String ums = processUmsMsg(data);
-                emitData(data.getKey(), data.getTableId(), ums, input);
+                emitData(data.getKey(), data.getTableId(), ums, input, data.getOffset());
             } else {
                 logger.warn("not support process type. emit warp key: {}", data.getKey());
             }
+            logger.info("encode bolt adk {}", data.getOffset());
             collector.ack(input);
         } catch (Exception e) {
             collector.fail(input);
@@ -171,7 +172,7 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
         destroy();
         inner.close(true);
         init(true);
-        inner.zkHelper.saveReloadStatus(ctrl, "DBusRouterEncodeBolt-" + context.getThisTaskId() , true);
+        inner.zkHelper.saveReloadStatus(ctrl, "DBusRouterEncodeBolt-" + context.getThisTaskId(), true);
         logger.info("encode bolt reload completed.");
     }
 
@@ -238,22 +239,24 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
     private String processUmsMsg(EmitWarp<ConsumerRecord<String, byte[]>> data) throws Exception {
         DbusMessage ums = obtainUms(data);
         updateSchemaChangeFlag(data.getTableId());
-        if (encodeConfigMap != null &&  encodeConfigMap.get(data.getTableId()) != null) {
-            UmsEncoder encoder = new PluggableMessageEncoder(PluginManagerProvider.getManager(), (e, column, message) -> {});
+        if (encodeConfigMap != null && encodeConfigMap.get(data.getTableId()) != null) {
+            UmsEncoder encoder = new PluggableMessageEncoder(PluginManagerProvider.getManager(), (e, column, message) -> {
+            });
             encoder.encode(ums, encodeConfigMap.get(data.getTableId()));
         } else {
-            logger.info("table id:{}, name space:{}, 脱敏配置信息为空,因此不执行脱敏.", data.getTableId(), data.getNameSpace());
+            logger.debug("table id:{}, name space:{}, 脱敏配置信息为空,因此不执行脱敏.", data.getTableId(), data.getNameSpace());
         }
         return ums.toString();
     }
 
-    private void emitCtrlData(String key, String ctrl, Tuple input) {
+    private void emitCtrlData(String key, String ctrl, Tuple input, long offset) {
         EmitWarp<String> emitData = new EmitWarp<>(key);
         emitData.setData(ctrl);
+        emitData.setOffset(offset);
         this.collector.emit("ctrlStream", input, new Values(emitData));
     }
 
-    private void emitStatData(EmitWarp<ConsumerRecord<String, byte[]>> data, Tuple input) {
+    private void emitStatData(EmitWarp<ConsumerRecord<String, byte[]>> data, Tuple input, long offset) {
         Stat vo = statWindows.poll(data.getNameSpace());
         if (vo == null) {
             collectStat(data, 0);
@@ -265,13 +268,15 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
         vo.setTime(data.getHbTime());
         vo.setTxTime(data.getHbTime());
         emitData.setData(vo);
+        emitData.setOffset(offset);
         this.collector.emit("statStream", input, new Values(emitData));
     }
 
-    private void emitData(String key, Long tableId, String ums, Tuple input) {
+    private void emitData(String key, Long tableId, String ums, Tuple input, long offset) {
         EmitWarp<String> emitData = new EmitWarp<>(key);
         emitData.setData(ums);
         emitData.setTableId(tableId);
+        emitData.setOffset(offset);
         this.collector.emit("umsOrHbStream", input, new Values(emitData));
     }
 
@@ -279,7 +284,8 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
         // eg. mysql.caiwudb.fso_yao_db.customer_offline.4.0.0
         // String[] vals = ArrayUtils.insert(4, StringUtils.split(ns, "."), inner.topologyId);
         String[] vals = StringUtils.split(ns, ".");
-        vals[1] = StringUtils.joinWith("!", vals[1], inner.topologyId);
+        // vals[1] = StringUtils.joinWith("!", vals[1], inner.topologyId);
+        vals[1] = StringUtils.joinWith("!", vals[1], inner.alias);
         if (fixOutTableVersionMap.get(tableId) == null)
             return StringUtils.joinWith(".", vals);
 
@@ -295,6 +301,7 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
         statVo.setTableName(data.getTableName());
         statVo.setSuccessCnt(cnt);
         statVo.setTaskId(context.getThisTaskId());
+        statVo.setTaskIdSum(statVo.getTaskId());
 //        statVo.setTime(data.getHbTime());
         statWindows.add(data.getNameSpace(), statVo);
     }
@@ -319,15 +326,15 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
 
         Set<String> columns = fixOutTableColumnsMap.get(data.getTableId());
         JSONArray fields = schema.getJSONArray("fields");
-        for (int i=0; i<fields.size(); i++) {
+        for (int i = 0; i < fields.size(); i++) {
             JSONObject field = fields.getJSONObject(i);
             String name = field.getString("name");
 
             if ((StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_ID_) ||
-                StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_OP_) ||
-                StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_TS_) ||
-                StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_UID_)) &&
-                (i <= 3)) {
+                    StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_OP_) ||
+                    StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_TS_) ||
+                    StringUtils.equalsIgnoreCase(name, DbusMessage.Field._UMS_UID_)) &&
+                    (i <= 3)) {
                 reservedIndex.add(i);
                 continue;
             }
@@ -337,9 +344,9 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                 if (columns.contains(name)) {
                     reservedIndex.add(i);
                     builder.appendSchema(name,
-                                        obtainDataType(field.getString("type")),
-                                        field.getBoolean("nullable"),
-                                        field.getBoolean("encoded"));
+                            obtainDataType(field.getString("type")),
+                            field.getBoolean("nullable"),
+                            field.getBoolean("encoded"));
 
                     FixColumnOutPutMeta fcopm = tableIdColumnNameMetaCache.get(data.getTableId()).get(name);
                     if (fcopm != null) {
@@ -374,9 +381,9 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                 }
             } else {
                 builder.appendSchema(name,
-                                    obtainDataType(field.getString("type")),
-                                    field.getBoolean("nullable"),
-                                    field.getBoolean("encoded"));
+                        obtainDataType(field.getString("type")),
+                        field.getBoolean("nullable"),
+                        field.getBoolean("encoded"));
 
                 if (tableIdColumnNameEncodeCache.get(data.getTableId()) != null) {
                     DBusRouterEncodeColumn ec = tableIdColumnNameEncodeCache.get(data.getTableId()).get(name);
@@ -395,7 +402,7 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
             }
         }
 
-        for (int i=0; i<payload.size(); i++) {
+        for (int i = 0; i < payload.size(); i++) {
             JSONObject tuple = payload.getJSONObject(i);
             JSONArray jsonArrayValue = tuple.getJSONArray("tuple");
             // columns 不等于null 说明采用的是固定列输出
@@ -403,7 +410,7 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                 List<Object> values = jsonArrayValue.toJavaList(Object.class);
                 if (reservedIndex.size() > removeIndex.size()) {
                     List<Object> values_wk = new LinkedList<>(values);
-                    for (int idx = removeIndex.size() -1; idx>=0; idx--)
+                    for (int idx = removeIndex.size() - 1; idx >= 0; idx--)
                         values_wk.remove(idx);
 
                     // 出现删除列或者变更列名找不到的场合,按照原来的列名补齐字段,值补成null
@@ -472,12 +479,12 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                     if (fcopm.getSchemaChangeFlag() == DBusRouterConstants.SCHEMA_CHANGE_COLUMN_NONE) {
                         fcopm.setSchemaChangeFlag(DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE);
                         inner.dbHelper.updateTpttmvSchemaChange(fcopm.getTpttmvId(),
-                                                                DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
-                                                                "deleted");
+                                DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
+                                "deleted");
                         logger.info("tpttmv schema changed id:{}, column:{} deleted", fcopm.getTpttmvId(), fcopm.getColumnName());
                         if (!isUpdateTptt) {
                             inner.dbHelper.updateTpttSchemaChange(fcopm.getTpttId(),
-                                                                  DBusRouterConstants.SCHEMA_CHANGE_TABLE_UPDATE);
+                                    DBusRouterConstants.SCHEMA_CHANGE_TABLE_UPDATE);
                             logger.info("tptt schema changed id:{}", fcopm.getTpttId());
                             isUpdateTptt = true;
                         }
@@ -486,8 +493,8 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                     fcopm.setDelete(false);
                     fcopm.setSchemaChangeFlag(DBusRouterConstants.SCHEMA_CHANGE_COLUMN_NONE);
                     inner.dbHelper.updateTpttmvSchemaChange(fcopm.getTpttmvId(),
-                                                            DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
-                                                            "added");
+                            DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
+                            "added");
                     logger.info("tpttmv schema changed id:{}, column:{} added", fcopm.getTpttmvId(), fcopm.getColumnName());
                 }
                 fcopm.setChanged(false);
@@ -518,12 +525,12 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                     if (ec.getSchemaChangeFlag() == DBusRouterConstants.SCHEMA_CHANGE_COLUMN_NONE) {
                         ec.setSchemaChangeFlag(DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE);
                         inner.dbHelper.updateTptteocSchemaChange(ec.getTptteocId(),
-                                                                 DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
-                                                                 "deleted");
+                                DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
+                                "deleted");
                         logger.info("tptteoc schema changed id:{}, column:{} deleted", ec.getTptteocId(), ec.getFieldName());
                         if (!isUpdateTptt) {
                             inner.dbHelper.updateTpttSchemaChange(ec.getTpttId(),
-                                                                  DBusRouterConstants.SCHEMA_CHANGE_TABLE_UPDATE);
+                                    DBusRouterConstants.SCHEMA_CHANGE_TABLE_UPDATE);
                             logger.info("tptt schema changed id:{}", ec.getTpttId());
                             isUpdateTptt = true;
                         }
@@ -532,8 +539,8 @@ public class DBusRouterEncodeBolt extends BaseRichBolt {
                     ec.setDelete(false);
                     ec.setSchemaChangeFlag(DBusRouterConstants.SCHEMA_CHANGE_COLUMN_NONE);
                     inner.dbHelper.updateTptteocSchemaChange(ec.getTptteocId(),
-                                                             DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
-                                                             "added");
+                            DBusRouterConstants.SCHEMA_CHANGE_COLUMN_DELETE,
+                            "added");
                     logger.info("tptteoc schema changed id:{}, column:{} added", ec.getTptteocId(), ec.getFieldName());
                 }
                 ec.setChanged(false);

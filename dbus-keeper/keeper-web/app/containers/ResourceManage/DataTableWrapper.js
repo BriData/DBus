@@ -1,62 +1,61 @@
-import React, { PropTypes, Component } from 'react'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
+import React, {Component, PropTypes} from 'react'
+import {connect} from 'react-redux'
+import {createStructuredSelector} from 'reselect'
 import Request from '@/app/utils/request'
 import Helmet from 'react-helmet'
 import {message} from 'antd'
 // 导入自定义组件
 import {
   Bread,
-  DataTableManageSearch,
-  DataTableManageGrid,
-  DataTableManageReadZkModal,
-  DataTableManageEncodeModal,
-  DataTableManageModifyModal,
-  DataTableManageVersionModal,
-  DataTableManageSourceInsightModal,
-  DataTableManageIndependentModal,
-  DataSourceManageMountModal,
   DataSourceManageCheckModal,
+  DataSourceManageMountModal,
+  DataTableBatchFullPullModal,
+  DataTableManageEncodeModal,
+  DataTableManageGrid,
+  DataTableManageIndependentModal,
+  DataTableManageModifyModal,
+  DataTableManageReadZkModal,
   DataTableManageRerunModal,
-  RuleImportModal,
-  DataTableBatchFullPullModal
+  DataTableManageSearch,
+  DataTableManageSourceInsightModal,
+  DataTableManageVersionModal,
+  DataTableMoveModal,
+  RuleImportModal
 } from '@/app/components'
-import { makeSelectLocale } from '../LanguageProvider/selectors'
-import {DataTableModel, DataSourceModel} from './selectors'
+import {makeSelectLocale} from '../LanguageProvider/selectors'
+import {DataSourceModel, DataTableModel} from './selectors'
 import {ZKManageModel} from "@/app/containers/ConfigManage/selectors";
 
 import {
-  searchDataSourceIdTypeName,
-  setDataTableParams,
   clearVersionDetail,
-  searchDataTableList,
   getEncodeConfig,
-  getTableColumn,
   getEncodeType,
-  getVersionList,
+  getSourceInsight,
+  getTableColumn,
   getVersionDetail,
-  getSourceInsight
+  getVersionList,
+  searchDataSourceIdTypeName,
+  searchDataTableList,
+  setDataTableParams
 } from './redux'
-import {
-  sendControlMessage,
-} from '@/app/containers/toolSet/redux'
+import {sendControlMessage,} from '@/app/containers/toolSet/redux'
 import {loadLevelOfPath, readZkData} from "@/app/components/ConfigManage/ZKManage/redux/action";
 
 import {
-  DATA_TABLE_UPDATE_API,
-  DATA_TABLE_DELETE_API,
-  DATA_TABLE_START_API,
-  DATA_TABLE_STOP_API,
-  DATA_TABLE_SAVE_ENCODE_CONFIG_API,
-  DATA_TABLE_CHECK_DATA_LINE_API,
+  DATA_SOURCE_FIND_SCHEMA_LIST_BY_DS_ID_API,
   DATA_TABLE_BATCH_START_API,
   DATA_TABLE_BATCH_STOP_API,
-  EXPORT_RULES_API
+  DATA_TABLE_CHECK_DATA_LINE_API,
+  DATA_TABLE_DELETE_API,
+  DATA_TABLE_MOVE_TABLES_API,
+  DATA_TABLE_SAVE_ENCODE_CONFIG_API,
+  DATA_TABLE_START_API,
+  DATA_TABLE_STOP_API,
+  DATA_TABLE_UPDATE_API,
+  EXPORT_RULES_API,
+  REINIT_TABLE_META_API
 } from './api'
-import {
-  GET_MOUNT_PROJECT_API,
-  PROJECT_TABLE_BATCH_FULLPULL_API
-} from "@/app/containers/ProjectManage/api";
+import {GET_MOUNT_PROJECT_API, PROJECT_TABLE_BATCH_FULLPULL_API} from "@/app/containers/ProjectManage/api";
 
 
 // 链接reducer和action
@@ -86,7 +85,7 @@ import {
   })
 )
 export default class DataTableWrapper extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.initParams = {
       pageNum: 1,
@@ -120,8 +119,7 @@ export default class DataTableWrapper extends Component {
 
       checkModalKey: 'checkModalKey',
       checkModalVisible: false,
-      checkModalResult: {
-      },
+      checkModalResult: {},
       checkModalLoading: false,
 
       selectedRowKeys: [],
@@ -136,9 +134,15 @@ export default class DataTableWrapper extends Component {
       ruleImportModalTableId: 1,
 
       batchFullPullModalVisible: false,
-      batchFullPullModalKey: 'batchFullPull'
+      batchFullPullModalKey: 'batchFullPull',
+
+      moveTablesModalVisible: false,
+      moveTablesModalKey: 'moveTables',
+
+      schemaList: [{id: null, schemaName: '请选择schema'}]
     }
   }
+
   componentWillMount() {
     // 初始化查询
     const {searchDataSourceIdTypeName} = this.props
@@ -159,7 +163,7 @@ export default class DataTableWrapper extends Component {
   handleSearch = (params, boolean) => {
     const {searchDataTableList, setDataTableParams} = this.props
     searchDataTableList(params)
-    if(boolean || boolean === undefined) {
+    if (boolean || boolean === undefined) {
       setDataTableParams(params)
     }
     this.setState({
@@ -187,7 +191,8 @@ export default class DataTableWrapper extends Component {
       params: {
         tableId: record.id
       },
-      method: 'get' })
+      method: 'get'
+    })
       .then(res => {
         if (res && res.status === 0) {
           this.handleOpenMountModal(res.payload)
@@ -296,8 +301,7 @@ export default class DataTableWrapper extends Component {
     this.setState({
       checkModalKey: this.handleRandom('checkModalKey'),
       checkModalVisible: true,
-      checkModalResult: {
-      },
+      checkModalResult: {},
       checkModalLoading: true,
     })
     Request(`${DATA_TABLE_CHECK_DATA_LINE_API}/${record.id}`, {
@@ -350,12 +354,11 @@ export default class DataTableWrapper extends Component {
 
   handleCloseIndependentFullPullModal = () => {
     this.setState({
-      independentModalKey: this.handleRandom('independentModalKey'),
       independentModalVisible: false,
       independentModalLoading: false
     })
+    this.handleRefresh()
   }
-
 
   handleRule = record => {
     this.props.router.push({
@@ -447,7 +450,7 @@ export default class DataTableWrapper extends Component {
 
   handleAllStart = () => {
     const {selectedRowKeys} = this.state
-    if(!selectedRowKeys.length) {
+    if (!selectedRowKeys.length) {
       message.error('没有选择表')
       return
     }
@@ -473,7 +476,7 @@ export default class DataTableWrapper extends Component {
   handleAllStop = () => {
     // debugger
     const {selectedRowKeys} = this.state
-    if(!selectedRowKeys.length) {
+    if (!selectedRowKeys.length) {
       message.error('没有选择表')
       return
     }
@@ -516,7 +519,7 @@ export default class DataTableWrapper extends Component {
 
   handleOpenBatchFullPullModal = () => {
     const {selectedRows} = this.state
-    if(!selectedRows.length) {
+    if (!selectedRows.length) {
       message.error('没有选择表')
       return
     }
@@ -535,7 +538,7 @@ export default class DataTableWrapper extends Component {
 
   handleBatchFullPull = (values) => {
     const {selectedRows} = this.state
-    if(!selectedRows.length) {
+    if (!selectedRows.length) {
       message.error('没有选择表')
       return
     }
@@ -563,9 +566,73 @@ export default class DataTableWrapper extends Component {
       .catch(error => message.error(error))
   }
 
+  getSchemaListByDsId = (dsId) => {
+    Request(`${DATA_SOURCE_FIND_SCHEMA_LIST_BY_DS_ID_API}`, {
+      params: {
+        dsId: dsId,
+      },
+      method: 'get'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          this.setState({schemaList: res.payload})
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
 
-  render () {
-    console.info(this.props)
+  }
+
+  handleOpenMoveTablesModal = () => {
+    const {dataTableData} = this.props
+    const {dataTableParams} = dataTableData
+    const {dsId, schemaId} = dataTableParams
+
+    if (!dsId || !schemaId) {
+      message.error('请选择具体数据源和schema并点击查询!')
+      return
+    }
+    const {selectedRows} = this.state
+    if (!selectedRows.length) {
+      message.error('请选择需要迁移的表!')
+      return
+    }
+    this.setState({
+      moveTablesModalVisible: true,
+      moveTablesModalKey: this.handleRandom('moveTables')
+    })
+  }
+
+  handleCloseMoveTablesModal = () => {
+    this.setState({
+      moveTablesModalVisible: false
+    })
+  }
+
+
+  handleMoveTable = (values) => {
+    const {selectedRows} = this.state
+    Request(`${DATA_TABLE_MOVE_TABLES_API}`, {
+      data: {
+        dsId: values.dsId,
+        tableIds: selectedRows.map(row => row.id)
+      },
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          this.handleCloseMoveTablesModal()
+          this.handleRefresh()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
+
+  render() {
     const {dataSourceData} = this.props
     const {dataSourceIdTypeName} = dataSourceData
 
@@ -573,13 +640,14 @@ export default class DataTableWrapper extends Component {
     const {dataTableParams, dataTableList} = dataTableData
 
     const {modifyModalKey, modifyModalVisible, modifyModalRecord} = this.state
+    const {schemaList} = this.state
 
     const {encodeModalKey, encodeModalVisible, encodeModalRecord} = this.state
     const {encodeConfigList, tableColumnList, encodeTypeList} = dataTableData
 
     const {zkModalKey, zkModalVisible, zkModalRecord} = this.state
     const {ZKManageData} = this.props
-    const {levelOfPath,zkData} = ZKManageData
+    const {levelOfPath, zkData} = ZKManageData
 
     const {versionModalKey, versionModalVisible, versionModalRecord} = this.state
     const versionLoading = dataTableData.versionDetail.loading
@@ -601,6 +669,8 @@ export default class DataTableWrapper extends Component {
     const {rerunModalVisible, rerunModalRecord, rerunModalKey} = this.state
     const {ruleImportModalKey, ruleImportModalVisible, ruleImportModalTableId} = this.state
     const {batchFullPullModalVisible, batchFullPullModalKey} = this.state
+    const {moveTablesModalVisible, moveTablesModalKey} = this.state
+
     const breadSource = [
       {
         path: '/resource-manage',
@@ -620,19 +690,22 @@ export default class DataTableWrapper extends Component {
         <Helmet
           title="数据源管理"
           meta={[
-            { name: 'description', content: 'Description of DataSource Manage' }
+            {name: 'description', content: 'Description of DataSource Manage'}
           ]}
         />
-        <Bread source={breadSource} />
+        <Bread source={breadSource}/>
         <DataTableManageSearch
           dataSourceIdTypeName={dataSourceIdTypeName}
+          schemaList={schemaList}
           params={dataTableParams}
           onSearch={this.handleSearch}
+          onGetSchemaList={this.getSchemaListByDsId}
           selectedRowKeys={selectedRowKeys}
           onAllStart={this.handleAllStart}
           onAllStop={this.handleAllStop}
           onSendControlMessage={this.handleSendControlMessage}
           onBatchFullPull={this.handleOpenBatchFullPullModal}
+          onMoveTables={this.handleOpenMoveTablesModal}
         />
         <DataTableManageGrid
           selectedRowKeys={selectedRowKeys}
@@ -653,6 +726,7 @@ export default class DataTableWrapper extends Component {
           updateApi={DATA_TABLE_UPDATE_API}
           deleteApi={DATA_TABLE_DELETE_API}
           startApi={DATA_TABLE_START_API}
+          reInitMeta={REINIT_TABLE_META_API}
           stopApi={DATA_TABLE_STOP_API}
           onSendControlMessage={this.handleSendControlMessage}
           onRerun={this.handleOpenRerunModal}
@@ -746,6 +820,14 @@ export default class DataTableWrapper extends Component {
           onRequest={this.handleRequest}
           onBatchFullPull={this.handleBatchFullPull}
         />
+        <DataTableMoveModal
+          key={moveTablesModalKey}
+          visible={moveTablesModalVisible}
+          onClose={this.handleCloseMoveTablesModal}
+          onMoveTable={this.handleMoveTable}
+          dataSourceIdTypeName={dataSourceIdTypeName}
+        />
+
       </div>
     )
   }

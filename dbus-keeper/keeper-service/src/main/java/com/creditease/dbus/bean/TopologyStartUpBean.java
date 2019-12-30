@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
  * >>
  */
 
+
 package com.creditease.dbus.bean;
 
 /**
  * User: 王少楠
  * Date: 2018-06-15
  * Time: 下午4:53
- * Desc: 加线时，getPath接口返回给前端的数据
+ * Desc: 加线时,getPath接口返回给前端的数据
  */
 public class TopologyStartUpBean {
     private String dsName;
@@ -34,8 +35,6 @@ public class TopologyStartUpBean {
     private String topolotyName;
 
     private String status;
-
-    private String stormPath;
 
     private String jarPath;
 
@@ -72,14 +71,6 @@ public class TopologyStartUpBean {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getStormPath() {
-        return stormPath;
-    }
-
-    public void setStormPath(String stormPath) {
-        this.stormPath = stormPath;
     }
 
     public String getJarPath() {

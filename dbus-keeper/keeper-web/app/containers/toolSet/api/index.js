@@ -29,3 +29,7 @@ export const KAFKA_READER_GET_TOPICS_BY_USER_ID_API = '/keeper/toolSet/getTopics
 // 批量重启topo
 export const BATCH_RESTART_TOPO_API = '/keeper/toolSet/batchRestartTopo'
 
+// 获取ogg canal部署详情
+export const GET_OGG_CANAL_DEPLOY_INFO = '/keeper/autoDeploy/getOggCanalDeployInfo'
+export const UPDATE_OGG_CANAL_DEPLOY_INFO = '/keeper/autoDeploy/updateOggCanalDeployInfo'
+

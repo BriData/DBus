@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,22 @@
  * >>
  */
 
+
 package com.creditease.dbus.utils;
 
 public class DelZookeeperNodesTemplate {
-	public static String[] ZK_CLEAR_NODES_PATHS = {
-			"Canal/canal-placeholder",
-			"Extractor/placeholder-mysql-extractor",
-			"FullPuller/placeholder",
-			"FullPullerGlobal/placeholder",
-			"HeartBeat/Monitor/placeholder",
-			"Topology/placeholder-appender",
-			"Topology/placeholder-dispatcher",
-			"Topology/dbus-fulldata-puller/placeholder-fullpuller",
-			"Topology/dbus-fulldata-splitter/placeholder-fullsplitter"
-	};
-	public static String[] ZK_CLEAR_NODES_PATHS_OF_DSNAME_TO_UPPERCASE = {
-			"NameSpace/placeholder"
-	};
+    public static String[] ZK_CLEAR_NODES_PATHS = {
+            "Canal/canal-placeholder",
+            "Extractor/placeholder-mysql-extractor",
+            "FullPuller/placeholder",
+            "FullPullerGlobal/placeholder",
+            "HeartBeat/Monitor/placeholder",
+            "Topology/placeholder-appender",
+            "Topology/placeholder-dispatcher",
+            "Topology/dbus-fulldata-puller/placeholder-fullpuller",
+            "Topology/dbus-fulldata-splitter/placeholder-fullsplitter"
+    };
+    public static String[] ZK_CLEAR_NODES_PATHS_OF_DSNAME_TO_UPPERCASE = {
+            "NameSpace/placeholder"
+    };
 }

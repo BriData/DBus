@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event;
 
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+package com.creditease.dbus.heartbeat.event;
 
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
@@ -37,11 +31,17 @@ import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
 import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.slf4j.Logger;
+
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractEvent implements IEvent {
 
@@ -98,15 +98,17 @@ public abstract class AbstractEvent implements IEvent {
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_UMS)
                                     // || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MONGO)
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FILEBEAT)
+                                    || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_JSON)
                                     || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FLUME)) {
                                 LOG.info(ds.getType() + "，Ignored!");
+                                countDown(ds.getKey());
                                 continue;
                             }
                         }
 
                         // 用于实现一个数据源一个线程插入心跳
                         if (StringUtils.isNotBlank(dsName) &&
-                            !StringUtils.equalsIgnoreCase(dsName, ds.getKey())) {
+                                !StringUtils.equalsIgnoreCase(dsName, ds.getKey())) {
                             continue;
                         }
 
@@ -121,14 +123,18 @@ public abstract class AbstractEvent implements IEvent {
                             String[] dsPartitions = StringUtils.splitByWholeSeparator(node.getDsPartition(), ",");
                             for (String partition : dsPartitions) {
                                 String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-                                path = StringUtils.join(new String[] {path, node.getDsName(), node.getSchema(), node.getTableName(), partition}, "/");
+                                path = StringUtils.join(new String[]{path, node.getDsName(), node.getSchema(), node.getTableName(), partition}, "/");
                                 if (this instanceof EmitHeartBeatEvent) {
                                     fire(ds, node, path, txTime);
-                                    if (isFirst)
-                                        cdl.countDown();
                                 } else if (this instanceof CheckHeartBeatEvent) {
                                     cdl.await();
-                                    String key = StringUtils.join(new String[] {node.getDsName(), node.getSchema()}, "/");
+                                    if (StringUtils.equalsIgnoreCase("dbus", node.getSchema())) {
+                                        // 数据源增加别名后,dbus schema如果同时存在于两个数据源中,会导致启动一个数据源的dbus schema报警
+                                        // eg. db8_sec.dbus和db8_rsc.dbus
+                                        // 所以暂时忽略掉所有dbus schema的报警检查
+                                        continue;
+                                    }
+                                    String key = StringUtils.join(new String[]{node.getDsName(), node.getSchema()}, "/");
                                     if (StringUtils.isBlank(EventContainer.getInstances().getSkipSchema(key))) {
                                         fire(ds, node, path, txTime);
                                     } else {
@@ -136,15 +142,26 @@ public abstract class AbstractEvent implements IEvent {
                                     }
                                 }
                             }
-
                         }
+
+                        countDown(ds.getKey());
+
                     }
                 }
                 sleep(interval, TimeUnit.SECONDS);
             } catch (Exception e) {
                 LOG.error("[control-event]", e);
             }
-            isFirst = false;
+        }
+    }
+
+    private void countDown(String dsKey) {
+        if (this instanceof EmitHeartBeatEvent && StringUtils.equalsIgnoreCase(dsName, dsKey)) {
+            if (isFirst) {
+                cdl.countDown();
+                LOG.info("[control-event] {} count down value:{}", dsName, cdl.getCount());
+                isFirst = false;
+            }
         }
     }
 
@@ -169,7 +186,7 @@ public abstract class AbstractEvent implements IEvent {
         } else {
             byte[] bytes = curator.getData().forPath(path);
             if (bytes != null && bytes.length != 0) {
-                packet = JsonUtil.fromJson(new String(bytes, Charset.forName("UTF-8")),  clazz);
+                packet = JsonUtil.fromJson(new String(bytes, Charset.forName("UTF-8")), clazz);
             }
         }
         return packet;

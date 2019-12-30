@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,27 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.vo;
 
 public class MessageVo {
-	private long batchId;
-	private byte[] message;
-	public long getBatchId() {
-		return batchId;
-	}
-	public void setBatchId(long batchId) {
-		this.batchId = batchId;
-	}
-	public byte[] getMessage() {
-		return message;
-	}
-	public void setMessage(byte[] message) {
-		this.message = message;
-	}
-	
+    private long batchId;
+    private byte[] message;
+
+    public long getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(long batchId) {
+        this.batchId = batchId;
+    }
+
+    public byte[] getMessage() {
+        return message;
+    }
+
+    public void setMessage(byte[] message) {
+        this.message = message;
+    }
+
 }

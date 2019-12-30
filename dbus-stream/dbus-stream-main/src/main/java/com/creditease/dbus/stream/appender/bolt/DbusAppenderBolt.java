@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.bolt;
 
@@ -176,8 +177,11 @@ public class DbusAppenderBolt extends BaseRichBolt implements CommandHandlerList
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
         } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
-        }
-        else {
+        } else if (type == DbusDatasourceType.MONGO) {
+            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
+        } else if (type == DbusDatasourceType.DB2) {
+            name = "com.creditease.dbus.stream.db2.appender.bolt.processor.provider.AppenderCmdHandlerProvider";
+        } else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

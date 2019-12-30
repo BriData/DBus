@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.creditease.dbus.heartbeat.container.AlarmResultContainer;
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
@@ -39,32 +33,37 @@ import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.Constants;
 import com.creditease.dbus.heartbeat.util.DateUtil;
 import com.creditease.dbus.heartbeat.util.MsgUtil;
-import com.creditease.dbus.heartbeat.vo.CheckVo;
-import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
-import com.creditease.dbus.heartbeat.vo.MasterSlaveDelayVo;
-import com.creditease.dbus.heartbeat.vo.PacketVo;
-import com.creditease.dbus.heartbeat.vo.ProjectMonitorNodeVo;
-import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
+import com.creditease.dbus.heartbeat.vo.*;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * User: 王少楠
  * Date: 2018-07-12
  * Desc:
  */
-public class ProjectCheckHeartBeatEvent extends AbstractEvent{
+public class ProjectCheckHeartBeatEvent extends AbstractEvent {
     private StringBuilder html = null;
 
-    /**project项目名称，对应唯一的project_name,非project_display_name */
+    /**
+     * project项目名称，对应唯一的project_name,非project_display_name
+     */
     private String projectNameWk = StringUtils.EMPTY;
 
-    /**project下一级，topology的名称*/
+    /**
+     * project下一级，topology的名称
+     */
     private String topoNameWk = StringUtils.EMPTY;
 
     private String dsNameWk = StringUtils.EMPTY;
@@ -91,8 +90,8 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                     String basePath = HeartBeatConfigContainer.getInstance().getHbConf().getProjectMonitorPath();
 
                     //获取所有监控的节点
-                    Set<String> monitorPaths= new HashSet<>();
-                    monitorPaths = getZKNodePathsFromPath(basePath,monitorPaths);
+                    Set<String> monitorPaths = new HashSet<>();
+                    monitorPaths = getZKNodePathsFromPath(basePath, monitorPaths);
 
                     //node节点存储 projectName，topoName,dsName,schemaName,dataName信息
                     ProjectMonitorNodeVo node = new ProjectMonitorNodeVo();
@@ -104,15 +103,15 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                             break;
 
                         //根据path信息初始化node
-                        node = initNodeAttribute(node,path,basePath);
-                        if(!checkNodeInfo(node)){
+                        node = initNodeAttribute(node, path, basePath);
+                        if (!checkNodeInfo(node)) {
                             continue;
                         }
                         cdl.await();
                         //根据dsName/schemaName判断，如果拉全量先不处理
-                        String key = StringUtils.join(new String[] {node.getDsName(), node.getSchema()}, "/");
+                        String key = StringUtils.join(new String[]{node.getDsName(), node.getSchema()}, "/");
                         if (StringUtils.isBlank(EventContainer.getInstances().getSkipSchema(key))) {
-                            fire2(node, path,dao);
+                            fire2(node, path, dao);
                         } else {
                             LOG.warn("[control-event] schema:{},正在拉取全量,{}不进行监控.", key, node.getTableName());
                         }
@@ -129,18 +128,19 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
 
     /**
      * 延时告警
+     *
      * @param node ProjectMonitorNodeVo
      * @param path :/DBus/HeartBeat/ProjectMonitor/project1/topo1/ds1.schema1.table1
-     * @param dao dao对象
+     * @param dao  dao对象
      */
     public void fire2(ProjectMonitorNodeVo node, String path, ILoadDbusConfigDao dao) {
         try {
-            ProjectNotifyEmailsVO emailsVO =dao.queryNotifyEmails(Constants.CONFIG_DB_KEY,node.getProjectName());
+            ProjectNotifyEmailsVO emailsVO = dao.queryNotifyEmails(Constants.CONFIG_DB_KEY, node.getProjectName());
             //查询延时告警通知email信息
-            String[] topologyDelayEmails =emailsVO.getTopologyDelayEmails();
+            String[] topologyDelayEmails = emailsVO.getTopologyDelayEmails();
 
             //如果告警通知关闭，那么直接返回
-            if(topologyDelayEmails == null){
+            if (topologyDelayEmails == null) {
                 return;
             }
 
@@ -179,18 +179,18 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
             String databaseSchemaName = node.getDsName() + "/" + node.getSchema();
 
 
-          if (notBlankAndEqual(projectNameWk,node,AttributeType.PROJECT_NAME)
-                  && notBlankAndEqual(dsNameWk,node,AttributeType.DS_NAME)
-                  && notBlankAndEqual(schemaNameWk,node,AttributeType.SCHEMA_NAME)) {
+            if (notBlankAndEqual(projectNameWk, node, AttributeType.PROJECT_NAME)
+                    && notBlankAndEqual(dsNameWk, node, AttributeType.DS_NAME)
+                    && notBlankAndEqual(schemaNameWk, node, AttributeType.SCHEMA_NAME)) {
 
                 /* 判断是超时还是主备，主备的略过 */
 
                 long masterSlaveDelayTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getMasterSlaveDelayTimeout();
                 String masterSlaveDealyPath = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-               //node生产策略改变，该字段抛弃
-               //String[] dsSchemaName = tableNameWk.split("\\.");
+                //node生产策略改变，该字段抛弃
+                //String[] dsSchemaName = tableNameWk.split("\\.");
 
-                masterSlaveDealyPath = StringUtils.join(new String[] {masterSlaveDealyPath, dsNameWk, schemaNameWk}, "/");
+                masterSlaveDealyPath = StringUtils.join(new String[]{masterSlaveDealyPath, dsNameWk, schemaNameWk}, "/");
                 MasterSlaveDelayVo msdVo = deserialize(masterSlaveDealyPath, MasterSlaveDelayVo.class);
                 long delayTime = 0l;
                 long synTime = 0l;
@@ -200,37 +200,37 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                 }
 
 
-              if (delayTime > masterSlaveDelayTimeout) {
-                  html.delete(0, html.length());
-                  return;
-              } else if (html.length() > 0 && ((currentTime - synTime) > 1000 * 60 * 10)) {
-                  // 为了防止主备库刚刚追上产生的延时报警, 给程序10分钟的一个追数据的时间
-                  // 如果10分钟还有追上数据就报警
+                if (delayTime > masterSlaveDelayTimeout) {
+                    html.delete(0, html.length());
+                    return;
+                } else if (html.length() > 0 && ((currentTime - synTime) > 1000 * 60 * 10)) {
+                    // 为了防止主备库刚刚追上产生的延时报警, 给程序10分钟的一个追数据的时间
+                    // 如果10分钟还有追上数据就报警
 
-                IMail mail = DBusMailFactory.build();
-                String subject = "DBus超时报警 ";
-                String contents = MsgUtil.format(Constants.MAIL_HEART_BEAT_NEW_PROJECT,
-                        "超时报警", projectNameWk, topoNameWk, dsNameWk, schemaNameWk,
-                        DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
-                        IMail.ENV,
-                        MsgUtil.format(AlarmResultContainer.getInstance().html(), html.toString()));
-                //根据邮件地址集合，发送邮件
-                  String emails = StringUtils.join(topologyDelayEmails,",");
+                    IMail mail = DBusMailFactory.build();
+                    String subject = "DBus超时报警 ";
+                    String contents = MsgUtil.format(Constants.MAIL_HEART_BEAT_NEW_PROJECT,
+                            "超时报警", projectNameWk, topoNameWk, dsNameWk, schemaNameWk,
+                            DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
+                            IMail.ENV,
+                            MsgUtil.format(AlarmResultContainer.getInstance().html(), html.toString()));
+                    //根据邮件地址集合，发送邮件
+                    String emails = StringUtils.join(topologyDelayEmails, ",");
 
-                  Message msg = new Message();
-                  msg.setAddress(emails);
-                  msg.setContents(contents);
-                  msg.setSubject(subject);
+                    Message msg = new Message();
+                    msg.setAddress(emails);
+                    msg.setContents(contents);
+                    msg.setSubject(subject);
 
-                  msg.setHost(hbConf.getAlarmMailSMTPAddress());
-                  if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
-                      msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
-                  msg.setUserName(hbConf.getAlarmMailUser());
-                  msg.setPassword(hbConf.getAlarmMailPass());
-                  msg.setFromAddress(hbConf.getAlarmSendEmail());
+                    msg.setHost(hbConf.getAlarmMailSMTPAddress());
+                    if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
+                        msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
+                    msg.setUserName(hbConf.getAlarmMailUser());
+                    msg.setPassword(hbConf.getAlarmMailPass());
+                    msg.setFromAddress(hbConf.getAlarmSendEmail());
 
-                  boolean ret = mail.send(msg);
-                  LOG.info("[check-event] 发送邮件", ret == true ? "成功" : "失败");
+                    boolean ret = mail.send(msg);
+                    LOG.info("[check-event] 发送邮件", ret == true ? "成功" : "失败");
                     html.delete(0, html.length());
                 }
 
@@ -277,13 +277,14 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
         }
     }
 
-    private enum AttributeType { PROJECT_NAME,TOPO_NAME,DS_NAME,SCHEMA_NAME,TABLE_NAME }
+    private enum AttributeType {PROJECT_NAME, TOPO_NAME, DS_NAME, SCHEMA_NAME, TABLE_NAME}
+
     /**
      * 需要判断的属性值不是blank,并且和节点属性值相等
      */
-    private boolean notBlankAndEqual(String attribute, ProjectMonitorNodeVo node, AttributeType type){
+    private boolean notBlankAndEqual(String attribute, ProjectMonitorNodeVo node, AttributeType type) {
         String nodeAttribute = StringUtils.EMPTY;
-        switch (type){
+        switch (type) {
             case PROJECT_NAME:
                 nodeAttribute = node.getProjectName();
                 break;
@@ -300,17 +301,18 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                 nodeAttribute = node.getTopoName();
         }
 
-        return StringUtils.isNotBlank(attribute)&&StringUtils.equals(attribute,nodeAttribute);
+        return StringUtils.isNotBlank(attribute) && StringUtils.equals(attribute, nodeAttribute);
     }
 
 
     /**
      * 根据根路径，获取所有末端叶子ZK节点
+     *
      * @param basePath 根路径
      * @return
      * @throws Exception
      */
-    private Set<String> getZKNodePathsFromPath(String basePath,Set<String> result){
+    private Set<String> getZKNodePathsFromPath(String basePath, Set<String> result) {
         Set<String> defaultSet = new HashSet<>();
         try {
             CuratorFramework curator = CuratorContainer.getInstance().getCurator();
@@ -328,8 +330,8 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                     }
                 } else {
                     //如果是末端叶子节点，那么将完整的路径加入到结果集
-                    if(!HeartBeatConfigContainer.getInstance().getHbConf().getProjectMonitorPath()
-                            .equals(basePath)){// 默认的base path不加入
+                    if (!HeartBeatConfigContainer.getInstance().getHbConf().getProjectMonitorPath()
+                            .equals(basePath)) {// 默认的base path不加入
                         LOG.info("add nodePath : " + basePath);
                         result.add(basePath);
                     }
@@ -337,48 +339,49 @@ public class ProjectCheckHeartBeatEvent extends AbstractEvent{
                 }
                 return result;
             }
-        }catch (Exception e){
-            LoggerFactory.getLogger().error("[ traverse zk node paths] path :"+basePath, e);
+        } catch (Exception e) {
+            LoggerFactory.getLogger().error("[ traverse zk node paths] path :" + basePath, e);
             return defaultSet;
         }
     }
 
     /**
      * 从path中提取信息，放入node中
+     *
      * @param node
-     * @param path 原始path: /DBus/HeartBeat/ProjectMonitor/project1/topo1/ds1.schema1.table1
+     * @param path     原始path: /DBus/HeartBeat/ProjectMonitor/project1/topo1/ds1.schema1.table1
      * @param basePath
      * @return
      */
-    private ProjectMonitorNodeVo initNodeAttribute(ProjectMonitorNodeVo node,String path, String basePath){
+    private ProjectMonitorNodeVo initNodeAttribute(ProjectMonitorNodeVo node, String path, String basePath) {
         //操作后path：project1/topo1/ds1.schema1.table1
-        path = StringUtils.replace(path,basePath+"/",StringUtils.EMPTY);
+        path = StringUtils.replace(path, basePath + "/", StringUtils.EMPTY);
 
         //projectTopoName:project1/topo1
-        String projectTopoName = StringUtils.substringBeforeLast(path,"/");
-        node.setProjectName(StringUtils.substringBeforeLast(projectTopoName,"/"));
-        node.setTopoName(StringUtils.substringAfterLast(projectTopoName,"/"));
+        String projectTopoName = StringUtils.substringBeforeLast(path, "/");
+        node.setProjectName(StringUtils.substringBeforeLast(projectTopoName, "/"));
+        node.setTopoName(StringUtils.substringAfterLast(projectTopoName, "/"));
 
         //ds1.schema1.table1
-        String leafNodeName = StringUtils.substringAfterLast(path,"/");
-        node.setTableName(StringUtils.substringAfterLast(path,"."));
+        String leafNodeName = StringUtils.substringAfterLast(path, "/");
+        node.setTableName(StringUtils.substringAfterLast(path, "."));
 
         //ds1.schema1
-        String datasourceSchemaName = StringUtils.substringBeforeLast(leafNodeName,".");
-        node.setDsName(StringUtils.substringBefore(datasourceSchemaName,"."));
-        node.setSchema(StringUtils.substringAfter(datasourceSchemaName,"."));
+        String datasourceSchemaName = StringUtils.substringBeforeLast(leafNodeName, ".");
+        node.setDsName(StringUtils.substringBefore(datasourceSchemaName, "."));
+        node.setSchema(StringUtils.substringAfter(datasourceSchemaName, "."));
 
         LOG.info(MsgUtil.format("node info: project: {0}, topo: {1}, ds: {2}, schema: {3}, table: {4}",
-                node.getProjectName(),node.getTopoName(),node.getDsName(),node.getSchema(),node.getTableName()));
+                node.getProjectName(), node.getTopoName(), node.getDsName(), node.getSchema(), node.getTableName()));
         return node;
     }
 
-    private boolean checkNodeInfo(ProjectMonitorNodeVo node){
-        if(StringUtils.isBlank(node.getProjectName()) || StringUtils.isBlank(node.getTopoName())
+    private boolean checkNodeInfo(ProjectMonitorNodeVo node) {
+        if (StringUtils.isBlank(node.getProjectName()) || StringUtils.isBlank(node.getTopoName())
                 || StringUtils.isBlank(node.getDsName()) || StringUtils.isBlank(node.getSchema())
-                || StringUtils.isBlank(node.getTableName())){
+                || StringUtils.isBlank(node.getTableName())) {
             LOG.info(MsgUtil.format("check node info error: project: {0}, topo: {1}, ds: {2}, schema: {3}, table: {4}",
-                    node.getProjectName(),node.getTopoName(),node.getDsName(),node.getSchema(),node.getTableName()));
+                    node.getProjectName(), node.getTopoName(), node.getDsName(), node.getSchema(), node.getTableName()));
             return false;
         }
         return true;

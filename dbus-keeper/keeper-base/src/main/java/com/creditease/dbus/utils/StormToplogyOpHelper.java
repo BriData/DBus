@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,113 +18,115 @@
  * >>
  */
 
+
 package com.creditease.dbus.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.bean.Topology;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.StormTopology;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.jcraft.jsch.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.kerberos.client.KerberosRestTemplate;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Hongchunyin on 2018/3/19.
  */
 public class StormToplogyOpHelper {
-    private static Logger logger = LoggerFactory.getLogger(StormToplogyOpHelper.class);
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static String TOPO_AVAILABLE_ALL_RUNNING = "ALL_RUNNING";
-    public static String TOPO_AVAILABLE_ALL_STOPPED = "ALL_STOPPED";
-    public static String TOPO_AVAILABLE_PART_RUNNING = "PART_RUNNING";
+    public String TOPO_AVAILABLE_ALL_RUNNING = "ALL_RUNNING";
+    public String TOPO_AVAILABLE_ALL_STOPPED = "ALL_STOPPED";
+    public String TOPO_AVAILABLE_PART_RUNNING = "PART_RUNNING";
 
-    public static String OP_RESULT_SUCCESS = "success";
+    private static RestTemplate restTemplate;
+    public String stormRestApi = "";
+    private IZkService zk;
 
-    public static boolean inited = false;
-    public static String stormRestApi = "";
-    private static IZkService zk;
-
-
-    public static void init(IZkService zkService) throws Exception {
-        zk = zkService;
-        stormRestApi = (String) zkService.getProperties(KeeperConstants.GLOBAL_CONF).get(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_API);
-        inited = true;
+    public StormToplogyOpHelper(IZkService zk) throws Exception {
+        this.zk = zk;
+        if (zk.isExists(KeeperConstants.GLOBAL_CONF)) {
+            Properties properties = zk.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+            stormRestApi = properties.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_REST_URL);
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zk), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                restTemplate = new KerberosRestTemplate(properties.getProperty(KeeperConstants.GLOBAL_CONF_KEY_KEYTAB_PATH),
+                        properties.getProperty(KeeperConstants.GLOBAL_CONF_KEY_PRINCIPAL));
+            } else {
+                restTemplate = new RestTemplate();
+            }
+        } else {
+            restTemplate = new RestTemplate();
+        }
     }
 
-    public static Map<String, StormTopology> getRunningTopologies() throws Exception {
+    public Map<String, StormTopology> getRunningTopologies() throws Exception {
         Map<String, StormTopology> runningTopologies = new HashMap<>();
-        JSONObject topologySummary = JSON.parseObject(topologySummary());
-        JSONArray toposArr = topologySummary.getJSONArray("topologies");
-        for (int i = 0; i < toposArr.size(); i++) {
-            JSONObject jsonObject = toposArr.getJSONObject(i);
-            String topoName = jsonObject.getString("name");
+        List<Topology> topologies = topologySummary();
+        topologies.forEach(topology -> {
+            String topoName = topology.getName();
             StormTopology topo = new StormTopology(topoName);
-            topo.setTopologyId(jsonObject.getString("id"));
-            topo.setUptime(jsonObject.getString("uptime"));
+            topo.setTopologyId(topology.getId());
+            topo.setUptime(topology.getUptime());
             runningTopologies.put(topoName, topo);
-        }
+        });
         return runningTopologies;
     }
 
-    public static String getTopoRunningInfoById(String topologyId) throws Exception {
-        String topoWorkers = getForResult(stormRestApi + "/topology-workers/" + topologyId);
-        logger.info(topoWorkers);
-        JSONObject topoWorkersObj = JSON.parseObject(topoWorkers);
-
-        JSONArray hostPortInfo = topoWorkersObj.getJSONArray("hostPortList");
-        if (!hostPortInfo.isEmpty()) {
-            String hostInfo = hostPortInfo.getJSONObject(0).getString("host");
-            String port = hostPortInfo.getJSONObject(0).getString("port");
-            String runningInfo = hostInfo + ":" + topologyId + "/" + port;
-            return runningInfo;
-        }
-        return null;
+    public List<Topology> getAllTopologiesInfo() throws Exception {
+        return topologySummary();
     }
 
-    public static void populateToposToDs(List<Map<String, Object>> dataSources) throws Exception {
+    public void populateToposToDs(List<Map<String, Object>> dataSources) throws Exception {
         Map runningTopologies = getRunningTopologies();
         populateToposToEachDs(runningTopologies, dataSources);
-
     }
 
-    public static StormTopology getTopologyByName(String name) throws Exception {
-        Map<String, StormTopology> runningTopologies = getRunningTopologies();
-        return runningTopologies.get(name);
+    public Topology getTopologyByName(String name) throws Exception {
+        List<Topology> collect = topologySummary().stream().filter(topology -> topology.getName().equals(name)).collect(Collectors.toList());
+        return collect != null && !collect.isEmpty() ? collect.get(0) : null;
     }
 
-    public static String killTopology(String topologyId, int waitTime) throws Exception {
-        String topologyKillApi = stormRestApi + "/topology/" + topologyId + "/kill/" + waitTime;
-        JSONObject resultJson = null;
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<JSONObject> result = restTemplate.postForEntity(topologyKillApi, new HttpEntity<>("", new HttpHeaders()), JSONObject.class);
-            resultJson = result.getBody();
-        return resultJson.getString("status");
+    public String stopTopology(String topologyId, Integer waitTime, String priKeyPath) throws Exception {
+        if (waitTime == null) {
+            waitTime = 10;
+        }
+        int index = topologyId.lastIndexOf("-");
+        int index1 = topologyId.lastIndexOf("-", index - 1);
+        String topologyName = topologyId.substring(0, index1);
+        Properties props = zk.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+        String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+        String stormNimbusHost = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        String stormHomePath = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOME_PATH);
+        if (StringUtils.endsWith(stormHomePath, "/")) {
+            stormHomePath = StringUtils.substringBeforeLast(stormHomePath, "/");
+        }
+        String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+
+        String cmd = MessageFormat.format("{0}/bin/storm kill {1} -w {2}", stormHomePath, topologyName, waitTime);
+        logger.info("stop topology command: {}", cmd);
+
+        String errMessage = SSHUtils.executeCommand(user, stormNimbusHost, Integer.parseInt(port), priKeyPath, cmd, true);
+        if (StringUtils.isNotBlank(errMessage)) {
+            return "error";
+        }
+        return "ok";
     }
 
-    //
 
-
-    private static void populateToposToEachDs(Map runningTopologies, List<Map<String, Object>> dataSources) {
+    private void populateToposToEachDs(Map runningTopologies, List<Map<String, Object>> dataSources) {
         for (Map<String, Object> dataSource : dataSources) {
             String dsName = (String) dataSource.get(DataSource.KEY_NAME);
             String type = (String) dataSource.get(DataSource.KEY_TYPE);
@@ -163,7 +165,8 @@ public class StormToplogyOpHelper {
             }
 
             if (DbusDatasourceType.ORACLE.name().equalsIgnoreCase(type) || DbusDatasourceType.MONGO.name().equalsIgnoreCase(type)
-                    ) {
+                    || DbusDatasourceType.DB2.name().equalsIgnoreCase(type)
+            ) {
                 String dispatcherAppenderTopoName = dsName + "-dispatcher-appender";
                 String[] streamSeperatedToposName = {dsName + "-dispatcher", dsName + "-appender"};
                 String streamTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, dispatcherAppenderTopoName, streamSeperatedToposName);
@@ -195,7 +198,7 @@ public class StormToplogyOpHelper {
         }
     }
 
-    private static String combinedTopoProcessing(Map runningTopologies, Map toposOfDsMap, String combinedTopoName, String[] seperatedToposName) {
+    private String combinedTopoProcessing(Map runningTopologies, Map toposOfDsMap, String combinedTopoName, String[] seperatedToposName) {
         String checkResult = TOPO_AVAILABLE_ALL_RUNNING;
         boolean topoAvailableFlag = true;
         boolean existedLivingSperatedTopo = false;
@@ -238,24 +241,113 @@ public class StormToplogyOpHelper {
         return checkResult;
     }
 
-    public static String topologySummary() throws Exception {
-        return getForResult(stormRestApi + "/topology/summary");
+    //storm worker数达到300+ nimbus有时候会莫名卡住,该方法一直无返回值
+    //public String topologySummary() throws Exception {
+    //    return getForResult(stormRestApi + "/topology/summary");
+    //}
+
+    public List<Topology> topologySummary() throws Exception {
+        //storm.zookeeper.root
+        Properties properties = zk.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+        String stormRoot = properties.getProperty("storm.zookeeper.root");
+        if (!stormRoot.startsWith("/")) {
+            stormRoot = "/" + stormRoot;
+        }
+        List<String> children = zk.getChildren(stormRoot + "/storms");
+        List<Topology> topologies = new ArrayList<>();
+        children.forEach(s -> {
+            Topology topology = new Topology();
+            int index = s.lastIndexOf("-");
+            int index1 = s.lastIndexOf("-", index - 1);
+            topology.setName(s.substring(0, index1));
+            topology.setId(s);
+            topology.setStatus("ACTIVE");
+            topology.setUptime(diffDate(System.currentTimeMillis() - Long.parseLong(s.substring(index + 1)) * 1000));
+            topologies.add(topology);
+        });
+        return topologies;
     }
 
-    public static String nimbusSummary() throws Exception {
+    public String getTopoRunningInfoById(String topologyId) {
+        String topoWorkers = getForResult(stormRestApi + "/topology-workers/" + topologyId);
+        //目前都是单worker部署,取index 0
+        JSONObject topoWorkersObj = JSON.parseObject(topoWorkers);
+        JSONArray hostPortInfo = topoWorkersObj.getJSONArray("hostPortList");
+        if (!hostPortInfo.isEmpty()) {
+            String hostInfo = hostPortInfo.getJSONObject(0).getString("host");
+            String port = hostPortInfo.getJSONObject(0).getString("port");
+            return String.format("%s:%s", hostInfo, port);
+        }
+        return "";
+//        String url = stormRestApi + "/topology/" + topologyId + "/visualization";
+//        logger.info("url:{}", url);
+//        String result = getForResult(url);
+//        JSONObject topoInfo = JSON.parseObject(result);
+//        String host = null;
+//        String port = null;
+//        for (Map.Entry<String, Object> entry : topoInfo.entrySet()) {
+//            JSONObject value = (JSONObject) entry.getValue();
+//            if (value.containsKey(":stats")) {
+//                JSONObject stats = value.getJSONArray(":stats").getJSONObject(0);
+//                host = stats.getString(":host");
+//                port = stats.getString(":port");
+//                break;
+//            }
+//        }
+//        return String.format("%s:%s", host, port);
+    }
+
+    public String nimbusSummary() {
         return getForResult(stormRestApi + "/nimbus/summary");
     }
 
-    public static String supervisorSummary() throws Exception {
+    public String supervisorSummary() {
         return getForResult(stormRestApi + "/supervisor/summary");
     }
 
-    private static String getForResult(String api) throws Exception {
+    private String getForResult(String api) {
         String result = null;
-            RestTemplate restTemplate = new RestTemplate();
-            result = restTemplate.getForObject(api, String.class);
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(api, String.class);
+        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+            result = responseEntity.getBody();
+        }
         return result;
     }
 
+    /**
+     * diff 毫秒
+     *
+     * @param diff
+     * @return
+     */
+    public String diffDate(long diff) {
+        long nd = 1000 * 24 * 60 * 60;
+        long nh = 1000 * 60 * 60;
+        long nm = 1000 * 60;
+        long ns = 1000;
+        // 计算差多少天
+        long day = diff / nd;
+        // 计算差多少小时
+        long hour = diff % nd / nh;
+        // 计算差多少分钟
+        long min = diff % nd % nh / nm;
+        // 计算差多少秒//输出结果
+        long sec = diff % nd % nh % nm / ns;
+
+        StringBuilder ret = new StringBuilder();
+        if (day != 0) {
+            ret.append(day + "d ");
+        }
+        if (hour != 0) {
+            ret.append(hour + "h ");
+        }
+        if (min != 0) {
+            ret.append(min + "m ");
+        }
+        if (sec != 0) {
+            ret.append(sec + "s");
+        }
+        return ret.length() == 0 ? "s" : ret.toString();
+    }
 
 }

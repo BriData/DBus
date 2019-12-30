@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
 import com.alibaba.fastjson.JSON;
@@ -29,13 +30,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ControlMessage implements Serializable {
-	
+
     public static final String ID = "id";
     public static final String TYPE = "type";
     public static final String TIMESTAMP = "timestamp";
     public static final String FROM = "from";
-    public static final String PAYLOAD = "payload";    
-    
+    public static final String PAYLOAD = "payload";
+
     private long id;
     private String type;
     private String timestamp;
@@ -106,7 +107,7 @@ public class ControlMessage implements Serializable {
         this.from = from;
     }
 
-	public Map<String, Object>  getPayload() {
+    public Map<String, Object> getPayload() {
         return payload;
     }
 
@@ -114,14 +115,14 @@ public class ControlMessage implements Serializable {
         this.payload = payload;
     }
 
-    public void addPayload (String key, Object value) {
+    public void addPayload(String key, Object value) {
         this.payload.put(key, value);
     }
 
     public <T> T payloadValue(String key, Class<T> clazz) {
         Object val = payload.get(key);
-        if(val != null && clazz != null && clazz.isInstance(val)) {
-            return (T)val;
+        if (val != null && clazz != null && clazz.isInstance(val)) {
+            return (T) val;
         }
         return null;
     }
@@ -133,8 +134,9 @@ public class ControlMessage implements Serializable {
     public void setProject(Map<String, Object> project) {
         this.project = project;
     }
-    public String toJSONString () {
-       return JSON.toJSONString(this);
+
+    public String toJSONString() {
+        return JSON.toJSONString(this);
     }
 
 

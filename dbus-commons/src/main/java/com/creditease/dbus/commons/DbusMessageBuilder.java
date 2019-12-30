@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
+
+import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.base.Joiner;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by Shrimp on 16/5/20.
@@ -186,7 +185,7 @@ public class DbusMessageBuilder {
         List<DbusMessage.Field> fields = message.getSchema().getFields();
         if (tuple.length != fields.size()) {
             throw new IllegalArgumentException(String.format("Data fields length != schema field length!!  data_length=%d, schema_length=%d",
-                        tuple.length, fields.size()));
+                    tuple.length, fields.size()));
         }
         DbusMessage.Field field;
         for (int i = 0; i < fields.size(); i++) {

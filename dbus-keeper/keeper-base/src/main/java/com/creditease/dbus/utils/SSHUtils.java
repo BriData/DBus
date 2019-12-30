@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.utils;
 
 import com.jcraft.jsch.ChannelExec;
@@ -8,7 +29,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This is Description
@@ -19,11 +43,12 @@ import java.io.*;
 public class SSHUtils {
     private static Logger logger = LoggerFactory.getLogger(SSHUtils.class);
 
-    public static int uploadFile(String user, String host, int port, String pubKeyPath, String pathFrom, String pathTo) {
+    public static String uploadFile(String user, String host, int port, String pubKeyPath, String pathFrom, String pathTo) {
         Session session = null;
         ChannelSftp channel = null;
         InputStream in = null;
         try {
+            logger.info("will upload file:{} to host:{}, path:{}", pathFrom, host, pathTo);
             JSch jsch = new JSch();
             jsch.addIdentity(pubKeyPath);
 
@@ -37,10 +62,10 @@ public class SSHUtils {
             File file = new File(pathFrom);
             in = new FileInputStream(file);
             channel.put(in, file.getName());
-            return 0;
+            return "ok";
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            return -1;
+            return e.getMessage();
         } finally {
             try {
                 if (session != null) {
@@ -53,7 +78,7 @@ public class SSHUtils {
                     in.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
     }
@@ -67,7 +92,7 @@ public class SSHUtils {
      * @param error      ture只返回错误信息,false只返回正常信息,null错误正常都返回
      * @return
      */
-    public static String executeCommand(String user, String host, int port, String pubKeyPath, String command, Boolean error) {
+    public static String executeCommand(String user, String host, Integer port, String pubKeyPath, String command, Boolean error) {
         logger.info("user:{},host:{},port:{},keyPath:{},command:{}", user, host, port, pubKeyPath, command);
         Session session = null;
         ChannelExec channel = null;
@@ -107,7 +132,7 @@ public class SSHUtils {
                 }
                 Thread.sleep(1000);
             }
-            logger.info("inputMsg:{}", inputMsg.toString());
+            //logger.info("inputMsg:{}", inputMsg.toString());
             logger.info("errorMsg:{}", errorMsg.toString());
             if (error == null) {
                 return inputMsg.toString().length() > 0 ? inputMsg.toString() : errorMsg.toString();
@@ -141,7 +166,10 @@ public class SSHUtils {
     }
 
     public static void main(String[] args) {
-        String app = executeCommand("app", "vdbus-11", 22, "C:\\Users\\admin\\.ssh\\id_rsa", "ls", null);
-        System.out.println((StringUtils.isNotBlank(app)) + ":" + app);
+        String app = executeCommand("app", "vdbus-19", 22, "C:\\Users\\admin\\.ssh\\id_rsa",
+                "mkdir -pv /app/dbus/keeper_test/test/11", null);
+        System.out.println("======");
+        System.out.println(StringUtils.isNotBlank(app));
+        System.out.println(app);
     }
 }

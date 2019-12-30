@@ -20,7 +20,7 @@ export default class DataSourceManageTopologyModal extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      killWaitTime: 10,
+      killWaitTime: 5,
       startModalKey: 'startModalKey',
       startModalVisible: false,
       startModalDataSource: {},

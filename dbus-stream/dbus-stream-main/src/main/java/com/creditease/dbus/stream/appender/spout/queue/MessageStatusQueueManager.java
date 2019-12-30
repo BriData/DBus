@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.appender.spout.queue;
 
 import com.creditease.dbus.commons.DBusConsumerRecord;
@@ -29,8 +30,8 @@ import java.util.Map;
 
 /**
  * Created by zhangyf on 17/2/23.
- *
- *原则：at least once
+ * <p>
+ * 原则：at least once
  * 1、只要ok过，就不再修改其状态；
  * 2、遇到ok,就检查其前面的状态是否全ok，并将全ok的提交
  * 3、遇到fail，检查其前面是否还有fail,并找到状态为fail的offset最小的seek
@@ -54,7 +55,7 @@ public class MessageStatusQueueManager {
     public DBusConsumerRecord<String, byte[]> okAndGetCommitPoint(DBusConsumerRecord<String, byte[]> record) {
         MessageStatusQueue queue = getQueue(buildKey(record));
         QueueElement element = queue.getQueueElement(record.offset());
-        if(element == null) {
+        if (element == null) {
             logger.warn("okAndGetCommitPoint impossible!!! message[topic:{},partition:{},offset:{}] not found in the queue.", record.topic(), record.partition(), record.offset());
             return null;
 
@@ -77,7 +78,7 @@ public class MessageStatusQueueManager {
     public DBusConsumerRecord<String, byte[]> failAndGetSeekPoint(DBusConsumerRecord<String, byte[]> record) {
         MessageStatusQueue queue = getQueue(buildKey(record));
         QueueElement element = queue.getQueueElement(record.offset());
-        if(element == null) {
+        if (element == null) {
             logger.warn("failAndGetSeekPoint impossible!!! message[topic:{},partition:{},offset:{}] not found in the queue.", record.topic(), record.partition(), record.offset());
             return null;
         }
@@ -94,12 +95,13 @@ public class MessageStatusQueueManager {
 
     /**
      * 判断参数record所在的topic和指定的partition在队列中的消息是否都已经处理完成
+     *
      * @param record
      * @return
      */
     public boolean isAllMessageProcessed(DBusConsumerRecord<String, byte[]> record) {
         MessageStatusQueue queue = getQueue(buildKey(record));
-        logger.info("queue size:{} while an event arrived.",queue.size());
+        logger.info("queue size:{} while an event arrived.", queue.size());
         return queue.isEmpty();
     }
 
@@ -109,7 +111,7 @@ public class MessageStatusQueueManager {
 
     private MessageStatusQueue getQueue(String key) {
         MessageStatusQueue queue = queueMap.get(key);
-        if(queue == null) {
+        if (queue == null) {
             queue = new MessageStatusQueue();
             queueMap.put(key, queue);
         }

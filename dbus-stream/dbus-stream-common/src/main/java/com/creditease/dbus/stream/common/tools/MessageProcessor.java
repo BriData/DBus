@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.tools;
 
@@ -48,7 +49,7 @@ public abstract class MessageProcessor {
 
     protected KafkaProducer<String, String> producer = null;
 
-    public List<IGenericMessage> messageList  = new LinkedList<>();
+    public List<IGenericMessage> messageList = new LinkedList<>();
 
     //stat info about count map, key is ds.schema.table, value is COUNT.
     protected TableStatMap statMap = null;
@@ -90,6 +91,7 @@ public abstract class MessageProcessor {
 
     /**
      * template method getNextList
+     *
      * @return
      * @throws IOException
      */
@@ -106,7 +108,7 @@ public abstract class MessageProcessor {
         // 1.根据schema 创建不同的hash map
         Map<String, List<IGenericMessage>> map = new HashMap<>();
         IGenericMessage msg;
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             msg = iter.next();
 
             String schemaName = msg.getSchemaName();
@@ -123,7 +125,11 @@ public abstract class MessageProcessor {
 
                     if (processFullPullerMessage(map, msg) == 0) {
                         //正常情况
+                        if (dsInfo.getDbSourceType().equals(Constants.DB2_CONFIG.DB2)) {
+                            ctrlMessageKey = msg.getNameSpace() + "." + msg.getSchemaId();
+                        } else {
                             ctrlMessageKey = msg.getNameSpace() + "." + msg.getSchemaHash();
+                        }
                         iter.remove();
                         break;
                     } else {
@@ -142,8 +148,7 @@ public abstract class MessageProcessor {
                         ctrlMessageKey = msg.getNameSpace() + "." + msg.getSchemaHash();
                         iter.remove();
                         break;
-                    }
-                    else {
+                    } else {
                         iter.remove(); //非insert的数据 ，跳过了一条不需要传递的message
                         continue;
                     }
@@ -165,7 +170,7 @@ public abstract class MessageProcessor {
             List<IGenericMessage> subList = map.get(schemaName);
             if (subList != null) {
                 subList.add(msg);
-            } else  {
+            } else {
                 subList = new LinkedList<>();
                 subList.add(msg);
                 map.put(schemaName, subList);
@@ -177,7 +182,7 @@ public abstract class MessageProcessor {
 
         // 2 将每个sublist 打包成为 byte[]
         List<DispatcherPackage> tuples = new LinkedList<>();
-        for (HashMap.Entry<String, List<IGenericMessage>>  entry : map.entrySet()) {
+        for (HashMap.Entry<String, List<IGenericMessage>> entry : map.entrySet()) {
 
             List<IGenericMessage> subList = entry.getValue();
 
@@ -194,6 +199,7 @@ public abstract class MessageProcessor {
 
     /**
      * template method, unwapMessage
+     *
      * @param record
      * @throws IOException
      */
@@ -205,6 +211,21 @@ public abstract class MessageProcessor {
                 record.offset(), messageList.size(), record.serializedValueSize(), record.topic()));
     }
 
+
+    /**
+     * unwapMessage db2 messages
+     *
+     * @param recordList
+     * @throws IOException
+     */
+    public void db2PreProcess(List<DBusConsumerRecord<String, byte[]>> recordList) throws IOException {
+        for (DBusConsumerRecord record : recordList) {
+            List<IGenericMessage> lists = unwrapDb2Messages(record);
+            if (!lists.isEmpty()) {
+                messageList.add(lists.get(0));
+            }
+        }
+    }
 
 
     /***
@@ -234,7 +255,7 @@ public abstract class MessageProcessor {
     //统计信息并插入到stat的kafka中
     public void statMeter(String schemaName, String tableName, long checkpointMS, long txTimeMS) {
         StatMessage message = statMap.logMeter(schemaName, tableName, checkpointMS, txTimeMS);
-        sendTableStatInfo (message);
+        sendTableStatInfo(message);
         message.cleanUp();
     }
 
@@ -243,6 +264,9 @@ public abstract class MessageProcessor {
         statMap.mark(schemaName, tableName, count);
     }
 
+    public List<IGenericMessage> unwrapDb2Messages(DBusConsumerRecord record) throws IOException {
+        return null;
+    }
 
 
     public abstract List<IGenericMessage> unwrapMessages(byte[] data) throws IOException;

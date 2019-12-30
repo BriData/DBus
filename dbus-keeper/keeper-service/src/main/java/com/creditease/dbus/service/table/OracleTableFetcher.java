@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.table;
 
 import com.creditease.dbus.domain.model.DataSource;
@@ -25,14 +26,14 @@ import com.creditease.dbus.domain.model.DataSource;
 import java.sql.PreparedStatement;
 import java.util.Map;
 
-public class OracleTableFetcher extends TableFetcher{
+public class OracleTableFetcher extends TableFetcher {
     public OracleTableFetcher(DataSource ds) {
         super(ds);
     }
 
     @Override
     public String buildQuery(Object... args) {
-        String sql =" select TABLE_NAME from all_tables where owner = ?";
+        String sql = " select TABLE_NAME from all_tables where owner = ?";
         return sql;
     }
 
@@ -51,12 +52,12 @@ public class OracleTableFetcher extends TableFetcher{
  */
     @Override
     public String buildTableFieldQuery(Object... args) {
-        String sql ="select TABLE_NAME,COLUMN_NAME,DATA_TYPE from all_tab_columns where owner= ?";
+        String sql = "select TABLE_NAME,COLUMN_NAME,DATA_TYPE from all_tab_columns where owner= ?";
         return sql;
     }
 
-    /*
-        填充sql查询字段，schemaName和tableName
+    /**
+     * 填充sql查询字段,schemaName和tableName
      */
     @Override
     public String fillTableParameters(PreparedStatement statement, Map<String, Object> params) throws Exception {
@@ -64,5 +65,9 @@ public class OracleTableFetcher extends TableFetcher{
         return null;
     }
 
+    @Override
+    protected String buildDataRowsQuery(String schemaName, String tableName) {
+        return "select num_rows num from all_tables t where owner = '" + schemaName + "' and table_name = '" + tableName + "'";
+    }
 
 }

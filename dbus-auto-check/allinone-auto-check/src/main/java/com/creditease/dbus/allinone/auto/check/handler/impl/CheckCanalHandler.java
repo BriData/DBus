@@ -1,6 +1,25 @@
-package com.creditease.dbus.allinone.auto.check.handler.impl;
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
 
-import java.io.BufferedWriter;
+
+package com.creditease.dbus.allinone.auto.check.handler.impl;
 
 import com.creditease.dbus.allinone.auto.check.bean.AutoCheckConfigBean;
 import com.creditease.dbus.allinone.auto.check.container.AutoCheckConfigContainer;
@@ -8,6 +27,8 @@ import com.creditease.dbus.allinone.auto.check.handler.AbstractHandler;
 import com.creditease.dbus.allinone.auto.check.utils.MsgUtil;
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.commons.ZkService;
+
+import java.io.BufferedWriter;
 
 /**
  * Created by Administrator on 2018/8/1.
@@ -39,7 +60,7 @@ public class CheckCanalHandler extends AbstractHandler {
     }
 
     private void checkCanalStart(BufferedWriter bw) throws Exception {
-        String[] cmd = { "/bin/sh", "-c", "jps -l | grep CanalLauncher" };
+        String[] cmd = {"/bin/sh", "-c", "jps -l | grep CanalLauncher"};
         Process process = Runtime.getRuntime().exec(cmd);
         Thread outThread = new Thread(new StreamRunnable(process.getInputStream(), bw));
         Thread errThread = new Thread(new StreamRunnable(process.getErrorStream(), bw));

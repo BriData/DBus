@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.model;
 
@@ -42,6 +43,8 @@ public class ProjectTopology {
     private Integer sinkId;
 
     private Date updateTime;
+
+    private String alias;
 
     public Integer getId() {
         return id;
@@ -121,5 +124,13 @@ public class ProjectTopology {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 }

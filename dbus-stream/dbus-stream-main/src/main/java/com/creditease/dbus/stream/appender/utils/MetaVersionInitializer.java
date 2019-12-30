@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.utils;
 
@@ -55,7 +56,7 @@ public class MetaVersionInitializer {
 
         // 过滤掉没有配置的schema
         filter(schemaList);
-        if(DbusDatasourceType.ORACLE == dsType) {
+        if (DbusDatasourceType.ORACLE == dsType) {
 
             // 支持reload操作
             MetaFetcherManager.reset();
@@ -63,12 +64,12 @@ public class MetaVersionInitializer {
             for (TabSchema schema : schemaList) {
                 reloadVersions(DBFacadeManager.getDbFacade().queryDataTables(schema.getId()));
             }
-        } else if(DbusDatasourceType.MYSQL == dsType){
+        } else if (DbusDatasourceType.MYSQL == dsType) {
             for (TabSchema schema : schemaList) {
                 List<DataTable> dts = DBFacadeManager.getDbFacade().queryDataTables(schema.getId());
-                for(DataTable dt : dts){
+                for (DataTable dt : dts) {
                     MetaVersion metaVer = DBFacadeManager.getDbFacade().queryMetaVersion(dt.getDsId(), dt.getSchema(), dt.getTableName());
-                    if(metaVer==null){
+                    if (metaVer == null) {
                         MetaVersion ver = new MetaVersion();
                         ver.setTableId(dt.getId());
                         ver.setDsId(dt.getDsId());
@@ -79,9 +80,42 @@ public class MetaVersionInitializer {
                     }
                 }
             }
+        } else if (DbusDatasourceType.MONGO == dsType) {
+            //TODO 因为MongoDB并没有meta和version之类的东西，因此此处是否是可以不用定义，还是需要加其他的呢
+            for (TabSchema schema : schemaList) {
+                List<DataTable> dts = DBFacadeManager.getDbFacade().queryDataTables(schema.getId());
+                for (DataTable dt : dts) {
+                    MetaVersion metaVer = DBFacadeManager.getDbFacade().queryMetaVersion(dt.getDsId(), dt.getSchema(), dt.getTableName());
+                    if (metaVer == null) {
+                        MetaVersion ver = new MetaVersion();
+                        ver.setTableId(dt.getId());
+                        ver.setDsId(dt.getDsId());
+                        ver.setSchema(dt.getSchema());
+                        ver.setTable(dt.getTableName());
+                        //ver.setMeta(MetaFetcherManager.getMysqlMetaFetcher().fetch(dt.getSchema(), dt.getTableName(), -999));
+                        DBFacadeManager.getDbFacade().createMetaVersion(ver);
+                    }
+                }
+            }
+        } else if (DbusDatasourceType.DB2 == dsType) {
+            for (TabSchema schema : schemaList) {
+                List<DataTable> dts = DBFacadeManager.getDbFacade().queryDataTables(schema.getId());
+                for (DataTable dt : dts) {
+                    MetaVersion metaVer = DBFacadeManager.getDbFacade().queryMetaVersion(dt.getDsId(), dt.getSchema(), dt.getTableName());
+                    if (metaVer == null) {
+                        MetaVersion ver = new MetaVersion();
+                        ver.setTableId(dt.getId());
+                        ver.setDsId(dt.getDsId());
+                        ver.setSchema(dt.getSchema());
+                        ver.setTable(dt.getTableName());
+                        ver.setMeta(MetaFetcherManager.getDb2MetaFetcher().fetch(dt.getSchema(), dt.getTableName(), -999));
+                        DBFacadeManager.getDbFacade().createMetaVersion(ver);
+                    }
+                }
+            }
         }
     }
-    
+
     private void reloadVersions(List<DataTable> list) throws Exception {
         for (DataTable t : list) {
             String schema = t.getSchema();
@@ -94,8 +128,7 @@ public class MetaVersionInitializer {
                     MetaVersion v = DBFacadeManager.getDbFacade().queryMetaVersion(t.getId(), Long.MAX_VALUE, Long.MAX_VALUE);
                     if (v == null) {
                         // 初始化加载
-                        int initVersion = -999;
-                        MetaWrapper wrapper = MetaFetcherManager.getOraMetaFetcher().fetch(schema, tableName, initVersion);
+                        MetaWrapper wrapper = MetaFetcherManager.getOraMetaFetcher().fetch(schema, tableName, -999);
                         v = new MetaVersion();
                         v.setSchema(schema);
                         v.setTable(tableName);

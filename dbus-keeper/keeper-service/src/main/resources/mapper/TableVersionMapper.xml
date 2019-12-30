@@ -64,4 +64,12 @@
   <select id="getVersionByTableId" resultMap="BaseResultMap">
     select * from t_meta_version where table_id =  #{tableId} order by version desc limit 1;
   </select>
+  <update id="updateByTableIds">
+    update t_meta_version
+    set ds_id = #{dsId},db_name = #{dsName},schema_name = #{schemaName}
+    where table_id in
+    <foreach collection="tableIds" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
 </mapper>

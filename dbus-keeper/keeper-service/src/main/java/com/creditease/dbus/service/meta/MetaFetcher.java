@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,16 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.meta;
 
-import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.domain.model.TableMeta;
+import com.creditease.dbus.enums.DbusDatasourceType;
 
 import java.sql.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by zhangyf on 16/9/19.
@@ -43,7 +45,7 @@ public abstract class MetaFetcher {
 
     public abstract String fillParameters(PreparedStatement statement, Map<String, Object> params) throws Exception;
 
-    public abstract List<TableMeta> buildResult(ResultSet rs) throws SQLException ;
+    public abstract List<TableMeta> buildResult(ResultSet rs) throws SQLException;
 
     public List<TableMeta> fetchMeta(Map<String, Object> params) throws Exception {
         PreparedStatement statement = null;
@@ -74,6 +76,10 @@ public abstract class MetaFetcher {
             case ORACLE:
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 fetcher = new OracleMataFetcher(ds);
+                break;
+            case DB2:
+                Class.forName("com.ibm.db2.jcc.DB2Driver");
+                fetcher = new DB2MataFetcher(ds);
                 break;
             default:
                 throw new IllegalArgumentException();

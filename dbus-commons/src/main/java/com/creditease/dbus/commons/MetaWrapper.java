@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons;
 
@@ -288,12 +289,19 @@ public class MetaWrapper implements Serializable {
             this.comments = comments;
         }
 
-        /** 对于oracle来讲可以为B/C，数据类型char(1 char)类型为C, char(1)和char(1 byte) 为B，默认为B */
+        /**
+         * 对于oracle来讲可以为B/C，数据类型char(1 char)类型为C, char(1)和char(1 byte) 为B，默认为B
+         */
         private String charUsed;
 
         public boolean isSupported() {
             return SupportedOraDataType.isSupported(getDataType()) && !isHidden() && !isVirtual();
         }
+
+        public boolean isSupportedOnDb2() {
+            return SupportedDb2DataType.isSupported(getDataType()) && !isHidden() && !isVirtual();
+        }
+
         public boolean isHidden() {
             return hiddenColumn != null && "YES".equals(hiddenColumn);
         }

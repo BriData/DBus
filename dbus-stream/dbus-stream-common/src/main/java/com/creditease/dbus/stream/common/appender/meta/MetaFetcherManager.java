@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.meta;
 
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.commons.exception.UnintializedException;
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.DbusDatasource;
 import com.creditease.dbus.stream.common.appender.db.DataSourceProvider;
 import com.creditease.dbus.stream.common.appender.db.DruidDataSourceProvider;
-import com.creditease.dbus.stream.common.appender.bean.DbusDatasource;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ public class MetaFetcherManager {
     private static Logger logger = LoggerFactory.getLogger(MetaFetcherManager.class);
     private static final String ORA_DATASOURCE_CONFIG_NAME = Constants.Properties.ORA_META;
 
+    private static final String DB2_DATASOURCE_CONFIG_NAME = Constants.Properties.DB2_META;
 
     private static MetaFetcher fetcher;
     private static AtomicBoolean initialized = new AtomicBoolean(false);
@@ -70,6 +72,40 @@ public class MetaFetcherManager {
                 boolean result = initializeOraMetaFetcher(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPwd());
                 if (!result) {
                     result = initializeOraMetaFetcher(ds.getSlaveUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                    if (!result) {
+                        throw new UnintializedException("DBFacadeManager initialized error!");
+                    }
+                }
+                initialized.set(true);
+            }
+        }
+        return fetcher;
+    }
+
+    private static boolean initializeDb2MetaFetcher(String jdbcUrl, String user, String pwd) {
+        try {
+            Properties properties = PropertiesHolder.getProperties(DB2_DATASOURCE_CONFIG_NAME);
+            properties.setProperty("url", jdbcUrl);
+            properties.setProperty("username", user);
+            properties.setProperty("password", pwd);
+            DataSourceProvider provider = new DruidDataSourceProvider(properties);
+            Class<?> clazz = Class.forName("com.creditease.dbus.stream.db2.appender.meta.Db2MetaFetcher");
+            Constructor<?> constructor = clazz.getConstructor(DataSource.class);
+            fetcher = (MetaFetcher) constructor.newInstance(provider.provideDataSource());
+            return true;
+        } catch (Exception e) {
+            logger.error("MetaFetcherManager initializeOraMetaFetcher error!", e);
+            return false;
+        }
+    }
+
+    public static MetaFetcher getDb2MetaFetcher() {
+        if (!initialized.get()) {
+            synchronized (MetaFetcherManager.class) {
+                DbusDatasource ds = Utils.getDatasource();
+                boolean result = initializeDb2MetaFetcher(ds.getMasterUrl(), ds.getDbusUser(), ds.getDbusPwd());
+                if (!result) {
+                    result = initializeDb2MetaFetcher(ds.getSlaveUrl(), ds.getDbusUser(), ds.getDbusPwd());
                     if (!result) {
                         throw new UnintializedException("DBFacadeManager initialized error!");
                     }

@@ -7,13 +7,18 @@
 export const SEARCH_JAR_INFOS_API = '/keeper/jars/infos'
 // JAR包批量删除
 export const BATCH_DELETE_JAR_API = '/keeper/jars/batch-delete'
+// JAR包删除
+export const DELETE_JAR_API = '/keeper/jars/delete'
 // JAR包上传
 export const UPLOAD_JAR_API = '/keeper/jars/uploads'
 // JAR包获取Version列表
 export const JAR_GET_VERSION_LIST_API = '/keeper/jars/versions'
 // JAR包获取Type列表
 export const JAR_GET_TYPE_LIST_API = '/keeper/jars/types'
-
+// JAR包获取Type列表
+export const JAR_LIST_SYNC_API = '/keeper/jars/sync'
+// JAR包更新
+export const JAR_UPDATE_API = '/keeper/jars/update'
 
 // DataSource首页的搜索
 export const DATA_SOURCE_SEARCH_API = '/keeper/data-source/search'
@@ -31,6 +36,8 @@ export const DATA_SOURCE_INSERT_API = '/keeper/data-source/insert'
 export const KILL_TOPOLOGY_API = '/keeper/data-source/kill'
 // 获取schema list by dsId
 export const DATA_SOURCE_GET_SCHEMA_LIST_BY_DS_ID_API = '/keeper/data-schema/source-schemas'
+// 获取schema list by dsId
+export const DATA_SOURCE_FIND_SCHEMA_LIST_BY_DS_ID_API = '/keeper/data-schema/findByDsId'
 // 获取schema table
 export const DATA_SOURCE_GET_SCHEMA_TABLE_LIST_API = '/keeper/data-schema/schema-tables'
 // 清除全量报警
@@ -45,10 +52,12 @@ export const LATEST_JAR_GET_PATH_API = '/keeper/data-source/paths'
 export const TOPO_JAR_START_API = '/keeper/data-source/startTopology'
 // 查看日志
 export const VIEW_LOG_API = '/keeper/data-source/view-log'
-// 批量加表
-export const DATA_SOURCE_BATCH_ADD_TABLE_API = '/keeper/data-service/batchAddTables/addSchemaAndTables'
-// 批量检查
-export const DATA_SOURCE_PRE_PROCESS_API = '/keeper/data-service/accessDbusPreTreated/check'
+// 生成加表脚本
+export const DATA_SOURCE_GENERATE_ADD_TABLE_SQL_API = '/keeper/keeper-service/datasource/generateAddTableSql'
+// 根据ip port获取数据线
+export const DATA_SOURCE_SEARCH_DATASOURCE_EXIST_API = '/keeper/keeper-service/datasource/searchDatasourceExist'
+// 加表模板下载
+export const DOWNLOAD_PRE_PROCESS_MODEL_API = '/keeper/keeper-service/datasource/downloadExcleModel'
 // 生成OGG Trail前缀
 export const DATA_SOURCE_GENERATE_OGG_TRAIN_NAME_API = '/keeper/autoDeploy/getOggTrailName'
 
@@ -66,6 +75,8 @@ export const DATA_SOURCE_SET_OGG_CONF_API = '/keeper/autoDeploy/setOggConf'
 export const DATA_SOURCE_GET_CANAL_CONF_API = '/keeper/autoDeploy/getCanalConf'
 // 设置canal配置
 export const DATA_SOURCE_SET_CANAL_CONF_API = '/keeper/autoDeploy/setCanalConf'
+// 自动部署canal ogg
+export const DATA_SOURCE_AUTO_ADD_OGG_CANAL_LINE_API = '/keeper/data-source/autoAddOggCanalLine'
 
 
 // DataSchema首页的搜索
@@ -82,6 +93,8 @@ export const DATA_SCHEMA_UPDATE_API = '/keeper/data-schema/update'
 export const DATA_SCHEMA_INSERT_API = '/keeper/data-schema/insert'
 // DataSchema拖回重跑
 export const DATA_SCHEMA_RERUN_API = '/keeper/data-schema/rerun'
+// DataSchema 迁移
+export const DATA_SCHEMA_MOVE_SCHEMA_API = '/keeper/data-schema/moveSourceSchema'
 
 // DataTable首页的搜索
 export const DATA_TABLE_SEARCH_API = '/keeper/tables/find'
@@ -103,10 +116,21 @@ export const DATA_TABLE_BATCH_STOP_API = '/keeper/tables/batchStopTableByTableId
 export const DATA_TABLE_STOP_API = '/keeper/tables/deactivate'
 // DataTable 拖回重跑
 export const DATA_TABLE_RERUN_API = '/keeper/tables/rerun'
+// DataTable 表迁移
+export const DATA_TABLE_MOVE_TABLES_API = '/keeper/tables/moveSourceTables'
 // DBusData 查询源端表和存储过程
 export const DBUS_DATA_SEARCH_FROM_SOURCE_API = '/keeper/data-source/searchFromSource'
 // DBusData 执行SQL
 export const DBUS_DATA_EXECUTE_SQL_API = '/keeper/tables/executeSql'
+// 重置表版本
+export const REINIT_TABLE_META_API = '/keeper/tables/reInitTableMeta'
+// 保存全量配置
+export const DATA_TABLE_SAVE_INITIAL_LOAD_CONF_API = '/keeper/fullpull/updateSourceCondition'
+// 全量断点续传
+export const DATA_RESUMING_FULLPULL_API = '/keeper/fullpull/resumingFullPull'
+// 全量任务重跑
+export const DATA_RERUN_API = '/keeper/fullpull/rerun'
+
 
 // Encode manager
 export const ENCODE_MANAGER_SEARCH_API = '/keeper/encode/search'

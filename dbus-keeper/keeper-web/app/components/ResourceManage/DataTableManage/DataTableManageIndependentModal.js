@@ -1,12 +1,13 @@
-import React, { PropTypes, Component } from 'react'
-import { Modal, Form, Select, Input, Button, message,Table } from 'antd'
-import { FormattedMessage } from 'react-intl'
-import OperatingButton from '@/app/components/common/OperatingButton'
+import React, {Component} from 'react'
+import {Button, Form, Input, message, Modal, Select} from 'antd'
+import {FormattedMessage} from 'react-intl'
 import {GLOBAL_FULL_PULL_API} from '@/app/containers/toolSet/api'
+import {DATA_TABLE_SAVE_INITIAL_LOAD_CONF_API} from '@/app/containers/ResourceManage/api'
 import dateFormat from 'dateformat'
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
+import {TABLE_GET_TABLE_ROWS_API} from "@/app/containers/ProjectManage/api";
 
 const FormItem = Form.Item
 const Option = Select.Option
@@ -14,10 +15,28 @@ const TextArea = Input.TextArea
 
 @Form.create()
 export default class DataTableManageIndependentModal extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.date = new Date()
-    this.state = {
+    this.state = {}
+  }
+
+  componentWillMount = () => {
+    const {record} = this.props
+    if (record && record.id) {
+      Request(`${TABLE_GET_TABLE_ROWS_API}/${record.id}`, {
+        method: 'get'
+      })
+        .then(res => {
+          if (res && res.status === 0) {
+            this.props.form.setFieldsValue({
+              rows: res.payload
+            })
+          } else {
+            message.warn(res.message)
+          }
+        })
+        .catch(error => message.error(error))
     }
   }
 
@@ -70,17 +89,48 @@ export default class DataTableManageIndependentModal extends Component {
     })
   }
 
-  render () {
-    const { getFieldDecorator } = this.props.form
+  handleSave = (ope) => {
+    const {record, onClose} = this.props
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        Request(DATA_TABLE_SAVE_INITIAL_LOAD_CONF_API, {
+          data: {
+            ...record,
+            fullpullCol: values.fullpullCol,
+            fullpullSplitShardSize: values.fullpullSplitShardSize,
+            fullpullSplitStyle: values.fullpullSplitStyle === undefined ? '' : values.fullpullSplitStyle,
+            fullpullCondition: values.fullpullCondition
+          },
+          method: 'post'
+        })
+          .then(res => {
+            if (res && res.status === 0) {
+              if (ope === 'onlySave') {
+                message.success(res.message)
+              } else {
+                this.handleSubmit()
+                onClose()
+              }
+            } else {
+              message.warn(res.message)
+            }
+          })
+          .catch(error => message.error(error))
+      }
+    })
+  }
+
+  render() {
+    const {getFieldDecorator} = this.props.form
     const {key, loading, visible, record, onClose} = this.props
     const formItemLayout = {
       labelCol: {
-        xs: { span: 5 },
-        sm: { span: 6 }
+        xs: {span: 5},
+        sm: {span: 6}
       },
       wrapperCol: {
-        xs: { span: 19 },
-        sm: { span: 12 }
+        xs: {span: 19},
+        sm: {span: 12}
       }
     }
     return (
@@ -95,20 +145,60 @@ export default class DataTableManageIndependentModal extends Component {
             defaultMessage="独立拉全量"
           />}
           onCancel={onClose}
-          confirmLoading={loading}
-          onOk={this.handleSubmit}
+          footer={[
+            <Button onClick={onClose}> 返 回 </Button>,
+            <Button type="primary" onClick={() => this.handleSave('onlySave')}> 仅保存全量配置 </Button>,
+            <Button type="primary" onClick={() => this.handleSave('saveAndSubmit')}> 确 定 </Button>,
+          ]}
         >
           <Form>
+            <FormItem label={'总数据量'} {...formItemLayout}>
+              {getFieldDecorator('rows', {
+                initialValue: null,
+              })(<Input disabled={true} size="large" type="text"/>)}
+            </FormItem>
             <FormItem label="Topic" {...formItemLayout}>
               {getFieldDecorator('topic', {
-                initialValue: `independent.${record.outputTopic}.${this.date.getTime()}`,
+                initialValue: record && `independent.${record.outputTopic}.${this.date.getTime()}`,
                 rules: [
                   {
                     required: true,
                     message: 'topic不能为空'
                   }
                 ]
-              })(<Input size="large" type="text" />)}
+              })(<Input size="large" type="text"/>)}
+            </FormItem>
+            <FormItem label={'分片列'} {...formItemLayout}>
+              {getFieldDecorator('fullpullCol', {
+                initialValue: record && record.fullpullCol,
+              })(<Input size="large" type="text"/>)}
+            </FormItem>
+            <FormItem label={'分片大小'} {...formItemLayout}>
+              {getFieldDecorator('fullpullSplitShardSize', {
+                initialValue: record && record.fullpullSplitShardSize,
+              })(<Input size="large" type="text"/>)}
+            </FormItem>
+            <FormItem label={'分片类型'} {...formItemLayout}>
+              {getFieldDecorator('fullpullSplitStyle', {
+                initialValue: record && record.fullpullSplitStyle,
+              })(
+                <Select
+                  showSearch
+                  optionFilterProp="children"
+                  allowClear={true}
+                >
+                  <Option value="number">number</Option>
+                  <Option value="md5">md5</Option>
+                  <Option value="md5big">md5big</Option>
+                  <Option value="uuid">uuid</Option>
+                  <Option value="uuidbig">uuidbig</Option>
+                </Select>
+              )}
+            </FormItem>
+            <FormItem label={'分片条件'} {...formItemLayout}>
+              {getFieldDecorator('fullpullCondition', {
+                initialValue: record && record.fullpullCondition,
+              })(<Input size="large" type="text"/>)}
             </FormItem>
           </Form>
         </Modal>
@@ -117,5 +207,4 @@ export default class DataTableManageIndependentModal extends Component {
   }
 }
 
-DataTableManageIndependentModal.propTypes = {
-}
+DataTableManageIndependentModal.propTypes = {}

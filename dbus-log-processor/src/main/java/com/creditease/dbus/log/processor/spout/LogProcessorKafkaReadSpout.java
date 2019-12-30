@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,9 @@
  * >>
  */
 
+
 package com.creditease.dbus.log.processor.spout;
 
-
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -35,9 +28,7 @@ import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.log.processor.base.LogProcessorBase;
 import com.creditease.dbus.log.processor.util.Constants;
-import com.creditease.dbus.log.processor.util.DateUtil;
 import com.creditease.dbus.log.processor.vo.AckMsg;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -56,6 +47,9 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 public class LogProcessorKafkaReadSpout extends BaseRichSpout {
@@ -87,6 +81,7 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
                 logger.info("hook ack info:{} latencyMs: {}", ack.getMaxOffset() + ", " + ack.getMinOffset() + ", " + ack.getPartition(),
                         info.failLatencyMs);
             }
+
             @Override
             public void spoutAck(SpoutAckInfo info) {
                 super.spoutAck(info);
@@ -117,7 +112,7 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
                 }
 
                 //处理UMS heartbeat
-                if(DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_UMS)
+                if (DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_UMS)
                         && StringUtils.contains(record.key(), "data_increment_heartbeat")) {
                     String[] vals = StringUtils.split(record.key(), ".");
                     String[] times = StringUtils.split(vals[8], "|");
@@ -131,7 +126,7 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
                 }
 
                 //处理logstash heartbeat
-                if(DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_LOGSTASH )
+                if (DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_LOGSTASH)
                         || DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_LOGSTASH_JSON)) {
                     Map<String, String> recordMap = JSON.parseObject(strValue, HashMap.class);
                     if (StringUtils.equals(recordMap.get("type"), inner.logProcessorConf.getProperty(Constants.LOG_HEARTBEAT_TYPE))) {
@@ -146,7 +141,8 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
 
                 //处理flume heartbeat
                 try {
-                    if(DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_FLUME)) {
+                    if (DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                            DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_JSON)) {
                         if (StringUtils.contains(JSON.parseObject(strValue).getString("type"), inner.logProcessorConf.getProperty(Constants.LOG_HEARTBEAT_TYPE))) {
                             // 先把心跳之前的数据发送出去
                             emitData(partitionRecordMap);
@@ -157,11 +153,12 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
                         }
                     }
                 } catch (Exception e) {
-                   logger.error("parse string: {} failed!", strValue);
+                    logger.error("parse string: {} failed!", strValue);
+                    continue;
                 }
 
                 //处理filebeat heartbeat
-                if(DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
+                if (DbusDatasourceType.stringEqual((String) inner.logProcessorConf.get("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
                     String hbType = JSON.parseObject(new String(record.value(), "UTF-8")).getString("type");
                     if (StringUtils.contains(hbType, inner.logProcessorConf.getProperty(Constants.LOG_HEARTBEAT_TYPE))) {
                         // 先把心跳之前的数据发送出去
@@ -300,6 +297,7 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
     private void rollback(AckMsg ack, String key) {
         TopicPartition tp = topicPartitionMap.get(key);
         if (tp != null) {
+            logger.info(String.format("seek topic: %s to offset: %d", tp.topic(), ack.getMinOffset()));
             consumer.seek(tp, ack.getMinOffset());
         } else {
             logger.error(String.format("do not find key:%s of TopicPartition", key));
@@ -318,12 +316,20 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
                 consumer.seekToEnd(topicMap.get(inner.dbusDsConf.getTopic()));
                 break;
             default:
-                for (String pair : StringUtils.split(strOffset, ",")){
+                for (String pair : StringUtils.split(strOffset, ",")) {
                     String[] val = StringUtils.split(pair, "->");
                     long offset = Long.parseLong(val[1]);
                     consumer.seek(topicPartitionMap.get(StringUtils.joinWith("_", inner.dbusDsConf.getTopic(), val[0])), offset);
                 }
                 break;
+        }
+        // 打印一下每个topic partition的消费位置
+        if (topicMap.get(inner.dbusDsConf.getTopic()) != null) {
+            for (TopicPartition partition : topicMap.get(inner.dbusDsConf.getTopic())) {
+                long position = consumer.position(partition);
+                logger.info(String.format("topic: %s, partition: %d, position: %d",
+                        partition.topic(), partition.partition(), position));
+            }
         }
         consumer.seekToEnd(topicMap.get(inner.dbusDsConf.getControlTopic()));
         inner.logProcessorConf.setProperty(Constants.LOG_OFFSET, "none");
@@ -347,11 +353,11 @@ public class LogProcessorKafkaReadSpout extends BaseRichSpout {
             ControlType cmd = ControlType.getCommand(JSONObject.parseObject(json).getString("type"));
             switch (cmd) {
                 case LOG_PROCESSOR_RELOAD_CONFIG: {
-                    logger.info("LogProcessorSpout-{} 收到reload消息！Type: {}, Values: {} " , context.getThisTaskId(), cmd, json);
+                    logger.info("LogProcessorSpout-{} 收到reload消息！Type: {}, Values: {} ", context.getThisTaskId(), cmd, json);
                     inner.close(true);
                     if (consumer != null) consumer.close();
                     init();
-                    inner.zkHelper.saveReloadStatus(json, "LogProcessorSpout-" + context.getThisTaskId() , true);
+                    inner.zkHelper.saveReloadStatus(json, "LogProcessorSpout-" + context.getThisTaskId(), true);
                     break;
                 }
                 default:

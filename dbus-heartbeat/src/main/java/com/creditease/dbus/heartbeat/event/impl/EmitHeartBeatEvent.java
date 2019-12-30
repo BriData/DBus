@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.creditease.dbus.heartbeat.dao.IHeartBeatDao;
 import com.creditease.dbus.heartbeat.dao.impl.HeartBeatDaoImpl;
@@ -33,9 +30,11 @@ import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
 import com.creditease.dbus.heartbeat.vo.PacketVo;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
 /**
- *
- *
  * @author Liang.Ma
  * @version 1.0
  */
@@ -88,17 +87,23 @@ public class EmitHeartBeatEvent extends AbstractEvent {
 
             // boolean isMysql = StringUtils.contains(ds.getDriverClass(), "mysql");
             int cnt = dao.sendPacket(ds.getKey(), node.getDsName(), node.getSchema(), node.getTableName(), strPacket, ds.getType());
-            if (cnt ==1 && isFirst) {
+            if (cnt == 1 && isFirst) {
                 saveZk(path, strPacket);
             }
 
-            //emitCount++
-            long emitCount = ds.getEmitCount();
-            ds.setEmitCount(emitCount + 1);
+            /**
+             * 根据日志发现，如果插入心跳失败，在执行删除心跳老数据时，执行select获取最大id时抛出异常，
+             * 会导致下一次创建preparestatment时卡死，所以只在插入成功时才执行删除操作
+             */
+            if (cnt == 1) {
+                //emitCount++
+                long emitCount = ds.getEmitCount();
+                ds.setEmitCount(emitCount + 1);
 
-            //删除不需要的心跳数据, 第一次emit一定会试图删除旧的
-            if (emitCount % 1000 == 0) {
-                dao.deleteOldHeartBeat(ds.getKey(), ds.getType());
+                //删除不需要的心跳数据, 第一次emit一定会试图删除旧的
+                if (emitCount % 1000 == 0) {
+                    dao.deleteOldHeartBeat(ds.getKey(), ds.getType());
+                }
             }
 
             //LoggerFactory.getLogger().info("心跳数据发送{},数据包[{}].", (cnt == 1) ? "成功" : "失败", strPacket);

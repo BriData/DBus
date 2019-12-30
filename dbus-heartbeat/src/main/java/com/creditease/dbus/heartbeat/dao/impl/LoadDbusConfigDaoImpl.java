@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,17 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.dao.impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+package com.creditease.dbus.heartbeat.dao.impl;
 
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
@@ -36,15 +27,44 @@ import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.dao.ILoadDbusConfigDao;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.DBUtil;
-import com.creditease.dbus.heartbeat.vo.DsVo;
-import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
-import com.creditease.dbus.heartbeat.vo.ProjectMonitorNodeVo;
-import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
-import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
-
+import com.creditease.dbus.heartbeat.util.JsonUtil;
+import com.creditease.dbus.heartbeat.vo.*;
 import org.apache.commons.lang.StringUtils;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+
 public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
+
+    public Map<String, String> queryAliasMapping(String key) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        Map<String, String> aliasMapping = new HashMap<>();
+        try {
+            conn = DataSourceContainer.getInstance().getConn(key);
+            ps = conn.prepareStatement("select ds.ds_name, map.alias from t_dbus_datasource ds, t_name_alias_mapping map where ds.id = map.name_id and map.type = 2");
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                aliasMapping.put(rs.getString("alias"), rs.getString("ds_name"));
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger().error("[db-LoadAliasMapping]", e);
+        } finally {
+            DBUtil.close(rs);
+            DBUtil.close(ps);
+            DBUtil.close(conn);
+        }
+        LoggerFactory.getLogger().info("[db-LoadAliasMapping] key: " + key + ", alias mapping： " + JsonUtil.toJson(aliasMapping));
+        return aliasMapping;
+    }
 
     private String getQuerySidConfigSql(String dsName) {
         StringBuilder sql = new StringBuilder();
@@ -78,6 +98,11 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             conn = DataSourceContainer.getInstance().getConn(key);
             ps = conn.prepareStatement(getQuerySidConfigSql(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema()));
             // ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             while (rs.next()) {
                 DsVo vo = new DsVo();
@@ -93,6 +118,8 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
                     vo.setDriverClass(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.ORACLE));
                 } else if (DbusDatasourceType.stringEqual(vo.getType(), DbusDatasourceType.MYSQL)) {
                     vo.setDriverClass(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.MYSQL));
+                } else if (DbusDatasourceType.stringEqual(vo.getType(), DbusDatasourceType.DB2)) {
+                    vo.setDriverClass(DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.DB2));
                 }
                 list.add(vo);
             }
@@ -173,6 +200,11 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             conn = DataSourceContainer.getInstance().getConn(key);//获得数据库连接
             ps = conn.prepareStatement(getQueryProjectMonitorNodeSql());
             ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             while (rs.next()) {
                 ProjectMonitorNodeVo projectMonitorNodeVo = new ProjectMonitorNodeVo();
@@ -198,7 +230,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
     /**
      * 构造查询通知email的sql语句
      */
-    private String getQueryNotifyEmailsSql(){
+    private String getQueryNotifyEmailsSql() {
         /*
          SELECT
          schema_change_notify_flag,
@@ -238,18 +270,23 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         try {
             conn = DataSourceContainer.getInstance().getConn(key);//获得数据库连接
             ps = conn.prepareStatement(getQueryNotifyEmailsSql());
-            ps.setString(1,projectName);
+            ps.setString(1, projectName);
             //ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             Set<String> excludeSchema = getExcludeDbSchema(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             while (rs.next()) {
-                int schemaChangeNotifyFlag =Integer.valueOf(rs.getString("schema_change_notify_flag"));
-                String schemaChangeNotifyEmailsStr =rs.getString("schema_change_notify_emails");
-                int slaveSyncDelayNotifyFlag=Integer.valueOf(rs.getString("slave_sync_delay_notify_flag"));
+                int schemaChangeNotifyFlag = Integer.valueOf(rs.getString("schema_change_notify_flag"));
+                String schemaChangeNotifyEmailsStr = rs.getString("schema_change_notify_emails");
+                int slaveSyncDelayNotifyFlag = Integer.valueOf(rs.getString("slave_sync_delay_notify_flag"));
                 String slaveSyncDelayNotifyEmailsStr = rs.getString("slave_sync_delay_notify_emails");
                 int fullpullNotifyFlag = Integer.valueOf(rs.getString("fullpull_notify_flag"));
                 String fullpullNotifyEmailsStr = rs.getString("fullpull_notify_emails");
-                int dataDelayNotifyFlag =Integer.valueOf(rs.getString("data_delay_notify_flag"));
+                int dataDelayNotifyFlag = Integer.valueOf(rs.getString("data_delay_notify_flag"));
                 String dataDelayNotifyEmails = rs.getString("data_delay_notify_emails");
 
                 //根据flag判断mails的赋值:数组或是null
@@ -311,6 +348,11 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             ps.setString(1, datasource);
             ps.setString(2, schema);
             ps.setString(3, table);
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             while (rs.next()) {
                 ProjectNotifyEmailsVO emailsVO = new ProjectNotifyEmailsVO();
@@ -359,6 +401,11 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             ps = conn.prepareStatement(getQueryMonitorNodeSql(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema()));
             // ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             Set<String> excludeSchema = getExcludeDbSchema(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             while (rs.next()) {
                 MonitorNodeVo vo = new MonitorNodeVo();
@@ -366,7 +413,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
                 vo.setDsPartition(rs.getString("ds_partition"));
                 vo.setSchema(rs.getString("schema_name"));
                 vo.setTableName(rs.getString("table_name"));
-                if(!isContainedByExcludeSchema(excludeSchema,vo.getDsName(),vo.getSchema()))
+                if (!isContainedByExcludeSchema(excludeSchema, vo.getDsName(), vo.getSchema()))
                     list.add(vo);
             }
         } catch (Exception e) {
@@ -416,6 +463,11 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             conn = DataSourceContainer.getInstance().getConn(key);
             ps = conn.prepareStatement(queryTargetTopicSql(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema()));
             // ps.setString(1, HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
+
+            Integer queryTimeout = HeartBeatConfigContainer.getInstance().getHbConf().getQueryTimeout();
+            if (queryTimeout == null) queryTimeout = 5;
+            ps.setQueryTimeout(queryTimeout);
+
             rs = ps.executeQuery();
             Set<String> excludeSchema = getExcludeDbSchema(HeartBeatConfigContainer.getInstance().getHbConf().getExcludeSchema());
             while (rs.next()) {
@@ -424,7 +476,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
                 vo.setSchemaName(rs.getString("schema_name"));
                 vo.setTableName(rs.getString("table_name"));
                 vo.setTargetTopic(rs.getString("output_topic"));
-                if(!isContainedByExcludeSchema(excludeSchema,vo.getDsName(),vo.getSchemaName()))
+                if (!isContainedByExcludeSchema(excludeSchema, vo.getDsName(), vo.getSchemaName()))
                     list.add(vo);
             }
         } catch (Exception e) {
@@ -438,18 +490,18 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         return list;
     }
 
-    private Set<String> getExcludeDbSchema(String excludeSchema){
+    private Set<String> getExcludeDbSchema(String excludeSchema) {
         String[] schema = StringUtils.split(excludeSchema, ",");
         Set<String> schemaSet = new HashSet<String>();
         schemaSet.addAll(Arrays.asList(schema));
         return schemaSet;
     }
 
-    private boolean isContainedByExcludeSchema(Set<String> excludeSchema, String dbName, String schemaName){
-        if(excludeSchema==null)
+    private boolean isContainedByExcludeSchema(Set<String> excludeSchema, String dbName, String schemaName) {
+        if (excludeSchema == null)
             return false;
-        String dbSchema = StringUtils.join(new String[]{dbName,schemaName},".");
-        if(excludeSchema.contains(dbSchema)||excludeSchema.contains(schemaName))
+        String dbSchema = StringUtils.join(new String[]{dbName, schemaName}, ".");
+        if (excludeSchema.contains(dbSchema) || excludeSchema.contains(schemaName))
             return true;
         return false;
     }

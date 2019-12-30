@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
@@ -48,13 +49,43 @@ public class MetaVerController {
         ThreadLocalCache.put(CacheNames.META_VERSION_CACHE, key, v);
     }
 
+    public static MetaVersion getOraSuitableVersion(String key, int schemaHash) {
+        MetaVersion version = getVersionFromCache(key);
+        if (version == null || !Integer.valueOf(schemaHash).equals(version.getSchemaHash())) {
+            String schema = StringUtils.substringBefore(key, ".");
+            String table = StringUtils.substringAfter(key, ".");
+            DataTable t = DBFacadeManager.getDbFacade().queryDataTable(Utils.getDatasource().getId(), schema, table);
+            if (t == null) {
+                logger.warn("table{} not found.", key);
+                return null;
+            }
+
+            try {
+                logger.info("数据哈希{}与版本哈希{}不一致，从库中查询版本", schemaHash, version != null ? version.getSchemaHash() : null);
+                version = DBFacadeManager.getDbFacade().queryOraMetaVersion(t.getId(), schemaHash);
+                if (version == null) {
+                    logger.info("库中不存在此哈希对应的版本");
+                    // 如果找不到，那么应该获取最新的一条schemaHash为空的版本作为当前版本
+                    DBFacadeManager.getDbFacade().updateOraMetaVersion(t.getId(), schemaHash);
+                    version = DBFacadeManager.getDbFacade().queryOraMetaVersion(t.getId(), schemaHash);
+                    logger.info("将最新哈希值为空的版本填入当前哈希值");
+                }
+                putVersion(key, version);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return version;
+        }
+
+        return version;
+    }
+
     /**
      * 通过缓存获取version,如果触发version生成的kafka消息的trailPos比参数传入的pos大,
      * 则需要通过数据库重新获取version
      */
     public static MetaVersion getSuitableVersion(String key, long pos, long offset) {
         MetaVersion version = getVersionFromCache(key);
-
         if (version == null) {
             String schema = StringUtils.substringBefore(key, ".");
             String table = StringUtils.substringAfter(key, ".");
@@ -63,11 +94,16 @@ public class MetaVerController {
                 logger.warn("table{} not found.", key);
                 return null;
             }
-            version = DBFacadeManager.getDbFacade().queryMetaVersion(t.getId(), pos, offset);
-            if (version != null) {
-                putVersion(key, version);
-            } else {
-                logger.warn("version not found by key: {}", key);
+
+            try {
+                version = DBFacadeManager.getDbFacade().queryMetaVersion(t.getId(), pos, offset);
+                if (version != null) {
+                    putVersion(key, version);
+                } else {
+                    logger.warn("version not found by key: {}", key);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
             return version;
         }
@@ -157,6 +193,11 @@ public class MetaVerController {
             }
         }
         return v;
+    }
+
+    public static MetaVersion getOraSuitableVersion(String schema, String tableName, int schemaHash) {
+        String key = genKey(schema, tableName);
+        return getOraSuitableVersion(key, schemaHash);
     }
 
     public static MetaVersion getSuitableVersion(String schema, String tableName, long pos, long offset) {

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,20 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.utils;
 
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.DbusDatasource;
+import com.creditease.dbus.stream.common.appender.bean.NameAliasMapping;
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
-import com.creditease.dbus.stream.common.appender.bean.DbusDatasource;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import org.apache.storm.shade.org.joda.time.DateTime;
 import org.apache.storm.shade.org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -39,6 +43,9 @@ import java.util.Date;
  * Created by Shrimp on 16/5/25.
  */
 public final class Utils {
+
+    private static Logger logger = LoggerFactory.getLogger(Utils.class);
+
     /**
      * 获取数据源信息,服务启动时保存数据源到缓存中
      */
@@ -46,9 +53,12 @@ public final class Utils {
         return GlobalCache.getDatasource();
     }
 
+    public static NameAliasMapping getNameAliasMapping() {
+        return GlobalCache.getNameAliasMapping();
+    }
+
     public static String getDataSourceNamespace() {
-        DbusDatasource ds = getDatasource();
-        return join(".", ds.getDsType(), ds.getDsName());
+        return join(".", getDatasource().getDsType(), getNameAliasMapping().getAlias());
     }
 
     /**
@@ -153,5 +163,36 @@ public final class Utils {
 
         DateFormat df = new SimpleDateFormat(ptn);
         return df.parse(timeStr).getTime();
+    }
+
+    /**
+     * oracle log file number 补偿，例如：pos:00000000200447755543其中文件号为 ab00000002 共9位
+     *
+     * @param pos          ogg pos
+     * @param compensation 文件号补偿值
+     * @return
+     */
+    private static int TRAIL_FILE_NUM_LENGTH = 10;
+
+    public static String oracleUMSID(String pos, Long compensation) {
+        if (pos.length() != 20) {
+            logger.error("pos:{} pos.length() from ogg != 20", pos);
+        }
+        String offset = pos.substring(pos.length() - TRAIL_FILE_NUM_LENGTH);
+        String lognum = Long.parseLong(pos.substring(0, pos.length() - TRAIL_FILE_NUM_LENGTH)) + compensation + "";
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < TRAIL_FILE_NUM_LENGTH - lognum.length(); i++) {
+            buf.append(0);
+        }
+        return buf.append(lognum).append(offset).toString();
+    }
+
+    public static void main(String[] args) {
+
+//        System.out.println(oracleUMSID("00000000050190143201", 100000L));
+//        System.out.println(oracleUMSID("00000005660025507073", 100000L));
+//        System.out.println(oracleUMSID("00000005390110005525", 100000L));
+        System.out.println(oracleUMSID("00000005390110005525", 100000L));
+
     }
 }

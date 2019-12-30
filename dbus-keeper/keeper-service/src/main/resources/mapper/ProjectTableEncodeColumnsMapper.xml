@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.ProjectTableEncodeColumnsMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.ProjectTableEncodeColumns">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="project_topo_table_id" jdbcType="INTEGER" property="topoTableId" />
+    <result column="field_name" jdbcType="VARCHAR" property="fieldName" />
+    <result column="encode_plugin_id" jdbcType="INTEGER" property="encodePluginId" />
+    <result column="field_type" jdbcType="VARCHAR" property="fieldType" />
+    <result column="data_length" jdbcType="BIGINT" property="dataLength" />
+    <result column="encode_type" jdbcType="VARCHAR" property="encodeType" />
+    <result column="encode_param" jdbcType="VARCHAR" property="encodeParam" />
+    <result column="desc_" jdbcType="VARCHAR" property="desc" />
+    <result column="truncate" jdbcType="INTEGER" property="truncate" />
+    <result column="encode_source" jdbcType="INTEGER" property="encodeSource" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="schema_change_flag" jdbcType="TINYINT" property="schemaChangeFlag" />
+    <result column="data_scale" jdbcType="INTEGER" property="dataScale" />
+    <result column="data_precision" jdbcType="INTEGER" property="dataPrecision" />
+    <result column="schema_change_comment" jdbcType="VARCHAR" property="schemaChangeComment" />
+    <result column="special_approve" jdbcType="INTEGER" property="specialApprove" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_project_topo_table_encode_output_columns
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.ProjectTableEncodeColumns">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_project_topo_table_encode_output_columns (project_topo_table_id, field_name, encode_plugin_id,
+      field_type, data_length, encode_type,
+      encode_param, desc_, truncate,
+      encode_source, update_time, schema_change_flag,
+      data_scale, data_precision, schema_change_comment, special_approve
+      )
+    values (#{topoTableId,jdbcType=INTEGER}, #{fieldName,jdbcType=VARCHAR}, #{encodePluginId,jdbcType=INTEGER},
+      #{fieldType,jdbcType=VARCHAR}, #{dataLength,jdbcType=BIGINT}, #{encodeType,jdbcType=VARCHAR},
+      #{encodeParam,jdbcType=VARCHAR}, #{desc,jdbcType=VARCHAR}, #{truncate,jdbcType=INTEGER},
+      #{encodeSource,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{schemaChangeFlag,jdbcType=TINYINT},
+      #{dataScale,jdbcType=INTEGER}, #{dataPrecision,jdbcType=INTEGER}, #{schemaChangeComment,jdbcType=VARCHAR},
+      #{specialApprove,jdbcType=INTEGER}
+      )
+  </insert>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select id, project_topo_table_id, field_name, encode_plugin_id, field_type, data_length,
+        encode_type, encode_param, desc_, truncate, encode_source, update_time, schema_change_flag,
+        data_scale, data_precision, schema_change_comment, special_approve
+        from t_project_topo_table_encode_output_columns
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select id, project_topo_table_id, field_name, encode_plugin_id, field_type, data_length,
+        encode_type, encode_param, desc_, truncate, encode_source, update_time, schema_change_flag,
+        data_scale, data_precision, schema_change_comment, special_approve
+        from t_project_topo_table_encode_output_columns
+    </select>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.ProjectTableEncodeColumns">
+    update t_project_topo_table_encode_output_columns
+    <set>
+      <if test="topoTableId !=null">project_topo_table_id = #{topoTableId,jdbcType=INTEGER},</if>
+      <if test="fieldName != null">field_name = #{fieldName,jdbcType=VARCHAR},</if>
+      <if test="fieldType != null">field_type = #{fieldType,jdbcType=VARCHAR},</if>
+      <if test="dataLength != null">data_length = #{dataLength,jdbcType=BIGINT},</if>
+      <if test="encodeType != null">encode_type = #{encodeType,jdbcType=VARCHAR},</if>
+      <if test="encodeParam != null">encode_param = #{encodeParam,jdbcType=VARCHAR},</if>
+      <if test="desc != null">desc_ = #{desc,jdbcType=VARCHAR},</if>
+      <if test="truncate != null">truncate = #{truncate,jdbcType=INTEGER},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+      <if test="encodeSource != null">encode_source = #{encodeSource,jdbcType=INTEGER},</if>
+      <if test="schemaChangeFlag != null">schema_change_flag = #{schemaChangeFlag,jdbcType=TINYINT},</if>
+      <if test="dataScale != null">data_scale = #{dataScale,jdbcType=INTEGER},</if>
+      <if test="dataPrecision != null">data_precision = #{dataPrecision,jdbcType=INTEGER},</if>
+      <if test="schemaChangeComment != null">schema_change_comment = #{schemaChangeComment,jdbcType=VARCHAR},</if>
+      <if test="specialApprove != null">special_approve = #{specialApprove,jdbcType=INTEGER},</if>
+      <!-- user在将encode改为default或其他的时候，encodePluginId可能为空，应该直接更新-->
+      encode_plugin_id = #{encodePluginId,jdbcType=INTEGER}
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByTableId" resultType="java.util.Map">
+     SELECT
+      encodeColumn.field_name columnName,
+      encodeColumn.data_length dataLength,
+      encodeColumn.encode_type encodeType,
+      encodeColumn.encode_param encodeParam,
+      encodeColumn.desc_ `desc`,
+      encodeColumn.truncate,
+      encodeColumn.id,
+      encodeColumn.encode_source encodeSource,
+      encodeColumn.encode_plugin_id encodePluginId,
+      encodeColumn.data_precision dataPrecision,
+      encodeColumn.data_scale dataScale,
+      encodeColumn.schema_change_flag schemaChangeFlag,
+      encodeColumn.schema_change_comment schemaChangeComment,
+      encodeColumn.special_approve specialApprove,
+      tm.data_type dataType
+    FROM
+    (SELECT
+          columns.*,
+          ptable.project_id,
+          ptable.topo_id,
+          ptable.table_id,
+          ptable.meta_ver
+        FROM
+          t_project_topo_table_encode_output_columns columns,
+          t_project_topo_table ptable
+        WHERE
+          columns.project_topo_table_id = #{tableId,jdbcType=INTEGER} AND
+          ptable.id = columns.project_topo_table_id
+
+    ) encodeColumn
+    LEFT JOIN
+         t_project_topo_table_meta_version tm
+    ON
+          tm.project_id = encodeColumn.project_id  AND
+          tm.topo_id = encodeColumn.topo_id  AND
+          tm.table_id = encodeColumn.table_id  and
+          tm.version = encodeColumn.meta_ver and
+          tm.column_name = encodeColumn.field_name
+  </select>
+  <delete id="deleteByTopoTableId" parameterType="java.lang.Integer">
+    delete from t_project_topo_table_encode_output_columns
+    where project_topo_table_id = #{tableId,jdbcType=INTEGER}
+  </delete>
+  <select id="selectByTopoTableIdAndFieldName" parameterType="java.util.Map" resultMap="BaseResultMap">
+    SELECT *
+    FROM t_project_topo_table_encode_output_columns columns
+    WHERE columns.project_topo_table_id = #{topoTableId,jdbcType=INTEGER} AND
+     columns.field_name = #{fieldName,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByProjectId" parameterType="java.lang.Integer">
+   delete pe from t_project_topo_table_encode_output_columns pe,t_project_topo_table pt
+   where pe.project_topo_table_id = pt.id and pt.project_id = #{projectId}
+  </delete>
+  <select id="search" resultType="java.util.Map">
+      SELECT
+      d.ds_name dsName,
+      t.schema_name schemaName,
+      t.table_name tableName,
+      pt.topo_name topoName,
+      tp.project_display_name projectName,
+      ptt.id ptId,
+      pc.id,
+      pc.field_name fieldName,
+      pc.encode_type encodeType,
+      pc.encode_param encodeParam,
+      pc.encode_source encodeSource,
+      pc.encode_plugin_id encodePluginId,
+      pc.special_approve specialApprove
+      FROM
+      t_project_topo_table_encode_output_columns pc
+      LEFT JOIN t_project_topo_table ptt on ptt.id = pc.project_topo_table_id
+      LEFT JOIN t_project_topo pt on pt.id = ptt.topo_id
+      LEFT JOIN t_project tp on tp.id = ptt.project_id
+      LEFT JOIN t_data_tables t on t.id = ptt.table_id
+      LEFT JOIN t_dbus_datasource d on t.ds_id = d.id
+      <where>
+          <if test="projectId != null">AND ptt.project_id = #{projectId}</if>
+          <if test="topoId != null">AND ptt.topo_id = #{topoId}</if>
+          <if test="dsId != null">AND d.id = #{dsId}</if>
+          <if test="schemaName != null">AND t.schema_name like "%"#{schemaName}"%"</if>
+          <if test="tableName != null">AND t.table_name like "%"#{tableName}"%"</if>
+      </where>
+      union
+      SELECT
+      d.ds_name dsName,
+      t.schema_name schemaName,
+      t.table_name tableName,
+      pt.topo_name topoName,
+      tp.project_display_name projectName,
+      ptt.id ptId,
+      ec.id,
+      ec.field_name fieldName,
+      ec.encode_type encodeType,
+      ec.encode_param encodeParam,
+      0 encodeSource,
+      ec.plugin_id encodePluginId,
+      0 specialApprove
+      FROM
+      t_project_topo_table ptt join t_encode_columns ec on ptt.table_id = ec.table_id
+      LEFT JOIN t_project_topo pt ON pt.id = ptt.topo_id
+      LEFT JOIN t_project tp ON tp.id = ptt.project_id
+      LEFT JOIN t_data_tables t ON t.id = ptt.table_id
+      LEFT JOIN t_dbus_datasource d ON t.ds_id = d.id
+      <where>
+          <if test="projectId != null">AND ptt.project_id = #{projectId}</if>
+          <if test="topoId != null">AND ptt.topo_id = #{topoId}</if>
+          <if test="dsId != null">AND d.id = #{dsId}</if>
+          <if test="schemaName != null">AND t.schema_name like "%"#{schemaName}"%"</if>
+          <if test="tableName != null">AND t.table_name like "%"#{tableName}"%"</if>
+      </where>
+  </select>
+  <select id="selectByTopoTableId" resultMap="BaseResultMap">
+    SELECT
+      *
+    FROM
+      t_project_topo_table_encode_output_columns columns
+    WHERE
+      columns.project_topo_table_id = #{topoTableId,jdbcType=INTEGER}
+      AND columns.encode_source = 0
+  </select>
+</mapper>

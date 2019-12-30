@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.enums;
 
@@ -69,13 +70,13 @@ public enum Command {
     }
 
     public static Command parse(String cmd) {
-        if(!initialized) {
+        if (!initialized) {
             throw new UnintializedException("Command has not initialized!");
         }
         cmd = cmd.toLowerCase();
-        if(cmds.containsKey(cmd)) {
+        if (cmds.containsKey(cmd)) {
             return cmds.get(cmd);
-        } else if(nameCmds.containsKey(cmd)) {
+        } else if (nameCmds.containsKey(cmd)) {
             return nameCmds.get(cmd);
         }
         return UNKNOWN_CMD;

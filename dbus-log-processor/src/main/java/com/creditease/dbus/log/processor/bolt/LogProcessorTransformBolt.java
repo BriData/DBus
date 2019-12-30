@@ -1,22 +1,4 @@
-/*-
- * <<
- * DBus
- * ==
- * Copyright (C) 2016 - 2018 Bridata
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * >>
- */
+
 
 package com.creditease.dbus.log.processor.bolt;
 
@@ -26,10 +8,7 @@ import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.DataType;
 import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.commons.DbusMessageBuilder;
-import com.creditease.dbus.commons.log.processor.adapter.LogFilebeatAdapter;
-import com.creditease.dbus.commons.log.processor.adapter.LogFlumeAdapter;
-import com.creditease.dbus.commons.log.processor.adapter.LogStashAdapter;
-import com.creditease.dbus.commons.log.processor.adapter.LogUmsAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.*;
 import com.creditease.dbus.commons.log.processor.parse.Field;
 import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
 import com.creditease.dbus.commons.log.processor.rule.impl.Rules;
@@ -99,13 +78,14 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                     ConsumerRecord<String, byte[]> record;
                     Integer partition = null;
                     Long offset = null;
-                    if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)
+                    if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)
                             || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)
+                            || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)
                             || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
                         recordMap = (HashMap) input.getValueByField("records");
                         partition = Integer.valueOf(recordMap.get("partition"));
                         offset = Long.valueOf(recordMap.get("offset"));
-                    } else if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH ) ||
+                    } else if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH) ||
                             DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH_JSON)) {
                         record = (ConsumerRecord<String, byte[]>) input.getValueByField("records");
                         recordMap = JSON.parseObject(new String(record.value(), "UTF-8"), HashMap.class);
@@ -122,38 +102,46 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                     long count_wk = 0l;
                     for (ConsumerRecord<String, byte[]> record : normalRecords) {
                         Iterator<String> it = null;
-                        if(DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_UMS)) {
+                        if (DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_UMS)) {
                             it = new LogUmsAdapter(new String(record.value(), "UTF-8"));
-                        } else if(DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_LOGSTASH)
+                        } else if (DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_LOGSTASH)
                                 || DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_LOGSTASH_JSON)) {
                             it = new LogStashAdapter(new String(record.value(), "UTF-8"));
-                        } else if(DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_FLUME)) {
+                        } else if (DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_FLUME)) {
                             it = new LogFlumeAdapter(record.key(), new String(record.value(), "UTF-8"));
-                        } else if(DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_FILEBEAT)) {
+                        } else if (DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_FILEBEAT)) {
                             it = new LogFilebeatAdapter(new String(record.value(), "UTF-8"));
+                        } else if (DbusDatasourceType.stringEqual(inner.dbusDsConf.getDsType(), DbusDatasourceType.LOG_JSON)) {
+                            it = new LogDefaultAdapter(new String(record.value(), "UTF-8"));
                         }
+
                         while (it.hasNext()) {
                             boolean missFlag = true;
                             String value = it.next();
                             String host = null;
                             Map<String, String> recordMap = JSON.parseObject(value, HashMap.class);
                             //logstash、log_flume或者logstash_json的host信息
-                            if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH) ||
+                            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH) ||
                                     DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH_JSON) ||
-                                            DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
+                                    DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
                                 host = StringUtils.replaceChars(recordMap.get("host"), ".", "_");
                             }
                             //ums中namespace拼接成的host信息
-                            if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
+                            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
                                 String namespace = recordMap.get("namespace");
                                 String[] vals = StringUtils.split(namespace, ".");
                                 host = StringUtils.joinWith("_", vals[0], vals[1], vals[2], vals[4]);
                                 recordMap.put("umsSource", vals[4]);
                             }
                             //filebeat中的host信息
-                            if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
+                            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
                                 host = StringUtils.replaceChars(recordMap.get("beat.hostname"), ".", "_");
                             }
+
+                            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) {
+                                host = inner.logProcessorConf.getProperty("log.json.host");
+                            }
+
                             boolean tableExecuteFlag = false;
                             //表
                             for (Map.Entry<Long, Map<Long, List<RuleInfo>>> tableGroupRules : inner.rules.entrySet()) {
@@ -164,8 +152,12 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                                 List<RecordWrapper> tableDatas = new ArrayList<>();
                                 //组
                                 for (Map.Entry<Long, List<RuleInfo>> groupRules : tableGroupRules.getValue().entrySet()) {
-                                    List<String> groupValues = new ArrayList<>();
-                                    groupValues.add(value);
+
+                                    List<String> row = new ArrayList<>();
+                                    row.add(value);
+                                    List<List<String>> datas = new ArrayList<>();
+                                    datas.add(row);
+
                                     int idx = 0;
                                     String namespace = null;
                                     //规则
@@ -180,8 +172,8 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                                         try {
                                             Rules rule = Rules.fromStr(ri.getRuleTypeName());
                                             List<RuleGrammar> ruleGrammarList = JSON.parseArray(ri.getRuleGrammar(), RuleGrammar.class);
-                                            groupValues = rule.getRule().transform(groupValues, ruleGrammarList, rule);
-                                            if (groupValues.isEmpty())
+                                            datas = rule.getRule().transform(datas, ruleGrammarList, rule);
+                                            if (datas.isEmpty())
                                                 break;
                                         } catch (Exception e) {
                                             logger.error("parse rule failed on LogProcessorTransformBolt! table: {}, Exception: {}", namespace, e);
@@ -192,22 +184,26 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                                                 tableErrorStatMap.put(namespace, 1L);
                                             }
                                             //出现异常时，groupValues不一定为空
-                                            groupValues.clear();
+                                            datas.clear();
                                         }
                                     }
 
-                                    if (!groupValues.isEmpty()) {
-                                        RecordWrapper rw = new RecordWrapper();
-                                        if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
-                                            rw.setTimeStamp(DateUtil.convertStrToLong4Date(recordMap.get("ums_ts_"), inner.logProcessorConf.getProperty("ums.timestamp")));
+                                    if (!datas.isEmpty()) {
+                                        int idxWk = 0;
+                                        for (List<String> itme : datas) {
+                                            RecordWrapper rw = new RecordWrapper();
+                                            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
+                                                rw.setTimeStamp(DateUtil.convertStrToLong4Date(recordMap.get("ums_ts_"), inner.logProcessorConf.getProperty("ums.timestamp")));
+                                            }
+                                            rw.setRecordMap(recordMap);
+                                            rw.setOffset(record.offset());
+                                            rw.setPartition(record.partition());
+                                            rw.setValue(itme);
+                                            rw.setIndex(idxWk++);
+                                            tableDatas.add(rw);
                                         }
-                                        rw.setRecordMap(recordMap);
-                                        rw.setOffset(record.offset());
-                                        rw.setPartition(record.partition());
-                                        rw.setValue(groupValues);
-                                        tableDatas.add(rw);
                                         //单表，当正常处理时，如果一条record满足某个group时，直接跳过后面的group
-                                        if(StringUtils.equals("false", inner.logProcessorConf.getProperty("multiTable"))) {
+                                        if (StringUtils.equals("false", inner.logProcessorConf.getProperty("multiTable"))) {
                                             tableExecuteFlag = true;
                                             break;
                                         }
@@ -229,10 +225,11 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                                         statMap.put(key, Long.valueOf(String.valueOf(tableDatas.size())));
                                     }
                                 }
-                                if(tableExecuteFlag) break;
+                                if (tableExecuteFlag)
+                                    break;
                             }
                             //ums中的heartbeat数据和ums数据的格式是一样的，统计中要去掉心跳数据
-                            if(missFlag && !StringUtils.contains(record.key(), "data_increment_heartbeat")) {
+                            if (missFlag && !StringUtils.contains(record.key(), "data_increment_heartbeat")) {
                                 // 对于UMS数据，统计扁平化之后的数据条数，和表无关
                                 if (globalMissStat.containsKey(host)) {
                                     globalMissStat.put(host, globalMissStat.get(host) + 1);
@@ -241,15 +238,15 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                                 }
                             }
                         }
-                        readKafkaRecordCount ++;
-                        count_wk ++;
+                        readKafkaRecordCount++;
+                        count_wk++;
                     }
                     emitUmsData(input, tableDatasMap);
                     if (logger.isDebugEnabled())
                         logger.debug("transform process count:{} cost time: {}", count_wk, System.currentTimeMillis() - startTime);
                     break;
                 }
-                default :
+                default:
                     break;
             }
             collector.ack(input);
@@ -270,14 +267,14 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
             String host = StringUtils.replaceChars(recordMap.get("host"), ".", "_");
             String tableName = null;
             String umsSource = null;
-            if(!StringUtils.isEmpty(recordMap.get("tableName"))) {
+            if (!StringUtils.isEmpty(recordMap.get("tableName"))) {
                 tableName = recordMap.get("tableName");
                 umsSource = recordMap.get("umsSource");
             }
             //发送active表的统计信息
             String namespace = emitActiveTableInfo(input, timestamp, host, partition, offset, tableName, umsSource);
             //发送abort表的统计信息
-            if(StringUtils.isEmpty(namespace)) {
+            if (StringUtils.isEmpty(namespace)) {
                 namespace = emitAbortTableInfo(input, timestamp, host, partition, offset, tableName, umsSource);
             } else {
                 emitAbortTableInfo(input, timestamp, host, partition, offset, tableName, umsSource);
@@ -288,11 +285,11 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
     }
 
     private void emitUmsData(Tuple input, Map<String, List<RecordWrapper>> tableDatasMap) throws Exception {
-        for(Map.Entry<String, List<RecordWrapper>> entry : tableDatasMap.entrySet()) {
+        for (Map.Entry<String, List<RecordWrapper>> entry : tableDatasMap.entrySet()) {
             // vals[0]:host, vals[1]: dsName, vals[2]: schemaName, vals[3]: tableName, vals[4]: version
             String[] vals = StringUtils.split(entry.getKey(), "|");
             String host = vals[0];
-            if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
+            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
                 host = entry.getValue().get(0).getRecordMap().get("umsSource");
             }
             DbusMessage ums = buildUms(entry.getValue(), vals[1], vals[2], vals[3], Long.parseLong(vals[4]), host);
@@ -306,14 +303,16 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
 
     private Long getLogTimestamp(Map<String, String> recordMap) {
         Long timestamp = null;
-        if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
+        if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
             timestamp = Long.valueOf(recordMap.get("@timestamp"));
-        } if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH)
+        }
+        if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH)
                 || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH_JSON)) {
             timestamp = DateUtil.addDay(recordMap.get("@timestamp"), inner.logProcessorConf.getProperty("@timestamp"), Integer.valueOf(inner.logProcessorConf.getProperty("add.hours")));
-        } else if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
+        } else if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) {
             timestamp = DateUtil.addDay(recordMap.get("@timestamp"), inner.logProcessorConf.getProperty("flume.timestamp"), 0);
-        } else if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
+        } else if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
             timestamp = DateUtil.addDay(recordMap.get("@timestamp"), inner.logProcessorConf.getProperty("dbus.heartbeat.timestamp"), 0);
         }
         return timestamp;
@@ -325,15 +324,15 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
             ControlType cmd = ControlType.getCommand(JSONObject.parseObject(json).getString("type"));
             switch (cmd) {
                 case LOG_PROCESSOR_RELOAD_CONFIG: {
-                    logger.info("LogProcessorTransformBolt-{} 收到reload消息！Type: {}, Values: {} " , context.getThisTaskId(), cmd, json);
+                    logger.info("LogProcessorTransformBolt-{} 收到reload消息！Type: {}, Values: {} ", context.getThisTaskId(), cmd, json);
                     inner.close(true);
                     init();
                     inner.zkHelper.saveReloadStatus(json, "LogProcessorTransformBolt-" + context.getThisTaskId(), true);
                     break;
                 }
                 case APPENDER_TOPIC_RESUME: {
-                    JSONObject jsonObject = (JSONObject)JSON.parseObject(json).get("payload");
-                    logger.info("LogProcessorTransformBolt-{} 收到resume消息！Type: {}, Values: {} " , context.getThisTaskId(), cmd, JSON.toJSONString(jsonObject));
+                    JSONObject jsonObject = (JSONObject) JSON.parseObject(json).get("payload");
+                    logger.info("LogProcessorTransformBolt-{} 收到resume消息！Type: {}, Values: {} ", context.getThisTaskId(), cmd, JSON.toJSONString(jsonObject));
                     String[] vals = StringUtils.split(jsonObject.getString("topic"), ".");
                     String dsName = vals[0];
                     String schemaName = jsonObject.getString("SCHEMA_NAME");
@@ -364,6 +363,17 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
         String namespace = buildNameSpace(dsName, schema, table, Long.valueOf(version).intValue(), host);
         builder.build(DbusMessage.ProtocolType.DATA_INCREMENT_DATA, namespace, 0);
 
+        Map<String, String> umsidComputeUseFiledConfMap = null;
+        String umsidComputeUseFiled = StringUtils.EMPTY;
+        String umsidComputeUseFiledFmt = StringUtils.EMPTY;
+        if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
+                StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed"))) {
+            umsidComputeUseFiledConfMap = JSON.parseObject(inner.logProcessorConf.getProperty("umsid_compute_use_filed"), Map.class);
+            umsidComputeUseFiled = umsidComputeUseFiledConfMap.get(table);
+            umsidComputeUseFiledFmt = umsidComputeUseFiledConfMap.get(StringUtils.join(new String[]{table, umsidComputeUseFiled}, "_"));
+        }
+
         int idx = 0;
         for (RecordWrapper data : tableDatas) {
             // 设置schema和payload
@@ -379,28 +389,25 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
              */
             Long timeStamp = null;
             //ums时间戳不需要转换时区
-            if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
+            if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_UMS)) {
                 timeStamp = data.getTimeStamp();
             }
             //logstash和filebeat需要转换时区
-            else if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH)
+            else if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH)
                     || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_LOGSTASH_JSON)
-                    || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)){
+                    || DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FILEBEAT)) {
                 //@timestamp ：抽取时间，只使用@timestamp
-                if(StringUtils.isEmpty(data.getRecordMap().get("@timestamp"))) logger.error("@timestamp is null!");
+                if (StringUtils.isEmpty(data.getRecordMap().get("@timestamp"))) logger.error("@timestamp is null!");
                 timeStamp = DateUtil.addDay(data.getRecordMap().get("@timestamp"),
                         inner.logProcessorConf.getProperty("@timestamp"), Integer.valueOf(inner.logProcessorConf.getProperty("add.hours")));
-            } else if(DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
+            } else if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME)) {
                 timeStamp = Long.valueOf(data.getRecordMap().get("timestamp"));
+            } else if (DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) {
+                timeStamp = System.currentTimeMillis();
             }
 
             try {
-                List<Object> values = new ArrayList<>();
-                Long ums_id = (timeStamp - 1483200000000L) << 22 | (data.getPartition() << 18) | (data.getOffset() % 262144);
-                values.add(ums_id);
-                values.add(DateUtil.convertLongToStr4Date(timeStamp));
-                values.add("i");
-                values.add(String.valueOf(inner.zkHelper.getZkservice().nextValue(buildNameSpaceForZkUidFetch(dsName))));
+                List<Object> values = new LinkedList<>();
 
                 // 设置其它field
                 for (String strField : data.getValue()) {
@@ -408,7 +415,32 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                     if (idx == 0)
                         builder.appendSchema(field.getName(), convertProcessorLogDataType(field.getType()), false);
                     values.add(field.getValue());
+
+                    if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                            DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
+                            StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed")) &&
+                            StringUtils.isNotBlank(umsidComputeUseFiled) &&
+                            StringUtils.isNotBlank(umsidComputeUseFiledFmt) &&
+                            StringUtils.equals(field.getName(), umsidComputeUseFiled)) {
+                        timeStamp = DateUtil.convertStrToLong4Date(String.valueOf(field.getValue()), umsidComputeUseFiledFmt);
+                    }
+
                 }
+
+                /**
+                 * 增加了flattenJsonArray算子之后，原来一个offset记录会拆分成多行数据，如果时间戳，partition，offset相同时
+                 * 多个ums生成了相同的ums_id，为了解决这个问题，当产生拆分后，在相同offset的基础上增加了一个索引，所以相应的
+                 * usm_id的生成方式也做了相应的修改，原来最后18位给offset使用，现在用10位给offset使用（offset做多支持1024）
+                 * 8给索引使用（索引最多支持255）
+                 *
+                 */
+                // Long ums_id = (timeStamp - 1483200000000L) << 22 | (data.getPartition() << 18) | (data.getOffset() % 262144);
+                Long ums_id = (timeStamp - 1483200000000L) << 22 | (data.getPartition() << 18) | ((data.getOffset() % 1023) << 8) | data.getIndex() % 255;
+                values.add(0, ums_id);
+                values.add(1, DateUtil.convertLongToStr4Date(timeStamp));
+                values.add(2, "i");
+                values.add(3, String.valueOf(inner.zkHelper.getZkservice().nextValue(buildNameSpaceForZkUidFetch(dsName))));
+
                 builder.appendPayload(values.toArray());
             } catch (IllegalArgumentException e) {
                 logger.error("IllegalArgumentException : {}", e);
@@ -427,7 +459,7 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
     }
 
     private String buildNameSpaceForZkUidFetch(String dsName) {
-        return StringUtils.join(new String[] {dsName, "schema.table.version"}, ".");
+        return StringUtils.join(new String[]{dsName, "schema.table.version"}, ".");
     }
 
 
@@ -454,12 +486,12 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
 
     private String emitActiveTableInfo(Tuple input, Long timestamp, String host, Integer partition, Long offset, String tableName, String umsSource) {
         String namespace = null;
-        for(Map.Entry<String, String> entry : inner.activeTableToTopicMap.entrySet()) {
+        for (Map.Entry<String, String> entry : inner.activeTableToTopicMap.entrySet()) {
             String[] vals = StringUtils.split(entry.getKey(), "|");
             namespace = entry.getKey();
-            if(StringUtils.isEmpty(tableName)) {
+            if (StringUtils.isEmpty(tableName)) {
                 namespace = emitActiveTableHbAndStatInfo(input, timestamp, host, partition, offset, umsSource, entry);
-            } else if(StringUtils.equals(tableName, vals[2])) {
+            } else if (StringUtils.equals(tableName, vals[2])) {
                 namespace = emitActiveTableHbAndStatInfo(input, timestamp, host, partition, offset, umsSource, entry);
             } else {
                 continue;
@@ -496,13 +528,13 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
         hb.setUmsSource(umsSource);
 
         String statKey = StringUtils.joinWith("|", host, entry.getKey());
-        if(statMap.containsKey(statKey)) {
+        if (statMap.containsKey(statKey)) {
             st.setSuccessCnt(statMap.get(statKey));
             statMap.remove(statKey);
         } else {
             st.setSuccessCnt(0L);
         }
-        if(tableErrorStatMap.containsKey(statKey)) {
+        if (tableErrorStatMap.containsKey(statKey)) {
             st.setErrorCnt(tableErrorStatMap.get(statKey));
             tableErrorStatMap.remove(statKey);
         } else {
@@ -515,12 +547,12 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
 
     private String emitAbortTableInfo(Tuple input, Long timestamp, String host, Integer partition, Long offset, String tableName, String umsSource) {
         String namespace = null;
-        for(Map.Entry<String, String> entry : inner.abortTableToTopicMap.entrySet()) {
+        for (Map.Entry<String, String> entry : inner.abortTableToTopicMap.entrySet()) {
             String[] vals = StringUtils.split(entry.getKey(), "|");
             namespace = entry.getKey();
-            if(StringUtils.isEmpty(tableName)) {
+            if (StringUtils.isEmpty(tableName)) {
                 namespace = emitAbortTableHbAndStatInfo(input, timestamp, host, partition, offset, entry);
-            } else if(StringUtils.equals(tableName, vals[2])) {
+            } else if (StringUtils.equals(tableName, vals[2])) {
                 namespace = emitAbortTableHbAndStatInfo(input, timestamp, host, partition, offset, entry);
             } else {
                 continue;
@@ -569,7 +601,7 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
         st.setNamespace(StringUtils.joinWith("|", vals[0], vals[1], "_unknown_table_"));
         st.setHost(host);
 
-        if(globalMissStat.containsKey(host)) {
+        if (globalMissStat.containsKey(host)) {
             st.setSuccessCnt(globalMissStat.get(host));
             globalMissStat.remove(host);
         } else {

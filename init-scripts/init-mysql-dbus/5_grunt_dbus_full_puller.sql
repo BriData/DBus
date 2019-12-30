@@ -1,6 +1,6 @@
----»ñÈ¡ÄâÀ­È¡µÄÄ¿±ê±í±¸¿âµÄ¶ÁÈ¨ÏŞ£¬ÓÃÓÚ³õÊ¼»¯¼ÓÔØ:
+---è·å–æ‹Ÿæ‹‰å–çš„ç›®æ ‡è¡¨å¤‡åº“çš„è¯»æƒé™ï¼Œç”¨äºåˆå§‹åŒ–åŠ è½½:
  GRANT select on test_db.test_table1 TO dbus;
- GRANT select on test_db.test_table2 TO dbus; 
+ GRANT select on test_db.test_table2 TO dbus;
  GRANT select on test_db1.test1_table1 TO dbus;
- 
-flush privileges; 
+
+flush privileges;

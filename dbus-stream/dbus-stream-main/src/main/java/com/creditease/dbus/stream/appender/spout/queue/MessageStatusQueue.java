@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.spout.queue;
 
@@ -93,6 +94,7 @@ public class MessageStatusQueue {
     public int size() {
         return queue.size();
     }
+
     public QueueElement getQueueElement(long offset) {
         for (QueueElement element : queue) {
             if (offset == element.getKey()) return element;

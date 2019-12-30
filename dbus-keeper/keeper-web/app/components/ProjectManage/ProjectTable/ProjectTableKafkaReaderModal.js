@@ -1,22 +1,13 @@
-import React, { PropTypes, Component } from 'react'
-import {Button, Modal, Form, Select, Input } from 'antd'
-import { FormattedMessage } from 'react-intl'
-import {
-  KafkaReaderForm
-} from '@/app/components'
-// 导入样式
-import styles from './res/styles/index.less'
-
-const FormItem = Form.Item
-const Option = Select.Option
-const TextArea = Input.TextArea
+import React, {Component} from 'react'
+import {Button, Form, Modal} from 'antd'
+import {FormattedMessage} from 'react-intl'
+import {KafkaReaderForm} from '@/app/components'
 
 @Form.create()
 export default class ProjectTableKafkaReaderModal extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
-    this.state = {
-    }
+    this.state = {}
   }
 
   componentWillMount() {
@@ -29,7 +20,7 @@ export default class ProjectTableKafkaReaderModal extends Component {
     readKafkaData(values)
   }
 
-  render () {
+  render() {
     const {key, visible, record, onClose} = this.props
     const topicList = (this.props.topicsByUserIdList.result.payload || []).sort()
     const kafkaData = this.props.kafkaData
@@ -58,5 +49,4 @@ export default class ProjectTableKafkaReaderModal extends Component {
   }
 }
 
-ProjectTableKafkaReaderModal.propTypes = {
-}
+ProjectTableKafkaReaderModal.propTypes = {}

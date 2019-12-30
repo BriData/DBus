@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,14 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.util;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import org.apache.commons.lang.StringUtils;
 
-import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import java.io.*;
+import java.nio.channels.FileChannel;
 
 public class IOUtil {
 

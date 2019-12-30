@@ -41,36 +41,49 @@
   </select>
   <select id="selectByProjectId" resultType="java.util.Map" parameterType="java.lang.Integer">
     SELECT
-      pr.*,
-      tptt.*,
-      IF(tdec.table_id, 1, 0) hasDbaEncode
+    *
     FROM
-      (SELECT
-         tpr.id resourceId,
-         dds.ds_type,
-         dds.ds_name,
-         dt.id,
-         ds.schema_name,
-         dt. STATUS,
-         dt.table_name,
-         mv.version,
-         dt.description,
-         DATE_FORMAT(dt.create_time, '%Y-%m-%d %H:%i:%s') create_time,
-         tpr.fullpull_enable_flag
-       FROM
-      	  t_project_resource tpr,
-      	  t_dbus_datasource dds,
-      	  t_data_schema ds,
-      	  t_data_tables dt,
-      	  t_meta_version mv
-       WHERE
-         tpr.project_id = #{projectId}
-         AND tpr.table_id = dt.id
-         AND dt.ds_id = dds.id
-         AND dt.schema_id = ds.id
-         AND dt.ver_id = mv.id) pr
-    LEFT JOIN (SELECT distinct table_id FROM t_dba_encode_columns GROUP BY table_id) tdec ON pr.id = tdec.table_id
-    LEFT JOIN (SELECT count(id) tptt_id_cnt, table_id, project_id FROM t_project_topo_table WHERE project_id = #{projectId} GROUP BY table_id ) tptt ON pr.id = tptt.table_id
+    (
+      SELECT
+      tpr.id resourceId,
+      dds.ds_type,
+      dds.ds_name,
+      dt.id,
+      ds.schema_name,
+      dt. STATUS,
+      dt.table_name,
+      mv.version,
+      dt.description,
+      DATE_FORMAT(
+      dt.create_time,
+      '%Y-%m-%d %H:%i:%s'
+      ) create_time,
+      tpr.fullpull_enable_flag
+      FROM
+      t_project_resource tpr,
+      t_dbus_datasource dds,
+      t_data_schema ds,
+      t_data_tables dt,
+      t_meta_version mv
+      WHERE
+      tpr.project_id = #{projectId}
+      AND tpr.table_id = dt.id
+      AND dt.ds_id = dds.id
+      AND dt.schema_id = ds.id
+      AND dt.ver_id = mv.id
+    ) pr
+    LEFT JOIN (
+    SELECT
+    count(id) tptt_id_cnt,
+    table_id,
+    project_id
+    FROM
+    t_project_topo_table
+    WHERE
+    project_id = #{projectId}
+    GROUP BY
+    table_id
+    ) tptt ON pr.id = tptt.table_id
   </select>
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
     delete from t_project_resource
@@ -121,10 +134,6 @@
   </select>
 
   <select id="searchTableResource" parameterType="java.util.Map" resultType="java.util.Map">
-    select * from
-    (select res.*,
-    IF (tdec.table_id, 1, 0) hasDbaEncode
-    from (
     SELECT DISTINCT *
     FROM (
     SELECT
@@ -162,19 +171,6 @@
     project_id = #{projectId} AND
     topo_id = #{topoId}
     )
-    ) res
-    LEFT JOIN (
-    SELECT DISTINCT
-    table_id
-    FROM
-    t_dba_encode_columns
-    GROUP BY
-    table_id
-    ) tdec ON res.tableId = tdec.table_id) t
-    <where>
-      <if test="hasDbaEncode != null">t.hasDbaEncode=#{hasDbaEncode}</if>
-    </where>
-
   </select>
   <select id="searchStatus" parameterType="java.lang.Integer" resultType="java.lang.String">
     SELECT
@@ -212,7 +208,7 @@
     WHERE
     dt.ver_id = tm.ver_id AND
     dt.id = #{id, jdbcType=INTEGER}) t_wk
-    LEFT JOIN t_dba_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
+    LEFT JOIN t_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
   </select>
   <select id="getDSNames" parameterType="java.lang.Integer" resultType="java.util.Map">
     SELECT DISTINCT

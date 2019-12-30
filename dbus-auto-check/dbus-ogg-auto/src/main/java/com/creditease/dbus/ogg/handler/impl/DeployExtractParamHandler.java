@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.ogg.handler.impl;
 
 import com.creditease.dbus.ogg.bean.ExtractConfigBean;
@@ -26,8 +47,8 @@ public class DeployExtractParamHandler extends AbstractHandler {
     private void deployExtractParam(BufferedWriter bw) throws Exception {
         ExtractConfigBean extractConfig = ExtractConfigContainer.getInstance().getExtrConfig();
         String extractName = extractConfig.getExtrName();
-        writeAndPrint( "********************************** EXTRACT DEPLOY START *************************************");
-        writeAndPrint( "extract 配置文件: " + extractName + ".prm");
+        writeAndPrint("********************************** EXTRACT DEPLOY START *************************************");
+        writeAndPrint("extract 配置文件: " + extractName + ".prm");
 
         try {
             if (extractConfig.getAppendTables() == null) {
@@ -37,9 +58,9 @@ public class DeployExtractParamHandler extends AbstractHandler {
             }
             String file = extractConfig.getOggHome() + "/dirprm/" + extractConfig.getExtrName() + ".prm";
             FileUtil.readFile(file, bw);
-            writeAndPrint( "********************************* EXTRACT DEPLOY SUCCESS ************************************");
+            writeAndPrint("********************************* EXTRACT DEPLOY SUCCESS ************************************");
         } catch (Exception e) {
-            writeAndPrint( "*********************************** EXTRACT DEPLOY FAIL *************************************");
+            writeAndPrint("*********************************** EXTRACT DEPLOY FAIL *************************************");
             throw e;
         }
     }

@@ -1,8 +1,6 @@
-import React, {PropTypes, Component} from 'react'
-import {Checkbox, Icon, Form, Select, Input, Button, message} from 'antd'
-const Textarea = Input.TextArea
+import React, {Component} from 'react'
+import {Button, Checkbox, Form, Icon, Input, message, Select} from 'antd'
 // 导入样式
-import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
 import LOGSTASH from './res/image/logstash.svg'
 import UMS from './res/image/ums.jpg'
@@ -10,11 +8,15 @@ import FLUME from './res/image/flume.png'
 import FILEBEAT from './res/image/filebeat.svg'
 
 import {
-  DATA_SOURCE_GET_OGG_CONF_API,
-  DATA_SOURCE_SET_OGG_CONF_API,
   DATA_SOURCE_GET_CANAL_CONF_API,
-  DATA_SOURCE_SET_CANAL_CONF_API
+  DATA_SOURCE_GET_OGG_CONF_API,
+  DATA_SOURCE_SET_CANAL_CONF_API,
+  DATA_SOURCE_SET_OGG_CONF_API
 } from '@/app/containers/ResourceManage/api'
+import DB2 from './res/image/db2.png'
+
+const Textarea = Input.TextArea
+
 const IMAGE_SIZE = 16
 
 const FormItem = Form.Item
@@ -29,6 +31,10 @@ export default class AddDataSource extends Component {
       isLogDsType: false,
       isDeployCanal: true,
       isDeployOgg: true,
+
+      oggHostList: [],
+      canalHostList: [],
+      loading: false
     }
   }
 
@@ -80,8 +86,9 @@ export default class AddDataSource extends Component {
       })
         .then(res => {
           if (res && res.status === 0) {
+            const oggHostList = (res.payload.hosts || '').split(',')
+            this.setState({oggHostList})
             this.props.form.setFieldsValue({
-              oggHost: res.payload.host || res.payload.hosts,
               oggUser: res.payload.user,
               oggPort: res.payload.port,
               oggToolPath: res.payload.oggToolPath,
@@ -107,8 +114,9 @@ export default class AddDataSource extends Component {
       })
         .then(res => {
           if (res && res.status === 0) {
+            const canalHostList = (res.payload.hosts || '').split(',')
+            this.setState({canalHostList})
             this.props.form.setFieldsValue({
-              canalSSHHost: res.payload.hosts,
               canalSSHUser: res.payload.user,
               canalSSHPort: res.payload.port,
               canalPath: res.payload.canalPath,
@@ -148,11 +156,12 @@ export default class AddDataSource extends Component {
     })
       .then(res => {
         if (res && res.status === 0) {
+          this.setState({loading: true})
           /**
            * 只有选择了oracle且部署ogg
            * 或者选择了mysql且部署canal
            * 才能自动部署
-          */
+           */
           const {isDeployCanal, isDeployOgg} = this.state
           if (values.dsType === 'mysql' && isDeployCanal) {
             this.handleSetOggOrCanal(values)
@@ -230,6 +239,7 @@ export default class AddDataSource extends Component {
     })
       .then(res => {
         if (res && res.status === 0) {
+          this.setState({loading: false})
           values = {
             id: res.payload,
             ...values
@@ -271,7 +281,7 @@ export default class AddDataSource extends Component {
         offset: 4,
       }
     }
-    const {isLogDsType} = this.state
+    const {isLogDsType, loading} = this.state
 
     const fieldsValue = this.props.form.getFieldsValue()
 
@@ -296,6 +306,7 @@ export default class AddDataSource extends Component {
     ]
     const {isDeployCanal, isDeployOgg} = this.state
 
+    const {oggHostList, canalHostList} = this.state
     return (
       <div>
         <Form autoComplete="off" className='data-source-start-topo-form'>
@@ -304,7 +315,8 @@ export default class AddDataSource extends Component {
               initialValue: null,
               rules: this.props.form.getFieldsValue().dsType === 'mysql' ? mysqlNameValidate : normalNameValidate
             })(
-              <Input onChange={e => this.handleDsNameChange(e.target.value)} placeholder="数据源名称" size="large" type="text"/>
+              <Input onChange={e => this.handleDsNameChange(e.target.value)} placeholder="数据源名称" size="large"
+                     type="text"/>
             )}
           </FormItem>
           <FormItem label='数据源类型' {...formItemLayout}>
@@ -321,16 +333,35 @@ export default class AddDataSource extends Component {
                 showSearch
                 optionFilterProp='children'
                 placeholder="数据源类型"
-                style={{ width: '100%' }}
+                style={{width: '100%'}}
                 onChange={this.handleDsTypeChange}
               >
-                <Option key="oracle" value="oracle"><Icon style={{color: 'red', verticalAlign: 'middle', height: IMAGE_SIZE, width: IMAGE_SIZE}} type="database" /> oracle</Option>
-                <Option key="mysql" value="mysql"><Icon style={{color: 'blue', verticalAlign: 'middle', height: IMAGE_SIZE, width: IMAGE_SIZE}} type="database" /> mysql</Option>
-                <Option key="log_logstash" value="log_logstash"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE} src={LOGSTASH}/> log_logstash</Option>
-                <Option key="log_logstash_json" value="log_logstash_json"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE} src={LOGSTASH}/> log_logstash_json</Option>
-                <Option key="log_ums" value="log_ums"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE} src={UMS}/> log_ums</Option>
-                <Option key="log_flume" value="log_flume"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE} src={FLUME}/> log_flume</Option>
-                <Option key="log_filebeat" value="log_filebeat"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE} src={FILEBEAT}/> log_filebeat</Option>
+                <Option key="oracle" value="oracle"><Icon
+                  style={{color: 'red', verticalAlign: 'middle', height: IMAGE_SIZE, width: IMAGE_SIZE}}
+                  type="database"/> oracle</Option>
+                <Option key="mysql" value="mysql"><Icon
+                  style={{color: 'blue', verticalAlign: 'middle', height: IMAGE_SIZE, width: IMAGE_SIZE}}
+                  type="database"/> mysql</Option>
+                <Option key="mongo" value="mongo"><Icon
+                  style={{color: 'green', verticalAlign: 'middle', height: IMAGE_SIZE, width: IMAGE_SIZE}}
+                  type="database"/> mongo</Option>
+                <Option key="db2" value="db2"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE}
+                                                   src={DB2}/> db2</Option>
+                <Option key="log_logstash" value="log_logstash"><img {...imageProps} height={IMAGE_SIZE}
+                                                                     width={IMAGE_SIZE}
+                                                                     src={LOGSTASH}/> log_logstash</Option>
+                <Option key="log_logstash_json" value="log_logstash_json"><img {...imageProps} height={IMAGE_SIZE}
+                                                                               width={IMAGE_SIZE}
+                                                                               src={LOGSTASH}/> log_logstash_json</Option>
+                <Option key="log_ums" value="log_ums"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE}
+                                                           src={UMS}/> log_ums</Option>
+                <Option key="log_flume" value="log_flume"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE}
+                                                               src={FLUME}/> log_flume</Option>
+                <Option key="log_filebeat" value="log_filebeat"><img {...imageProps} height={IMAGE_SIZE}
+                                                                     width={IMAGE_SIZE}
+                                                                     src={FILEBEAT}/> log_filebeat</Option>
+                <Option key="log_json" value="log_json"><img {...imageProps} height={IMAGE_SIZE} width={IMAGE_SIZE}
+                                                             src={LOGSTASH}/> log_json</Option>
               </Select>
             )}
           </FormItem>
@@ -348,7 +379,7 @@ export default class AddDataSource extends Component {
                 showSearch
                 optionFilterProp='children'
                 placeholder="状态"
-                style={{ width: '100%' }}
+                style={{width: '100%'}}
               >
                 <Option key="active" value="active">active</Option>
                 <Option key="inactive" value="inactive">inactive</Option>
@@ -408,7 +439,7 @@ export default class AddDataSource extends Component {
                 }
               ]
             })(
-              <Textarea disabled={isLogDsType} autosize={{minRows:3}} placeholder="主库URL" type="text" size="large"/>
+              <Textarea disabled={isLogDsType} autosize={{minRows: 3}} placeholder="主库URL" type="text" size="large"/>
             )}
           </FormItem>
           <FormItem label='从库URL' {...formItemLayout}>
@@ -421,7 +452,7 @@ export default class AddDataSource extends Component {
                 }
               ]
             })(
-              <Textarea disabled={isLogDsType} autosize={{minRows:3}} placeholder="从库URL" type="text" size="large"/>
+              <Textarea disabled={isLogDsType} autosize={{minRows: 3}} placeholder="从库URL" type="text" size="large"/>
             )}
           </FormItem>
 
@@ -433,7 +464,7 @@ export default class AddDataSource extends Component {
                 checked={isDeployOgg}
                 onChange={this.handleDeployOggChange}
               />
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'oracle' && isDeployOgg && (
             <FormItem label='OGG Trail Prefix' {...formItemLayout}>
               {getFieldDecorator('trailName', {
@@ -478,9 +509,20 @@ export default class AddDataSource extends Component {
                   }
                 ]
               })(
-                <Input placeholder="dbus-n1" size="large" type="text"/>
+                <Select
+                  mode="combobox"
+                  placeholder="Select host"
+                  optionFilterProp="children"
+                  filterOption={() => true}
+                >
+                  {oggHostList.map(item => (
+                    <Option value={item} key={item}>
+                      {item}
+                    </Option>
+                  ))}
+                </Select>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'oracle' && isDeployOgg && (
             <FormItem label='OGG部署服务器SSH用户名' {...formItemLayout}>
               {getFieldDecorator('oggUser', {
@@ -494,7 +536,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="app" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'oracle' && isDeployOgg && (
             <FormItem label='OGG部署服务器SSH端口' {...formItemLayout}>
               {getFieldDecorator('oggPort', {
@@ -508,7 +550,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="22" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'oracle' && isDeployOgg && (
             <FormItem label='OGG部署小工具目录' {...formItemLayout}>
               {getFieldDecorator('oggToolPath', {
@@ -522,7 +564,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="OGG Tool Path" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'oracle' && isDeployOgg && (
             <FormItem label='OGG根目录' {...formItemLayout}>
               {getFieldDecorator('oggPath', {
@@ -536,7 +578,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="OGG Path" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
 
           {fieldsValue.dsType === 'oracle' && isDeployOgg && (
             <FormItem label='NLS_LANG' {...formItemLayout}>
@@ -551,7 +593,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="NLS_LANG" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
 
           {/* mysql canal表单 */}
           {fieldsValue.dsType === 'mysql' && (
@@ -560,7 +602,7 @@ export default class AddDataSource extends Component {
                 checked={isDeployCanal}
                 onChange={this.handleDeployCanalChange}
               />
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='从库Ip:Port' {...formItemLayout}>
               {getFieldDecorator('canalAdd', {
@@ -574,7 +616,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="Canal Slave" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='从库Canal用户名' {...formItemLayout}>
               {getFieldDecorator('canalUser', {
@@ -588,7 +630,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="Canal User" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='从库Canal密码' {...formItemLayout}>
               {getFieldDecorator('canalPass', {
@@ -602,7 +644,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="Canal Password" size="large" type="password"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='Canal部署服务器Host' {...formItemLayout}>
               {getFieldDecorator('canalSSHHost', {
@@ -614,9 +656,20 @@ export default class AddDataSource extends Component {
                   }
                 ]
               })(
-                <Input placeholder="dbus-n1" size="large" type="text"/>
+                <Select
+                  mode="combobox"
+                  placeholder="Select host"
+                  optionFilterProp="children"
+                  filterOption={() => true}
+                >
+                  {canalHostList.map(item => (
+                    <Option value={item} key={item}>
+                      {item}
+                    </Option>
+                  ))}
+                </Select>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='Canal部署服务器SSH用户名' {...formItemLayout}>
               {getFieldDecorator('canalSSHUser', {
@@ -630,7 +683,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="app" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='Canal部署服务器SSH端口' {...formItemLayout}>
               {getFieldDecorator('canalSSHPort', {
@@ -644,7 +697,7 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="22" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
           {fieldsValue.dsType === 'mysql' && isDeployCanal && (
             <FormItem label='Canal部署小工具目录' {...formItemLayout}>
               {getFieldDecorator('canalPath', {
@@ -658,9 +711,9 @@ export default class AddDataSource extends Component {
               })(
                 <Input placeholder="Canal Tool Path" size="large" type="text"/>
               )}
-            </FormItem> )}
+            </FormItem>)}
 
-            {/* 几乎不需要手工配置的几个设置*/}
+          {/* 几乎不需要手工配置的几个设置*/}
           <FormItem label='Topic' {...formItemLayout}>
             {getFieldDecorator('topic', {
               initialValue: null,
@@ -715,7 +768,7 @@ export default class AddDataSource extends Component {
           </FormItem>
 
           <FormItem {...tailFormItemLayout}>
-            <Button type="primary" onClick={this.handleNext}>下一步</Button>
+            <Button type="primary" loading={loading} onClick={this.handleNext}>下一步</Button>
           </FormItem>
         </Form>
       </div>

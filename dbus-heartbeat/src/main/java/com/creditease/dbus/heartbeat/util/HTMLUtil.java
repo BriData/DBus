@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.heartbeat.util;
 
@@ -36,7 +37,7 @@ public class HTMLUtil {
         final String HTML_LINE_SEPARATOR = "<br/>";
         StringBuilder output = new StringBuilder();
         output.append("变更前后详情对比:" + HTML_LINE_SEPARATOR);
-        output.append(compareListHTML(beforeMap.getJSONArray("columns"),afterMap.getJSONArray("columns"), payload));
+        output.append(compareListHTML(beforeMap.getJSONArray("columns"), afterMap.getJSONArray("columns"), payload));
         return output.toString();
     }
 
@@ -48,10 +49,10 @@ public class HTMLUtil {
         result.append("<th colspan=\"" + header.length + "\">");
         int version = payload.getInteger("version");
         int oldVersion = isVersionChangeCompatible(payload).equals("") ? version - 1 : version;
-        result.append("变更前(版本号:"+oldVersion+")");
+        result.append("变更前(版本号:" + oldVersion + ")");
         result.append("</th>");
         result.append("<th colspan=\"" + header.length + "\">");
-        result.append("变更后(版本号:"+version+")");
+        result.append("变更后(版本号:" + version + ")");
         result.append("</th>");
         result.append("</tr>");
 
@@ -67,10 +68,10 @@ public class HTMLUtil {
         result.append("</tr>");
 
 
-        for(int i=0;i<table.length;i++) {
+        for (int i = 0; i < table.length; i++) {
             result.append("<tr bgcolor=\"#ffffff\">");
-            for(int j=0;j<header.length*2;j++) {
-                if(needHighlight[i]) result.append("<td bgcolor=\"#FFC0CB\">");
+            for (int j = 0; j < header.length * 2; j++) {
+                if (needHighlight[i]) result.append("<td bgcolor=\"#FFC0CB\">");
                 else result.append("<td>");
                 if (table[i][j] != null) result.append(table[i][j]);
                 result.append("</td>");

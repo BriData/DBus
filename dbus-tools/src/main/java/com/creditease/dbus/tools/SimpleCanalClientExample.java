@@ -1,21 +1,38 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 /**
  * Created by dongwang47 on 2016/8/11.
  */
 
 
 package com.creditease.dbus.tools;
-import java.net.InetSocketAddress;
-import java.util.List;
 
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;
+import com.alibaba.otter.canal.protocol.CanalEntry.*;
 import com.alibaba.otter.canal.protocol.Message;
-import com.alibaba.otter.canal.protocol.CanalEntry.Column;
-import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
-import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
-import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
-import com.alibaba.otter.canal.protocol.CanalEntry.RowChange;
-import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
+
+import java.net.InetSocketAddress;
+import java.util.List;
 
 public class SimpleCanalClientExample {
 
@@ -23,7 +40,7 @@ public class SimpleCanalClientExample {
     // 输入参数: dbus-n1  11111 testdb
     public static void main(String args[]) {
 
-        if(args.length != 3) {
+        if (args.length != 3) {
             System.out.println("args: dbus-n1 11111 testdb");
             return;
         }
@@ -78,8 +95,8 @@ public class SimpleCanalClientExample {
 
     private static void printEntry(List<Entry> entries, long batchId) {
 
- //       CanalPacket.Messages.Builder builder = CanalPacket.Messages.newBuilder();
- //       builder.setBatchId(batchId);
+        //       CanalPacket.Messages.Builder builder = CanalPacket.Messages.newBuilder();
+        //       builder.setBatchId(batchId);
 
         for (Entry entry : entries) {
 
@@ -119,14 +136,14 @@ public class SimpleCanalClientExample {
                     entry.getHeader().getLogfileName(), entry.getHeader().getLogfileOffset(),
                     entry.getHeader().getSchemaName(), entry.getHeader().getTableName(),
                     eventType, entry.getHeader().getEventType()));
-            System.out.println(namespace + ": sql:"+ rowChage.getSql());
+            System.out.println(namespace + ": sql:" + rowChage.getSql());
 
             for (RowData rowData : rowChage.getRowDatasList()) {
                 if (eventType == EventType.DELETE) {
                     printColumn(namespace, rowData.getBeforeColumnsList());
                 } else if (eventType == EventType.INSERT) {
                     printColumn(namespace, rowData.getAfterColumnsList());
-                } else if (eventType == EventType.UPDATE ){
+                } else if (eventType == EventType.UPDATE) {
                     System.out.println(namespace + ": -------> before");
                     printColumn(namespace, rowData.getBeforeColumnsList());
                     System.out.println(namespace + ": -------> after");
@@ -176,7 +193,7 @@ public class SimpleCanalClientExample {
     private static void printColumn(String namespace, List<Column> columns) {
         for (Column column : columns) {
             System.out.println(namespace + ": " + column.getName() + " : " + column.getValue() + "    update=" + column.getUpdated()
-            + ", sqltype=" + column.getMysqlType() + ", isnull=" + column.getIsNull() );
+                    + ", sqltype=" + column.getMysqlType() + ", isnull=" + column.getIsNull());
         }
     }
 }

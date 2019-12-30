@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.encoders;
 
@@ -33,7 +34,9 @@ public class EncoderConf {
     private String encodeParam;
     private boolean truncate;
     private String desc;
-    /** dbus message 中原始数据 */
+    /**
+     * dbus message 中原始数据
+     */
     private Map<String, Object> raw;
 
     public EncoderConf() {

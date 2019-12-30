@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
 import com.creditease.dbus.msgencoder.ExternalEncoders;
@@ -27,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -60,16 +63,18 @@ public class DistributedLock implements Lock, Watcher {
 
     private int sessionTimeout = 30000;
     private List<Exception> exceptionList = new ArrayList<Exception>();
+
     /**
      * 配置分布式锁
+     *
      * @param zkConnect 连接的url
-     * @param lockName 竞争资源
-     * 分布式锁实现原理：
-     * 1.客户端调用create()方法创建名为“_locknode_/guid-lock-”的节点，节点的创建类型需要设置为EPHEMERAL_SEQUENTIAL。
-       2.客户端调用getChildren(“_locknode_”)方法来获取所有已经创建的子节点，同时在这个节点上注册子节点变更通知的Watcher。
-       3.客户端获取到所有子节点path之后，如果发现自己在步骤1中创建的节点是所有节点中序号最小的，那么就认为这个客户端获得了锁。
-       4.如果在步骤3中发现自己并非是所有子节点中最小的，说明自己还没有获取到锁，就开始等待，直到下次子节点变更通知的时候，
-        再进行子节点的获取，判断是否获取锁。
+     * @param lockName  竞争资源
+     *                  分布式锁实现原理：
+     *                  1.客户端调用create()方法创建名为“_locknode_/guid-lock-”的节点，节点的创建类型需要设置为EPHEMERAL_SEQUENTIAL。
+     *                  2.客户端调用getChildren(“_locknode_”)方法来获取所有已经创建的子节点，同时在这个节点上注册子节点变更通知的Watcher。
+     *                  3.客户端获取到所有子节点path之后，如果发现自己在步骤1中创建的节点是所有节点中序号最小的，那么就认为这个客户端获得了锁。
+     *                  4.如果在步骤3中发现自己并非是所有子节点中最小的，说明自己还没有获取到锁，就开始等待，直到下次子节点变更通知的时候，
+     *                  再进行子节点的获取，判断是否获取锁。
      */
     public DistributedLock(String path, String zkConnect, String lockName) {
         this.lockName = lockName;
@@ -225,7 +230,6 @@ public class DistributedLock implements Lock, Watcher {
     }
 
 
-
     public void lockInterruptibly() throws InterruptedException {
         this.lock();
     }
@@ -233,9 +237,11 @@ public class DistributedLock implements Lock, Watcher {
 
     public class LockException extends RuntimeException {
         private static final long serialVersionUID = 1L;
+
         public LockException(String e) {
             super(e);
         }
+
         public LockException(Exception e) {
             super(e);
         }

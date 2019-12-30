@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.controller;
 
@@ -34,21 +35,21 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/encode")
 public class EncodeController extends BaseController {
 
-	@Autowired
-	private EncodeService service;
+    @Autowired
+    private EncodeService service;
 
-	/**
-	 * 脱敏查询
-	 * 参数 Integer pageNum, Integer pageSize, Integer projectId, Integer topoId, Integer dsId
-	 * String schemaName ,String tableName
-	 *
-	 * @param request
-	 * @return
-	 * @throws Exception
-	 */
-	@GetMapping(path = "/search")
-	public ResultEntity searchEncodeColumns(HttpServletRequest request) {
-		return service.searchEncodeColumns(request.getQueryString());
-	}
+    /**
+     * 脱敏查询
+     * 参数 Integer pageNum, Integer pageSize, Integer projectId, Integer topoId, Integer dsId
+     * String schemaName ,String tableName
+     *
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    @GetMapping(path = "/search")
+    public ResultEntity searchEncodeColumns(HttpServletRequest request) {
+        return service.searchEncodeColumns(request.getQueryString());
+    }
 
 }

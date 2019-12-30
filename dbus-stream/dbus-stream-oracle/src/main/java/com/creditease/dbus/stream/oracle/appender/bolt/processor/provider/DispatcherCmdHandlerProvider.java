@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,17 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.oracle.appender.bolt.processor.provider;
 
 import avro.shaded.com.google.common.collect.Maps;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.stream.common.appender.annotation.BoltCmdHandlerProvider;
 import com.creditease.dbus.stream.common.appender.bolt.processor.AbsCommandHandlerProvider;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.CommonReloadHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.dispatcher.DispatcherInitialLoadHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.dispatcher.DispatcherResumeHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
-import com.creditease.dbus.stream.common.appender.enums.BoltType;
 import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.oracle.appender.bolt.processor.dispatcher.DispatcherDefaultHandler;
 

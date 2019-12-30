@@ -1,0 +1,30 @@
+server.port: ${mgr.server.port}
+
+spring:
+  aop:
+    auto: true
+  application:
+    version: v1
+    cnname: dbus控制台-v1
+    name: dbus-keeper-mgr-${spring.application.version}
+  messages:
+    encoding: UTF-8
+    cache-seconds: 3600
+    basename: i18n/messages
+  jackson.date-format: yyyy-MM-dd HH:mm:ss
+  jackson.time-zone: GMT+8
+  http:
+    multipart:
+      max-file-size: 50Mb
+      max-request-size: 50Mb
+management.security.enabled: false
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+  client:
+    serviceUrl.defaultZone: ${register.server.url}
+
+zk.str: ${zk.str}
+pubKeyPath: ~/.ssh/id_rsa

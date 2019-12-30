@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.DatahubTableMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.bean.DataTableBean">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="ds_id" jdbcType="INTEGER" property="dsId" />
+    <result column="schema_id" jdbcType="INTEGER" property="schemaId" />
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName" />
+    <result column="table_name" jdbcType="VARCHAR" property="tableName" />
+    <result column="table_name_alias" jdbcType="VARCHAR" property="tableNameAlias" />
+    <result column="physical_table_regex" jdbcType="VARCHAR" property="physicalTableRegex" />
+    <result column="output_topic" jdbcType="VARCHAR" property="outputTopic" />
+    <result column="ver_id" jdbcType="INTEGER" property="verId" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="meta_change_flg" jdbcType="INTEGER" property="metaChangeFlg" />
+    <result column="batch_id" jdbcType="INTEGER" property="batchId" />
+    <result column="ver_change_history" jdbcType="VARCHAR" property="verChangeHistory" />
+    <result column="ver_change_notice_flg" jdbcType="INTEGER" property="verChangeNoticeFlg" />
+    <result column="output_before_update_flg" jdbcType="INTEGER" property="outputBeforeUpdateFlg" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
+    <result column="ds_type" jdbcType="VARCHAR" property="dsType" />
+    <result column="ctrl_topic" jdbcType="VARCHAR" property="ctrlTopic" />
+    <result column="master_url" jdbcType="VARCHAR" property="masterUrl" />
+    <result column="slave_url" jdbcType="VARCHAR" property="slaveUrl" />
+    <result column="dbus_user" jdbcType="VARCHAR" property="dbusUser" />
+    <result column="dbus_pwd" jdbcType="VARCHAR" property="dbusPassword" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="innerVersion" jdbcType="INTEGER" property="inner_version" />
+  </resultMap>
+  <select id="findAllTables" resultMap="BaseResultMap">
+    select t1.*, t2.ds_name, t2.ds_type, t2.ctrl_topic, t2.master_url, t2.slave_url, t2.dbus_user, t2.dbus_pwd, t3.version, t3.inner_version
+    from t_data_tables t1
+    left join t_dbus_datasource t2 on t1.ds_id = t2.id
+    left join t_meta_version t3 on t1.ver_id = t3.id
+    order by t1.create_time desc
+  </select>
+  <select id="searchTablesByParam" resultMap="BaseResultMap">
+    select t1.*, t2.ds_name, t2.ds_type, t2.ctrl_topic, t2.master_url, t2.slave_url, t2.dbus_user, t2.dbus_pwd
+    from t_data_tables t1, t_dbus_datasource t2
+    where t1.ds_id = t2.id
+    <if test ="dsId != null"> and t1.ds_id = #{dsId}</if>
+    <if test ="dsName != null and dsName != ''"> and t2.ds_name = #{dsName}</if>
+    <if test ="schemaId != null"> and t1.schema_id = #{schemaId}</if>
+    <if test ="schemaName != null and schemaName != ''"> and t1.schema_name = #{schemaName}</if>
+    <if test ="tableName != null and tableName != ''"> and t1.table_name = #{tableName}</if>
+    <if test ="status != null and status != ''"> and t1.status = #{status}</if>
+    <if test ="tableNames != null">
+      and t1.table_name in
+      <foreach collection="tableNames" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+    </if>
+  </select>
+  <select id="getDdlDBusTables" resultMap="BaseResultMap">
+    SELECT DISTINCT
+    t1.*, t2.ds_name, t2.ds_type, t2.ctrl_topic, t2.master_url, t2.slave_url, t2.dbus_user, t2.dbus_pwd
+    FROM
+    (
+      SELECT *  FROM t_ddl_event
+      WHERE ddl_type = 'ALTER'
+      AND update_time <![CDATA[ > ]]> #{startTime}
+      AND update_time <![CDATA[ <= ]]> #{endTime}
+    ) e
+    JOIN t_data_tables t1 ON e.ds_id = t1.ds_id
+    AND e.schema_name = t1.schema_name
+    AND e.table_name = t1.table_name
+    JOIN t_dbus_datasource t2 ON t1.ds_id = t2.id
+    <where>
+      <if test ="schemaId != null"> AND t1.schema_id = #{schemaId}</if>
+      <if test ="tableName != null and tableName != ''"> AND t1.table_name = #{tableName}</if>
+    </where>
+  </select>
+</mapper>

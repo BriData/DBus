@@ -2,6 +2,7 @@ import React, {PropTypes, Component} from 'react'
 import {Button, Row, Col, Modal, Form, Select, Input, Spin, Table, Icon, message} from 'antd'
 import {FormattedMessage} from 'react-intl'
 import OperatingButton from '@/app/components/common/OperatingButton'
+import AddTableOggModal from './AddTableOggModal'
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
@@ -17,6 +18,9 @@ export default class DataSchemaManageAddModal extends Component {
     this.state = {
       selectedRows: [],
 
+      oggModalKey: 'oggModalKey',
+      oggModalVisible: false,
+      oggModalContent: null
     }
     this.tableWidth = [
       '20%',
@@ -97,6 +101,121 @@ export default class DataSchemaManageAddModal extends Component {
       .substr(3, 8)}${key || ''}`
 
 
+  viewOgg = () => {
+    const {selectedRows} = this.state
+    const {schemaTableResult} = this.props
+    const schemaTable = schemaTableResult.result.payload
+
+    const schemaInfos = {
+      [schemaTable.schema.schemaName] : schemaTable.schema
+    }
+    const tableInfos = {
+      [schemaTable.schema.schemaName] : selectedRows
+    }
+    const recordRowKeys = {
+      [schemaTable.schema.schemaName] : [
+        ...selectedRows.map(row => row.tableName),
+        ...schemaTable.tables.filter(table => table.disable).map(table => table.tableName)
+      ]
+    }
+
+    let string = ""
+    string += "-- NEW ADD ALTER:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...tableInfos[schemaName].map(table => {
+        return `ALTER TABLE ${schemaName}.${table.tableName} ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;\n`
+      }))
+    }))
+
+    string += "\n-- NEW ADD OGG:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...tableInfos[schemaName].map(table => {
+        let ret = `TABLE ${schemaName}.${table.tableName}`
+        if (table.columnName !== '无') {
+          const nameTypes = table.columnName.split(" ");
+          let colsExcept = ''
+          nameTypes.forEach((nameType, index) => {
+            if (nameType) {
+              const slashIndex = nameType.indexOf('/')
+              if (index) colsExcept += ','
+              colsExcept += nameType.substr(0, slashIndex)
+            }
+          })
+          ret += `, COLSEXCEPT ( ${colsExcept} )`
+        }
+        ret += ';\n'
+        return ret
+      }))
+    }))
+
+    string += "\n-- NEW ADD MAPS:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...tableInfos[schemaName].map(table => {
+        return `MAP ${schemaName}.${table.tableName} ,TARGET ${schemaName}.${table.tableName};\n`
+      }))
+    }))
+
+    string += "\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...[
+        `MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = '${schemaName}');\n`
+      ])
+    }))
+
+    string += "\n------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+
+    string += "\n-- ALTER:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...recordRowKeys[schemaName].map(existTableName => {
+        return tableInfos[schemaName].every(table => table.tableName !== existTableName) ?
+          `ALTER TABLE ${schemaName}.${existTableName} ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;\n` :
+          ""
+      }))
+    }))
+
+    string += "\n-- OGG:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...recordRowKeys[schemaName].map(existTableName => {
+        return tableInfos[schemaName].every(table => table.tableName !== existTableName) ?
+          `TABLE ${schemaName}.${existTableName};\n` :
+          ""
+      }))
+    }))
+
+    string += "\n-- MAPS:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...recordRowKeys[schemaName].map(existTableName => {
+        return tableInfos[schemaName].every(table => table.tableName !== existTableName) ?
+          `MAP ${schemaName}.${existTableName} ,TARGET ${schemaName}.${existTableName};\n` :
+          ""
+      }))
+    }))
+
+    string += "\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...[
+        `MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = '${schemaName}');\n`
+      ])
+    }))
+
+    this.setState({
+      oggModalKey: this.handleRandom('oggModalKey'),
+      oggModalVisible: true,
+      oggModalContent: string
+    })
+  }
+
+  closeOgg = () => {
+    this.setState({
+      oggModalKey: this.handleRandom('oggModalKey'),
+      oggModalVisible: false
+    })
+  }
+
   render() {
     const {visible, key, record, onClose, schemaTableResult} = this.props
     const loading = schemaTableResult.loading
@@ -107,6 +226,11 @@ export default class DataSchemaManageAddModal extends Component {
       outputTopic: table.outputTopic || record.target_topic,
       physicalTableRegex: table.physicalTableRegex || table.tableName
     }))
+    let schemaInfo = schemaTable && schemaTable.schema || {}
+    if (schemaInfo.dsType !== 'mysql') {
+      tableList = tableList.filter(table => table.tableName.indexOf('$') < 0)
+    }
+    tableList = tableList.filter(table => !table.disable)
     const columns = [
       {
         title: (
@@ -192,6 +316,7 @@ export default class DataSchemaManageAddModal extends Component {
         marginBottom: 0
       }
     }
+    const {oggModalKey, oggModalVisible, oggModalContent} = this.state
     return (
       <Modal
         className="top-modal"
@@ -206,6 +331,11 @@ export default class DataSchemaManageAddModal extends Component {
             id="app.components.resourceManage.dataSchema.addTable"
             defaultMessage="添加表"
           />
+          {record.ds_type === 'oracle' && (
+            <Button style={{marginLeft: 10}} onClick={this.viewOgg}>
+              <FormattedMessage id="app.components.resourceManage.dataSource.viewOggScript" defaultMessage="查看OGG脚本" />
+            </Button>
+          )}
         </div>
         }
       >
@@ -307,6 +437,12 @@ export default class DataSchemaManageAddModal extends Component {
             <div style={{width: '100%', height: 100}}/>
           )}
         </Spin>
+        <AddTableOggModal
+          visible={oggModalVisible}
+          key={oggModalKey}
+          content={oggModalContent}
+          onClose={this.closeOgg}
+        />
       </Modal>
     )
   }

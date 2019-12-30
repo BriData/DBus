@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.constant;
 
 /**
@@ -28,7 +29,7 @@ package com.creditease.dbus.constant;
 public class MessageCode {
 
     //Authentication module code 10xx
-    public static final int USER_NAME_EMPTY =1001;
+    public static final int USER_NAME_EMPTY = 1001;
     public static final int PASSWORD_EMPTY = 1002;
     public static final int LOGIN_FAIL = 1003;
     public static final int TOKEN_EXPIRED = 1004;

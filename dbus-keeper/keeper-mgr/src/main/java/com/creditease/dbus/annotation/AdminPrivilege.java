@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.annotation;
 
 import java.lang.annotation.ElementType;
@@ -31,8 +32,8 @@ import java.lang.annotation.Target;
  * Time: 上午11:46
  * Desc: 该注解标注的方法或类需要admin才能访问
  */
-@Target({ElementType.METHOD,ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AdminPrivilege {
-    String name () default "";
+    String name() default "";
 }

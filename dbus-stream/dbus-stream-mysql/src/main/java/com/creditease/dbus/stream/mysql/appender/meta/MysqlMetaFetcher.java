@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.mysql.appender.meta;
 
@@ -124,7 +125,7 @@ public class MysqlMetaFetcher implements MetaFetcher {
         cell.setInternalColumnId(colId);
         String columnType = rs.getString("column_type");
         String dataType = rs.getString("data_type");
-        if("int".equalsIgnoreCase(dataType) && columnType.trim().toLowerCase().endsWith("unsigned")) {
+        if ("int".equalsIgnoreCase(dataType) && columnType.trim().toLowerCase().endsWith("unsigned")) {
             dataType = "int unsigned";
         }
         cell.setDataType(dataType);
@@ -138,9 +139,15 @@ public class MysqlMetaFetcher implements MetaFetcher {
         cell.setDataLength(0L);
         cell.setDataPrecision(0);
         cell.setDataScale(0);
-        if(rs.getObject("character_maximum_length") != null) {
+        if (rs.getObject("character_maximum_length") != null) {
             cell.setDataLength(rs.getLong("character_maximum_length"));
-        } else if(rs.getObject("numeric_precision") != null) {
+        } else if (rs.getObject("numeric_precision") != null) {
+            /*
+              mysql库中查询meta时，数字类型的character_maximum_length字段为null，后续使用不方便
+              为了统一，将dataLength设置为numeric_precision
+             */
+            cell.setDataLength(rs.getLong("numeric_precision"));
+
             cell.setDataPrecision(rs.getInt("numeric_precision"));
             cell.setDataScale(rs.getInt("numeric_scale"));
         }
@@ -149,13 +156,13 @@ public class MysqlMetaFetcher implements MetaFetcher {
         //    cell.setDataPrecision(rs.getInt("datetime_precision"));
         //}
 
-        if("yes".equalsIgnoreCase(rs.getString("is_nullable"))) {
+        if ("yes".equalsIgnoreCase(rs.getString("is_nullable"))) {
             cell.setNullAble("Y");
         } else {
             cell.setNullAble("N");
         }
 
-        if("pri".equalsIgnoreCase(rs.getString("column_key"))) {
+        if ("pri".equalsIgnoreCase(rs.getString("column_key"))) {
             cell.setIsPk("Y");
         } else {
             cell.setIsPk("N");

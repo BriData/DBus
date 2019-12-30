@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
-import com.creditease.dbus.bean.AddSchemaAndTablesBean;
+import com.creditease.dbus.bean.AddDataSourceTablesBean;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.DataSchema;
 import com.creditease.dbus.service.DataSchemaService;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * User: 尹宏春
@@ -176,9 +178,9 @@ public class DataSchemaController extends BaseController {
     }
 
     @PostMapping("/schema-tables")
-    public ResultEntity addSchemaAndTables(@RequestBody AddSchemaAndTablesBean schemaAndTablesInfo) {
+    public ResultEntity addSchemaAndTables(@RequestBody AddDataSourceTablesBean addDataSourceTablesBean) {
         try {
-            ResultEntity resultEntity = service.addSchemaAndTablesInfo(schemaAndTablesInfo);
+            ResultEntity resultEntity = service.addSchemaAndTablesInfo(addDataSourceTablesBean);
             if (resultEntity.getMessage() == null) {
                 return resultEntityBuilder().status(resultEntity.getStatus()).build();
             }
@@ -206,6 +208,16 @@ public class DataSchemaController extends BaseController {
             return resultEntityBuilder().status(result).build();
         } catch (Exception e) {
             logger.error("Exception encountered while rerun schema ({})", dsName + "." + schemaName, e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping("/moveSourceSchema")
+    public ResultEntity moveSourceSchema(@RequestBody Map<String, Object> param) {
+        try {
+            return service.moveSourceSchema(param);
+        } catch (Exception e) {
+            logger.error("Exception encountered while request moveSourceSchema.", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

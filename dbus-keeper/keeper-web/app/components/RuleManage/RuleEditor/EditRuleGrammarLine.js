@@ -328,6 +328,12 @@ export default class EditRuleGrammarLine extends Component {
                                   defaultValue={ruleGrammar.ruleParamter}
                                   onChange={this.handleRuleParamterChange}/>);
         }
+        else if (ruleType === 'flattenJsonArray') {
+          line.push(<Input key={ruleGrammar.key+"parameter"} addonBefore="parameter"
+                           style={{width: 700}}
+                           defaultValue={ruleGrammar.ruleParamter}
+                           onChange={this.handleRuleParamterChange}/>);
+        }
 
         line.push(<span key={ruleGrammar.key+"tailSpan1"} className="ant-divider"/>);
         line.push(<Button key={ruleGrammar.key+"buttonAdd"} shape="circle" title="Add" icon="plus"

@@ -1,10 +1,8 @@
-import React, {PropTypes, Component} from 'react'
-import {Form, Select, Input, Button, Checkbox, Row, Col} from 'antd'
-const Textarea = Input.TextArea
-import { FormattedMessage } from 'react-intl'
+import React, {Component} from 'react'
+import {Button, Checkbox, Col, Form, Input, Row, Select} from 'antd'
+import {FormattedMessage} from 'react-intl'
 // 导入样式
-import styles from './res/styles/index.less'
-import Request from "@/app/utils/request";
+const Textarea = Input.TextArea
 
 const FormItem = Form.Item
 const Option = Select.Option
@@ -33,16 +31,13 @@ export default class BasicConfigForm extends Component {
         offset: 5,
       }
     }
-    const {config, onValueChange, onCheckboxChange, onSave} = this.props
+    const {config, onValueChange, onCheckboxChange, onSave, onSendMailTest} = this.props
     return (
       <div>
         <Form>
           <Row>
             <Col span={15}>
-              <FormItem label={<FormattedMessage
-                id="app.components.configCenter.heartbeatConfig.adminEmail"
-                defaultMessage="管理员邮箱"
-              />} {...formItemLayout}>
+              <FormItem label={'报警邮件收件箱'} {...formItemLayout}>
                 {getFieldDecorator('adminEmail', {
                   initialValue: config['adminEmail'],
                   rules: [
@@ -52,7 +47,9 @@ export default class BasicConfigForm extends Component {
                     }
                   ]
                 })(
-                  <Input onChange={e => onValueChange(e.target.value, 'adminEmail')} placeholder="Admin邮箱" size="large" type="text"/>
+                  <Input onChange={e => onValueChange(e.target.value, 'adminEmail')} placeholder="admin@xxx.com"
+                         size="large"
+                         type="text"/>
                 )}
               </FormItem>
             </Col>
@@ -78,10 +75,7 @@ export default class BasicConfigForm extends Component {
           </Row>
           <Row>
             <Col span={15}>
-              <FormItem label={<FormattedMessage
-                id="app.components.configCenter.heartbeatConfig.adminSMSNo"
-                defaultMessage="管理员手机号"
-              />} {...formItemLayout}>
+              <FormItem label={'报警短信接收手机号'} {...formItemLayout}>
                 {getFieldDecorator('adminSMSNo', {
                   initialValue: config['adminSMSNo'],
                   rules: [
@@ -91,7 +85,8 @@ export default class BasicConfigForm extends Component {
                     }
                   ]
                 })(
-                  <Input onChange={e => onValueChange(e.target.value, 'adminSMSNo')} placeholder="Admin短信手机号" size="large" type="text"/>
+                  <Input onChange={e => onValueChange(e.target.value, 'adminSMSNo')} placeholder="13000000000"
+                         size="large" type="text"/>
                 )}
               </FormItem>
             </Col>
@@ -119,10 +114,7 @@ export default class BasicConfigForm extends Component {
 
           <Row>
             <Col span={15}>
-              <FormItem label={<FormattedMessage
-                id="app.components.configCenter.heartbeatConfig.schemaChangeEmail"
-                defaultMessage="Schema变更通知邮箱"
-              />} {...formItemLayout}>
+              <FormItem label={'表结构变更通知邮箱'} {...formItemLayout}>
                 {getFieldDecorator('schemaChangeEmail', {
                   initialValue: config['schemaChangeEmail'],
                   rules: [
@@ -132,7 +124,8 @@ export default class BasicConfigForm extends Component {
                     }
                   ]
                 })(
-                    <Input onChange={e => onValueChange(e.target.value, 'schemaChangeEmail')} placeholder="Schema变更通知邮箱" size="large" type="text"/>
+                  <Input onChange={e => onValueChange(e.target.value, 'schemaChangeEmail')} placeholder="admin@xxx.com"
+                         size="large" type="text"/>
                 )}
               </FormItem>
             </Col>
@@ -156,7 +149,106 @@ export default class BasicConfigForm extends Component {
               </FormItem>
             </Col>
           </Row>
+
           <Row>
+            <Col span={15}>
+              <FormItem label={'报警邮箱名'} {...formItemLayout}>
+                {getFieldDecorator('alarmSendEmail', {
+                  initialValue: config['alarmSendEmail'],
+                  rules: [
+                    {
+                      required: true,
+                      message: '不能为空'
+                    }
+                  ]
+                })(
+                  <Input onChange={e => onValueChange(e.target.value, 'alarmSendEmail')} placeholder="alarm@xxc.com"
+                         size="large" type="text"/>
+                )}
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={15}>
+              <FormItem label={'报警邮箱服务地址'} {...formItemLayout}>
+                {getFieldDecorator('alarmMailSMTPAddress', {
+                  initialValue: config['alarmMailSMTPAddress'],
+                  rules: [
+                    {
+                      required: true,
+                      message: '不能为空'
+                    }
+                  ]
+                })(
+                  <Input onChange={e => onValueChange(e.target.value, 'alarmMailSMTPAddress')}
+                         placeholder="smtp.xxx.com"
+                         size="large" type="text"/>
+                )}
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={15}>
+              <FormItem label={'报警邮箱服务端口号'} {...formItemLayout}>
+                {getFieldDecorator('alarmMailSMTPPort', {
+                  initialValue: config['alarmMailSMTPPort'],
+                  rules: [
+                    {
+                      required: true,
+                      message: '不能为空'
+                    }
+                  ]
+                })(
+                  <Input onChange={e => onValueChange(e.target.value, 'alarmMailSMTPPort')} placeholder="994"
+                         size="large" type="text"/>
+                )}
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={15}>
+              <FormItem label={'报警邮件发件人'} {...formItemLayout}>
+                {getFieldDecorator('alarmMailUser', {
+                  initialValue: config['alarmMailUser'],
+                  rules: [
+                    {
+                      required: true,
+                      message: '不能为空'
+                    }
+                  ]
+                })(
+                  <Input onChange={e => onValueChange(e.target.value, 'alarmMailUser')} placeholder="alarm@xxx.com"
+                         size="large" type="text"/>
+                )}
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={15}>
+              <FormItem label={'报警邮件发件人密码'} {...formItemLayout}>
+                {getFieldDecorator('alarmMailPass', {
+                  initialValue: config['alarmMailPass'],
+                  rules: [
+                    {
+                      required: true,
+                      message: '不能为空'
+                    }
+                  ]
+                })(
+                  <Input onChange={e => onValueChange(e.target.value, 'alarmMailPass')} placeholder="password"
+                         size="large" type="text"/>
+                )}
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={15}>
+              <FormItem {...tailFormItemLayout}>
+                <Button type="primary" onClick={onSendMailTest}>
+                  邮件测试
+                </Button>
+              </FormItem>
+            </Col>
             <Col span={15}>
               <FormItem {...tailFormItemLayout}>
                 <Button type="primary" onClick={onSave}>

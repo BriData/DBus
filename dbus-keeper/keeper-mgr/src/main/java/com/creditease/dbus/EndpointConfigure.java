@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
  * >>
  */
 
-package com.creditease.dbus;
 
-import javax.websocket.server.ServerEndpointConfig;
+package com.creditease.dbus;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+
+import javax.websocket.server.ServerEndpointConfig;
 
 /**
  * Created by mal on 2018/4/26.

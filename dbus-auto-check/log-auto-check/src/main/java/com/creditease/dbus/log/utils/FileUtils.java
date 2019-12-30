@@ -1,14 +1,32 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.log.utils;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,12 +36,13 @@ public class FileUtils {
     /**
      * 实现向指定位置
      * 插入数据
-     * @param fileName 文件名
-     * @param points 指针位置
+     *
+     * @param fileName      文件名
+     * @param points        指针位置
      * @param insertContent 插入内容
-     * **/
+     **/
     public static void insert(String fileName, long points, String insertContent) {
-        try{
+        try {
             File tmp = File.createTempFile("tmp", null);
             tmp.deleteOnExit();//在JVM退出时删除
 
@@ -34,11 +53,11 @@ public class FileUtils {
             raf.seek(points);
 
             //将插入点后的内容读入临时文件夹
-            byte [] buff = new byte[10240];
+            byte[] buff = new byte[10240];
             //用于保存临时读取的字节数
             int hasRead = 0;
             //循环读取插入点后的内容
-            while((hasRead = raf.read(buff)) > 0) {
+            while ((hasRead = raf.read(buff)) > 0) {
                 // 将读取的数据写入临时文件中
                 tmpOut.write(buff, 0, hasRead);
             }
@@ -47,11 +66,11 @@ public class FileUtils {
             //追加需要追加的内容
             raf.write(insertContent.getBytes());
             //最后追加临时文件中的内容
-            while((hasRead = tmpIn.read(buff)) > 0) {
-                raf.write(buff,0,hasRead);
+            while ((hasRead = tmpIn.read(buff)) > 0) {
+                raf.write(buff, 0, hasRead);
             }
             System.out.println("update config: [filebeat.extract.file.path: " + fileName + "] success!\n");
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -115,24 +134,24 @@ public class FileUtils {
     //检测文件及文件夹是否存在
     public static boolean checkFileAndFolderIsExist(String path) {
 
-        if(!StringUtils.startsWith(path, "/")) {
+        if (!StringUtils.startsWith(path, "/")) {
             System.out.println("ERROR: 文件或文件夹路径：" + path + " is not beginning with '/'! 请检查配置文件 [conf/log-conf.properties]");
             return false;
         }
 
-        String []arr = StringUtils.split(path,"/");
+        String[] arr = StringUtils.split(path, "/");
         String basePath = "";
         int len = arr.length;
-        if(StringUtils.contains(arr[len-1], "*")) {
+        if (StringUtils.contains(arr[len - 1], "*")) {
             len = len - 1;
         }
 
-        for(int i = 0; i <= len - 1; i++) {
-            if(i == 0) {
+        for (int i = 0; i <= len - 1; i++) {
+            if (i == 0) {
                 String filePath = "/" + arr[0];
                 basePath = filePath;
                 File file = new File(filePath);
-                if(!file.exists()) {
+                if (!file.exists()) {
                     System.out.println("ERROR: 文件或文件夹路径：" + filePath + " is not exist! 请检查配置文件 [conf/log-conf.properties]");
                     return false;
                 }
@@ -140,7 +159,7 @@ public class FileUtils {
                 String filePath = StringUtils.joinWith("/", basePath, arr[i]);
                 basePath = filePath;
                 File file = new File(filePath);
-                if(!file.exists()) {
+                if (!file.exists()) {
                     System.out.println("ERROR: 文件或文件夹路径：" + filePath + " is not exist! 请检查配置文件 [conf/log-conf.properties]");
                     return false;
                 }

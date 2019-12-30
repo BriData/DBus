@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,17 +18,18 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.stattools.InfluxSink;
 import com.creditease.dbus.heartbeat.stattools.KafkaSource;
 
-public class SendStatMessageEvent extends AbstractEvent{
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class SendStatMessageEvent extends AbstractEvent {
 
     private KafkaSource source = null;
     private InfluxSink sink = null;

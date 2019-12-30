@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common;
 
@@ -38,6 +39,7 @@ public class Constants {
         public static final String CONFIGURE = "configure";
         public static final String MYSQL = "mysql";
         public static final String ORA_META = "ora-meta";
+        public static final String DB2_META = "db2-meta";
         public static final String PRODUCER_CONFIG = "producer-config";
         public static final String PRODUCER_CONTROL = "producer-control";
     }
@@ -56,13 +58,14 @@ public class Constants {
         public static final String UMS_PAYLOAD_MAX_SIZE = "ums.payload.max.size"; // ums中payload大小最大值,单位Byte
         public static final String DBUS_STATISTIC_TOPIC = "dbus.statistic.topic"; // 统计信息topic
         public static final String GLOBAL_EVENT_TOPIC = "global.event.topic"; // 全局事件topic
-        public static final String LOGFILE_NUM_COMPENSATION = "logfile.num.compensation"; // mysql binlog 文件号补偿值
+        public static final String LOGFILE_NUM_COMPENSATION = "logfile.num.compensation"; // 文件号补偿值
+        public static final String DB2_OFFSET_COMPENSATION = "offset.num.compensation"; // db2 offset 补偿值
         public static final String META_FETCHER_BOLT_PARALLELISM = "metafetcher.bolt.parallelism";
         public static final String KAFKA_WRITTER_BOLT_PARALLELISM = "kafkawritter.bolt.parallelism";
         public static final String WRAPPER_BOLT_PARALLELISM = "wrapper.bolt.parallelism";
         public static final String MAX_SPOUT_PENDING = "max.spout.pending";
         public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
-        public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url"; 
+        public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url";
         public static final String DATASOURCE_TYPE = "dbus.dispatcher.datasource.type";
 
         /**
@@ -71,6 +74,14 @@ public class Constants {
          */
         public static final String IGNORE_VIRTUAL_FIELDS = "ignore.virtual.fields";
 
+        /**  */
+        public static final String META_FETCHER_EXCEPTION_STRATEGY = "meta.fetcher.exception.strategy";
+        public static final String TOPOLOGY_WORKER_CHILDOPTS = "topology.worker.childopts"; // eg:-Xmx16g
+
+        /**
+         * 配置mysql版本生成ums namespace是否包含分表，1为输出 0为不输出
+         */
+        public static final String MYSQL_UMS_WITH_TABLE_PARTITION = "mysql.ums.with.table.partition";
     }
 
     /**
@@ -107,9 +118,6 @@ public class Constants {
     }
 
 
-
-
-
     public static class UmsMessage {
         public static final String BEFORE_UPDATE_OPERATION = "b";
         public static final String NAMESPACE_INDISTINCTIVE_SCHEMA = "schema";
@@ -121,19 +129,33 @@ public class Constants {
      * Cache 名字常量
      */
     public static class CacheNames {
-        /**  Avro Schema保存的本地缓存名称 */
+        /**
+         * Avro Schema保存的本地缓存名称
+         */
         public static final String AVRO_SCHEMA_CACHE = "avro_schema_cache";
-        /** 存储meta当前版本的cache */
+        /**
+         * 存储meta当前版本的cache
+         */
         public static final String META_VERSION_CACHE = "meta_version_cache";
-        /** 数据表缓存 */
+        /**
+         * 数据表缓存
+         */
         public static final java.lang.String DATA_TABLES = "dbus_data_table_cache";
-        /** table schema 缓存 */
+        /**
+         * table schema 缓存
+         */
         public static final String TAB_SCHEMA = "dbus_table_schema_cache";
-        /** 需要脱敏的列缓存 */
+        /**
+         * 需要脱敏的列缓存
+         */
         public static final String TAB_ENCODE_FIELDS = "tab_encode_fields";
-        /** 脱敏插件缓存 */
+        /**
+         * 脱敏插件缓存
+         */
         public static final String TAB_CENCODE_PLUGINS = "tab_encode_plugins";
-        /** 输出版本号缓存 */
+        /**
+         * 输出版本号缓存
+         */
         public static final String OUTPUT_VERSION_CACHE = "output_meta_version_cache";
 
         public static final String TABLE_SCHEMA_VERSION_CACHE = "table_schema_version_cache";
@@ -170,7 +192,9 @@ public class Constants {
          */
         public static final String ZK_TOPOLOGY_ROOT = ZK_ROOT + "/Topology";
 
-        /** zookeeper中Commons路径 */
+        /**
+         * zookeeper中Commons路径
+         */
         public static final String ZK_COMMONS = ZK_ROOT + "/Commons";
         /**
          * 接收到 meta sync 命令后暂停发送消息到 wormhole 的 data table 列表
@@ -199,11 +223,17 @@ public class Constants {
         public static final String GROUP_FIELD = "group_field";
         public static final String EMIT_TYPE = "emit_type";
 
-        /** 根据DbusGrouping定义, Emit 数据列表中最后一个值为 0 时会发送给所有下游blot */
+        /**
+         * 根据DbusGrouping定义, Emit 数据列表中最后一个值为 0 时会发送给所有下游blot
+         */
         public static final int EMIT_TO_ALL = 0;
-        /** 根据DbusGrouping定义, Emit 数据列表中最后一个值为非1值时会发送下游的一个blot */
+        /**
+         * 根据DbusGrouping定义, Emit 数据列表中最后一个值为非1值时会发送下游的一个blot
+         */
         public static final int EMIT_TO_BOLT = 1;
-        /** 根据DbusGrouping定义, Emit 数据列表中最后一个值为值2时会,预处理group field再进行分组发送 */
+        /**
+         * 根据DbusGrouping定义, Emit 数据列表中最后一个值为值2时会,预处理group field再进行分组发送
+         */
         public static final int EMIT_HEARTBEAT = 2;
 
         public static final String HEARTBEAT_FIELD_SUFFIX = ".heartbeat";
@@ -217,12 +247,22 @@ public class Constants {
      * 解析后消息的通用schema名
      */
     public static final String GENERIC_SCHEMA = "generic_wrapper";
+    public static final String DB2_GENERIC_SCHEMA = "db2_generic_wrapper";
     public static final int MAGIC_BYTE = 0x0;
     public static final String END = "end";
     public static final String BEGIN = "begin";
     public static final String NONE = "none";
 
 
+    public static class DB2MessageBodyKey {
+        public static final String DB2_ENTTYP = "DB2_ENTTYP";
+        public static final String DB2_CURTMSTP = "DB2_CURTMSTP";
+        public static final String DB2_CURTMSTP_FORMAT = "yyyy-MM-dd-HH:mm:ss.SSSSSS";
+        public static final String PT = "PT";
+        public static final String DL = "DL";
+        public static final String UP = "UP";
+        public static final String RR = "RR";
+    }
 
     /**
      * mysql partition table default name

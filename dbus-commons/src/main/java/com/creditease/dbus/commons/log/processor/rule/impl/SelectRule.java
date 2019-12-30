@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.rule.impl;
 
 import com.creditease.dbus.commons.log.processor.parse.ParseResult;
@@ -30,16 +31,21 @@ import java.util.List;
 
 public class SelectRule implements IRule {
 
-    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception{
-        List<String> ret = new ArrayList<>();
-        List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
-        for (ParseResult pr : prList) {
-            for (int col : pr.getScope()) {
-                if (col >= data.size()) continue;
-                ret.add(data.get(col));
+    public List<List<String>> transform(List<List<String>> datas, List<RuleGrammar> grammar, Rules ruleType) throws Exception {
+        List<List<String>> retVal = new ArrayList<>();
+        for (List<String> data : datas) {
+            List<String> row = new ArrayList<>();
+            List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
+            for (ParseResult pr : prList) {
+                for (int col : pr.getScope()) {
+                    if (col >= data.size())
+                        continue;
+                    row.add(data.get(col));
+                }
             }
+            retVal.add(row);
         }
-        return ret;
+        return retVal;
     }
 
 }

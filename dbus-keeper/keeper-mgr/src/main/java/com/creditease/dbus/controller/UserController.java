@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
@@ -26,7 +27,7 @@ import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.User;
 import com.creditease.dbus.service.UserService;
 import com.creditease.dbus.utils.DBusUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

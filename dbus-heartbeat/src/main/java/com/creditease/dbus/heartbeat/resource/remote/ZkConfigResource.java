@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.resource.remote;
 
-import org.apache.curator.framework.CuratorFramework;
+package com.creditease.dbus.heartbeat.resource.remote;
 
 import com.creditease.dbus.heartbeat.container.CuratorContainer;
 import com.creditease.dbus.heartbeat.resource.AbstractConfigResource;
+import org.apache.curator.framework.CuratorFramework;
 
 public abstract class ZkConfigResource<T> extends AbstractConfigResource<T> {
 

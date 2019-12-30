@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.log.processor;
 
@@ -79,6 +80,7 @@ public class DBusLogProcessorTopology {
 
         builder.setBolt("LogProcessorHeartbeatBolt",
                 new LogProcessorHeartbeatBolt(), 1).
+                shuffleGrouping("LogProcessorTransformBolt", "umsStream").
                 shuffleGrouping("LogProcessorTransformBolt", "heartbeatStream").
                 allGrouping("LogProcessorTransformBolt", "ctrlStream");
 
@@ -86,8 +88,8 @@ public class DBusLogProcessorTopology {
                 new LogProcessorKafkaWriteBolt(),
                 kafkaWriteBoltParallel).
                 allGrouping("LogProcessorTransformBolt", "ctrlStream").
-                shuffleGrouping("LogProcessorTransformBolt", "umsStream").
-                shuffleGrouping("LogProcessorHeartbeatBolt").
+                shuffleGrouping("LogProcessorHeartbeatBolt", "heartbeatStream").
+                shuffleGrouping("LogProcessorHeartbeatBolt", "umsStream").
                 shuffleGrouping("LogProcessorStatBolt");
 
         return builder.createTopology();

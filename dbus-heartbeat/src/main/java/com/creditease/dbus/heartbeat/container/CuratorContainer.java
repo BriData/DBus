@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.container;
 
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.vo.ZkVo;
-
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -69,7 +69,7 @@ public class CuratorContainer {
     public boolean createZkNode(String path) {
         boolean isExists = false;
         try {
-            LoggerFactory.getLogger().info("path: " + path );
+            LoggerFactory.getLogger().info("path: " + path);
             isExists = curator.checkExists().forPath(path) == null ? false : true;
             if (!isExists) {
                 curator.create().creatingParentsIfNeeded().forPath(path, null);

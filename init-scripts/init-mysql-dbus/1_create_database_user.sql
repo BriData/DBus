@@ -1,18 +1,13 @@
---- 1 ´´½¨¿â£¬¿â´óĞ¡ÓÉdbaÖÆ¶¨(¿ÉÒÔºÜĞ¡£¬¾Í2ÕÅ±í£©
+--- 1 åˆ›å»ºåº“ï¼Œåº“å¤§å°ç”±dbaåˆ¶å®š(å¯ä»¥å¾ˆå°ï¼Œå°±2å¼ è¡¨ï¼‰
 create database dbus;
 
---- 2  ´´½¨ÓÃ»§£¬ÃÜÂëÓÉdbaÖÆ¶¨
+--- 2  åˆ›å»ºç”¨æˆ·ï¼Œå¯†ç ç”±dbaåˆ¶å®š
 CREATE USER dbus IDENTIFIED BY 'your_password';
 
 
---- 3 ÊÚÈ¨dbusÓÃ»§·ÃÎÊdbus×Ô¼ºµÄ¿â, ĞèÒªÊÚÈ¨¸ødbus³ÌĞò¶ÔÓ¦µÄip¶Î
+--- 3 æˆæƒdbusç”¨æˆ·è®¿é—®dbusè‡ªå·±çš„åº“, éœ€è¦æˆæƒç»™dbusç¨‹åºå¯¹åº”çš„ipæ®µ
 GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'your_password';
 GRANT ALL ON dbus.* TO dbus@'%'  IDENTIFIED BY 'your_password';
 
 
-flush privileges; 
-
-
-
-
-
+flush privileges;

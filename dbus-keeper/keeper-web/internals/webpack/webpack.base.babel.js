@@ -33,21 +33,21 @@ module.exports = (options) => ({
       include: [/app/],
       loaders: ['style-loader', 'css-loader', 'postcss-loader']
     }, {
-      test: /\.less$/,
-      include: /node_modules/,
-      loaders: [
-        'style-loader',
-        'css-loader',
-        `less-loader?{"sourceMap":true,"modifyVars": ${JSON.stringify(overrideLessVariables)}}`
-      ]
-    }, {
-      test: /\.less$/,
-      exclude: /node_modules/,
-      loaders: [
-        'style-loader',
-        'css-loader?modules&importLoaders=1&localIdentName=[name]__[local]--[hash:base64:5]',
-        'postcss-loader',
-        'less-loader'
+          test: /\.less$/,
+          include: /node_modules/,
+          loaders: [
+            'style-loader',
+            'css-loader',
+            `less-loader?{"sourceMap":true,"modifyVars": ${JSON.stringify(overrideLessVariables)}}`
+          ]
+        }, {
+          test: /\.less$/,
+          exclude: /node_modules/,
+          loaders: [
+            'style-loader',
+            'css-loader?modules&importLoaders=1&localIdentName=[name]__[local]--[hash:base64:5]',
+            'postcss-loader',
+            'less-loader'
       ]
     }, {
       test: /\.(eot|svg|ttf|woff|woff2)$/,

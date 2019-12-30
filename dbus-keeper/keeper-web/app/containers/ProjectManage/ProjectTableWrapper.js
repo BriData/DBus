@@ -12,6 +12,7 @@ import {
   ProjectTableInitialLoadModal,
   ProjectTableKafkaReaderModal,
   ProjectTableBatchFullPullModal,
+  ProjectTableMoveTopoTableModal,
   Bread
 } from '@/app/components'
 // selectors
@@ -51,7 +52,8 @@ import {
   PROJECT_TABLE_INITIAL_LOAD_API,
   PROJECT_TABLE_BATCH_STOP_API,
   PROJECT_TABLE_BATCH_START_API,
-  PROJECT_TABLE_BATCH_FULLPULL_API
+  PROJECT_TABLE_BATCH_FULLPULL_API,
+  PROJECT_TABLE_MOVE_TOPO_TABLES_API
 } from './api'
 import Request from '@/app/utils/request'
 import {KafkaReaderModel} from "@/app/containers/toolSet/selectors";
@@ -114,6 +116,9 @@ export default class ProjectTableWrapper extends Component {
       kafkaReadModalKey: 'kafkaRead',
       kafkaReadModalRecord: {},
 
+      batchMoveTopoTablesModalVisible: false,
+      batchMoveTopoTablesModalKey: 'batchMoveTopoTables',
+
       batchFullPullModalVisible: false,
       batchFullPullModalKey: 'batchFullPull',
 
@@ -121,21 +126,37 @@ export default class ProjectTableWrapper extends Component {
       selectedRows: []
     }
     this.tableWidth = [
-      '10%',
-      '10%',
-      '11%',
-      '14%',
-      '10%',
-      '22%',
-      '22%',
-      '9%',
-      '10%',
-      '10%',
-      '7%',
-      '8%',
-      '9%',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
+      '200px',
       '200px'
     ]
+    // this.tableWidth = [
+    //   '10%',
+    //   '10%',
+    //   '11%',
+    //   '14%',
+    //   '25%',
+    //   '22%',
+    //   '22%',
+    //   '9%',
+    //   '10%',
+    //   '10%',
+    //   '7%',
+    //   '8%',
+    //   '9%',
+    //   '200px'
+    // ]
     this.initParams = {
       pageNum: 1,
       pageSize: 10
@@ -458,6 +479,34 @@ export default class ProjectTableWrapper extends Component {
     })
   }
 
+  handleOpenBatchMoveTopoTablesModal = () => {
+    const {projectTableData} = this.props
+    const {tableParams} = projectTableData
+    const {topoId} = tableParams
+    if (!topoId) {
+      message.error('请选择具体拓扑并点击查询!')
+      return
+    }
+    const {selectedRows} = this.state
+    if(!selectedRows.length) {
+      message.error('请选择需要迁移的表!')
+      return
+    }
+    this.setState({
+      batchMoveTopoTablesModalVisible: true,
+      batchMoveTopoTablesModalKey: this.handleRandom('batchMoveTopoTables')
+    })
+  }
+
+  handleCloseBatchMoveTopoTablesModal = () => {
+    this.setState({
+      batchMoveTopoTablesModalVisible: false,
+      batchMoveTopoTablesModalKey: this.handleRandom('batchMoveTopoTables'),
+      selectedRows: [],
+      selectedRowKeys: []
+    })
+  }
+
   handleBatchFullPull = (values) => {
     const {selectedRows} = this.state
     if(!selectedRows.length) {
@@ -487,6 +536,36 @@ export default class ProjectTableWrapper extends Component {
       })
       .catch(error => message.error(error))
   }
+
+  handleMoveTopoTables = (values) => {
+    const {selectedRows} = this.state
+    if (!selectedRows.length) {
+      message.error('没有选择表')
+      return
+    }
+    Request(`${PROJECT_TABLE_MOVE_TOPO_TABLES_API}`, {
+      data: {
+        topoId: values.nameId,
+        topoTableIds: selectedRows.map(row => row.tableId)
+      },
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
+          this.handleCloseBatchFullPullModal()
+          this.setState({
+            selectedRows: [],
+            selectedRowKeys: []
+          })
+          this.handleReloadSearch()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
   handleRequest = (obj) => {
     const {projectTableData} = this.props
     const {tableParams} = projectTableData
@@ -558,6 +637,7 @@ export default class ProjectTableWrapper extends Component {
 
     const {initialLoadModalVisible, initialLoadModalKey,initialLoadModalRecord} = this.state
     const {batchFullPullModalVisible, batchFullPullModalKey} = this.state
+    const {batchMoveTopoTablesModalKey, batchMoveTopoTablesModalVisible} = this.state
     const {selectedRowKeys} = this.state
     const {
       locale,
@@ -584,7 +664,6 @@ export default class ProjectTableWrapper extends Component {
       getTopicsByUserId,
       readKafkaData
     } = this.props
-    console.info('KafkaReaderData=',KafkaReaderData)
     const {
       topicsByUserIdList,
       kafkaData
@@ -642,6 +721,7 @@ export default class ProjectTableWrapper extends Component {
           onBatchStop={this.handleBatchStop}
           onBatchStart={this.handleBatchStart}
           onBatchFullPull={this.handleOpenBatchFullPullModal}
+          onBatchMoveTopoTables={this.handleOpenBatchMoveTopoTablesModal}
         />
         <ProjectTableGrid
           locale={locale}
@@ -722,6 +802,14 @@ export default class ProjectTableWrapper extends Component {
           onClose={this.handleCloseBatchFullPullModal}
           onRequest={this.handleRequest}
           onBatchFullPull={this.handleBatchFullPull}
+        />
+        <ProjectTableMoveTopoTableModal
+          key={batchMoveTopoTablesModalKey}
+          visible={batchMoveTopoTablesModalVisible}
+          tableParams={tableParams}
+          onClose={this.handleCloseBatchMoveTopoTablesModal}
+          onRequest={this.handleRequest}
+          onBatchMoveTopoTables={this.handleMoveTopoTables}
         />
       </div>
     )

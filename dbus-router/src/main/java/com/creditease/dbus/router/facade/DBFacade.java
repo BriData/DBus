@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.router.facade;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+package com.creditease.dbus.router.facade;
 
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.encoders.EncodePlugin;
@@ -31,15 +27,20 @@ import com.creditease.dbus.router.bean.FixColumnOutPutMeta;
 import com.creditease.dbus.router.bean.ReadSpoutConfig;
 import com.creditease.dbus.router.bean.Resources;
 import com.creditease.dbus.router.bean.Sink;
+import com.creditease.dbus.router.cache.Cache;
 import com.creditease.dbus.router.container.DataSourceContainer;
 import com.creditease.dbus.router.dao.IDBusRouterDao;
 import com.creditease.dbus.router.dao.impl.DBusRouterDao;
 import com.creditease.dbus.router.encode.DBusRouterEncodeColumn;
 import com.creditease.dbus.router.util.DBusRouterConstants;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by mal on 2018/5/22.
@@ -73,6 +74,18 @@ public class DBFacade {
         }
         logger.info("read spout config: {}", JSONObject.toJSONString(config));
         return config;
+    }
+
+    public void loadAliasMapping(String topologyName, Cache cache) throws Exception {
+        List<Resources> resources = routerDao.queryResources(topologyName);
+        if (resources != null && resources.size() > 0) {
+            for (Resources vo : resources) {
+                if (StringUtils.isNoneBlank(vo.getAlias())) {
+                    cache.putObject(vo.getAlias(), vo.getOriginDsName());
+                }
+            }
+        }
+        logger.info("alias mapping: {}", JSONObject.toJSONString(cache));
     }
 
     public List<Sink> loadSinks(String topologyName) throws Exception {

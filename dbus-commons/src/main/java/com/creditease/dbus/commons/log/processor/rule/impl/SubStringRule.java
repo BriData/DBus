@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.rule.impl;
 
 import com.creditease.dbus.commons.Constants;
@@ -28,49 +29,56 @@ import com.creditease.dbus.commons.log.processor.rule.IRule;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SubStringRule implements IRule {
 
-    public List<String> transform(List<String> data, List<RuleGrammar> grammar, Rules ruleType) throws Exception{
-        List<String> ret = new LinkedList<>(data);
-        List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
-        for (ParseResult pr : prList) {
-            for(int col : pr.getScope()) {
-                if (col >= data.size()) continue;
-                String value = data.get(col);
-                ret.remove(col);
-                if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_INDEX) &&
-                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_INDEX)) {
-                    if(pr.getEnd() != null) {
-                        ret.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart()), NumberUtils.toInt(pr.getEnd())));
-                    } else {
-                        ret.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart())));
-                    }
-                } else if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_INDEX) &&
-                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_STRING)) {
-                    ret.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart()),
-                            StringUtils.lastIndexOf(value, StringUtils.defaultString(pr.getEnd(), "")) + StringUtils.defaultString(pr.getEnd(), "").length()));
-                } else if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_STRING) &&
-                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_INDEX)) {
-                    if(pr.getEnd() != null) {
-                        ret.add(col, StringUtils.substring(value,
-                                StringUtils.indexOf(value, pr.getStart()), NumberUtils.toInt(pr.getEnd())));
-                    } else {
-                        ret.add(col, StringUtils.substring(value,
-                                StringUtils.indexOf(value, pr.getStart())));
-                    }
-                } else if(StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_STRING) &&
-                        StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_STRING)) {
-                    if(pr.getEnd() != null) {
-                        ret.add(col, StringUtils.substring(value, StringUtils.indexOf(value, pr.getStart()), StringUtils.lastIndexOf(value, pr.getEnd()) + pr.getEnd().length()));
-                    } else {
-                        ret.add(col, StringUtils.substring(value, StringUtils.indexOf(value, pr.getStart())));
+    public List<List<String>> transform(List<List<String>> datas, List<RuleGrammar> grammar, Rules ruleType) throws Exception {
+        List<List<String>> retVal = new ArrayList<>();
+        for (List<String> data : datas) {
+            List<String> row = new LinkedList<>(data);
+            List<ParseResult> prList = ParseRuleGrammar.parse(grammar, data.size(), ruleType);
+            for (ParseResult pr : prList) {
+                for (int col : pr.getScope()) {
+                    if (col >= data.size())
+                        continue;
+                    String value = data.get(col);
+                    row.remove(col);
+                    if (StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_INDEX) &&
+                            StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_INDEX)) {
+                        if (pr.getEnd() != null) {
+                            row.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart()), NumberUtils.toInt(pr.getEnd())));
+                        } else {
+                            row.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart())));
+                        }
+                    } else if (StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_INDEX) &&
+                            StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_STRING)) {
+                        row.add(col, StringUtils.substring(value, NumberUtils.toInt(pr.getStart()),
+                                StringUtils.lastIndexOf(value, StringUtils.defaultString(pr.getEnd(), "")) + StringUtils.defaultString(pr.getEnd(), "").length()));
+                    } else if (StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_STRING) &&
+                            StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_INDEX)) {
+                        if (pr.getEnd() != null) {
+                            row.add(col, StringUtils.substring(value,
+                                    StringUtils.indexOf(value, pr.getStart()), NumberUtils.toInt(pr.getEnd())));
+                        } else {
+                            row.add(col, StringUtils.substring(value,
+                                    StringUtils.indexOf(value, pr.getStart())));
+                        }
+                    } else if (StringUtils.equals(pr.getStartType(), Constants.RULE_TYPE_STRING) &&
+                            StringUtils.equals(pr.getEndType(), Constants.RULE_TYPE_STRING)) {
+                        if (pr.getEnd() != null) {
+                            row.add(col, StringUtils.substring(value, StringUtils.indexOf(value, pr.getStart()), StringUtils.lastIndexOf(value, pr.getEnd()) + pr.getEnd().length()));
+                        } else {
+                            row.add(col, StringUtils.substring(value, StringUtils.indexOf(value, pr.getStart())));
+                        }
                     }
                 }
             }
+            retVal.add(row);
         }
-        return ret;
+        return retVal;
     }
 
     public static void main(String[] args) {

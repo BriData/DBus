@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.vo;
+
+import com.creditease.dbus.heartbeat.event.AlarmType;
 
 import java.io.Serializable;
 import java.text.MessageFormat;
-
-import com.creditease.dbus.heartbeat.event.AlarmType;
 
 public class CheckVo implements Serializable {
 

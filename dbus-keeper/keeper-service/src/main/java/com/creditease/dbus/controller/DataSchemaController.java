@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
-import com.creditease.dbus.bean.SchemaAndTablesInfoBean;
+import com.creditease.dbus.bean.AddSchemaTablesBean;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.DataSchema;
 import com.creditease.dbus.domain.model.DataSource;
@@ -32,7 +32,6 @@ import com.creditease.dbus.service.DataSchemaService;
 import com.creditease.dbus.service.DataSourceService;
 import com.creditease.dbus.service.schema.MongoSchemaFetcher;
 import com.creditease.dbus.service.schema.SchemaFetcher;
-import com.creditease.dbus.service.source.SourceFetcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +63,8 @@ public class DataSchemaController extends BaseController {
     }
 
     @GetMapping("/searchSchema")
-    public ResultEntity searchSchema(@RequestParam(required = false) Long schemaId, @RequestParam(required = false) Long dsId, @RequestParam(required = false) String schemaName) {
+    public ResultEntity searchSchema(@RequestParam(required = false) Integer schemaId, @RequestParam(required = false) Integer dsId,
+                                     @RequestParam(required = false) String schemaName) {
         return resultEntityBuilder().payload(service.searchSchema(schemaId, dsId, schemaName)).build();
     }
 
@@ -74,7 +74,7 @@ public class DataSchemaController extends BaseController {
     }
 
     @GetMapping("/delete/{id}")
-    public ResultEntity deleteById(@PathVariable Long id) {
+    public ResultEntity deleteById(@PathVariable Integer id) {
         return resultEntityBuilder().payload(service.deleteBySchemaId(id)).build();
     }
 
@@ -133,20 +133,21 @@ public class DataSchemaController extends BaseController {
     }
 
     @GetMapping("/get/{id}")
-    public ResultEntity getById(@PathVariable Long id) {
+    public ResultEntity getById(@PathVariable Integer id) {
         return resultEntityBuilder().payload(service.selectById(id)).build();
     }
 
     /**
      * 添加schema和table
+     *
      * @return
      */
     @PostMapping("/schema-and-tables")
-    public ResultEntity insertSchemaAndTables(@RequestBody List<SchemaAndTablesInfoBean> schemaAndTablesList){
+    public ResultEntity insertSchemaAndTables(@RequestBody List<AddSchemaTablesBean> schemaAndTablesList) {
         try {
-            service.addSchemaAndTables(schemaAndTablesList);
-            return resultEntityBuilder().build();
-        }catch (Exception e){
+            int i = service.addSchemaAndTables(schemaAndTablesList);
+            return resultEntityBuilder().payload(i).build();
+        } catch (Exception e) {
             return resultEntityBuilder().status(MessageCode.DATASCHEMA_PARAM_FOARMAT_ERROR).build();
         }
     }
@@ -155,11 +156,11 @@ public class DataSchemaController extends BaseController {
      * 获取源端schema信息
      */
     @GetMapping("/source-schemas")
-    public ResultEntity getSourceSchemas(@RequestParam Integer dsId){
+    public ResultEntity getSourceSchemas(@RequestParam Integer dsId) {
         try {
             return resultEntityBuilder().payload(service.fetchSchemas(dsId)).build();
         } catch (Exception e) {
-            logger.error("[source schemas] Exception:{}",e);
+            logger.error("[source schemas] Exception:{}", e);
             return resultEntityBuilder().status(MessageCode.DATASCHEMA_DS_TYPE_ERROR).build();
         }
     }
@@ -168,8 +169,17 @@ public class DataSchemaController extends BaseController {
      * 根据dsId和schemaName
      */
     @GetMapping("/manager-schema")
-    public ResultEntity getManagerSchema(@RequestParam int dsId, @RequestParam String schemaName){
-        return resultEntityBuilder().payload(service.findSchema(dsId,schemaName)).build();
+    public ResultEntity getManagerSchema(@RequestParam int dsId, @RequestParam String schemaName) {
+        return resultEntityBuilder().payload(service.findSchema(dsId, schemaName)).build();
     }
 
+    @PostMapping("/moveSourceSchema")
+    public ResultEntity moveSourceSchema(@RequestBody Map<String, Object> param) {
+        try {
+            return resultEntityBuilder().status(service.moveSourceSchema(param)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request moveSourceSchema.", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
 }

@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
@@ -35,8 +32,11 @@ import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.HeartBeatMonitorVo;
 import com.creditease.dbus.heartbeat.vo.MasterSlaveDelayVo;
 import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
-
 import org.apache.commons.lang.StringUtils;
+
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by mal on 2018/3/7.
@@ -57,18 +57,23 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
         while (isRun.get()) {
             try {
                 if (isRun.get()) {
+
+                    String dsNameWk = StringUtils.EMPTY;
+                    String schemaNameWk = StringUtils.EMPTY;
+
                     for (DsVo ds : dsVos) {
                         if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_LOGSTASH)
                                 || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_LOGSTASH_JSON)
                                 || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_UMS)
                                 || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MONGO)
                                 || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FILEBEAT)
+                                || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_JSON)
+                                || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.JSONLOG)
                                 || DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.LOG_FLUME)) {
                             LOG.info(ds.getType() + ", Ignored!");
                             continue;
                         }
-                        String dsNameWk = StringUtils.EMPTY;
-                        String schemaNameWk = StringUtils.EMPTY;
+
                         for (MonitorNodeVo node : nodes) {
                             //快速退出
                             if (!isRun.get())
@@ -78,7 +83,7 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
                                 continue;
 
                             if (!StringUtils.equals(dsNameWk, node.getDsName()) ||
-                                !StringUtils.equals(schemaNameWk, node.getSchema())) {
+                                    !StringUtils.equals(schemaNameWk, node.getSchema())) {
                                 // boolean isMysql = DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.MYSQL);
                                 MasterSlaveDelayVo msdVo = new MasterSlaveDelayVo();
                                 HeartBeatMonitorVo masterHbmVo = dao.queryLatestHeartbeat(ds.getKey(), node.getDsName(), node.getSchema(), ds.getType());
@@ -91,13 +96,17 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
                                         masterLatestTime = DateUtil.convertStrToLong4Date(masterHbmVo.getCreateTime());
                                     } else if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.ORACLE)) {
                                         masterLatestTime = DateUtil.convertStrToLong4Date(masterHbmVo.getCreateTime(), "yyyyMMdd HH:mm:ss.SSS");
+                                    } else if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.DB2)) {
+                                        masterLatestTime = DateUtil.convertStrToLong4Date(masterHbmVo.getCreateTime());
                                     }
                                 } else {
                                     msdVo.setMasterLatestTime(StringUtils.EMPTY);
+                                    LOG.info("[check-master-slave-delay-event] key: {}, ds:{}, schema:{}, query error.",
+                                            ds.getKey(), node.getDsName(), node.getSchema());
                                 }
 
                                 if (StringUtils.isNotBlank(ds.getSlvaeUrl())) {
-                                    String key = StringUtils.join(new String[] {ds.getKey(), "slave"}, "_");
+                                    String key = StringUtils.join(new String[]{ds.getKey(), "slave"}, "_");
                                     HeartBeatMonitorVo slaveHbmVo = dao.queryLatestHeartbeat(key, node.getDsName(), node.getSchema(), ds.getType());
                                     LOG.info("[check-master-slave-delay-event] key: {}, ds:{}, schema:{}, query result:{}",
                                             key, node.getDsName(), node.getSchema(), JsonUtil.toJson(slaveHbmVo));
@@ -108,18 +117,22 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
                                             slaveLatestTime = DateUtil.convertStrToLong4Date(slaveHbmVo.getCreateTime());
                                         } else if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.ORACLE)) {
                                             slaveLatestTime = DateUtil.convertStrToLong4Date(slaveHbmVo.getCreateTime(), "yyyyMMdd HH:mm:ss.SSS");
+                                        } else if (DbusDatasourceType.stringEqual(ds.getType(), DbusDatasourceType.DB2)) {
+                                            slaveLatestTime = DateUtil.convertStrToLong4Date(slaveHbmVo.getCreateTime());
                                         }
                                         msdVo.setDiff(masterLatestTime - slaveLatestTime);
                                         msdVo.setStrDiff(DateUtil.diffDate(masterLatestTime, slaveLatestTime));
                                     } else {
                                         msdVo.setSlaveLatestTime(StringUtils.EMPTY);
+                                        LOG.info("[check-master-slave-delay-event] key: {}, ds:{}, schema:{}, query error.",
+                                                ds.getKey(), node.getDsName(), node.getSchema());
                                     }
                                 } else {
                                     LOG.warn("[check-master-slave-delay-event] key: {} of slave url empty.", ds.getKey());
                                 }
 
                                 String path = HeartBeatConfigContainer.getInstance().getHbConf().getMonitorPath();
-                                path = StringUtils.join(new String[] {path, node.getDsName(), node.getSchema()}, "/");
+                                path = StringUtils.join(new String[]{path, node.getDsName(), node.getSchema()}, "/");
                                 MasterSlaveDelayVo preMsd = deserialize(path, MasterSlaveDelayVo.class);
 
                                 if (preMsd != null) {
@@ -135,6 +148,9 @@ public class CheckMasterSlaveDelayEvent extends AbstractEvent {
                                 LOG.info("[check-master-slave-delay-event] save zk data:{}", msdJson);
                                 saveZk(path, msdJson);
                             }
+
+                            dsNameWk = node.getDsName();
+                            schemaNameWk = node.getSchema();
                         }
                     }
                 }

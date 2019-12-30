@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
@@ -86,8 +87,11 @@ public abstract class AbstractMessageHandler {
                 name = "com.creditease.dbus.stream.mysql.appender.spout.processor.MysqlMessageHandler";
             } else if (datasourceType == DbusDatasourceType.ORACLE) {
                 name = "com.creditease.dbus.stream.oracle.appender.spout.processor.OracleMessageHandler";
-            }
-            else {
+            } else if (datasourceType == DbusDatasourceType.MONGO) {
+                name = "com.creditease.dbus.stream.mongo.appender.spout.processor.MongoMessageHandler";
+            } else if (datasourceType == DbusDatasourceType.DB2) {
+                name = "com.creditease.dbus.stream.db2.appender.spout.processor.Db2MessageHandler";
+            } else {
                 throw new IllegalArgumentException(datasourceType.toString() + " not support.");
             }
             Class<?> clazz = Class.forName(name);

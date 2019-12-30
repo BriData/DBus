@@ -1,6 +1,6 @@
-import React, { PropTypes, Component } from 'react'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
+import React, {PropTypes, Component} from 'react'
+import {connect} from 'react-redux'
+import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
 // 导入自定义组件
 import {
@@ -10,9 +10,10 @@ import {
   DataSchemaManageModifyModal,
   DataSchemaManageAddModal,
   DataSchemaManageAddLogModal,
-  DataSchemaManageRerunModal
+  DataSchemaManageRerunModal,
+  DataSchemaMoveModal
 } from '@/app/components'
-import { makeSelectLocale } from '../LanguageProvider/selectors'
+import {makeSelectLocale} from '../LanguageProvider/selectors'
 import {DataSchemaModel, DataSourceModel} from './selectors'
 import {
   searchDataSourceIdTypeName,
@@ -31,6 +32,7 @@ import {
 import {
   DATA_SOURCE_ADD_SCHEMA_TABLE_LIST_API
 } from './api'
+import {message} from "antd";
 
 // 链接reducer和action
 @connect(
@@ -50,7 +52,7 @@ import {
   })
 )
 export default class DataSchemaWrapper extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.initParams = {
       pageNum: 1,
@@ -71,9 +73,14 @@ export default class DataSchemaWrapper extends Component {
 
       rerunModalKey: 'rerunModalKey',
       rerunModalRecord: {},
-      rerunModalVisible: false
+      rerunModalVisible: false,
+
+      moveSchemaModalVisible: false,
+      moveSchemaRecord: {},
+      moveSchemaModalKey: 'moveSchema'
     }
   }
+
   componentWillMount() {
     // 初始化查询
     const {searchDataSourceIdTypeName} = this.props
@@ -89,7 +96,7 @@ export default class DataSchemaWrapper extends Component {
   handleSearch = (params, boolean) => {
     const {searchDataSchemaList, setDataSchemaParams} = this.props
     searchDataSchemaList(params)
-    if(boolean || boolean === undefined) {
+    if (boolean || boolean === undefined) {
       setDataSchemaParams(params)
     }
   }
@@ -126,6 +133,7 @@ export default class DataSchemaWrapper extends Component {
 
   handleAdd = record => {
     if (record.ds_type === 'oracle' || record.ds_type === 'mysql' || record.ds_type === 'mongo'
+      || record.ds_type === 'db2'
     ) {
       this.handleOpenAddModal(record)
     } else {
@@ -134,7 +142,7 @@ export default class DataSchemaWrapper extends Component {
   }
 
   handleOpenAddModal = record => {
-    const {cleanSchemaTable, getSchemaTableList } = this.props
+    const {cleanSchemaTable, getSchemaTableList} = this.props
     cleanSchemaTable()
     this.setState({
       addModalVisible: true,
@@ -187,7 +195,21 @@ export default class DataSchemaWrapper extends Component {
     })
   }
 
-  render () {
+  handleOpenMoveSchemaModal = record => {
+    this.setState({
+      moveSchemaModalVisible: true,
+      moveSchemaRecord: record,
+      moveSchemaModalKey: this.handleRandom('moveTables')
+    })
+  }
+
+  handleCloseMoveSchemaModal = () => {
+    this.setState({
+      moveSchemaModalVisible: false
+    })
+  }
+
+  render() {
     console.info(this.props)
     const {dataSourceData} = this.props
     const {dataSourceIdTypeName} = dataSourceData
@@ -202,6 +224,7 @@ export default class DataSchemaWrapper extends Component {
 
     const {addLogModalKey, addLogModalVisible, addLogModalRecord} = this.state
     const {rerunModalKey, rerunModalRecord, rerunModalVisible} = this.state
+    const {moveSchemaModalVisible, moveSchemaModalKey, moveSchemaRecord} = this.state
     const breadSchema = [
       {
         path: '/resource-manage',
@@ -221,10 +244,10 @@ export default class DataSchemaWrapper extends Component {
         <Helmet
           title="数据源管理"
           meta={[
-            { name: 'description', content: 'Description of DataSchema Manage' }
+            {name: 'description', content: 'Description of DataSchema Manage'}
           ]}
         />
-        <Bread source={breadSchema} />
+        <Bread source={breadSchema}/>
         <DataSchemaManageSearch
           dataSourceIdTypeName={dataSourceIdTypeName}
           params={dataSchemaParams}
@@ -239,6 +262,7 @@ export default class DataSchemaWrapper extends Component {
           deleteApi={DATA_SCHEMA_DELETE_API}
           onRefresh={this.handleRefresh}
           onRerun={this.handleOpenRerunModal}
+          onMoveSchema={this.handleOpenMoveSchemaModal}
         />
         <DataSchemaManageModifyModal
           key={modifyModalKey}
@@ -267,6 +291,14 @@ export default class DataSchemaWrapper extends Component {
           visible={rerunModalVisible}
           record={rerunModalRecord}
           onClose={this.handleCloseRerunModal}
+        />
+        <DataSchemaMoveModal
+          key={moveSchemaModalKey}
+          visible={moveSchemaModalVisible}
+          onClose={this.handleCloseMoveSchemaModal}
+          record={moveSchemaRecord}
+          dataSourceIdTypeName={dataSourceIdTypeName}
+          onRefresh={this.handleRefresh}
         />
       </div>
     )

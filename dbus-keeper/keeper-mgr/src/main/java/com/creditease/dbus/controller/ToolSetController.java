@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.controller;
 
@@ -26,7 +27,7 @@ import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.service.ToolSetService;
 import com.creditease.dbus.service.TopologyService;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +45,7 @@ public class ToolSetController extends BaseController {
     @Autowired
     private ToolSetService toolSetService;
     @Autowired
-    private TopologyService topoLogyService;
+    private TopologyService topologyService;
 
     /**
      * 发送controMessage
@@ -224,6 +225,26 @@ public class ToolSetController extends BaseController {
         }
     }
 
+    @GetMapping("/checkCanal")
+    public ResultEntity checkCanal() {
+        try {
+            return resultEntityBuilder().payload(toolSetService.checkCanal()).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request checkCanal", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping("/checkOgg")
+    public ResultEntity checkOgg() {
+        try {
+            return resultEntityBuilder().payload(toolSetService.checkOgg()).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request checkOgg", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
     @GetMapping("/initConfig")
     public ResultEntity initConfig(String dsName) {
         try {
@@ -236,7 +257,7 @@ public class ToolSetController extends BaseController {
     }
 
     @PostMapping("/batchRestartTopo")
-    public ResultEntity batchRestartTopo(@RequestBody Map<String,Object> map) {
+    public ResultEntity batchRestartTopo(@RequestBody Map<String, Object> map) {
         try {
             String dsType = (String) map.get("dsType");
             String jarPath = (String) map.get("jarPath");
@@ -253,8 +274,12 @@ public class ToolSetController extends BaseController {
                         || topoType.equalsIgnoreCase("mysql-extractor")) {
                     return resultEntityBuilder().status(MessageCode.TOPO_TYPE_AND_DSTYPE_NOT_MATCH).build();
                 }
-            }
-            else {
+            } else if ("db2".equalsIgnoreCase(dsType)) {
+                if (topoType.equalsIgnoreCase("log-processor")
+                        || topoType.equalsIgnoreCase("mysql-extractor")) {
+                    return resultEntityBuilder().status(MessageCode.TOPO_TYPE_AND_DSTYPE_NOT_MATCH).build();
+                }
+            } else {
                 if (topoType.equalsIgnoreCase("splitter-puller")
                         || topoType.equalsIgnoreCase("dispatcher-appender")
                         || topoType.equalsIgnoreCase("mysql-extractor")
@@ -263,7 +288,7 @@ public class ToolSetController extends BaseController {
                     return resultEntityBuilder().status(MessageCode.TOPO_TYPE_AND_DSTYPE_NOT_MATCH).build();
                 }
             }
-            topoLogyService.batchRestartTopo(jarPath, topoType, dsNameList);
+            topologyService.batchRestartTopo(jarPath, topoType, dsNameList);
             return resultEntityBuilder().build();
         } catch (Exception e) {
             logger.error("Exception encountered while request batchRestartTopo", e);

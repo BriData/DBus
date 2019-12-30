@@ -9,22 +9,20 @@ import {
   ClusterCheckForm
 } from '@/app/components'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
-import {
-} from '@/app/containers/SelfCheck/redux'
+import {} from '@/app/containers/SelfCheck/redux'
 import {
   CHECK_CLUSTER_API
 } from './api'
-import Request from "@/app/utils/request";
+import Request from '@/app/utils/request'
 // 链接reducer和action
 @connect(
   createStructuredSelector({
     locale: makeSelectLocale()
   }),
-  dispatch => ({
-  })
+  dispatch => ({})
 )
 export default class ClusterCheckWrapper extends Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = {
       grafanaUrl: 'notok',
@@ -35,21 +33,25 @@ export default class ClusterCheckWrapper extends Component {
       stormSSHSecretFree: 'notok',
       supervisors: [],
       zkStats: [],
+      loading: false
     }
   }
 
-  componentWillMount() {
+  componentWillMount () {
     this.handleCheckCluster()
   }
 
   handleCheckCluster = (params) => {
+    this.setState({loading: true})
     Request(CHECK_CLUSTER_API, {
       params: params,
-      method: 'get' })
+      method: 'get'
+    })
       .then(res => {
         if (res && res.status === 0) {
           this.setState({
-            ...res.payload
+            ...res.payload,
+            loading: false
           })
         } else {
           message.warn(res.message)
@@ -62,7 +64,7 @@ export default class ClusterCheckWrapper extends Component {
       })
   }
 
-  render() {
+  render () {
     console.info(this.props)
     return (
       <div>

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,25 @@
  * >>
  */
 
+
 package com.creditease.dbus.domain.model;
 
 import java.util.Date;
 
 public class ProjectResource {
 
-    /** 不能拉全量*/
+    /**
+     * 不能拉全量
+     */
     public static final byte FULL_PULL_ENABLE_FALSE = 0;
-    /** 可以拉全量*/
+    /**
+     * 可以拉全量
+     */
     public static final byte FULL_PULL_ENABLE_TRUE = 1;
 
-    /** 状态*/
+    /**
+     * 状态
+     */
     public static final String STATUS_USE = "use";
     public static final String STATUS_UNUSE = "unuse";
 

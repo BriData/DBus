@@ -1,4 +1,4 @@
-import React, {PropTypes, Component} from 'react'
+import React, {Component, PropTypes} from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
@@ -6,55 +6,54 @@ import {message, Modal} from 'antd'
 // 导入自定义组件
 import {
   Bread,
-  DataSourceManageSearch,
+  CanalConfModifyModal,
+  DataSourceManageAddModal,
   DataSourceManageGrid,
   DataSourceManageModifyModal,
-  DataSourceManageTopologyModal,
   DataSourceManageMountModal,
-  DataSourceManageAddModal,
   DataSourceManageRerunModal,
-  DataSourceManageBatchAddTableModal,
-  DataSourceManagePreProcessModal
+  DataSourceManageSearch,
+  DataSourceManageTopologyModal,
+  GenerateAddTableSqlModal,
+  OggConfModifyModal,
+  SearchDatasourceExistModal
 } from '@/app/components'
 // selectors
-import {DataSourceModel,JarManageModel} from './selectors'
+import {DataSourceModel, JarManageModel} from './selectors'
 import {ZKManageModel} from '../ConfigManage/selectors'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
 // action
 import {
-  setDataSourceParams,
-  searchDataSourceList,
+  cleanSchemaTable,
+  clearFullPullAlarm,
   getDataSourceById,
-  killTopology,
+  getOggCanalConfByDsName,
   getSchemaListByDsId,
   getSchemaTableList,
-  cleanSchemaTable,
+  killTopology,
+  searchDataSourceList,
   searchJarInfos,
-  clearFullPullAlarm
+  setDataSourceParams
 } from './redux'
+import {readZkData, saveZkData} from '../ConfigManage/redux'
 import {
-  readZkData,
-  saveZkData
-} from '../ConfigManage/redux'
-import {
-  DATA_SOURCE_UPDATE_API,
-  DATA_SOURCE_DELETE_API,
   DATA_SOURCE_ADD_SCHEMA_TABLE_LIST_API,
-  TOPO_JAR_START_API,
-  DATA_SOURCE_GENERATE_OGG_TRAIN_NAME_API
+  DATA_SOURCE_DELETE_API,
+  DATA_SOURCE_GENERATE_OGG_TRAIN_NAME_API,
+  DATA_SOURCE_SEARCH_DATASOURCE_EXIST_API,
+  DATA_SOURCE_UPDATE_API,
+  DOWNLOAD_PRE_PROCESS_MODEL_API,
+  TOPO_JAR_START_API
 } from './api'
-import {
-  GET_MOUNT_PROJECT_API
-} from '../ProjectManage/api'
+import {GET_MOUNT_PROJECT_API} from '../ProjectManage/api'
 import Request from "@/app/utils/request";
-
 // 链接reducer和action
 @connect(
   createStructuredSelector({
     JarManageData: JarManageModel(),
     dataSourceData: DataSourceModel(),
     ZKManageData: ZKManageModel(),
-    locale: makeSelectLocale()
+    locale: makeSelectLocale(),
   }),
   dispatch => ({
     clearFullPullAlarm: param => dispatch(clearFullPullAlarm.request(param)),
@@ -68,6 +67,7 @@ import Request from "@/app/utils/request";
     searchJarInfos: param => dispatch(searchJarInfos.request(param)),
     readZkData: param => dispatch(readZkData.request(param)),
     saveZkData: param => dispatch(saveZkData.request(param)),
+    getOggCanalConfByDsName: param => dispatch(getOggCanalConfByDsName.request(param)),
   })
 )
 export default class DataSourceWrapper extends Component {
@@ -97,11 +97,17 @@ export default class DataSourceWrapper extends Component {
       rerunModalVisible: false,
       rerunModalRecord: {},
 
-      batchAddTableModalKey: 'batchAddTableModalKey',
-      batchAddTableModalVisible: false,
+      generateAddTableSqlKey: 'generateAddTableSqlKey',
+      generateAddTableSqlVisible: false,
 
-      preProcessModalKey: 'preProcessModalKey',
-      preProcessModalVisible: false
+      oggModifyModalKey: 'oggModifyModalKey',
+      oggModifyModalVisible: false,
+
+      canalModifyModalKey: 'canalModifyModalKey',
+      canalModifyModalVisible: false,
+
+      searchDatasourceExistKey: 'searchDatasourceExistKey',
+      searchDatasourceExistVisible: false
     }
   }
 
@@ -121,7 +127,7 @@ export default class DataSourceWrapper extends Component {
   handleSearch = (params, boolean) => {
     const {searchDataSourceList, setDataSourceParams} = this.props
     searchDataSourceList(params)
-    if(boolean || boolean === undefined) {
+    if (boolean || boolean === undefined) {
       setDataSourceParams(params)
     }
   }
@@ -150,7 +156,7 @@ export default class DataSourceWrapper extends Component {
   }
 
   handleCreateDataSource = () => {
-    window.location.href='/resource-manage/datasource-create'
+    window.location.href = '/resource-manage/datasource-create'
   }
 
   handleClearFullPullAlarm = record => {
@@ -172,6 +178,38 @@ export default class DataSourceWrapper extends Component {
     this.setState({
       modifyModalKey: this.handleRandom('modify'),
       modifyModalVisible: false
+    })
+    this.handleRefresh()
+  }
+
+  handleOpenOggModifyModal = record => {
+    const {getOggCanalConfByDsName} = this.props
+    getOggCanalConfByDsName(record)
+    this.setState({
+      oggModifyModalVisible: true,
+    })
+  }
+
+  handleCloseOggModify = () => {
+    this.setState({
+      oggModifyModalKey: this.handleRandom('oggModifyModalKey'),
+      oggModifyModalVisible: false,
+    })
+    this.handleRefresh()
+  }
+
+  handleOpenCanalModifyModal = record => {
+    const {getOggCanalConfByDsName} = this.props
+    getOggCanalConfByDsName(record)
+    this.setState({
+      canalModifyModalVisible: true,
+    })
+  }
+
+  handleCloseCanalModify = () => {
+    this.setState({
+      canalModifyModalKey: this.handleRandom('canalModifyModalKey'),
+      canalModifyModalVisible: false,
     })
     this.handleRefresh()
   }
@@ -220,7 +258,8 @@ export default class DataSourceWrapper extends Component {
       params: {
         dsId: record.id
       },
-      method: 'get' })
+      method: 'get'
+    })
       .then(res => {
         if (res && res.status === 0) {
           this.handleOpenMountModal(res.payload)
@@ -279,29 +318,16 @@ export default class DataSourceWrapper extends Component {
     })
   }
 
-  handleOpenBatchAddTableModal = () => {
+  handleOpenGenerateAddTableSqlModal = () => {
     this.setState({
-      batchAddTableModalKey: this.handleRandom('batchAddTableModalKey'),
-      batchAddTableModalVisible: true
+      generateAddTableSqlKey: this.handleRandom('generateAddTableSqlKey'),
+      generateAddTableSqlVisible: true
     })
   }
 
-  handleCloseBatchAddTableModal = () => {
+  handleCloseGenerateAddTableSqlModal = () => {
     this.setState({
-      batchAddTableModalVisible: false
-    })
-  }
-
-  handleOpenPreProcessModal = () => {
-    this.setState({
-      preProcessModalKey: this.handleRandom('preProcessModalKey'),
-      preProcessModalVisible: true
-    })
-  }
-
-  handleClosePreProcessModal = () => {
-    this.setState({
-      preProcessModalVisible: false
+      generateAddTableSqlVisible: false
     })
   }
 
@@ -310,8 +336,8 @@ export default class DataSourceWrapper extends Component {
       .then(res => {
         if (res && res.status === 0) {
           Modal.info({
-            content: <span style={{fontSize: 14 }}>OGG Trail前缀：{res.payload}</span>,
-          });
+            content: <span style={{fontSize: 14}}>OGG Trail前缀：{res.payload}</span>
+          })
         } else {
           message.warn(res.message)
         }
@@ -319,13 +345,57 @@ export default class DataSourceWrapper extends Component {
       .catch(error => message.error(error))
   }
 
+  handleCloseSearchDatasourceExist = () => {
+    this.setState({
+      searchDatasourceExistKey: this.handleRandom('searchDatasourceExistKey'),
+      searchDatasourceExistVisible: false
+    })
+    this.handleRefresh()
+  }
+
+  handleOpensearchDatasourceExist = () => {
+    this.setState({
+      searchDatasourceExistVisible: true
+    })
+  }
+
+  handleSearchDatasourceExist = (param) => {
+    Request(DATA_SOURCE_SEARCH_DATASOURCE_EXIST_API, {
+      params: {
+        ip: param.ip,
+        port: param.port
+      },
+      method: 'get'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          Modal.info({
+            content: <span style={{fontSize: 14}}>接入数据源：{res.payload}</span>
+          })
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
+  handleDownload = () => {
+    const TOKEN = window.localStorage.getItem('TOKEN')
+    window.open(`${DOWNLOAD_PRE_PROCESS_MODEL_API}?token=${TOKEN}`)
+  }
+
   render() {
-    console.info(this.props)
+    // console.info(this.props)
     const {locale, dataSourceData} = this.props
+
     const {dataSourceParams, dataSourceList} = dataSourceData
 
     const {theDataSourceGottenById} = dataSourceData
+    const {oggCanalConfDsName} = dataSourceData
+
     const {modifyModalKey, modifyModalVisible} = this.state
+
+    const {oggModifyModalKey, oggModifyModalVisible, canalModifyModalKey, canalModifyModalVisible} = this.state
 
     const {topoModalKey, topoModalId, topoModalVisible} = this.state
 
@@ -337,13 +407,13 @@ export default class DataSourceWrapper extends Component {
     const jarInfos = this.props.JarManageData.jarInfos.result.payload || []
     const {searchJarInfos} = this.props
 
-    const {readZkData,saveZkData} = this.props
+    const {readZkData, saveZkData} = this.props
     const zkData = this.props.ZKManageData.zkData.result.payload || {}
 
     const {mountModalContent, mountModalVisible, mountModalKey} = this.state
     const {rerunModalVisible, rerunModalRecord, rerunModalKey} = this.state
-    const {batchAddTableModalKey, batchAddTableModalVisible} = this.state
-    const {preProcessModalKey, preProcessModalVisible} = this.state
+    const {generateAddTableSqlKey, generateAddTableSqlVisible} = this.state
+    const {searchDatasourceExistKey, searchDatasourceExistVisible} = this.state
     const breadSource = [
       {
         path: '/resource-manage',
@@ -371,15 +441,18 @@ export default class DataSourceWrapper extends Component {
           params={dataSourceParams}
           onSearch={this.handleSearch}
           onCreateDataSource={this.handleCreateDataSource}
-          onBatchAddTable={this.handleOpenBatchAddTableModal}
-          onPreProcess={this.handleOpenPreProcessModal}
+          onGenerateAddTableSql={this.handleOpenGenerateAddTableSqlModal}
           onGenerateOggTrailName={this.handleGenerateOggTrailName}
+          onOpenSearchDatasourceExist={this.handleOpensearchDatasourceExist}
+          onDownload={this.handleDownload}
         />
         <DataSourceManageGrid
           dataSourceList={dataSourceList}
           onPagination={this.handlePagination}
           onShowSizeChange={this.handleShowSizeChange}
           onModify={this.handleOpenModifyModal}
+          onOggModify={this.handleOpenOggModifyModal}
+          onCanalModify={this.handleOpenCanalModifyModal}
           onTopo={this.handleOpenTopoModal}
           onAdd={this.handleOpenAddModal}
           onMount={this.handleMount}
@@ -433,15 +506,28 @@ export default class DataSourceWrapper extends Component {
           record={rerunModalRecord}
           onClose={this.handleCloseRerunModal}
         />
-        <DataSourceManageBatchAddTableModal
-          key={batchAddTableModalKey}
-          visible={batchAddTableModalVisible}
-          onClose={this.handleCloseBatchAddTableModal}
+        <GenerateAddTableSqlModal
+          key={generateAddTableSqlKey}
+          visible={generateAddTableSqlVisible}
+          onClose={this.handleCloseGenerateAddTableSqlModal}
         />
-        <DataSourceManagePreProcessModal
-          key={preProcessModalKey}
-          visible={preProcessModalVisible}
-          onClose={this.handleClosePreProcessModal}
+        <OggConfModifyModal
+          key={oggModifyModalKey}
+          visible={oggModifyModalVisible}
+          onClose={this.handleCloseOggModify}
+          oggCanalConf={oggCanalConfDsName}
+        />
+        <CanalConfModifyModal
+          key={canalModifyModalKey}
+          visible={canalModifyModalVisible}
+          onClose={this.handleCloseCanalModify}
+          oggCanalConf={oggCanalConfDsName}
+        />
+        <SearchDatasourceExistModal
+          key={searchDatasourceExistKey}
+          visible={searchDatasourceExistVisible}
+          onClose={this.handleCloseSearchDatasourceExist}
+          onSearch={this.handleSearchDatasourceExist}
         />
       </div>
     )

@@ -221,13 +221,15 @@ export default class ProjectTopologyWrapper extends Component {
       startTopoModalLog: `发送${operate}命令中...`,
       startTopoModalLoading: true
     })
+
     Request(START_OR_STOP_TOPOLOGY_API, {
       data: {
         cmdType: operate,
         topoName: record.topoName,
         projectName: record.projectName,
         id: record.id,
-        jarPath: record.jarFilePath
+        jarPath: record.jarFilePath,
+        alias: record.alias
       },
       method: 'post' })
       .then(res => {

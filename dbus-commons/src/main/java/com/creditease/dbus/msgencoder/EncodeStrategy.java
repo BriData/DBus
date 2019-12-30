@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.msgencoder;
 
 import com.creditease.dbus.commons.DbusMessage;
@@ -27,6 +28,7 @@ import com.creditease.dbus.commons.DbusMessage;
  */
 public interface EncodeStrategy {
     public Object encode(DbusMessage.Field field, Object value, EncodeColumn col);
+
     public default void set(Object param) {
     }
 }

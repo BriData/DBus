@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.tools;
 
@@ -33,7 +34,7 @@ public class TableStatMap extends HashMap<String, StatMessage> {
     protected Logger logger = LoggerFactory.getLogger(getClass());
     private String dsName;
 
-    public void initDsName (String dsName) {
+    public void initDsName(String dsName) {
         this.dsName = dsName;
     }
 
@@ -46,7 +47,7 @@ public class TableStatMap extends HashMap<String, StatMessage> {
         String key = makeKey(schemaName, tableName);
         StatMessage message = this.get(key);
         if (message == null) {
-            logger.info("mark key:{}",key);
+            logger.info("mark key:{}", key);
             return;
         }
         //count++
@@ -59,7 +60,7 @@ public class TableStatMap extends HashMap<String, StatMessage> {
         StatMessage message = this.get(key);
         if (message == null) {
             message = new StatMessage(dsName, schemaName, tableName, StatMessage.DISPATCH_TYPE);
-            logger.info("logMeter put key:{}",key);
+            logger.info("logMeter put key:{}", key);
             this.put(key, message);
         }
 

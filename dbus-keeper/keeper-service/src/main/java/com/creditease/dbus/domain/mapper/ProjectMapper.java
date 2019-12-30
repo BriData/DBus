@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
  * >>
  */
 
-package com.creditease.dbus.domain.mapper;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.domain.model.Project;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Map;
 
 public interface ProjectMapper {
 
@@ -48,7 +49,7 @@ public interface ProjectMapper {
 
     List<Project> getProjectBySinkId(Integer id);
 
-	String getPrincipal(int id);
+    String getPrincipal(int id);
 
     List<Project> getMountedProjrct(@Param("dsId") Integer dsId, @Param("tableId") Integer tableId, @Param("sinkId") Integer sinkId);
 

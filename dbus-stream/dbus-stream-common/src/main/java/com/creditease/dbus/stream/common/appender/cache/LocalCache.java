@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.cache;
 
 import java.util.Map;
@@ -31,6 +32,8 @@ public interface LocalCache {
     void put(String cacheName, String key, Object value);
 
     void clear();
+
     void remove(String cacheName, String key);
+
     Map<String, Object> asMap(String cacheName);
 }

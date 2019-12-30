@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.dispatcher;
 
@@ -64,7 +65,7 @@ public class BoltCommandHandlerHelper {
         mergeMap(beforeMap, afterMap);
 
         for (Map.Entry<String, Object> entry : beforeMap.entrySet()) {
-            if(!entry.getKey().endsWith(Constants.MessageBodyKey.IS_MISSING_SUFFIX)) {
+            if (!entry.getKey().endsWith(Constants.MessageBodyKey.IS_MISSING_SUFFIX)) {
                 wrapper.addPair(new Pair<>(entry.getKey(), entry.getValue()));
             }
         }
@@ -76,10 +77,10 @@ public class BoltCommandHandlerHelper {
         return (T) record.get(key);
     }
 
-    private static void mergeMap(Map<String,Object> m0, Map<String, Object> m) {
+    private static void mergeMap(Map<String, Object> m0, Map<String, Object> m) {
         for (Map.Entry<String, Object> entry : m.entrySet()) {
-            if(!entry.getKey().endsWith(Constants.MessageBodyKey.IS_MISSING_SUFFIX)) {
-                if(!(Boolean)m.get(entry.getKey() + Constants.MessageBodyKey.IS_MISSING_SUFFIX)) {
+            if (!entry.getKey().endsWith(Constants.MessageBodyKey.IS_MISSING_SUFFIX)) {
+                if (!(Boolean) m.get(entry.getKey() + Constants.MessageBodyKey.IS_MISSING_SUFFIX)) {
                     m0.put(entry.getKey(), entry.getValue());
                 }
             }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.base;
 
@@ -71,7 +72,7 @@ public class ResultEntityBuilder {
     }
 
     /**
-     * 从 data 对象中抽取出相应的属性值保持到attributes中，
+     * 从 data 对象中抽取出相应的属性值保持到attributes中,
      * 在执行build()方法时可以将attributes写入到entity的payload中
      *
      * @param data javabean 或者 Map对象
@@ -92,7 +93,7 @@ public class ResultEntityBuilder {
     /**
      * 构建ResultEntity对象
      *
-     * @param messageReplacements 使用该参数替换status对应的消息字符串中的 {placeholder}字符串，生成完整的message
+     * @param messageReplacements 使用该参数替换status对应的消息字符串中的 {placeholder}字符串,生成完整的message
      * @return
      */
     public ResultEntity build(Object... messageReplacements) {

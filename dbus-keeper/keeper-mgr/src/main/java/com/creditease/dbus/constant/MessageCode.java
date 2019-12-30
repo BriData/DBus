@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.constant;
 
@@ -32,8 +33,8 @@ public class MessageCode {
     public static final int USER_NAME_EMPTY = 10001;
     public static final int PASSWORD_EMPTY = 10002;
     public static final int USER_NAME_OR_PASSWORD_INCORRECT = 10003;
-    public static final int AUTHORIZATION_FAILURE  = 10004;
-    public static final int AUTHORIZATION_FAILURE_PROJECT  = 10005;
+    public static final int AUTHORIZATION_FAILURE = 10004;
+    public static final int AUTHORIZATION_FAILURE_PROJECT = 10005;
 
     //User module code 11xxx
     public static final int MAILBOX_EMPTY = 11001;
@@ -136,6 +137,7 @@ public class MessageCode {
     //fullpull
     public static final int ILLEGAL_CONTROL_MESSAGE = 23001;
     public static final int EXCEPTION_WHEN_GOLBAL_FULLPULL = 23002;
+    public static final int TASK_STATE_IS_ILLEGAL = 23003;
 
     // project topo module code 3xxxx
     public static final int ACHIEVE_TOPOLOGY_MAX_COUNT = 30001;

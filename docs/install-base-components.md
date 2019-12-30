@@ -270,7 +270,7 @@ rpm -ivh influxdb-1.1.0.x86_64.rpm
 service influxdb start
 ```
 
-## 5.3 初始化配置
+## 5.3 初始化配置，此步骤可省略，web可以自动初始化
 
 在dbus-n1上执行如下命令：
 
@@ -332,7 +332,7 @@ service grafana-server start
 
 ![](img/install-base-components-05.png)
 
-### 6.4.2 配置grafana
+### 6.4.2 配置grafana，此步骤可省略，web可以自动初始化
 
 v0.5.0版本和以后版本可以跳过配置步骤，在web初始化时会进行自动的创建和导入。
 

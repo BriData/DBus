@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.extractor.spout;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+package com.creditease.dbus.extractor.spout;
 
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;
@@ -42,7 +38,6 @@ import com.creditease.dbus.extractor.manager.ContainerMng;
 import com.creditease.dbus.extractor.vo.MessageVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
 import com.creditease.dbus.extractor.vo.SendStatusVo;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -56,10 +51,15 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created by ximeiwang on 2017/8/15.
  */
-public class CanalClientSpout extends BaseRichSpout  {
+public class CanalClientSpout extends BaseRichSpout {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     private boolean needReconnect = false;
@@ -97,6 +97,7 @@ public class CanalClientSpout extends BaseRichSpout  {
 
     //对canal client 进行disconnect之后，进行处理
     protected int softStopCount = 0;
+
     protected boolean softStopProcess() {
         logger.info("starting soft stop process......");
         try {
@@ -112,6 +113,7 @@ public class CanalClientSpout extends BaseRichSpout  {
         }
         return false;
     }
+
     /********************************************************************************/
     private void reloadConfig(String reloadJson) {
         logger.info("spout: canal client reload starting......");
@@ -135,7 +137,7 @@ public class CanalClientSpout extends BaseRichSpout  {
             flowSize = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalFlowSize();
 
             /****************************初始化控制reload的kafka consumer************************/
-            if(consumer != null){
+            if (consumer != null) {
                 consumer.close();
                 consumer = null;
             }
@@ -145,7 +147,7 @@ public class CanalClientSpout extends BaseRichSpout  {
                 break;
             }
             consumer = DbusHelper.createConsumer(ExtractorConfigContainer.getInstances().getKafkaConsumerConfig(),
-                                                 extractorControlTopic);
+                    extractorControlTopic);
             logger.info("spout: 2 reload kafka consumer OK!");
             /***********************************************************************************/
 
@@ -153,17 +155,17 @@ public class CanalClientSpout extends BaseRichSpout  {
             String canalZkPath = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalZkPath();
             String newZkConnectStr = zkServers + canalZkPath;
             String newDestination = ExtractorConfigContainer.getInstances().getExtractorConfig().getCanalInstanceName();
-            if(connector == null || (connector != null && connector.checkValid() == false)) {
+            if (connector == null || (connector != null && connector.checkValid() == false)) {
                 //连接不可用
                 if (connector != null && connector.checkValid() == false) {
                     //有连接，连接不可用
                     logger.error("spout: connect is not valid!");
                     connector.disconnect();
-                    if(softStopProcess()) {
+                    if (softStopProcess()) {
                         MsgStatusContainer.getInstance().clear();
                     }
                 }
-                assert(zkConnectStr == null && destination == null);
+                assert (zkConnectStr == null && destination == null);
                 zkConnectStr = newZkConnectStr;
                 destination = newDestination;
                 connector = CanalConnectors.newClusterConnector(newZkConnectStr, newDestination, "", "");
@@ -214,7 +216,7 @@ public class CanalClientSpout extends BaseRichSpout  {
         this.collector = collector;
         this.zkServers = (String) conf.get(Constants.ZOOKEEPER_SERVERS);
         this.extractorName = (String) conf.get(Constants.EXTRACTOR_TOPOLOGY_ID);
-        this.extractorRoot = Constants.EXTRACTOR_ROOT + "/" + "";
+        this.extractorRoot = Constants.EXTRACTOR_ROOT + "/";
 
         reloadConfig(null);
         ackOrRollbackStartTime = System.currentTimeMillis();
@@ -238,6 +240,7 @@ public class CanalClientSpout extends BaseRichSpout  {
         }
         return false;
     }
+
     @Override
     public void nextTuple() {
         try {
@@ -307,7 +310,7 @@ public class CanalClientSpout extends BaseRichSpout  {
                     logger.info("canal spout is alive.");
                 }
                 printAlive = printAlive + 1;
-                if(printAlive >= 500){
+                if (printAlive >= 500) {
                     printAlive = 0;
                 }
             }
@@ -339,20 +342,22 @@ public class CanalClientSpout extends BaseRichSpout  {
     }
 
     @Override
-    public void close () {
+    public void close() {
         if (connector != null) {
             connector.disconnect();
             connector = null;
         }
     }
+
     @Override
     public void activate() {
 
     }
+
     @Override
     public void ack(Object msgId) {
-        try{
-            Pair<Long, String> pair = (Pair<Long, String>)msgId;
+        try {
+            Pair<Long, String> pair = (Pair<Long, String>) msgId;
             logger.info("spout ack batchId: " + pair.getKey());
             MsgStatusContainer.getInstance().setCompleted(pair.getKey(), 1);
             //设定一个时间间隔
@@ -361,19 +366,20 @@ public class CanalClientSpout extends BaseRichSpout  {
                 ackOrRollback();
                 ackOrRollbackStartTime = curTime;
             }
-        }catch (Exception e){
-            logger.error("spout ack exception {}" ,e);
+        } catch (Exception e) {
+            logger.error("spout ack exception {}", e);
         }
     }
+
     @Override
     public void fail(Object msgId) {
-        try{
-            Pair<Long, String> pair = (Pair<Long, String>)msgId;
+        try {
+            Pair<Long, String> pair = (Pair<Long, String>) msgId;
             logger.error("spout fail batchId: " + pair.getKey());
             MsgStatusContainer.getInstance().setError(pair.getKey(), true);
             ackOrRollbackStartTime = System.currentTimeMillis();
             ackOrRollback();
-        }catch (Exception e) {
+        } catch (Exception e) {
             logger.error("spout fail exception {}", e);
         }
 
@@ -384,9 +390,11 @@ public class CanalClientSpout extends BaseRichSpout  {
             return false;
         return true;
     }
+
     private void produceData(Message msg) {
         logger.debug("starting produce message data......");
         int serializedSize = 0;
+        int batchCount = 0;
         Integer split = 0;
         CanalPacket.Messages.Builder builder = CanalPacket.Messages.newBuilder();
         builder.setBatchId(msg.getId());
@@ -404,35 +412,44 @@ public class CanalClientSpout extends BaseRichSpout  {
                 CanalEntry.Header header = CanalEntry.Header.newBuilder(entry.getHeader()).setTableName(finalTable).build();
                 entry = CanalEntry.Entry.newBuilder(entry).setHeader(header).build();
             }
-            serializedSize += entry.getSerializedSize();
-            builder.addMessages(entry.toByteString());
 
-            if (serializedSize >= kafkaSendBatchSize) {
-                serializedSize = 0;
+            // 如果加上当前这条，大小已经超过最大数，就发送
+            if (serializedSize + entry.getSerializedSize() >= kafkaSendBatchSize) {
                 MsgStatusContainer.getInstance().setTotal(msg.getId(), ++split, false);
                 MessageVo msgVo = new MessageVo();
                 msgVo.setBatchId(msg.getId());
                 msgVo.setMessage(builder.build().toByteArray());
-                //this.collector.emit(new Values(msgVo));
-                this.collector.emit(new Values(msgVo,"controlReCord"), new Pair<Long, Integer>(msg.getId(), split));
+
+                logger.info("produceData serializedSize:{}, batchCount:{}", serializedSize, batchCount);
+                this.collector.emit(new Values(msgVo, "controlReCord"), new Pair<Long, Integer>(msg.getId(), split));
                 logger.debug("message to bolt, the batch id is {}, and it's the {} fragment.", msg.getId(), split);
+
+                serializedSize = 0;
+                batchCount = 0;
                 builder.clearMessages();
             }
+
+            serializedSize += entry.getSerializedSize();
+            batchCount += 1;
+            builder.addMessages(entry.toByteString());
         }
+
         if (builder.getMessagesCount() > 0) {
             MsgStatusContainer.getInstance().setTotal(msg.getId(), ++split, true);
+            logger.info("split produce just done, the batch id is {}, split is {}.", msg.getId(), split);
             MessageVo msgVo = new MessageVo();
             msgVo.setBatchId(msg.getId());
             msgVo.setMessage(builder.build().toByteArray());
-            this.collector.emit(new Values(msgVo,"controlReCord"), new Pair<Long, Integer>(msg.getId(), split));
-            logger.info("split produce done, the batch id is {}, split is {}.", msg.getId(), split);
+
+            logger.info("produceData serializedSize:{}, batchCount:{}", serializedSize, batchCount);
+            this.collector.emit(new Values(msgVo, "controlReCord"), new Pair<Long, Integer>(msg.getId(), split));
             builder.clear();
         } else {
             if (split != 0) {
                 logger.info("split produce just done, the batch id is {}, split is {}.", msg.getId(), split);
                 MsgStatusContainer.getInstance().setTotal(msg.getId(), split, true);
             } else {
-                logger.info("produce filtered message, the batch id is {}.", msg.getId());
+                logger.info("Empty batch id is {}. No data to kafka", msg.getId());
                 MsgStatusContainer.getInstance().setTotal(msg.getId(), 1, true);
                 MsgStatusContainer.getInstance().setCompleted(msg.getId(), 1);
             }
@@ -442,29 +459,30 @@ public class CanalClientSpout extends BaseRichSpout  {
     }
 
     private void ackOrRollback() {
-            Set<SendStatusVo> set = MsgStatusContainer.getInstance().getNeedAckOrRollbackBatch();
-            Iterator<SendStatusVo> iter = set.iterator();
-            while (iter.hasNext()) {
-                SendStatusVo vo = iter.next();
-                if (vo.getResult() == Constants.NEED_ACK_CANAL && vo.getBatchId() != 0) {
-                    connector.ack(vo.getBatchId());
-                    MsgStatusContainer.getInstance().deleteMsg(vo.getBatchId());
-                    int totalBatchSize = MsgStatusContainer.getInstance().getSize();
-                    logger.info("the batchId {} is ack to canal, so far, haven't ack total batch size {}", vo.getBatchId(), totalBatchSize);
-                } else if (vo.getResult() == Constants.NEED_ROLLBACK_CANAL && vo.getBatchId() != 0) {
-                    //由于canal的batchId为自增变量，然后所有的消息必须依次ack/rollback，不能跳跃，因此针对某个具体的batchId
-                    //进行rollback，会出现rollback失败，具体可参考canal源码
-                    connector.rollback();
-                    // connector.rollback(vo.getBatchId());
-                    int totalBatchSize = MsgStatusContainer.getInstance().getSize();
-                    logger.info("rollback to canal, the batchId is {}, haven't ack total batch size {}", vo.getBatchId(), totalBatchSize);
-                    MsgStatusContainer.getInstance().clear();
-                    break;
-                } else if (vo.getResult() == Constants.SEND_NOT_COMPLETED) {
-                    break;
-                }
+        Set<SendStatusVo> set = MsgStatusContainer.getInstance().getNeedAckOrRollbackBatch();
+        Iterator<SendStatusVo> iter = set.iterator();
+        while (iter.hasNext()) {
+            SendStatusVo vo = iter.next();
+            if (vo.getResult() == Constants.NEED_ACK_CANAL && vo.getBatchId() != 0) {
+                connector.ack(vo.getBatchId());
+                MsgStatusContainer.getInstance().deleteMsg(vo.getBatchId());
+                int totalBatchSize = MsgStatusContainer.getInstance().getSize();
+                logger.info("batchId {} ack OK! Unfinished batch size is {}", vo.getBatchId(), totalBatchSize);
+            } else if (vo.getResult() == Constants.NEED_ROLLBACK_CANAL && vo.getBatchId() != 0) {
+                //由于canal的batchId为自增变量，然后所有的消息必须依次ack/rollback，不能跳跃，因此针对某个具体的batchId
+                //进行rollback，会出现rollback失败，具体可参考canal源码
+                connector.rollback();
+                // connector.rollback(vo.getBatchId());
+                int totalBatchSize = MsgStatusContainer.getInstance().getSize();
+                logger.warn("rollback canal, the batchId is {}, unfinished batch size is {}", vo.getBatchId(), totalBatchSize);
+                MsgStatusContainer.getInstance().clear();
+                logger.warn("batch size cleared, unfinished batch size is {}", totalBatchSize);
+                break;
+            } else if (vo.getResult() == Constants.SEND_NOT_COMPLETED) {
+                break;
             }
-            set = null;
+        }
+        set = null;
     }
 
 }

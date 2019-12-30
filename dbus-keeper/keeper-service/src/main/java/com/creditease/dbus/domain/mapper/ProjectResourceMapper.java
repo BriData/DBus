@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
  * >>
  */
 
-package com.creditease.dbus.domain.mapper;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.domain.model.ProjectResource;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Map;
 
 public interface ProjectResourceMapper {
     int deleteByPrimaryKey(Integer id);
@@ -41,20 +42,20 @@ public interface ProjectResourceMapper {
 
     int deleteByProjectId(Integer id);
 
-    List<Map<String,Object>> search(Map<String, Object> params);
+    List<Map<String, Object>> search(Map<String, Object> params);
 
-    List<Map<String,Object>> searchTableResource(Map<String, Object> params);
+    List<Map<String, Object>> searchTableResource(Map<String, Object> params);
 
-    String searchStatus(@Param("projectId") int projectId,@Param("tableId") int tableId);
+    String searchStatus(@Param("projectId") int projectId, @Param("tableId") int tableId);
 
-    String searchEncodeType(@Param("tableId") Integer tableId, @Param("projectId")Integer projectId);
+    String searchEncodeType(@Param("tableId") Integer tableId, @Param("projectId") Integer projectId);
 
     List<Map<String, Object>> selectColumns(Integer tableId);
 
-    List<Map<String,Object>> getDSNames(@Param(value = "projectId") Integer projectId);
+    List<Map<String, Object>> getDSNames(@Param(value = "projectId") Integer projectId);
 
-    List<Map<String,Object>> getProjectNames();
+    List<Map<String, Object>> getProjectNames();
 
-    ProjectResource selectByPIdTId(@Param("projectId") Integer projectId,@Param("tableId") Integer tableId);
+    ProjectResource selectByPIdTId(@Param("projectId") Integer projectId, @Param("tableId") Integer tableId);
 
 }

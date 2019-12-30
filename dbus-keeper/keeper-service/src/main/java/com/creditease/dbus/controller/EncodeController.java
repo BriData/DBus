@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
-import com.creditease.dbus.domain.model.ProjectTopoTableEncodeOutputColumns;
+import com.creditease.dbus.domain.model.ProjectTableEncodeColumns;
 import com.creditease.dbus.service.EncodeService;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +35,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/encode")
 public class EncodeController extends BaseController {
 
-	@Autowired
-	private EncodeService service;
+    @Autowired
+    private EncodeService service;
 
-	@GetMapping(path = "/search")
-	public ResultEntity searchEncodeColumns(Integer pageNum, Integer pageSize, Integer projectId, Integer topoId,
-											Integer dsId, String schemaName, String tableName) {
-		PageInfo<ProjectTopoTableEncodeOutputColumns> pageInfo = service.searchEncodeColumns(pageNum, pageSize, projectId, topoId, dsId, schemaName, tableName);
-		return resultEntityBuilder().payload(pageInfo).build();
-	}
+    @GetMapping(path = "/search")
+    public ResultEntity searchEncodeColumns(Integer pageNum, Integer pageSize, Integer projectId, Integer topoId,
+                                            Integer dsId, String schemaName, String tableName) {
+        PageInfo<ProjectTableEncodeColumns> pageInfo = service.searchEncodeColumns(pageNum, pageSize, projectId, topoId, dsId, schemaName, tableName);
+        return resultEntityBuilder().payload(pageInfo).build();
+    }
 
 }

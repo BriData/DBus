@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
 import java.util.Collections;
@@ -25,6 +26,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Constants {
+    public static final String RELEASE_VERSION = "0.6.0";
+
     public static final String VERSION_12 = "1.2";
     public static final String VERSION_13 = "1.3";
     public static final String VERSION_14 = "1.4"; //used for mongo
@@ -41,12 +44,16 @@ public class Constants {
     public static final String MANGER_DB_CONNECT_URL = "dbus.manger.DB.connect.url";
     public static final String TOPOLOGY_ID = "dbus.storm.topology.dispatcher.id";
     public static final String ROUTER_PROJECT_NAME = "dbus.storm.topology.router.project.name";
+    public static final String TOPOLOGY_ALIAS = "dbus.storm.topology.alias";
 
     public static final String STATISTIC_TOPIC = "dbus.statistic.topic";
+    public static final String SINKER_HEARTBEAT_TOPIC = "sinker.heartbeat.topic";
 
     public static final String DBUS_DATASOURCE_TYPE = "dbus.datasource.type";
 
     public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url";
+
+    public static final String SINK_TYPE = "sink.type";
 
     //顶级目录
     public static final String DBUS_ROOT = "/DBus";
@@ -87,6 +94,8 @@ public class Constants {
 
     public static final String ROUTER_ROOT = DBUS_ROOT + "/Router";
 
+    public static final String SINKER_ROOT = DBUS_ROOT + "/Sinker";
+
     public static final String STREAMING_ROOT = DBUS_ROOT + "/Streaming";
 
     /**
@@ -96,6 +105,7 @@ public class Constants {
     public static final String BROKERS_ROOT = KAFKA_ROOT + "/brokers";
     public static final String BROKERS_IDS = BROKERS_ROOT + "/ids";
 
+    public static final String SECURITY_ROOT = "/security";
     public static final String RULE_TYPE_STRING = "string";
 
     public static final String RULE_TYPE_REGEX = "regex";
@@ -112,15 +122,13 @@ public class Constants {
     public static final String TRIM_ALL = "all";
 
     public static final String LOG_PROCESSOR = "log-processor";
+    public static final String GLOBAL_SECURITY_CONF = "global_security.conf";
+    public static final String SECURITY_CONFIG_TRUE_VALUE = "kerberos_kafkaACL";
     public static final String ROUTER = "router";
     //full puller
     public static final String HEARTBEAT_CONTROL_NODE = HEARTBEAT_ROOT + "/Control";
     public static final String FULL_SPLITTING_PROPS_ROOT = "dbus-fulldata-splitter";
     public static final String FULL_PULLING_PROPS_ROOT = "dbus-fulldata-puller";
-    public static final String FULL_SPLITTER_TYPE = "full-splitter";
-    public static final String FULL_PULLER_TYPE = "full-puller";
-    //full puller mode
-    public static final String FULL_PULLER_MODE = "/DBus/Keeper/safeMode/full_puller_mode.properties";
 
     public static final String CANAL_ROOT = DBUS_ROOT + "/Canal";
 
@@ -143,6 +151,7 @@ public class Constants {
     public static final String DISPATCHER_OFFSET = "dbus.dispatcher.offset";
 
     public static final String DISPATCHER_CUNSUMER_PROPERTIES = "dispatcher.consumer.properties";
+    public static final String DISPATCHER_DB2_CUNSUMER_PROPERTIES = "dispatcher.db2.consumer.properties";
     public static final String DISPATCHER_PRODUCER_PROPERTIES = "dispatcher.producer.properties";
     public static final String DISPATCHER_SCHEMA_TOPICS_PROPERTIES = "dispatcher.schema.topics.properties";
     public static final String DISPATCHER_RAW_TOPICS_PROPERTIES = "dispatcher.raw.topics.properties";
@@ -155,6 +164,12 @@ public class Constants {
     public static final String EXTRACTOR_TOPOLOGY_ID = "extractor.topology.id";
 
 
+    //DB2类型常量配置
+    public static class DB2_CONFIG {
+        public static final String DB2 = "db2";
+        public static final String EMIT_DATA_TYPE = "data";
+        public static final String EMIT_CTRL_TYPE = "ctrl";
+    }
 
 
     /**
@@ -255,6 +270,7 @@ public class Constants {
         public static final String SPLITTING_BOLT_PARALLEL = "splitting.bolt.parallel";
         public static final String PULLING_BOLT_PARALLEL = "pulling.bolt.parallel";
         public static final String HEARTBEAT_MONITOR_TIME_INTERVAL = "heartbeat.monitor.time.interval";
+        public static final String TOPOLOGY_WORKER_CHILDOPTS = "topology.worker.childopts";
 
         public static final String TOPOS_KILL_WAIT_TIME_FOR_RETRIES = "fullpull.topos.kill.waittime.for.retries";
         public static final String TOPOS_KILL_WAIT_TIMEOUT = "fullpull.topos.kill.timeout";

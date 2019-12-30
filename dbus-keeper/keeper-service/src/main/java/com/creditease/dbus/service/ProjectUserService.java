@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@
  * >>
  */
 
-package com.creditease.dbus.service;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.service;
 
 import com.creditease.dbus.domain.mapper.ProjectUserMapper;
 import com.creditease.dbus.domain.model.ProjectUser;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/3/27.

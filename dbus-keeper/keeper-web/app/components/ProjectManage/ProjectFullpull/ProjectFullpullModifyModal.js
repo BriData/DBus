@@ -1,7 +1,6 @@
-import React, { PropTypes, Component } from 'react'
-import { Modal, Form, Select, Input, Button, message,Table } from 'antd'
-import { FormattedMessage } from 'react-intl'
-import OperatingButton from '@/app/components/common/OperatingButton'
+import React, {Component} from 'react'
+import {Form, Input, message, Modal, Select} from 'antd'
+import {FormattedMessage} from 'react-intl'
 import {FULLPULL_HISTORY_UPDATE_API} from '@/app/containers/ProjectManage/api'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -13,10 +12,9 @@ const TextArea = Input.TextArea
 
 @Form.create()
 export default class ProjectFullpullModifyModal extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
-    this.state = {
-    }
+    this.state = {}
   }
 
   handleSubmit = () => {
@@ -24,7 +22,8 @@ export default class ProjectFullpullModifyModal extends Component {
     this.props.form.validateFieldsAndScroll((err, values) => {
       Request(FULLPULL_HISTORY_UPDATE_API, {
         data: values,
-        method: 'post' })
+        method: 'post'
+      })
         .then(res => {
           if (res && res.status === 0) {
             onClose()
@@ -40,17 +39,17 @@ export default class ProjectFullpullModifyModal extends Component {
     })
   }
 
-  render () {
-    const { getFieldDecorator } = this.props.form
+  render() {
+    const {getFieldDecorator} = this.props.form
     const {key, visible, fullpullInfo, onClose} = this.props
     const formItemLayout = {
       labelCol: {
-        xs: { span: 5 },
-        sm: { span: 6 }
+        xs: {span: 5},
+        sm: {span: 6}
       },
       wrapperCol: {
-        xs: { span: 19 },
-        sm: { span: 12 }
+        xs: {span: 19},
+        sm: {span: 12}
       }
     }
     return (
@@ -74,7 +73,7 @@ export default class ProjectFullpullModifyModal extends Component {
             <FormItem label="ID" {...formItemLayout}>
               {getFieldDecorator('id', {
                 initialValue: fullpullInfo.id,
-              })(<Input disabled={true} size="large" type="text" />)}
+              })(<Input disabled={true} size="large" type="text"/>)}
             </FormItem>
             <FormItem label={<FormattedMessage
               id="app.components.projectManage.projectFullpullHistory.table.pullType"
@@ -82,7 +81,7 @@ export default class ProjectFullpullModifyModal extends Component {
             />} {...formItemLayout}>
               {getFieldDecorator('type', {
                 initialValue: fullpullInfo.type,
-              })(<Input disabled={true} size="large" type="text" />)}
+              })(<Input disabled={true} size="large" type="text"/>)}
             </FormItem>
             <FormItem label={<FormattedMessage
               id="app.components.projectManage.projectFullpullHistory.table.project"
@@ -90,23 +89,23 @@ export default class ProjectFullpullModifyModal extends Component {
             />} {...formItemLayout}>
               {getFieldDecorator('projectDisplayName', {
                 initialValue: fullpullInfo.projectDisplayName,
-              })(<Input disabled={true} size="large" type="text" />)}
+              })(<Input disabled={true} size="large" type="text"/>)}
             </FormItem>
             <FormItem label={<FormattedMessage
               id="app.components.resourceManage.dataSourceName"
               defaultMessage="数据源名称"
             />} {...formItemLayout}>
               {getFieldDecorator('dsName', {
-                initialValue:fullpullInfo.dsName,
-              })(<Input disabled={true} size="large" type="text" />)}
+                initialValue: fullpullInfo.dsName,
+              })(<Input disabled={true} size="large" type="text"/>)}
             </FormItem>
             <FormItem label={<FormattedMessage
               id="app.components.resourceManage.dataSchemaName"
               defaultMessage="Schema名称"
             />} {...formItemLayout}>
               {getFieldDecorator('schemaName', {
-                initialValue:fullpullInfo.schemaName,
-              })(<Input disabled={true} size="large" type="text" />)}
+                initialValue: fullpullInfo.schemaName,
+              })(<Input disabled={true} size="large" type="text"/>)}
             </FormItem>
             <FormItem label={<FormattedMessage
               id="app.components.resourceManage.dataTableName"
@@ -114,7 +113,31 @@ export default class ProjectFullpullModifyModal extends Component {
             />} {...formItemLayout}>
               {getFieldDecorator('tableName', {
                 initialValue: fullpullInfo.tableName,
-              })(<Input disabled={true} size="large" type="text" />)}
+              })(<Input disabled={true} size="large" type="text"/>)}
+            </FormItem>
+            <FormItem label={<FormattedMessage
+              id="app.components.projectManage.projectFullpullHistory.table.firstSplitOffset"
+              defaultMessage="首片Offset"
+            />} {...formItemLayout}>
+              {getFieldDecorator('firstShardMsgOffset', {
+                initialValue: fullpullInfo.firstShardMsgOffset,
+              })(<Input disabled={true} size="large" type="text"/>)}
+            </FormItem>
+            <FormItem label={<FormattedMessage
+              id="app.components.projectManage.projectFullpullHistory.table.lastSplitOffset"
+              defaultMessage="末片Offset"
+            />} {...formItemLayout}>
+              {getFieldDecorator('lastSplitOffset', {
+                initialValue: fullpullInfo.lastShardMsgOffset,
+              })(<Input disabled={true} size="large" type="text"/>)}
+            </FormItem>
+            <FormItem label={<FormattedMessage
+              id="app.components.projectManage.projectFullpullHistory.table.currentShardOffset"
+              defaultMessage="当前片Offset"
+            />} {...formItemLayout}>
+              {getFieldDecorator('currentShardOffset', {
+                initialValue: fullpullInfo.currentShardOffset,
+              })(<Input size="large" type="text"/>)}
             </FormItem>
             <FormItem
               label={<FormattedMessage
@@ -123,7 +146,7 @@ export default class ProjectFullpullModifyModal extends Component {
               />} {...formItemLayout}
             >
               {getFieldDecorator('state', {
-                initialValue:`${fullpullInfo.state}`
+                initialValue: `${fullpullInfo.state}`
               })(
                 <Select
                   showSearch
@@ -144,8 +167,8 @@ export default class ProjectFullpullModifyModal extends Component {
               defaultMessage="出错信息"
             />} {...formItemLayout}>
               {getFieldDecorator('errorMsg', {
-                initialValue:fullpullInfo.errorMsg,
-              })(<Input size="large" type="text" />)}
+                initialValue: fullpullInfo.errorMsg,
+              })(<Input size="large" type="text"/>)}
             </FormItem>
           </Form>
         </Modal>
@@ -154,5 +177,4 @@ export default class ProjectFullpullModifyModal extends Component {
   }
 }
 
-ProjectFullpullModifyModal.propTypes = {
-}
+ProjectFullpullModifyModal.propTypes = {}

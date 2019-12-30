@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.model;
 
@@ -84,8 +85,13 @@ public class DataTable {
 
     private Integer innerVersion;
 
+    //mongo表是否需要展开处理 0:不展开,1:一级展开
+    private Integer isOpen;
+
+    private Boolean isAutoComplete;//mongo表是否自动补全
 
     private String fullpullCondition;
+
 
     public DataTable() {
 
@@ -104,7 +110,7 @@ public class DataTable {
         this.status = status;
     }
 
-    //这个是真正的版本号历史，直接通过版本id在webservice中转换，数据库中无此项
+    //这个是真正的版本号历史,直接通过版本id在webservice中转换,数据库中无此项
 //    private String versionsChangeHistory;
 
     public Integer getId() {
@@ -339,6 +345,21 @@ public class DataTable {
         this.dbusPassword = dbusPassword;
     }
 
+    public Integer getIsOpen() {
+        return isOpen;
+    }
+
+    public void setIsOpen(Integer isOpen) {
+        this.isOpen = isOpen;
+    }
+
+    public Boolean getAutoComplete() {
+        return isAutoComplete;
+    }
+
+    public void setAutoComplete(Boolean autoComplete) {
+        isAutoComplete = autoComplete;
+    }
 
 
     public String getFullpullCondition() {
@@ -348,4 +369,6 @@ public class DataTable {
     public void setFullpullCondition(String fullpullCondition) {
         this.fullpullCondition = fullpullCondition;
     }
+
+
 }

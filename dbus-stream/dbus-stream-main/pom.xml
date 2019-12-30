@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>dbus-stream_1.3</artifactId>
+        <artifactId>dbus-stream</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dbus-stream-main_1.3</artifactId>
+    <artifactId>dbus-stream-main</artifactId>
 
     <dependencies>
         <dependency>
@@ -20,20 +20,30 @@
         <dependency>
             <groupId>com.creditease.dbus</groupId>
             <artifactId>dbus-stream-common</artifactId>
-            <version>0.5.0</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.creditease.dbus</groupId>
             <artifactId>dbus-stream-mysql</artifactId>
-            <version>0.5.0</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.creditease.dbus</groupId>
             <artifactId>dbus-stream-oracle</artifactId>
-            <version>0.5.0</version>
+            <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.creditease.dbus</groupId>
+            <artifactId>dbus-stream-db2</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
+        <dependency>
+            <groupId>com.creditease.dbus</groupId>
+            <artifactId>dbus-stream-mongo</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.storm</groupId>
@@ -117,7 +127,7 @@
                         <id>make-assembly</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>assembly</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>

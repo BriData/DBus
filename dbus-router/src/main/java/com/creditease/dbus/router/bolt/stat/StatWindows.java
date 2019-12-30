@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.bolt.stat;
+
+import com.creditease.dbus.router.bean.Stat;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import com.creditease.dbus.router.bean.Stat;
 
 /**
  * Created by Administrator on 2018/6/4.
@@ -42,11 +43,12 @@ public class StatWindows {
         this.isUseBarrier = isUseBarrier;
     }
 
-    public void add (String namespace, Stat vo) {
-        if (statMap.containsKey(namespace))
+    public void add(String namespace, Stat vo) {
+        if (statMap.containsKey(namespace)) {
             statMap.get(namespace).merge(vo, isUseBarrier);
-        else
+        } else {
             statMap.put(namespace, vo);
+        }
     }
 
     /**
@@ -70,11 +72,13 @@ public class StatWindows {
     }
 
     public Stat tryPoll(String namespace, Integer taskIdSum) {
-        Stat vo = null;
-        if (statMap.containsKey(namespace)) {
-            vo = statMap.get(namespace);
-            if (vo.getTaskIdSum() >= taskIdSum)
-                statMap.remove(namespace);
+        Stat vo = statMap.get(namespace);
+        if (vo != null && vo.getTaskIdSum() >= taskIdSum) {
+            //说明所有encode bolt的stat都已到齐,可以清楚缓存中的数据
+            statMap.remove(namespace);
+        } else if (vo != null) {
+            // 说明所有encode bolt的stat还没有到齐,需要清空vo继续等待
+            vo = null;
         }
         return vo;
     }

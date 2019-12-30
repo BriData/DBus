@@ -74,7 +74,8 @@ export default class ProjectTableTabs extends Component {
       onSetEncodes,
       projectId,
       onGetTableSinks,
-      tableId
+      tableId,
+      modifyRecord
     } = this.props
     // 组装sink
     sink = {}
@@ -86,7 +87,7 @@ export default class ProjectTableTabs extends Component {
     onSetSink(sink)
     // 组装 topology
     topology = {}
-    topology['topoId'] = `${params['sink'].sinkId}`
+    topology['topoId'] = `${modifyRecord.topoId}`
     temporaryData['topology'] = topology
     onSetTopology(topology)
     // 组装 encodes
@@ -112,6 +113,7 @@ export default class ProjectTableTabs extends Component {
 
   render () {
     const {
+      modifyRecord,
       locale,
       projectId,
       projectInfo,
@@ -162,6 +164,7 @@ export default class ProjectTableTabs extends Component {
             <Spin spinning={topicList.loading}>
               {!topicList.loading ? (
                 <ResourceForm
+                  modifyRecord={modifyRecord}
                   locale={locale}
                   projectId={projectId}
                   resource={resource}

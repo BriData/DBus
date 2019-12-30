@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.handler.impl;
 
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+package com.creditease.dbus.heartbeat.handler.impl;
 
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.DataSourceContainer;
@@ -30,6 +27,7 @@ import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.container.MongoClientContainer;
 import com.creditease.dbus.heartbeat.handler.AbstractHandler;
 import com.creditease.dbus.heartbeat.resource.IResource;
+import com.creditease.dbus.heartbeat.resource.remote.AlialMappingConfigResource;
 import com.creditease.dbus.heartbeat.resource.remote.DsConfigResource;
 import com.creditease.dbus.heartbeat.resource.remote.MonitorNodeConfigResource;
 import com.creditease.dbus.heartbeat.resource.remote.TargetTopicConfigResource;
@@ -38,8 +36,12 @@ import com.creditease.dbus.heartbeat.vo.DsVo;
 import com.creditease.dbus.heartbeat.vo.JdbcVo;
 import com.creditease.dbus.heartbeat.vo.MonitorNodeVo;
 import com.creditease.dbus.heartbeat.vo.TargetTopicVo;
-
 import org.apache.commons.collections.CollectionUtils;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 加载DataSource和Schema的信息
@@ -54,6 +56,7 @@ public class LoadDbConfigHandler extends AbstractHandler {
         loadSid();
         loadMonitorNode();
         loadTargetTopic();
+        loadAliasMapping();
     }
 
     private void loadSid() {
@@ -68,6 +71,7 @@ public class LoadDbConfigHandler extends AbstractHandler {
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_LOGSTASH_JSON)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_UMS)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_FLUME)
+                        || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_JSON)
                         || DbusDatasourceType.stringEqual(conf.getType(), DbusDatasourceType.LOG_FILEBEAT)) {
                     continue;
                 }
@@ -94,6 +98,12 @@ public class LoadDbConfigHandler extends AbstractHandler {
         	LoggerFactory.getLogger().info("[db-LoadDbusConfigDao] topic:{} ",topic.toString());
         }*/
         HeartBeatConfigContainer.getInstance().setTargetTopic(topics);
+    }
+
+    private void loadAliasMapping() {
+        IResource<Map<String, String>> resource = new AlialMappingConfigResource(Constants.CONFIG_DB_KEY);
+        Map<String, String> aliasMapping = resource.load();
+        HeartBeatConfigContainer.getInstance().setAliasMapping(aliasMapping);
     }
 
 }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,23 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.handler.impl;
 
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-
+import com.creditease.dbus.heartbeat.container.CuratorContainer;
+import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
+import com.creditease.dbus.heartbeat.handler.AbstractHandler;
+import com.creditease.dbus.heartbeat.log.LoggerFactory;
+import com.creditease.dbus.heartbeat.util.JsonUtil;
+import com.creditease.dbus.heartbeat.vo.BrokerInfoVo;
 import com.creditease.dbus.heartbeat.vo.ZkVo;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 
-import com.creditease.dbus.heartbeat.container.CuratorContainer;
-import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
-import com.creditease.dbus.heartbeat.handler.AbstractHandler;
-import com.creditease.dbus.heartbeat.log.LoggerFactory;
-import com.creditease.dbus.heartbeat.type.WatcherType;
-import com.creditease.dbus.heartbeat.util.JsonUtil;
-import com.creditease.dbus.heartbeat.vo.BrokerInfoVo;
-import com.creditease.dbus.heartbeat.vo.HeartBeatVo;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
 
 public class LeaderElectHandler extends AbstractHandler {
 
@@ -63,6 +61,7 @@ public class LeaderElectHandler extends AbstractHandler {
                     LoggerFactory.getLogger().error("本机现在切换到非leader状态,准备终止当前进程PID:{}", brokerInfo.getPid());
                     System.exit(-1);
                 }
+
                 @Override
                 public void isLeader() {
                     LoggerFactory.getLogger().info("本机现在切换到leader状态.");

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.bolt.processor.heartbeat;
 
@@ -37,18 +38,20 @@ public class HeartbeatReloadHandler implements BoltCommandHandler {
     private CommandHandlerListener listener;
     private long lastReloadTs = 0L;
     private final long MIN_PERIOD_MS = 20 * 1000;
+
     public HeartbeatReloadHandler(CommandHandlerListener listener) {
         this.listener = listener;
     }
+
     @Override
     public void handle(Tuple tuple) {
         long ts = System.currentTimeMillis();
-        if(ts - lastReloadTs > MIN_PERIOD_MS) {
+        if (ts - lastReloadTs > MIN_PERIOD_MS) {
             listener.reloadBolt(tuple);
             lastReloadTs = ts;
             logger.info("Heartbeat bolt reloaded, reload ts:{}", lastReloadTs);
             return;
         }
-        logger.debug("Bolt has been reloaded at "+ new Date(lastReloadTs));
+        logger.debug("Bolt has been reloaded at " + new Date(lastReloadTs));
     }
 }

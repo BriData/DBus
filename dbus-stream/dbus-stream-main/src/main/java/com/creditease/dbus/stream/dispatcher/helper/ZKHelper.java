@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.dispatcher.helper;
 
-import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.commons.*;
-import com.creditease.dbus.commons.Constants;
+import com.creditease.dbus.stream.common.DataSourceInfo;
+import com.creditease.dbus.stream.common.tools.SecurityConfProvider;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +82,9 @@ public class ZKHelper {
         Properties props = zkService.getProperties(path);
         String clientID = topologyID + "-producer";
         props.put("client.id", clientID);
+        if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), "kerberos_kafkaACL")) {
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+        }
         return props;
     }
 
@@ -88,17 +94,32 @@ public class ZKHelper {
         String id = topologyID + "-consumer";
         props.setProperty("group.id", id);
         props.setProperty("client.id", id);
+        if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), "kerberos_kafkaACL")) {
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+        }
         logger.info(String.format("Spout set: group.id and client.id=%s", id));
         return props;
     }
 
+    public Properties getDb2ConsumerProps() throws Exception {
+        String path = topologyRoot + "/" + Constants.DISPATCHER_DB2_CUNSUMER_PROPERTIES;
+        Properties props = zkService.getProperties(path);
+        String id = "db2-" + topologyID + "-consumer";
+        props.setProperty("group.id", id);
+        props.setProperty("client.id", id);
+        logger.info(String.format("Spout set: group.id and client.id=%s", id));
+        return props;
+    }
 
     public Properties getStatProducerProps() throws Exception {
         String path = topologyRoot + "/" + Constants.DISPATCHER_PRODUCER_PROPERTIES;
-        Properties props =  zkService.getProperties(path);
+        Properties props = zkService.getProperties(path);
         String clientID = topologyID + "-stat-producer";
         props.put("client.id", clientID);
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), "kerberos_kafkaACL")) {
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+        }
         return props;
     }
 
@@ -110,6 +131,7 @@ public class ZKHelper {
     /**
      * saveDsInfo
      * Write data topic, control topic and dbus schema to zk.
+     *
      * @throws Exception
      */
     public void saveDsInfo(DataSourceInfo dsInfo) throws Exception {
@@ -172,7 +194,7 @@ public class ZKHelper {
                 zkService.close();
                 zkService = null;
             }
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Close Zookeeper error:" + ex.getMessage());
         }
     }

@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,17 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.container;
 
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+package com.creditease.dbus.heartbeat.container;
 
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.mongo.DBusMongoClient;
 import com.creditease.dbus.heartbeat.vo.JdbcVo;
 import com.mongodb.MongoClient;
+
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MongoClientContainer {
 
@@ -71,7 +72,7 @@ public class MongoClientContainer {
             DBusMongoClient client = cmap.get(key);
             client.getMongoClient().close();
             if (client.getShardMongoClients() != null &&
-                client.getShardMongoClients().size() > 0) {
+                    client.getShardMongoClients().size() > 0) {
                 for (Map.Entry<String, MongoClient> mc : client.getShardMongoClients().entrySet())
                     mc.getValue().close();
             }

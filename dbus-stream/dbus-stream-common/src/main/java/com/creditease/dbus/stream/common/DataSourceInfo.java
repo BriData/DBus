@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common;
 
@@ -65,7 +66,6 @@ public class DataSourceInfo {
     }
 
 
-
     public String getDataTopicOffset() {
         return dataTopicOffset;
     }
@@ -97,6 +97,6 @@ public class DataSourceInfo {
     @Override
     public String toString() {
         return String.format("dsName=%s, dsType=%s, dataTopic=%s, ctrlTopic=%s, dbusSchema=%s, dataTopicOffset=%s",
-                              dbSourceName, dbSourceType, dataTopic, ctrlTopic, dbusSchema, dataTopicOffset);
+                dbSourceName, dbSourceType, dataTopic, ctrlTopic, dbusSchema, dataTopicOffset);
     }
 }

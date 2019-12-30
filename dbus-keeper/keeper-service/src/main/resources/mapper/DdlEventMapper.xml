@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.DdlEventMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.DdlEvent">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="event_id" jdbcType="INTEGER" property="eventId" />
+    <result column="ds_id" jdbcType="INTEGER" property="dsId" />
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName" />
+    <result column="table_name" jdbcType="VARCHAR" property="tableName" />
+    <result column="column_name" jdbcType="VARCHAR" property="columnName" />
+    <result column="ver_id" jdbcType="INTEGER" property="verId" />
+    <result column="trigger_ver" jdbcType="INTEGER" property="triggerVer" />
+    <result column="ddl_type" jdbcType="VARCHAR" property="ddlType" />
+    <result column="ddl" jdbcType="VARCHAR" property="ddl" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_ddl_event
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.DdlEvent">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_ddl_event (event_id, ds_id, schema_name,
+      table_name, column_name, ver_id,
+      trigger_ver, ddl_type, ddl,
+      update_time)
+    values (#{eventId,jdbcType=INTEGER}, #{dsId,jdbcType=INTEGER}, #{schemaName,jdbcType=VARCHAR},
+      #{tableName,jdbcType=VARCHAR}, #{columnName,jdbcType=VARCHAR}, #{verId,jdbcType=INTEGER},
+      #{triggerVer,jdbcType=INTEGER}, #{ddlType,jdbcType=VARCHAR}, #{ddl,jdbcType=VARCHAR},
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.DdlEvent">
+    update t_ddl_event
+    set event_id = #{eventId,jdbcType=INTEGER},
+      ds_id = #{dsId,jdbcType=INTEGER},
+      schema_name = #{schemaName,jdbcType=VARCHAR},
+      table_name = #{tableName,jdbcType=VARCHAR},
+      column_name = #{columnName,jdbcType=VARCHAR},
+      ver_id = #{verId,jdbcType=INTEGER},
+      trigger_ver = #{triggerVer,jdbcType=INTEGER},
+      ddl_type = #{ddlType,jdbcType=VARCHAR},
+      ddl = #{ddl,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, event_id, ds_id, schema_name, table_name, column_name, ver_id, trigger_ver, 
+    ddl_type, ddl, update_time
+    from t_ddl_event
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, event_id, ds_id, schema_name, table_name, column_name, ver_id, trigger_ver, 
+    ddl_type, ddl, update_time
+    from t_ddl_event
+  </select>
+  <select id="selectByUpdateTime" resultMap="BaseResultMap">
+    SELECT  e.*  FROM
+    (
+      SELECT * FROM t_ddl_event
+      WHERE
+      ddl_type = 'ALTER'
+      AND update_time <![CDATA[ > ]]> #{startTime}
+      AND update_time <![CDATA[ <= ]]> #{endTime}
+    ) e
+    JOIN t_data_tables t ON e.ds_id = t.ds_id
+    AND e.schema_name = t.schema_name
+    AND e.table_name = t.table_name
+    <where>
+      <if test ="schemaId != null"> AND t.schema_id = #{schemaId}</if>
+      <if test ="tableName != null"> AND t.table_name = #{tableName}</if>
+    </where>
+  </select>
+</mapper>

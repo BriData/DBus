@@ -94,15 +94,34 @@ grant select on db1.table to dbus;
 启动topology时报如下异常：
 
 ```sql
-2018-02-28 18:27:19:999 - error: /app/dbus-allinone/distribution-0.4.0-bin/manager/lib/service/start-topology-service.js[37] - startTopo err: Error: Command failed: ssh -p 22 root@localhost 'cd /app/dbus-allinone/apache-storm-1.0.1//dbus_jars; ./dbus_startTopology.sh /app/dbus-allinone/apache-storm-1.0.1/ log-processor localhost:2181 heartbeat_log 0.4.x/log_processor/20180123_201400/dbus-log-processor-0.4.0-jar-with-dependencies.jar'Traceback (most recent call last):  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 766, in <module>    main()  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 763, in main    (COMMANDS.get(COMMAND, unknown_command))(*ARGS)  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 234, in jar    transform_class = confvalue("client.jartransformer.class", [CLUSTER_CONF_DIR])  File "/app/dbus-allinone/apache-storm-1.0.1//bin/storm.py", line 144, in confvalue    p = sub.Popen(command, stdout=sub.PIPE)  File "/usr/lib64/python2.6/subprocess.py", line 642, in __init__    errread, errwrite)  File "/usr/lib64/python2.6/subprocess.py", line 1238, in _execute_child    raise child_exceptionOSError: [Errno 2] No such file or directory
+Traceback (most recent call last):
+  File "/app/dbus-allinone/apache-storm-1.0.1/bin/storm.py", line 766, in <module>
+    main()
+  File "/app/dbus-allinone/apache-storm-1.0.1/bin/storm.py", line 763, in main
+    (COMMANDS.get(COMMAND, unknown_command))(*ARGS)
+  File "/app/dbus-allinone/apache-storm-1.0.1/bin/storm.py", line 234, in jar
+    transform_class = confvalue("client.jartransformer.class", [CLUSTER_CONF_DIR])
+  File "/app/dbus-allinone/apache-storm-1.0.1/bin/storm.py", line 144, in confvalue
+    p = sub.Popen(command, stdout=sub.PIPE)
+  File "/usr/lib64/python2.6/subprocess.py", line 642, in __init__
+    errread, errwrite)
+  File "/usr/lib64/python2.6/subprocess.py", line 1238, in _execute_child
+    raise child_exception
+
+OSError: [Errno 2] No such file or directory
 ```
 
 原因：ssh -p 22 root@localhost没有把JAVA_HOME环境变量带过来。
 
-解决办法：
+解决办法： 
 
 ```sql
-在/apache-storm-1.0.1/bin/storm脚本最上面增加java环境变量export JAVA_HOME=/opt/programs/jdk1.8.0_152export JRE_HOME=/opt/programs/jdk1.8.0_152/jreexport CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/libexport PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+1.在~/.bashrc文件配置 JAVA_HOME环境变量 
+2.在/apache-storm-1.0.1/bin/storm 脚本最上面增加java环境变量
+export JAVA_HOME=/opt/programs/jdk1.8.0_152
+export JRE_HOME=/opt/programs/jdk1.8.0_152/jre
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
+export PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
 ```
 ## Q9:关系型数据库，拉全量卡死，Topo重启
 
@@ -112,4 +131,192 @@ grant select on db1.table to dbus;
 
 具体配置步骤如下：
 
-![encode-project-user](img/manual/md5conf_1.png)![encode-project-user](img/manual/md5conf_2.png)
+![encode-project-user](img/manual/md5conf_1.png)
+
+
+
+## Q10:关于dbus的日志
+
+### 1、dbusweb日志：
+
+位于dbusweb部署根目录的logs目录下。
+
+```
+config.log         --本地配置中心日志，一般无需关心
+register.log       --本地注册中心日志，一般无需关心
+gateway.log        --本地网关日志，记录了全部来自页面的调用记录
+mgr.log            --控制台日志，记录了所有的dbus关键处理过程相关日志，关注度较高
+service.log        --数据库层面服务日志，记录了所有的dbus和数据库交互的相关日志,关注度较高
+```
+
+### 2、dbus流式数据处理相关日志
+
+#### 2.1、mysql
+
+**以数据线testdb为例:**
+
+canal部署在dbusn1的 /app/dbus/canal目录下，testdb.log就是canal的日志，或者进到canal-testdb/logs下查看
+
+![](img/faq/mysql-canal.png)
+
+mysql-exteractor抽取、dispatcher-appender增量、splitter-puller全量日志均在storm的worker日志目录下。
+
+
+
+以mysql-exteractor为例：先通过dbusweb找到worker所在的机器和日志位置，登录机器查看，dbusweb提供最后500行的预览
+
+![](img\faq\mysql-log-1.png)
+
+![mysql-log-2](img\faq\mysql-log-2.png)
+
+![mysql-log-3](img\faq\mysql-log-3.png)
+
+#### 2.2、oracle
+
+**以数据线orcl为例：**
+
+ogg的replicat状态查看：去你的ogg部署的根目录执行
+
+```
+[oracle@dbus-n2 golden]$ ./ggsci 
+Oracle GoldenGate for Big Data
+Version 12.3.1.1.1
+
+Oracle GoldenGate Command Interpreter
+Version 12.3.0.1.0 OGGCORE_OGGADP.12.3.0.1.0GA_PLATFORMS_170828.1608
+Linux, x64, 64bit (optimized), Generic on Aug 28 2017 17:13:45
+Operating system character set identified as UTF-8.
+
+Copyright (C) 1995, 2017, Oracle and/or its affiliates. All rights reserved.
+
+
+
+GGSCI (vdbus-11) 1> info orcl
+
+REPLICAT   ORCL      Last Started 2019-12-17 14:32   Status RUNNING
+Checkpoint Lag       00:00:00 (updated 03:18:19 ago)
+Log Read Checkpoint  File /u01/golden/dirdat/aa000000000
+                     2019-12-19 14:53:04.988283  RBA 20109
+
+```
+
+状态不是running请查看该目录下的ggserr.log查看错误信息
+
+dispatcher-appender增量、splitter-puller全量日志均在storm的worker日志目录下，同mysql相同方法查看。
+
+
+
+## Q11:mysql表无数据
+
+举例数据线testdb的schema1库的t1表
+
+**首先查看表的状态是否是running状态，非正常状态请先启动表。 表管理->目标表->操作->启动。**
+
+### 1、mysql数据流转图：
+
+```
+增量数据流转：
+canal  -> extractor -> 一级topic(数据线同名,例如:testdb) 
+-> dispatcher -> 二级topic(数据线.schema 例如:testdb.schema1)
+-> appender -> 三级topic(数据线.schema.result  例如:testdb.schema1.result)
+```
+
+### 2、快速定位错误：
+
+#### 2.1、表管理检查数据线：
+
+正常检查数据线结果
+![](img/faq/mysql-flow-line.png)
+
+1.插入心跳包失败： 检查主库数据库权限，或者查看service.log日志，查看错误原因。
+
+2.抽取进程失败：查看canal日志是否异常，canal无异常，查看mysql-exteractor日志获取具体异常信息。
+
+3.分发进程和增量进程失败：查看dispatcher-appender日志获取具体异常信息。
+
+#### 2.2、kafka小工具
+
+通过kafka小工具，查看第一级、第二级、第三级的offset有没有增长，没有增长说明有问题
+
+查看第一级topic  testdb，没有数据说明canal或者mysql-exteractor异常
+
+查看第二级topic  testdb.schema1和第三级topic testdb.schema1.result没有数据说明dispatcher-appender有问题，目前dispatcher appender是一个worker进程，一起部署的。
+
+## Q12：oracle表无数据
+
+举例数据线orcl的utest库的customer表
+
+**首先查看表的状态是否是running状态，非正常状态请先启动表。 表管理->目标表->操作->启动。**
+
+### 1、oracle数据流转图：
+
+```
+增量数据流转：
+源端ogg extractor进程发送数据到目标端ogg,在dirdata下生成指定前缀的日志文件,例如：aa000000000
+->目标端ogg replicat进程读取aa000000000日志文件 -> 一级topic(数据线同名,例如:testdb) 
+-> dispatcher -> 二级topic(数据线.schema 例如:testdb.schema1)
+-> appender -> 三级topic(数据线.schema.result  例如:testdb.schema1.result)
+```
+
+### 2、快速定位错误：
+
+#### 2.1、表管理检查数据线：
+
+正常检查数据线结果
+![](img/faq/mysql-flow-line.png)
+
+1.插入心跳包失败： 检查主库数据库权限，或者查看service.log日志，查看错误原因。
+
+2.抽取进程失败：查看源端或者目标端ogg日志获取具体异常信息。
+
+3.分发进程和增量进程失败：查看dispatcher-appender日志获取具体异常信息。
+
+#### 2.2、kafka小工具
+
+通过kafka小工具，查看第一级、第二级、第三级的offset有没有增长，没有增长说明有问题
+
+查看第一级topic  testdb，没有数据说明源端或者目标端ogg异常。
+
+查看第二级topic  testdb.schema1和第三级topic testdb.schema1.result没有数据说明dispatcher-appender有问题，目前dispatcher appender是一个worker进程，一起部署的。
+
+#### 2.3、均无异常
+
+查看源端ogg是否配置抽取该表
+
+```
+[oracle@vdbus-10 golden]$ ./ggsci 
+
+Oracle GoldenGate Command Interpreter for Oracle
+Version 12.2.0.1.1 OGGCORE_12.2.0.1.0_PLATFORMS_151211.1401_FBO
+Linux, x64, 64bit (optimized), Oracle 12c on Dec 12 2015 02:56:48
+Operating system character set identified as UTF-8.
+
+Copyright (C) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
+
+
+
+GGSCI (vdbus-10) 1> info all
+
+Program     Status      Group       Lag at Chkpt  Time Since Chkpt
+
+MANAGER     RUNNING                                           
+EXTRACT     RUNNING     ORCL        00:00:00      00:00:04    
+EXTRACT     RUNNING     ORCL19      00:00:00      00:00:08    
+
+
+GGSCI (vdbus-10) 2> view param orcl
+
+EXTRACT ORCL
+SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
+USERID ogg,PASSWORD ogg
+RMTHOST vdbus-11, MGRPORT 7809
+rmttrail /u01/golden/dirdat/aa
+DDL INCLUDE MAPPED
+TRANLOGOPTIONS DBLOGREADER
+
+TABLE UTEST.CUSTOMER;
+
+```
+
+查看目标端ogg是否配置抽取该表
+

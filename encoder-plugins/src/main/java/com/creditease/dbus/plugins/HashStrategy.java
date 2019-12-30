@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.plugins;
 
@@ -40,7 +41,7 @@ public abstract class HashStrategy extends DataTypeTemplate implements SaltProvi
 
     @Override
     public Object encodeLong(EncoderConf conf, Object value) {
-        return hash(value, conf).asLong() + "";
+        return hash(value, conf).asLong();
     }
 
     @Override

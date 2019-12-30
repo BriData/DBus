@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.event.impl;
-
-import java.util.Iterator;
-import java.util.Set;
-
-import org.apache.commons.lang.StringUtils;
 
 import com.creditease.dbus.heartbeat.container.EventContainer;
 import com.creditease.dbus.heartbeat.event.AbstractEvent;
 import com.creditease.dbus.heartbeat.type.DelayItem;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.Iterator;
+import java.util.Set;
 
 public class FullPullEndDelayEvent extends AbstractEvent {
 
@@ -55,7 +55,7 @@ public class FullPullEndDelayEvent extends AbstractEvent {
                         if (schemas != null) {
                             try {
                                 EventContainer.getInstances().fullPullerLock();
-                                for(String schema : schemas){
+                                for (String schema : schemas) {
                                     EventContainer.getInstances().removeSkipSchema(schema);
                                 }
                                 LOG.info("[fullPullEndDelay-event] 从全量拉取延时队列中删除schema:{}", item.getSchema());

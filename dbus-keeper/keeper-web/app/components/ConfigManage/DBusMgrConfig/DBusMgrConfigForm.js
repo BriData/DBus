@@ -103,14 +103,14 @@ export default class DBusMgrConfigForm extends Component {
                     />
                   </Button>
                 </Popconfirm>
-                <Popconfirm title={'检验整个表数据正确性,drop已经存在的表,并重新执行建表sql！确定重置吗？'} onConfirm={this.handleReset} okText="Yes" cancelText="No">
+               {/* <Popconfirm title={'检验整个表数据正确性,drop已经存在的表,并重新执行建表sql！确定重置吗？'} onConfirm={this.handleReset} okText="Yes" cancelText="No">
                   <Button style={{marginLeft: 5}} type="danger">
                     <FormattedMessage
                       id="app.components.configCenter.mgrConfig.reset"
                       defaultMessage="重置"
                     />
                   </Button>
-                </Popconfirm>
+                </Popconfirm>*/}
               </FormItem>
             </Form>) : ( <Form>
               <FormItem label={<FormattedMessage

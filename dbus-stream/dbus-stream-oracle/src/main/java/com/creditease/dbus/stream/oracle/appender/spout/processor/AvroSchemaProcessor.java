@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.oracle.appender.spout.processor;
 
 import com.creditease.dbus.commons.DBusConsumerRecord;
@@ -26,9 +27,6 @@ import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.spout.processor.AbstractProcessor;
 import com.creditease.dbus.stream.common.appender.spout.processor.ConsumerListener;
 import com.creditease.dbus.stream.common.appender.spout.processor.RecordProcessListener;
-import org.apache.storm.tuple.Values;
-
-import java.util.List;
 
 /**
  * 处理接收到的Avro Schema

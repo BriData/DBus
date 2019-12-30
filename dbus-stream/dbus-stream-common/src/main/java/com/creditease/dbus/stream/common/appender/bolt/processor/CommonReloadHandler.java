@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
 import com.creditease.dbus.stream.common.appender.enums.Command;
-import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import org.apache.storm.tuple.Tuple;
 
 /**
@@ -32,13 +33,15 @@ import org.apache.storm.tuple.Tuple;
  */
 public class CommonReloadHandler implements BoltCommandHandler {
     private CommandHandlerListener listener;
+
     public CommonReloadHandler(CommandHandlerListener listener) {
         this.listener = listener;
     }
+
     @Override
     public void handle(Tuple tuple) {
         EmitData emitData = (EmitData) tuple.getValueByField(Constants.EmitFields.DATA);
-        Command cmd = (Command)tuple.getValueByField(Constants.EmitFields.COMMAND);
+        Command cmd = (Command) tuple.getValueByField(Constants.EmitFields.COMMAND);
 
         listener.reloadBolt(tuple);
         this.emitToAll(listener.getOutputCollector(), tuple, emitData, cmd);

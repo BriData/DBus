@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@
  * >>
  */
 
-package com.creditease.dbus.controller;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.ProjectEncodeHint;
 import com.creditease.dbus.service.ProjectEncodeHintService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/3/21.
@@ -72,12 +72,12 @@ public class ProjectEncodeHintController extends BaseController {
 
     @GetMapping("/select-by-pid-tid")
     public ResultEntity selectByPidAndTid(@RequestParam Integer projectId,
-                                          @RequestParam Integer tableId){
-        if(projectId == null || tableId==null){
+                                          @RequestParam Integer tableId) {
+        if (projectId == null || tableId == null) {
             return resultEntityBuilder().status(MessageCode.TABLE_ID_EMPTY_OR_PROJECT_ID_EMPTY)
                     .build();
         }
-        List<Map<String, Object>> encodeHints = service.selectByPidAndTid(projectId,tableId);
+        List<Map<String, Object>> encodeHints = service.selectByPidAndTid(projectId, tableId);
         return resultEntityBuilder().payload(encodeHints).build();
     }
 

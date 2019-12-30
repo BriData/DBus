@@ -136,18 +136,6 @@ export default class ProjectResourceGrid extends Component {
       },
       {
         title: (
-          <FormattedMessage
-            id="app.components.projectManage.projectResource.table.encodeNeed"
-            defaultMessage="是否脱敏"
-          />
-        ),
-        width: tableWidth[11],
-        dataIndex: 'mask',
-        key: 'mask',
-        render: this.renderComponent(this.renderMask)
-      },
-      {
-        title: (
           <FormattedMessage id="app.common.operate" defaultMessage="操作" />
         ),
         width: tableWidth[12],
@@ -236,18 +224,6 @@ export default class ProjectResourceGrid extends Component {
         dataIndex: 'ifFullpull',
         key: 'ifFullpull',
         render: this.renderComponent(this.renderIfFullpull)
-      },
-      {
-        title: (
-          <FormattedMessage
-            id="app.components.projectManage.projectResource.table.encodeNeed"
-            defaultMessage="脱敏要求"
-          />
-        ),
-        width: tableWidth[11],
-        dataIndex: 'mask',
-        key: 'mask',
-        render: this.renderComponent(this.renderUserEncodeOperating)
       }
     ]
   }

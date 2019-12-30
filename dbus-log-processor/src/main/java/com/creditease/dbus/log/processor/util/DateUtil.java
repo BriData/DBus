@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.log.processor.util;
 
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ import java.util.Date;
 
 public class DateUtil {
     private static Logger logger = LoggerFactory.getLogger(DateUtil.class);
+
     private DateUtil() {
     }
 

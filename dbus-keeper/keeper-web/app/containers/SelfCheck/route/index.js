@@ -6,8 +6,8 @@
 // 导入自定义组件
 import App from '@/app/containers/App'
 import ClusterCheckWrapper from '@/app/containers/SelfCheck/ClusterCheckWrapper'
-import TopoCheckWrapper from '@/app/containers/SelfCheck/TopoCheckWrapper'
-// HOCFactory({'siderHidden': true})(App)
+import CanalCheckWrapper from "@/app/containers/SelfCheck/CanalCheckWrapper";
+import OggCheckWrapper from "@/app/containers/SelfCheck/OggCheckWrapper";
 // 导出路由
 export default (store) => [
   {
@@ -28,8 +28,12 @@ export default (store) => [
         component: ClusterCheckWrapper
       },
       {
-        path: '/self-check/topo-check',
-        component: TopoCheckWrapper
+        path: '/self-check/canal-status',
+        component: CanalCheckWrapper
+      },
+      {
+        path: '/self-check/ogg-status',
+        component: OggCheckWrapper
       }
     ]
   }

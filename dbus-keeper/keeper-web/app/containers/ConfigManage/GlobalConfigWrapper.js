@@ -1,20 +1,11 @@
-import React, {PropTypes, Component} from 'react'
+import React, {Component, PropTypes} from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
-import {Row, Col,message} from 'antd'
-import {
-  Bread,
-  GlobalConfigForm
-} from '@/app/components'
-import Request from "@/app/utils/request";
-import {ZKManageModel, GlobalConfigModel} from './selectors'
-import {
-  readZkProperties,
-  updateGlobalConf,
-  initGlobalConf
-} from "./redux";
+import {Bread, GlobalConfigForm} from '@/app/components'
+import {GlobalConfigModel, ZKManageModel} from './selectors'
+import {initGlobalConf, readZkProperties, updateGlobalConf} from "./redux";
 
 const ZK_PATH = '/DBus/Commons/global.properties'
 
@@ -34,8 +25,7 @@ const ZK_PATH = '/DBus/Commons/global.properties'
 export default class GlobalConfigWrapper extends Component {
   constructor(props) {
     super(props)
-    this.state = {
-    }
+    this.state = {}
   }
 
   componentWillMount() {
@@ -71,7 +61,6 @@ export default class GlobalConfigWrapper extends Component {
         name: '全局配置'
       }
     ]
-    console.info(this.props)
     const config = this.props.ZKManageData.zkProperties.result.payload
     return (
       <div>

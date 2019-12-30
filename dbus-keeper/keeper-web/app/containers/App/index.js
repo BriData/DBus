@@ -59,7 +59,7 @@ export class App extends Component {
     if (rotype === 'admin') {
       this.leftMenu = require('@/app/assets/json/leftMenu/admin.json')
       this.handleGetMenus('top', 'admin', () => {
-        const { router } = this.props
+        const {router} = this.props
         const pathName = router.routes[1].path.substr(1)
         this.handleGetMenus('left', pathName)
       })

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,42 +18,51 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.vo;
 
 public class OutputTopicVo {
-	private String dsName;
-	private String dsType;
-	private String topic;
-	private String controlTopic;
+    private String dsName;
+    private String dsType;
+    private String topic;
+    private String controlTopic;
 
-	public String getDsName() {
-		return dsName;
-	}
-	public void setDsName(String dsName) {
-		this.dsName = dsName;
-	}
-	public String getDsType() {
-		return dsType;
-	}
-	public void setDsType(String dsType) {
-		this.dsType = dsType;
-	}
-	public String getTopic() {
-		return topic;
-	}
-	public void setTopic(String topic) {
-		this.topic = topic;
-	}
-	public String getControlTopic() {
-		return controlTopic;
-	}
-	public void setControlTopic(String controlTopic) {
-		this.controlTopic = controlTopic;
-	}
-	@Override
-	public String toString() {
-		return "OutputTopicVo [dsName=" + dsName + ", dsType=" + dsType + ", topic=" + topic + ", ctrl_topic=" + controlTopic +"]";
-	}
-	
-	
+    public String getDsName() {
+        return dsName;
+    }
+
+    public void setDsName(String dsName) {
+        this.dsName = dsName;
+    }
+
+    public String getDsType() {
+        return dsType;
+    }
+
+    public void setDsType(String dsType) {
+        this.dsType = dsType;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+    public String getControlTopic() {
+        return controlTopic;
+    }
+
+    public void setControlTopic(String controlTopic) {
+        this.controlTopic = controlTopic;
+    }
+
+    @Override
+    public String toString() {
+        return "OutputTopicVo [dsName=" + dsName + ", dsType=" + dsType + ", topic=" + topic + ", ctrl_topic=" + controlTopic + "]";
+    }
+
+
 }

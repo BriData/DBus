@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.dispatcher;
 
@@ -64,9 +65,9 @@ public class OracleGenericSchemaDecoder {
 
     private void initDecoder() {
         try {
-            genericSchema =   OracleGenericSchemaProvider.getInstance().getSchema("generic_wrapper.avsc");
+            genericSchema = OracleGenericSchemaProvider.getInstance().getSchema("generic_wrapper.avsc");
 
-            fullPullSchema =  OracleGenericSchemaProvider.getInstance().getSchema("DBUS.DB_FULL_PULL_REQUESTS.avsc");
+            fullPullSchema = OracleGenericSchemaProvider.getInstance().getSchema("DBUS.DB_FULL_PULL_REQUESTS.avsc");
             fullPullHash = OracleGenericSchemaProvider.getInstance().getSchemaHash("DBUS.DB_FULL_PULL_REQUESTS.avsc");
 
             syncEventSchema = OracleGenericSchemaProvider.getInstance().getSchema("DBUS.META_SYNC_EVENT.avsc");
@@ -129,7 +130,7 @@ public class OracleGenericSchemaDecoder {
         BinaryEncoder encoder = EncoderFactory.get().blockingBinaryEncoder(outputStream, null);
 
         for (IGenericMessage obj : list) {
-            OracleGenericMessage msg = (OracleGenericMessage)obj;
+            OracleGenericMessage msg = (OracleGenericMessage) obj;
             GenericRecord record = msg.generateRecord(genericSchema);
             datumWriter.write(record, encoder);
         }
@@ -142,7 +143,7 @@ public class OracleGenericSchemaDecoder {
         List<IGenericMessage> list = new LinkedList<>();
 
         BinaryDecoder decoder = getBinaryDecoder(input);
-        while(!decoder.isEnd()) {
+        while (!decoder.isEnd()) {
             GenericRecord record = datumReader.read(null, decoder);
 
             OracleGenericMessage msg = new OracleGenericMessage();
@@ -155,7 +156,7 @@ public class OracleGenericSchemaDecoder {
 
             logger.debug(String.format("TAble: %s, HASH: %d\n", msg.getNameSpace(), msg.getSchemaHash()));
 
-            list.add((IGenericMessage)msg);
+            list.add((IGenericMessage) msg);
         }
 
         return list;

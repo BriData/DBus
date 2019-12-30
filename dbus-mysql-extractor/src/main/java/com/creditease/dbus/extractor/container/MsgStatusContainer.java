@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.container;
+
+import com.creditease.dbus.extractor.common.utils.Constants;
+import com.creditease.dbus.extractor.vo.SendStatusVo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,16 +32,12 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.creditease.dbus.extractor.common.utils.Constants;
-import com.creditease.dbus.extractor.vo.SendStatusVo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class MsgStatusContainer {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     private static MsgStatusContainer msgStatusContainer;
 
+    // 10 mins
     private static final long timeout = 10 * 60 * 1000;
 
     //key是batchId
@@ -76,6 +78,7 @@ public class MsgStatusContainer {
         }
     }
 
+    // 设置完成数据，不会添加新map项
     public void setCompleted(long batchId, int completed) {
         SendStatusVo vo = null;
         synchronized (this) {
@@ -86,6 +89,7 @@ public class MsgStatusContainer {
         }
     }
 
+    // 设置失败情况，不会添加新map项
     public void setError(long batchId, boolean isErr) {
         SendStatusVo vo = null;
         synchronized (this) {
@@ -121,6 +125,12 @@ public class MsgStatusContainer {
             vo = entry.getValue();
             SendStatusVo voRet = new SendStatusVo();
             voRet.setBatchId(entry.getKey());
+
+            //大于1分钟就打印节点状态, 用于调试状态
+            //if (System.currentTimeMillis() - vo.getCreateTime() > 60 * 1000) {
+            //    logger.info(vo.toString());
+            //}
+
             if (vo.getTotal() != 0 && vo.getCompleted() != 0 && !vo.isError()
                     && vo.isStatus() && (vo.getTotal() <= vo.getCompleted())) {
                 voRet.setResult(Constants.NEED_ACK_CANAL);

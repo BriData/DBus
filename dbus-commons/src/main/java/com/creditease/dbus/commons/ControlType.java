@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons;
 
@@ -50,6 +51,9 @@ public enum ControlType {
     ROUTER_TOPOLOGY_TABLE_START,       // router 拓扑表启动
     ROUTER_TOPOLOGY_TABLE_STOP,        // router 拓扑表停止
 
+    SINKER_RELOAD_CONFIG,  //sinker重新加载
+    SINKER_DRAG_BACK_RUN_AGAIN,  //sinker拖回重跑
+
     UNKNOWN;
 
     private static Map<String, ControlType> commands = new HashMap<>();
@@ -60,7 +64,7 @@ public enum ControlType {
         }
     }
 
-    public static ControlType getCommand (String key) {
+    public static ControlType getCommand(String key) {
         if (key == null) {
             return UNKNOWN;
         }

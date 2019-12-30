@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.router;
 
-import java.util.Properties;
+package com.creditease.dbus.router;
 
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.router.bolt.DBusRouterEncodeBolt;
@@ -30,12 +29,7 @@ import com.creditease.dbus.router.facade.ZKFacade;
 import com.creditease.dbus.router.spout.DBusRouterKafkaReadSpout;
 import com.creditease.dbus.router.spout.DBusRouterMonitorSpout;
 import com.creditease.dbus.router.util.DBusRouterConstants;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
@@ -43,13 +37,17 @@ import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 
+import java.util.Properties;
+
 /**
  * Created by mal on 2018/5/17.
  */
 public class DBusRouterTopology {
 
+    private static String CURRENT_JAR_INFO = "dbus-router-" + Constants.RELEASE_VERSION + ".jar";
     private static String zkConnect;
     private static String topologyId;
+    private static String alias;
     private static String projectName;
     private static String topologyName;
     private static boolean runAsLocal;
@@ -116,7 +114,11 @@ public class DBusRouterTopology {
         Config conf = new Config();
         conf.put(com.creditease.dbus.commons.Constants.ZOOKEEPER_SERVERS, zkConnect);
         conf.put(Constants.TOPOLOGY_ID, topologyId);
+        conf.put(Constants.TOPOLOGY_ALIAS, alias);
         conf.put(Constants.ROUTER_PROJECT_NAME, projectName);
+
+        String workerChildOpts = routerConf.getProperty(DBusRouterConstants.STORM_TOPOLOGY_WORKER_CHILDOPTS, "-Xmx2g");
+        conf.put(Config.TOPOLOGY_WORKER_CHILDOPTS, workerChildOpts);
 
         int msgTimeout = Integer.valueOf(routerConf.getProperty(DBusRouterConstants.STORM_MESSAGE_TIMEOUT, "10"));
         conf.setMessageTimeoutSecs(msgTimeout);
@@ -141,6 +143,7 @@ public class DBusRouterTopology {
         Options options = new Options();
         options.addOption("zk", "zookeeper", true, "the zookeeper address for properties files.");
         options.addOption("tid", "topology_id", true, "the unique id as topology name and as part of the configuration path in zookeeper.");
+        options.addOption("alias", "alias", true, "the unique id as topology alias and as part of ums namespace.");
         options.addOption("pn", "project_name", true, "as part of the configuration path in zookeeper.");
         options.addOption("l", "local", false, "run as local topology.");
         options.addOption("h", "help", false, "print usage().");
@@ -148,11 +151,23 @@ public class DBusRouterTopology {
         int ret = 0;
         try {
             CommandLine line = parser.parse(options, args);
-            runAsLocal = line.hasOption("local");
-            zkConnect = line.getOptionValue("zookeeper");
-            topologyId = line.getOptionValue("topology_id");
-            projectName = line.getOptionValue("project_name");
-            topologyName = topologyId + "-" + Constants.ROUTER;
+            if (line.hasOption("help")) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp(CURRENT_JAR_INFO, options);
+                return -1;
+            } else {
+                runAsLocal = line.hasOption("local");
+                zkConnect = line.getOptionValue("zookeeper");
+                topologyId = line.getOptionValue("topology_id");
+                alias = line.getOptionValue("alias");
+                projectName = line.getOptionValue("project_name");
+                topologyName = topologyId + "-" + Constants.ROUTER;
+                if (zkConnect == null || topologyId == null || alias == null | projectName == null) {
+                    HelpFormatter formatter = new HelpFormatter();
+                    formatter.printHelp(CURRENT_JAR_INFO, options);
+                    return -1;
+                }
+            }
         } catch (ParseException exp) {
             System.err.println("Parsing failed. Reason: " + exp.getMessage());
             ret = -1;

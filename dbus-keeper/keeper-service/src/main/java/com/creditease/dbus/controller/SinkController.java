@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
@@ -25,15 +26,18 @@ import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.base.ResultEntityBuilder;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.Sink;
+import com.creditease.dbus.domain.model.SinkerTopology;
+import com.creditease.dbus.domain.model.SinkerTopologySchema;
 import com.creditease.dbus.service.SinkService;
 import com.creditease.dbus.utils.DBusUtils;
 import com.github.pagehelper.PageInfo;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by mal on 2018/3/23.
@@ -45,7 +49,7 @@ public class SinkController extends BaseController {
     @Autowired
     private SinkService service;
 
-    @PostMapping(path = "create", consumes = "application/json")
+    @PostMapping(path = "/create", consumes = "application/json")
     public ResultEntity createSink(@RequestBody Sink sink) {
         ResultEntityBuilder reb = resultEntityBuilder();
         if (StringUtils.isBlank(sink.getSinkName())) {
@@ -76,7 +80,7 @@ public class SinkController extends BaseController {
         return reb.payload(sink).build();
     }
 
-    @PostMapping(path = "update", consumes = "application/json")
+    @PostMapping(path = "/update", consumes = "application/json")
     public ResultEntity update(@RequestBody Sink sink) {
         ResultEntityBuilder reb = resultEntityBuilder();
         Sink s = service.getSink(sink.getSinkName(), sink.getId());
@@ -96,7 +100,7 @@ public class SinkController extends BaseController {
         return reb.build();
     }
 
-    @GetMapping("delete/{id}")
+    @GetMapping("/delete/{id}")
     public ResultEntity delete(@PathVariable Integer id) {
         ResultEntityBuilder reb = resultEntityBuilder();
         //该sink是否还有项目Topology在使用
@@ -123,21 +127,104 @@ public class SinkController extends BaseController {
 
     @GetMapping("/search-by-user-project")
     public ResultEntity search(Integer pageNum, Integer pageSize, Integer userId, Integer projectId) {
-        PageInfo<Sink> page = service.search( pageNum, pageSize, userId, projectId);
+        PageInfo<Sink> page = service.search(pageNum, pageSize, userId, projectId);
         return resultEntityBuilder().payload(page).build();
     }
 
-    @GetMapping("get-sink-by-id/{id}")
+    @GetMapping("/get-sink-by-id/{id}")
     public ResultEntity getSinkByID(@PathVariable Integer id) {
         Sink sink = service.getSinkById(id);
         ResultEntityBuilder reb = resultEntityBuilder();
         return reb.payload(sink).build();
     }
 
-    @PostMapping(path = "exampleSink", consumes = "application/json")
+    @PostMapping(path = "/exampleSink", consumes = "application/json")
     public ResultEntity exampleSink(@RequestBody Sink sink) {
         service.exampleSink(sink);
         return resultEntityBuilder().build();
     }
 
+    /**
+     * sinker
+     */
+    @GetMapping("/searchSinkerTopology")
+    public ResultEntity searchSinkerTopology(int pageNum, int pageSize, String sinkerName, String sortby, String order) {
+        sortby = DBusUtils.underscoresNaming(sortby);
+        if (!StringUtils.isBlank(order)) {
+            if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
+                logger.warn("ignored invalid sort parameter[order]:{}", order);
+                order = null;
+            }
+        }
+        PageInfo<SinkerTopology> page = service.searchSinkerTopology(pageNum, pageSize, sinkerName, sortby, order);
+        return resultEntityBuilder().payload(page).build();
+    }
+
+    @PostMapping(path = "/createSinkerTopology")
+    public ResultEntity createSinkerTopology(@RequestBody SinkerTopology sinkerTopology) {
+        try {
+            SinkerTopology topology = service.searchBySinkerName(sinkerTopology.getSinkerName());
+            if (topology != null) {
+                return new ResultEntity(MessageCode.EXCEPTION, "sinker名称已存在");
+            }
+            service.createSinkerTopology(sinkerTopology);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while create sinker topology", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping(path = "/updateSinkerTopology")
+    public ResultEntity updateSinkerTopology(@RequestBody SinkerTopology sinkerTopology) {
+        try {
+            service.updateSinkerTopology(sinkerTopology);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while update sinker topology", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping(path = "/deleteSinkerTopology/{id}")
+    public ResultEntity deleteSinkerTopology(@PathVariable Integer id) {
+        try {
+            service.deleteSinkerTopology(id);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while delete sinker topology", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping(path = "/searchSinkerTopologyById/{id}")
+    public ResultEntity searchSinkerTopologyById(@PathVariable Integer id) {
+        try {
+            return resultEntityBuilder().payload(service.searchSinkerTopologyById(id)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while get sinker topology", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping(path = "/searchSinkerTopologySchema")
+    public ResultEntity searchSinkerTopologySchema(String dsName, String schemaName, Integer sinkerTopoId) {
+        try {
+            return resultEntityBuilder().payload(service.searchSinkerTopologySchema(dsName, schemaName, sinkerTopoId)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while get sinker topology schema", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping(path = "/updateSinkerTopologySchema")
+    public ResultEntity updateSinkerTopologySchema(@RequestBody List<SinkerTopologySchema> sinkerSchemaList) {
+        try {
+            service.updateSinkerTopologySchema(sinkerSchemaList);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while update sinker topology schema", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
 }

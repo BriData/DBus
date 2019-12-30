@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.appender.spout.processor;
 
@@ -54,10 +55,10 @@ public class OracleMessageHandler extends AbstractMessageHandler {
         if (recordKey != null && recordKey.startsWith(initialLoadTableNs)) {
             return initialLoadProcessor;
         }
-        if(controlTopics.contains(topic)) {
+        if (controlTopics.contains(topic)) {
             return controlProcessor;
         }
-        if(schemaTopics.contains(topic)) {
+        if (schemaTopics.contains(topic)) {
             return avroSchemaProcessor;
         }
         return defaultProcessor;

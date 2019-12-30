@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "generic_wrapper",
+  "namespace": "db2.cdc",
+  "fields": [
+    {
+      "name": "table_name",
+      "type": "string"
+    },
+    {
+      "name": "schema_id",
+      "type": "int"
+    },
+    {
+      "name": "offset",
+      "type": "string"
+    },
+    {
+      "name": "payload",
+      "type": "bytes"
+    }
+  ]
+}

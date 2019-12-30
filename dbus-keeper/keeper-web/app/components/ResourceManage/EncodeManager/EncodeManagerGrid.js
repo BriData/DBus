@@ -63,7 +63,7 @@ export default class EncodeManagerGrid extends Component {
     let title
     switch (text) {
       case 0:
-        title = 'DBA脱敏'
+        title = '源端脱敏'
         break
       case 1:
         title = '项目级脱敏'
@@ -103,12 +103,12 @@ export default class EncodeManagerGrid extends Component {
       {
         title: (
           <FormattedMessage
-            id="app.components.projectManage.encodeManager.project_topo_table_id"
-            defaultMessage="项目拓扑表ID"
+            id="app.components.projectManage.encodeManager.projectTableId"
+            defaultMessage="项目表ID"
           />
         ),
-        dataIndex: 'tpttId',
-        key: 'tpttId',
+        dataIndex: 'ptId',
+        key: 'ptId',
         render: this.renderComponent(this.renderNomal)
       },
       {

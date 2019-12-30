@@ -50,6 +50,7 @@ export default class ProjectTableSearch extends Component {
       onBatchStop,
       onBatchStart,
       onBatchFullPull,
+      onBatchMoveTopoTables,
       isCreate
     } = this.props
     const project = [
@@ -68,7 +69,10 @@ export default class ProjectTableSearch extends Component {
       <div className="form-search">
         <Form autoComplete="off" layout="inline" className={styles.searchForm} onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
-            <Col span={isCreate ? 2 : 10} className={styles.formLeft}>
+            {/*<Col span={isCreate ? 2 : 10} className={styles.formLeft}>*/}
+
+            {/*</Col>*/}
+            <Col span={isCreate ? 22 : 14} className={styles.formRight}>
               {(
                 <Button
                   size="large"
@@ -110,7 +114,7 @@ export default class ProjectTableSearch extends Component {
                           value={item.projectId ? `${item.projectId}` : null}
                           key={`${
                             item.projectId ? item.projectId : 'projectId'
-                          }`}
+                            }`}
                         >
                           {item.projectDisplayName}
                         </Option>
@@ -135,6 +139,7 @@ export default class ProjectTableSearch extends Component {
                       optionFilterProp='children'
                       className={styles.select}
                       placeholder="Select Topology"
+                      style={{ width: 200 }}
                     >
                       {topology.map(item => (
                         <Option
@@ -148,8 +153,6 @@ export default class ProjectTableSearch extends Component {
                   )}
                 </FormItem>
               )}
-            </Col>
-            <Col span={isCreate ? 22 : 14} className={styles.formRight}>
               {!!isCreate && (
               <FormItem label="Topology">
                 {getFieldDecorator('topoId', {
@@ -225,6 +228,19 @@ export default class ProjectTableSearch extends Component {
                     defaultMessage="查询"
                   />
                 </Button>
+              </FormItem>
+              <FormItem>
+                  <Button
+                    type="primary"
+                    icon="export"
+                    size="large"
+                    onClick={onBatchMoveTopoTables}
+                  >
+                    <FormattedMessage
+                      id="app.components.resourceManage.dataTable.batchMoveTopoTables"
+                      defaultMessage="批量迁移"
+                    />
+                  </Button>
               </FormItem>
               <FormItem>
                 <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.extractor.vo;
 
@@ -139,11 +140,11 @@ public class JdbcVo implements Serializable {
         this.ctrlTopic = ctrlTopic;
     }
 
-	@Override
-	public String toString() {
-		return "JdbcVo [type=" + type + ", key=" + key + ", driverClass=" + driverClass + ", url=" + url + ", userName="
-				+ userName + ", password=" + password + ", ctrlTopic=" + ctrlTopic + ", initialSize=" + initialSize
-				+ ", maxActive=" + maxActive + ", maxIdle=" + maxIdle + ", minIdle=" + minIdle + "]";
-	}
+    @Override
+    public String toString() {
+        return "JdbcVo [type=" + type + ", key=" + key + ", driverClass=" + driverClass + ", url=" + url + ", userName="
+                + userName + ", password=" + password + ", ctrlTopic=" + ctrlTopic + ", initialSize=" + initialSize
+                + ", maxActive=" + maxActive + ", maxIdle=" + maxIdle + ", minIdle=" + minIdle + "]";
+    }
 
 }

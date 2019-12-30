@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.service.ToolSetService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,6 +72,17 @@ public class ToolSetController extends BaseController {
             return resultEntityBuilder().build();
         } catch (Exception e) {
             logger.error("Exception encountered while initMgrSql", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping("/getAllUniqueColumn")
+    public ResultEntity getAllUniqueColumn() {
+        try {
+            HashMap<String, String> list = toolSetService.getAllUniqueColumn();
+            return resultEntityBuilder().payload(list).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while getAllUniqueColumn", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

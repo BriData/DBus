@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.mysql.appender.spout.processor;
 
@@ -41,7 +42,6 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,69 +50,69 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MysqlInitialLoadProcessor extends AbstractProcessor {
-	private Logger logger = LoggerFactory.getLogger(getClass());
-	
-	private final BinlogProtobufParser parser;
+    private Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final BinlogProtobufParser parser;
     private List<String> controlTopics;
     private Cache<String, Object> cache;
-    
-    public MysqlInitialLoadProcessor(List<String> ctrlTopics, RecordProcessListener listener, ConsumerListener consumerListener){
-    	 super(listener, consumerListener);
-         this.controlTopics = ctrlTopics;
-         cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
-         parser = BinlogProtobufParser.getInstance();
+
+    public MysqlInitialLoadProcessor(List<String> ctrlTopics, RecordProcessListener listener, ConsumerListener consumerListener) {
+        super(listener, consumerListener);
+        this.controlTopics = ctrlTopics;
+        cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
+        parser = BinlogProtobufParser.getInstance();
     }
-    
+
     /**
      * 处理mysql 拉全量请求
      */
     @Override
-    public void process(final DBusConsumerRecord<String, byte[]> consumerRecord, Object... args){
-    	try{
-	    	List<MessageEntry> msgEntryLst = parser.getEntry(consumerRecord.value());
-	    	if(msgEntryLst.isEmpty())
-	    		return ; 
-	    	EntryHeader entryHeader = msgEntryLst.get(0).getEntryHeader();
-	    	EventType operType = entryHeader.getOperType();
-	    	
-	    	//TODO 暂时放弃拉全量表的update/delete等消息
-	        if (operType!=EventType.INSERT) {
-	            listener.reduceFlowSize(consumerRecord.serializedValueSize());
-	            consumerListener.syncOffset(consumerRecord);
-	            return;
-	        }
-	        
-	     // 判断是否处理过该消息
-	        String msgPos = entryHeader.getPos();
-	        Object processed = cache.getIfPresent(msgPos);
-	        if (processed != null) {
-	            logger.info("Data have bean processed, the data position is [{}]", msgPos);
-	            listener.reduceFlowSize(consumerRecord.serializedValueSize());
-	            consumerListener.syncOffset(consumerRecord);
-	            return;
-	        }
-	        
-	        logger.info("Received FULL DATA PULL REQUEST message");
-	        ControlMessage message = Convertor.mysqlFullPullMessage(msgEntryLst.get(0), listener.getListenerId(), consumerRecord);
-	        String schemaName = getStringValue("SCHEMA_NAME", message);
-	        String tableName = getStringValue("TABLE_NAME", message);
-	        DataTable table = ThreadLocalCache.get(Constants.CacheNames.DATA_TABLES, Utils.buildDataTableCacheKey(schemaName, tableName));
-	        if (table == null) {
-	            logger.warn("Table {}.{} is not supported,please configure it in dbus database.", schemaName, tableName);
-	            return;
-	        }
-	        
-	        for (String controlTopic : controlTopics) {
-	            String json = message.toJSONString();
-	            ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>(controlTopic, message.getType(), json.getBytes());
-	
-	            Future<RecordMetadata> future = listener.sendRecord(producerRecord);
-	            future.get();
-	
-	            logger.info("write initial load request message to kafka: {}", json);
-	        }
-	        
-	     // 暂停接收 topic 的数据
+    public void process(final DBusConsumerRecord<String, byte[]> consumerRecord, Object... args) {
+        try {
+            List<MessageEntry> msgEntryLst = parser.getEntry(consumerRecord.value());
+            if (msgEntryLst.isEmpty())
+                return;
+            EntryHeader entryHeader = msgEntryLst.get(0).getEntryHeader();
+            EventType operType = entryHeader.getOperType();
+
+            //TODO 暂时放弃拉全量表的update/delete等消息
+            if (operType != EventType.INSERT) {
+                listener.reduceFlowSize(consumerRecord.serializedValueSize());
+                consumerListener.syncOffset(consumerRecord);
+                return;
+            }
+
+            // 判断是否处理过该消息
+            String msgPos = entryHeader.getPos();
+            Object processed = cache.getIfPresent(msgPos);
+            if (processed != null) {
+                logger.info("Data have bean processed, the data position is [{}]", msgPos);
+                listener.reduceFlowSize(consumerRecord.serializedValueSize());
+                consumerListener.syncOffset(consumerRecord);
+                return;
+            }
+
+            logger.info("Received FULL DATA PULL REQUEST message");
+            ControlMessage message = Convertor.mysqlFullPullMessage(msgEntryLst.get(0), listener.getListenerId(), consumerRecord);
+            String schemaName = getStringValue("SCHEMA_NAME", message);
+            String tableName = getStringValue("TABLE_NAME", message);
+            DataTable table = ThreadLocalCache.get(Constants.CacheNames.DATA_TABLES, Utils.buildDataTableCacheKey(schemaName, tableName));
+            if (table == null) {
+                logger.warn("Table {}.{} is not supported,please configure it in dbus database.", schemaName, tableName);
+                return;
+            }
+
+            for (String controlTopic : controlTopics) {
+                String json = message.toJSONString();
+                ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>(controlTopic, message.getType(), json.getBytes());
+
+                Future<RecordMetadata> future = listener.sendRecord(producerRecord);
+                future.get();
+
+                logger.info("write initial load request message to kafka: {}", json);
+            }
+
+            // 暂停接收 topic 的数据
             TopicPartition tp = new TopicPartition(consumerRecord.topic(), consumerRecord.partition());
             consumerListener.pauseTopic(tp, consumerRecord.offset(), message);
 
@@ -124,12 +124,12 @@ public class MysqlInitialLoadProcessor extends AbstractProcessor {
 
             consumerListener.syncOffset(consumerRecord);
             cache.put(msgPos, msgEntryLst.get(0).toString());
-    	}catch(Exception e){
-    		throw new RuntimeException(e);
-    	}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-	private String getStringValue(String key, ControlMessage message) {
-		return message.payloadValue(key, Object.class).toString();
-	}
+    private String getStringValue(String key, ControlMessage message) {
+        return message.payloadValue(key, Object.class).toString();
+    }
 }

@@ -134,6 +134,12 @@ RuleTypeTips.jsonPath = (
   </div>
 );
 
+RuleTypeTips.flattenJsonArray = (
+  <div>
+    <p>提取指定路径下的JSON数组</p>
+  </div>
+);
+
 export default class RuleEditorGrid extends Component {
   constructor(props) {
     super(props)
@@ -294,6 +300,7 @@ export default class RuleEditorGrid extends Component {
             <Option value={'prefixOrAppend'}>{'prefixOrAppend'}</Option>
             <Option value={'regexExtract'}>{'regexExtract'}</Option>
             <Option value={'jsonPath'}>{'jsonPath'}</Option>
+            <Option value={'flattenJsonArray'}>{'flattenJsonArray'}</Option>
             </Select>
             <Popover content={RuleTypeTips[text.ruleTypeName]}
                      title={text.ruleTypeName}>

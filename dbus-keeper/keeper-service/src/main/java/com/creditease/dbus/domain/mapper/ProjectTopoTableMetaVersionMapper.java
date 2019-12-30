@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.domain.model.ProjectTopoTableMetaVersion;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface ProjectTopoTableMetaVersionMapper {
@@ -37,14 +39,17 @@ public interface ProjectTopoTableMetaVersionMapper {
     int updateByPrimaryKey(ProjectTopoTableMetaVersion record);
 
     List<ProjectTopoTableMetaVersion> selectByNonPrimaryKey(@Param("projectId") int projectId,
-                                                               @Param("topoId") int topoId,
-                                                               @Param("tableId") int tableId,
+                                                            @Param("topoId") int topoId,
+                                                            @Param("tableId") int tableId,
                                                             @Param("version") int version);
+
     //如果columnName是null,则删除某个projectTopoTable下所有的meta_version
     int deleteByNonPrimaryKey(@Param("projectId") int projectId,
                               @Param("topoId") int topoId,
                               @Param("tableId") int tableId,
                               @Param("columnName") String columnName);
 
-	int deleteByProjectId(int projectId);
+    int deleteByProjectId(int projectId);
+
+    void updateTopoIdByTopoTableIds(@Param("topoId") Integer topoId, @Param("list") ArrayList<Integer> topoTableIds);
 }

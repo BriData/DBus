@@ -1,10 +1,25 @@
-package com.creditease.dbus.heartbeat.mongo;
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+package com.creditease.dbus.heartbeat.mongo;
 
 import com.creditease.dbus.heartbeat.container.MongoClientContainer;
 import com.creditease.dbus.heartbeat.dao.IHeartBeatDao;
@@ -21,11 +36,16 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
-
 import org.apache.commons.lang.StringUtils;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2018/11/8.
@@ -78,7 +98,7 @@ public class DBusMongoClient {
             MongoCollection mongoCollection = mdb.getCollection("shards");
             FindIterable<Document> it = mongoCollection.find();
             for (Document doc : it) {
-                // eg. { "_id" : "shard1", "host" : "shard1/192.168.0.1:27001,192.168.0.2:27001", "state" : 1 }
+                // eg. { "_id" : "shard1", "host" : "shard1/localhost:27001,localhost:27001", "state" : 1 }
                 logger.info("config.shards.find: {}", doc.toJson());
                 String shard = StringUtils.substringBefore(doc.getString("host"), "/");
                 String host = StringUtils.substringAfterLast(doc.getString("host"), "/");
@@ -133,7 +153,7 @@ public class DBusMongoClient {
         if (shard) {
             MongoDatabase mdb = mongoClient.getDatabase("config");
             MongoCollection mongoCollection = mdb.getCollection("collections");
-            String id = StringUtils.join(new String[] {db, collection}, ".");
+            String id = StringUtils.join(new String[]{db, collection}, ".");
             Document condition = new Document("_id", id).append("dropped", false);
             ret = (mongoCollection.countDocuments(condition) > 0);
             logger.info("db:{}, collection:{} is shard collection.", db, collection);

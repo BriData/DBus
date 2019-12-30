@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.constant;
 
@@ -74,17 +75,19 @@ public class MessageCode {
     public static final int DATASCHEMA_FETCH_FROM_SOURCE_FAILED = 160002;
     public static final int DATASCHEMA_PARAM_FOARMAT_ERROR = 160003;
     public static final int DATASCHEMA_DS_TYPE_ERROR = 160004;
+    public static final int SCHEMA_NAME_ERROR = 160005;
+    public static final int TARGET_DATASOURCE_HAVE_NO_ALIAS = 160006;
 
     //Table module code 17xxx
     public static final int TABLE_NOT_FOUND_BY_ID = 170001;
     public static final int CAN_NOT_FETCH_TABLE_COLUMNS_INFORMATION = 170002;
     public static final int SEND_CONFIRMATION_MESSAGE_FAILED = 170003;
-    public static final int USE_THE_DIFF_CONTRAST  = 170004;
-    public static final int FETCH_TABLE_ERROR  = 170005;
-    public static final int SOURCE_TABLE_INSERT_ERROR  = 170006;
-    public static final int TABLE_SUPPLEMENTAL_LOG_NOT_OPEN  = 170007;
+    public static final int USE_THE_DIFF_CONTRAST = 170004;
+    public static final int FETCH_TABLE_ERROR = 170005;
+    public static final int SOURCE_TABLE_INSERT_ERROR = 170006;
+    public static final int TABLE_SUPPLEMENTAL_LOG_NOT_OPEN = 170007;
 
     //Jar module code 18xxx
-    public static final int PLUGIN_IS_USING  = 180001;
-    public static final int ENCODE_PLUGIN_JAR_IS_WRONG  = 180002;
+    public static final int PLUGIN_IS_USING = 180001;
+    public static final int ENCODE_PLUGIN_JAR_IS_WRONG = 180002;
 }

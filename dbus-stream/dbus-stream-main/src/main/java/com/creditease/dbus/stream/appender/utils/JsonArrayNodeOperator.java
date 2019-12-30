@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.utils;
 
@@ -33,9 +34,10 @@ public class JsonArrayNodeOperator extends ZKNodeOperator {
     public JsonArrayNodeOperator(IZkService zk, String node) {
         super(zk, node);
     }
+
     @Override
     public List<Map<String, Object>> convert(byte[] data) {
-       return (List<Map<String, Object>>)JSON.parse(data);
+        return (List<Map<String, Object>>) JSON.parse(data);
     }
 
     public static void main(String[] args) {

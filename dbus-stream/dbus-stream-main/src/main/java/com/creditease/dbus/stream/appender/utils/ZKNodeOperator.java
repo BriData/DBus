@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.utils;
 
@@ -39,6 +40,7 @@ public abstract class ZKNodeOperator {
         this.zk = zk;
         this.zkNode = zkNode;
     }
+
     public void createWhenNotExists(Object initializeValue) throws Exception {
         if (!zk.isExists(zkNode)) {
             zk.createNode(zkNode, getJsonBytes(initializeValue));
@@ -74,8 +76,6 @@ public abstract class ZKNodeOperator {
         }
         return obj.toString().getBytes();
     }
-
-
 
 
     public static void main(String[] args) {

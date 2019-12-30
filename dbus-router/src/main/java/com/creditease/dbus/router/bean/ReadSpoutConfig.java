@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.bean;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.apache.kafka.common.TopicPartition;
+
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * Created by Administrator on 2018/6/28.
@@ -84,4 +80,5 @@ public class ReadSpoutConfig implements Serializable {
     public void setTopicMap(Map<String, List<TopicPartition>> topicMap) {
         this.topicMap = topicMap;
     }
+
 }

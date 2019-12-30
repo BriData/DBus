@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.appender.spout.processor;
 
@@ -42,7 +43,6 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +80,7 @@ public class InitialLoadProcessor extends AbstractProcessor {
 
         try {
             List<GenericData> schemaList = decoder.unwrap(consumerRecord.value());
-            if(schemaList.isEmpty()) {
+            if (schemaList.isEmpty()) {
                 listener.reduceFlowSize(consumerRecord.serializedValueSize());
                 return;
             }

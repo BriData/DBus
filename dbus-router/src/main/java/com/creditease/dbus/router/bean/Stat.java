@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.router.bean;
 
@@ -136,7 +137,7 @@ public class Stat implements Serializable {
         this.errorCnt += vo.getErrorCnt();
         this.warnCnt += vo.getWarnCnt();
         if (isUseBarrier)
-            this.taskIdSum += vo.taskId;
+            this.taskIdSum += vo.taskIdSum;
     }
 
     public void correc(Integer size) {

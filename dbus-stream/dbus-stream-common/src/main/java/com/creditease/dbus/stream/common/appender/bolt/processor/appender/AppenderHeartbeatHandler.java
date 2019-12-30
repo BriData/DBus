@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor.appender;
 
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.MetaVerController;
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
-import com.creditease.dbus.stream.common.appender.bean.DataTable;
-import com.creditease.dbus.stream.common.appender.bean.EmitData;
-import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ public class AppenderHeartbeatHandler implements BoltCommandHandler {
             data.add(EmitData.VERSION, ver);
 
             this.emitHeartbeat(listener.getOutputCollector(), tuple, groupKey, data, Command.HEART_BEAT);
-            if(logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 Object offset = data.get(EmitData.OFFSET);
                 logger.debug("[heartbeat] {} offset:{}", groupKey, offset == null ? -1 : offset);
             }

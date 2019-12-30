@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
+import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.ZkNode;
+import com.creditease.dbus.service.ConfigCenterService;
 import com.creditease.dbus.service.ZkConfService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,8 @@ public class ZkConfController extends BaseController {
 
     @Autowired
     private ZkConfService zkConfService;
+    @Autowired
+    private ConfigCenterService configCenterService;
 
     /**
      * 按照properties格式返回节点信息
@@ -56,6 +59,14 @@ public class ZkConfController extends BaseController {
     public ResultEntity loadZKNodeProperties(@RequestParam String path) {
         try {
             Properties properties = zkConfService.loadZKNodeProperties(path);
+            //没有
+            if ((properties == null || properties.isEmpty()) && path.endsWith(Constants.GLOBAL_PROPERTIES)) {
+                Map map = configCenterService.getBasicConf().getPayload(Map.class);
+                if (map != null && !map.isEmpty()) {
+                    properties = new Properties();
+                    properties.putAll(map);
+                }
+            }
             return resultEntityBuilder().payload(properties).build();
         } catch (Exception e) {
             logger.error("Exception encountered while request loadZKNodeInfo with param ( path:{}).", path, e);
@@ -70,7 +81,7 @@ public class ZkConfController extends BaseController {
      * @return
      */
     @GetMapping("/loadZKNodeJson")
-    public ResultEntity loadZKNodeJson(@RequestParam String path,String admin) {
+    public ResultEntity loadZKNodeJson(@RequestParam String path, String admin) {
         try {
             ZkNode zkNode = zkConfService.loadZKNodeJson(path, admin);
             return resultEntityBuilder().payload(zkNode).build();
@@ -168,11 +179,11 @@ public class ZkConfController extends BaseController {
 
     /**
      * 根据给定dsName获取对应业务线的zk配置树。
-     * 特别地：我们获取business tree的时候，会考虑“以zk配置模板为基准”。
-     * 我们获取完整的zk配置模板树，然后根据该树的结构和映射规则，去查询业务的对应zk配置。
-     * 如果没找到，会设置exists=false标志。
-     * 所以，返回给前端的数据，实际上是zk模板树，但其中的path等根据规则替换成了对应business的path。
-     * 并根据业务node是否存在，设置标志。
+     * 特别地：我们获取business tree的时候,会考虑“以zk配置模板为基准”。
+     * 我们获取完整的zk配置模板树,然后根据该树的结构和映射规则,去查询业务的对应zk配置。
+     * 如果没找到,会设置exists=false标志。
+     * 所以,返回给前端的数据,实际上是zk模板树,但其中的path等根据规则替换成了对应business的path。
+     * 并根据业务node是否存在,设置标志。
      *
      * @return zk tree json
      */
@@ -211,11 +222,11 @@ public class ZkConfController extends BaseController {
     @GetMapping("/deleteZkNodeOfPath")
     public ResultEntity deleteZkNodeOfPath(@RequestParam String path) {
         try {
-			String s = zkConfService.deleteZkNodeOfPath(path);
-			if(s!=null){
-				return new ResultEntity(MessageCode.EXCEPTION, s);
-			}
-			return resultEntityBuilder().build();
+            String s = zkConfService.deleteZkNodeOfPath(path);
+            if (s != null) {
+                return new ResultEntity(MessageCode.EXCEPTION, s);
+            }
+            return resultEntityBuilder().build();
         } catch (Exception e) {
             logger.error("Exception encountered while request deleteZkNodeOfPath with param ( path:{}).", path, e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();

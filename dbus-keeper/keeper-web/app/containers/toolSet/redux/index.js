@@ -2,11 +2,13 @@
  * @author xiancangao
  * @description redux  {reducer,action}
  */
+
 export ControlMessageReducer from '@/app/components/toolSet/ControlMessage/redux/reducer'
 export GlobalFullpullReducer from '@/app/components/toolSet/GlobalFullpull/redux/reducer'
 export KafkaReaderReducer from '@/app/components/toolSet/KafkaReader/redux/reducer'
 export BatchRestartTopoReducer from '@/app/components/toolSet/BatchRestartTopo/redux/reducer'
 export JarManageReducer from '@/app/components/ResourceManage/JarManage/redux/reducer'
+export projectTableReducer from '@/app/components/ProjectManage/ProjectTable/redux/reducer'
 export {
   searchDataSourceList,
   sendControlMessage,
@@ -30,3 +32,7 @@ export {
   getOffsetRange,
   getTopicsByUserId
 } from '@/app/components/toolSet/KafkaReader/redux/action'
+export {
+  getTopologyList
+} from '@/app/components/ProjectManage/ProjectTable/redux/action'
+

@@ -12,6 +12,7 @@ import ProjectTopologyWrapper from '@/app/containers/ProjectManage/ProjectTopolo
 import ProjectFullpullWrapper from '@/app/containers/ProjectManage/ProjectFullpullWrapper'
 import EncodeManageWrapper from '@/app/containers/ProjectManage/EncodeManageWrapper'
 import EncodePluginWrapper from '@/app/containers/ProjectManage/EncodePluginWrapper'
+import UserKeyUploadWrapper from '@/app/containers/ProjectManage/UserKeyUploadWrapper'
 // HOCFactory({'siderHidden': true})(App)
 // 导出路由
 export default (store) => [
@@ -56,6 +57,10 @@ export default (store) => [
         path: '/project-manage/encode-plugin-manager',
         component: EncodePluginWrapper
       },
+      {
+        path: '/project-manage/user-key-upload-manager',
+        component: UserKeyUploadWrapper
+      }
     ]
   }
 ]

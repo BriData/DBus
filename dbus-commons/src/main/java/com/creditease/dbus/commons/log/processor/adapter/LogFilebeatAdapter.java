@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.adapter;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import java.util.*;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class LogFilebeatAdapter implements Iterator<String> {
@@ -40,10 +43,10 @@ public class LogFilebeatAdapter implements Iterator<String> {
         List<String> wk = new ArrayList<>();
         JSONObject ret = new JSONObject();
         JSONObject fbData = JSON.parseObject(value);
-        for(String key : fbData.keySet()) {
-            if(fbData.get(key) instanceof JSONObject) {
+        for (String key : fbData.keySet()) {
+            if (fbData.get(key) instanceof JSONObject) {
                 JSONObject subJbValue = ((JSONObject) fbData.get(key));
-                for(String jbKey : subJbValue.keySet()) {
+                for (String jbKey : subJbValue.keySet()) {
                     ret.put(StringUtils.joinWith(".", key, jbKey), subJbValue.get(jbKey));
                 }
             } else {

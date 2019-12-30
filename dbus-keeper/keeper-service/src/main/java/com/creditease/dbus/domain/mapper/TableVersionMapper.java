@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.domain.model.TableVersion;
+import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 
 public interface TableVersionMapper {
@@ -37,4 +40,7 @@ public interface TableVersionMapper {
     List<TableVersion> getVersionListByTableId(Integer tableId);
 
     TableVersion getVersionByTableId(Integer tableId);
+
+    void updateByTableIds(@Param("dsId") Integer dsId, @Param("dsName") String dsName, @Param("schemaName") String schemaName,
+                          @Param("tableIds") List<Integer> tableIds);
 }

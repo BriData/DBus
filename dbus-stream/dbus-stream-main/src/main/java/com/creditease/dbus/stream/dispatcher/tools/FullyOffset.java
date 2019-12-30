@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.dispatcher.tools;
 
@@ -34,7 +35,7 @@ public class FullyOffset implements Serializable {
     }
 
     private int compareKafkaOffset(FullyOffset other) {
-        if (this.kafkaOffset > other.getKafkaOffset())  {
+        if (this.kafkaOffset > other.getKafkaOffset()) {
             return 1;
         } else if (this.kafkaOffset == other.getKafkaOffset()) {
             return 0;
@@ -44,7 +45,7 @@ public class FullyOffset implements Serializable {
     }
 
     private int comparePartID(FullyOffset other) {
-        if (this.partitionOffset > other.getPartitionOffset())  {
+        if (this.partitionOffset > other.getPartitionOffset()) {
             return 1;
         } else if (this.partitionOffset == other.getPartitionOffset()) {
             return 0;
@@ -53,8 +54,8 @@ public class FullyOffset implements Serializable {
         }
     }
 
-    private int compareSubID (FullyOffset other) {
-        if (this.subOffset > other.getSubOffset())  {
+    private int compareSubID(FullyOffset other) {
+        if (this.subOffset > other.getSubOffset()) {
             return 1;
         } else if (this.subOffset == other.getSubOffset()) {
             return 0;
@@ -79,13 +80,14 @@ public class FullyOffset implements Serializable {
     /**
      * isZeroOffset
      * Check if the kafkaOffset is zero kafkaOffset
+     *
      * @return true/false
      */
     public boolean isZeroOffset() {
         return (this.kafkaOffset == 0 && this.partitionOffset == 0 && this.subOffset == 0);
     }
 
-    public String toString () {
+    public String toString() {
         return String.format("%d-%d-%d", kafkaOffset, partitionOffset, subOffset);
     }
 

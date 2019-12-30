@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.router.bolt;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+package com.creditease.dbus.router.bolt;
 
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.Constants;
@@ -35,7 +29,6 @@ import com.creditease.dbus.router.base.DBusRouterBase;
 import com.creditease.dbus.router.bean.EmitWarp;
 import com.creditease.dbus.router.bean.Sink;
 import com.creditease.dbus.router.util.DBusRouterConstants;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.Callback;
@@ -49,6 +42,8 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Created by mal on 2018/5/22.
@@ -86,19 +81,21 @@ public class DBusRouterKafkaWriteBolt extends BaseRichBolt {
             if (data.isCtrl()) {
                 String ctrl = (String) data.getData();
                 processCtrlMsg(ctrl);
+                logger.info("kafka write bolt ack {}", data.getOffset());
                 collector.ack(input);
             } else if (data.isStat()) {
                 String stat = (String) data.getData();
                 String topic = inner.routerConfProps.getProperty(DBusRouterConstants.STAT_TOPIC, "dbus_statistic");
                 String url = inner.routerConfProps.getProperty(DBusRouterConstants.STAT_URL);
-                sendKafka(data.getKey(), stat, url, topic, data.getNameSpace(), input);
+                sendKafka(data.getKey(), stat, url, topic, data.getNameSpace(), input, data.getOffset());
             } else if (data.isUMS() || data.isHB()) {
                 String ums = (String) data.getData();
                 String url = sinksMap.get(data.getNameSpace());
                 String topic = topicMap.get(data.getNameSpace());
-                sendKafka(data.getKey(), ums, url, topic, data.getNameSpace(), input);
+                sendKafka(data.getKey(), ums, url, topic, data.getNameSpace(), input, data.getOffset());
             } else {
                 logger.warn("not support process type. emit warp key: {}", data.getKey());
+                logger.info("kafka write bolt ack {}", data.getOffset());
                 collector.ack(input);
             }
         } catch (Exception e) {
@@ -151,7 +148,7 @@ public class DBusRouterKafkaWriteBolt extends BaseRichBolt {
         destroy();
         inner.close(true);
         init();
-        inner.zkHelper.saveReloadStatus(ctrl, "DbusRouterKafkaWriteBolt-" + context.getThisTaskId() , true);
+        inner.zkHelper.saveReloadStatus(ctrl, "DbusRouterKafkaWriteBolt-" + context.getThisTaskId(), true);
         logger.info("kafka write bolt reload completed.");
     }
 
@@ -229,9 +226,10 @@ public class DBusRouterKafkaWriteBolt extends BaseRichBolt {
         logger.info("kafka write bolt rerun topology completed.");
     }
 
-    private void sendKafka(String key, String data, String url, String topic, String ns, Tuple input) {
+    private void sendKafka(String key, String data, String url, String topic, String ns, Tuple input, long offset) {
         if (StringUtils.isBlank(topic)) {
             logger.warn("namespace: {}, not obtain topic. ums: {}", ns, data);
+            logger.info("kafka write bolt fail {}, topic {}", offset, topic);
             collector.fail(input);
             return;
         }
@@ -240,10 +238,14 @@ public class DBusRouterKafkaWriteBolt extends BaseRichBolt {
             producer.send(new ProducerRecord<String, byte[]>(topic, key, data.getBytes()), new Callback() {
                 @Override
                 public void onCompletion(RecordMetadata metadata, Exception exception) {
-                    if (exception == null)
+                    if (exception == null) {
+                        logger.info("kafka write bolt ack {}, topic {}", offset, topic);
                         collector.ack(input);
-                    else
+                    } else {
+                        logger.error("kafka write bolt fail {}, topic {}", offset, topic);
+                        logger.error("kafka write bolt fail {}", exception.getMessage());
                         collector.fail(input);
+                    }
                 }
             });
         } else {
@@ -294,6 +296,8 @@ public class DBusRouterKafkaWriteBolt extends BaseRichBolt {
             props.put("bootstrap.servers", url);
             props.put("client.id", clientId);
 
+            if (StringUtils.equals(inner.zkHelper.getSecurityConf(), Constants.SECURITY_CONFIG_TRUE_VALUE))
+                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
 
             producer = new KafkaProducer<>(props);
             logger.info("kafka write bolt create kafka producer. url:{}", url);

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.log.processor.bolt;
 
@@ -93,7 +94,7 @@ public class LogProcessorStatBolt extends BaseRichBolt {
                         collector.emit(input, new Values(outputTopic, swi, Constants.EMIT_DATA_TYPE_STAT));
                     }
                     break;
-                default :
+                default:
                     break;
             }
             collector.ack(input);
@@ -106,7 +107,7 @@ public class LogProcessorStatBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("outputTopic","value", "emitDataType"));
+        declarer.declare(new Fields("outputTopic", "value", "emitDataType"));
     }
 
     @Override
@@ -119,7 +120,7 @@ public class LogProcessorStatBolt extends BaseRichBolt {
             ControlType cmd = ControlType.getCommand(JSONObject.parseObject(json).getString("type"));
             switch (cmd) {
                 case LOG_PROCESSOR_RELOAD_CONFIG: {
-                    logger.info("LogProcessorStatBolt-{} 收到reload消息！Type: {}, Values: {} " , context.getThisTaskId(), cmd, json);
+                    logger.info("LogProcessorStatBolt-{} 收到reload消息！Type: {}, Values: {} ", context.getThisTaskId(), cmd, json);
                     inner.close(true);
                     init();
                     inner.zkHelper.saveReloadStatus(json, "LogProcessorStatBolt-" + context.getThisTaskId(), true);

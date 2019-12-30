@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.oracle.appender.bolt.processor.wrapper;
 
 import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.*;
 import com.creditease.dbus.msgencoder.EncodeColumn;
 import com.creditease.dbus.msgencoder.EncodeColumnProvider;
-import com.creditease.dbus.msgencoder.UmsEncoder;
 import com.creditease.dbus.msgencoder.MessageEncoder;
+import com.creditease.dbus.msgencoder.UmsEncoder;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.DataTable;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;

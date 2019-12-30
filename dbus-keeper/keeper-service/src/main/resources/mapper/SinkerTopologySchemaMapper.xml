@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.SinkerTopologySchemaMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.SinkerTopologySchema">
+    <id column="id" jdbcType="INTEGER" property="id"/>
+    <result column="sinker_topo_id" jdbcType="INTEGER" property="sinkerTopoId"/>
+    <result column="sinker_name" jdbcType="VARCHAR" property="sinkerName"/>
+    <result column="ds_id" jdbcType="INTEGER" property="dsId"/>
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName"/>
+    <result column="schema_id" jdbcType="INTEGER" property="schemaId"/>
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName"/>
+    <result column="target_topic" jdbcType="VARCHAR" property="targetTopic"/>
+    <result column="description" jdbcType="VARCHAR" property="description"/>
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+  </resultMap>
+  <resultMap id="resultMap" type="com.creditease.dbus.domain.model.SinkerTopologySchema">
+    <id column="schema_id" jdbcType="INTEGER" property="schemaId"/>
+    <result column="id" jdbcType="INTEGER" property="id"/>
+    <result column="sinker_topo_id" jdbcType="INTEGER" property="sinkerTopoId"/>
+    <result column="sinker_name" jdbcType="VARCHAR" property="sinkerName"/>
+    <result column="ds_id" jdbcType="INTEGER" property="dsId"/>
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName"/>
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName"/>
+    <result column="target_topic" jdbcType="VARCHAR" property="targetTopic"/>
+    <result column="description" jdbcType="VARCHAR" property="description"/>
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_sinker_topo_schema
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.SinkerTopologySchema">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_sinker_topo_schema (sinker_topo_id, sinker_name, ds_id,
+    ds_name, schema_id, schema_name,
+    target_topic, description, update_time
+    )
+    values (#{sinkerTopoId,jdbcType=INTEGER}, #{sinkerName,jdbcType=VARCHAR}, #{dsId,jdbcType=INTEGER},
+    #{dsName,jdbcType=VARCHAR}, #{schemaId,jdbcType=INTEGER}, #{schemaName,jdbcType=VARCHAR},
+    #{targetTopic,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}
+    )
+  </insert>
+  <insert id="insertOrUpdate" parameterType="com.creditease.dbus.domain.model.SinkerTopologySchema">
+    <selectKey keyProperty="id" order="BEFORE" resultType="java.lang.Integer">
+      select count(*) FROM t_sinker_topo_schema
+      where schema_id = #{schemaId}
+    </selectKey>
+    <if test="id == 0">
+      insert into t_sinker_topo_schema (sinker_topo_id, sinker_name, ds_id,
+      ds_name, schema_id, schema_name, target_topic, description
+      )
+      values (#{sinkerTopoId,jdbcType=INTEGER}, #{sinkerName,jdbcType=VARCHAR}, #{dsId,jdbcType=INTEGER},
+      #{dsName,jdbcType=VARCHAR}, #{schemaId,jdbcType=INTEGER}, #{schemaName,jdbcType=VARCHAR},
+      #{targetTopic,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}
+      )
+    </if>
+    <if test="id > 0">
+      update t_sinker_topo_schema set
+        sinker_topo_id = #{sinkerTopoId,jdbcType=INTEGER},
+        sinker_name = #{sinkerName,jdbcType=VARCHAR},
+        update_time = current_timestamp()
+      where schema_id = #{schemaId,jdbcType=INTEGER}
+    </if>
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.SinkerTopologySchema">
+    update t_sinker_topo_schema
+    <set>
+      <if test="sinkerTopoId != null">sinker_topo_id = #{sinkerTopoId,jdbcType=INTEGER},</if>
+      <if test="sinkerName != null and sinkerName != ''">sinker_name = #{sinkerName,jdbcType=VARCHAR},</if>
+      <if test="dsId != null">ds_id = #{dsId,jdbcType=INTEGER},</if>
+      <if test="dsName != null and dsName != ''">ds_name = #{dsName,jdbcType=VARCHAR},</if>
+      <if test="schemaId != null">schema_id = #{schemaId,jdbcType=INTEGER},</if>
+      <if test="schemaName != null and schemaName != ''">schema_name = #{schemaName,jdbcType=VARCHAR},</if>
+      <if test="targetTopic != null and targetTopic != ''">target_topic = #{targetTopic,jdbcType=VARCHAR},</if>
+      <if test="description != null and description != ''">description = #{description,jdbcType=VARCHAR},</if>
+      update_time = current_timestamp()
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, target_topic, 
+    description, update_time
+    from t_sinker_topo_schema
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, target_topic, 
+    description, update_time
+    from t_sinker_topo_schema
+  </select>
+  <select id="searchAll" resultMap="resultMap">
+    select t.id, t.sinker_topo_id, t.sinker_name, s.ds_id, d.ds_name, s.id schema_id, s.schema_name, s.target_topic,
+    t.description, t.update_time
+    from t_data_schema s
+    join t_dbus_datasource d on s.ds_id = d.id
+    left join t_sinker_topo_schema t on s.id = t.schema_id
+    <where>
+      (d.ds_type = 'mysql' or d.ds_type = 'oracle')
+      <if test="dsName != null and dsName != ''">and d.ds_name = #{dsName}</if>
+      <if test="schemaName != null and schemaName != ''">and s.schema_name = #{schemaName}</if>
+    </where>
+  </select>
+  <select id="searchBySinkerTopoId" resultMap="resultMap">
+    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, target_topic, description,
+    update_time
+    from t_sinker_topo_schema
+    where sinker_topo_id = #{sinkerTopoId}
+  </select>
+</mapper>

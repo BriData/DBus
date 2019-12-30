@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +18,29 @@
  * >>
  */
 
-package com.creditease.dbus.extractor.container;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+package com.creditease.dbus.extractor.container;
 
 import com.creditease.dbus.extractor.vo.ExtractorVo;
 import com.creditease.dbus.extractor.vo.JdbcVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
+
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 public class ExtractorConfigContainer {
 
     private static ExtractorConfigContainer container;
 
     private List<JdbcVo> jdbc;
-    
+
     private ExtractorVo extractorConfig;
-    
+
     private Properties kafkaProducerConfig;
 
     private Properties kafkaConsumerConfig;
-    
+
     private Set<OutputTopicVo> outputTopic;
     //private OutputTopicVo controlTopic;
 
@@ -65,16 +66,16 @@ public class ExtractorConfigContainer {
     public void setJdbc(List<JdbcVo> jdbc) {
         this.jdbc = jdbc;
     }
-    
+
     public ExtractorVo getExtractorConfig() {
-		return extractorConfig;
-	}
+        return extractorConfig;
+    }
 
-	public void setExtractorConfig(ExtractorVo extractorConfig) {
-		this.extractorConfig = extractorConfig;
-	}
+    public void setExtractorConfig(ExtractorVo extractorConfig) {
+        this.extractorConfig = extractorConfig;
+    }
 
-	public Properties getKafkaProducerConfig() {
+    public Properties getKafkaProducerConfig() {
         return kafkaProducerConfig;
     }
 
@@ -91,24 +92,25 @@ public class ExtractorConfigContainer {
     }
 
     public Set<OutputTopicVo> getOutputTopic() {
-		return outputTopic;
-	}
-
-	public void setOutputTopic(Set<OutputTopicVo> outputTopic) {
-		this.outputTopic = outputTopic;
-	}
-/*
-    public OutputTopicVo getControlTopic() {
-        return controlTopic;
+        return outputTopic;
     }
 
-    public void setControlTopic(OutputTopicVo controlTopic) {
-        this.controlTopic = controlTopic;
+    public void setOutputTopic(Set<OutputTopicVo> outputTopic) {
+        this.outputTopic = outputTopic;
     }
-*/
+
+    /*
+        public OutputTopicVo getControlTopic() {
+            return controlTopic;
+        }
+
+        public void setControlTopic(OutputTopicVo controlTopic) {
+            this.controlTopic = controlTopic;
+        }
+    */
     public String getFilter() {
-    return filter;
-}
+        return filter;
+    }
 
     public void setFilter(String filter) {
         this.filter = filter;

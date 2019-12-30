@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
-import com.creditease.dbus.domain.mapper.ProjectTopoTableEncodeOutputColumnsMapper;
-import com.creditease.dbus.domain.model.ProjectTopoTableEncodeOutputColumns;
+import com.creditease.dbus.domain.mapper.ProjectTableEncodeColumnsMapper;
+import com.creditease.dbus.domain.model.ProjectTableEncodeColumns;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
@@ -32,15 +33,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class EncodeService {
 
-	@Autowired
-	private ProjectTopoTableEncodeOutputColumnsMapper columnMapper;
+    @Autowired
+    private ProjectTableEncodeColumnsMapper columnMapper;
 
-	private Logger logger = LoggerFactory.getLogger(getClass());
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
-	public PageInfo<ProjectTopoTableEncodeOutputColumns> searchEncodeColumns(Integer pageNum, Integer pageSize, Integer projectId,
-																			 Integer topoId, Integer dsId, String schemaName, String tableName) {
-		PageHelper.startPage(pageNum, pageSize);
-		return new PageInfo(columnMapper.search(projectId, topoId, dsId, schemaName, tableName));
-	}
+    public PageInfo<ProjectTableEncodeColumns> searchEncodeColumns(Integer pageNum, Integer pageSize, Integer projectId,
+                                                                   Integer topoId, Integer dsId, String schemaName, String tableName) {
+        PageHelper.startPage(pageNum, pageSize);
+        return new PageInfo(columnMapper.search(projectId, topoId, dsId, schemaName, tableName));
+    }
 
 }

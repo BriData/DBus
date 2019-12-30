@@ -105,14 +105,14 @@ export default class DataTableManageModifyModal extends Component {
                 initialValue:tableInfo.physicalTableRegex,
               })(<Input size="large" type="text" />)}
             </FormItem>
-            <FormItem label={<FormattedMessage
-              id="app.components.resourceManage.dataTableNameAlias"
-              defaultMessage="模板表"
-            />} {...formItemLayout}>
-              {getFieldDecorator('tableNameAlias', {
-                initialValue:tableInfo.tableNameAlias,
-              })(<Input size="large" type="text" />)}
-            </FormItem>
+            {/*<FormItem label={<FormattedMessage*/}
+              {/*id="app.components.resourceManage.dataTableNameAlias"*/}
+              {/*defaultMessage="模板表"*/}
+            {/*/>} {...formItemLayout}>*/}
+              {/*{getFieldDecorator('tableNameAlias', {*/}
+                {/*initialValue: tableInfo.tableNameAlias*/}
+              {/*})(<Input size="large" type="text"/>)}*/}
+            {/*</FormItem>*/}
             <FormItem label={<FormattedMessage
               id="app.common.description"
               defaultMessage="描述"
@@ -142,17 +142,17 @@ export default class DataTableManageModifyModal extends Component {
                 </Select>
               )}
             </FormItem>
-            <FormItem label="split_col" {...formItemLayout}>
-              {getFieldDecorator('fullpullCol', {
+            <FormItem label="分片列" {...formItemLayout}>
+              {getFieldDecorator('split_col', {
                 initialValue: tableInfo.fullpullCol,
               })(<Input size="large" type="text" />)}
             </FormItem>
-            <FormItem label="split_shard_size" {...formItemLayout}>
+            <FormItem label="分片大小" {...formItemLayout}>
               {getFieldDecorator('fullpullSplitShardSize', {
                 initialValue: tableInfo.fullpullSplitShardSize,
               })(<Input size="large" type="text" />)}
             </FormItem>
-            <FormItem label="split_style" {...formItemLayout}>
+            <FormItem label="分片类型" {...formItemLayout}>
               {getFieldDecorator('fullpullSplitStyle', {
                 initialValue: tableInfo.fullpullSplitStyle,
               })(<Input size="large" type="text" />)}

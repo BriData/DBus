@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.heartbeat.vo;
 
@@ -30,7 +31,9 @@ public class HeartBeatVo implements Serializable {
      */
     private static final long serialVersionUID = -4849126266520972270L;
 
-    /** heartbeat频率  */
+    /**
+     * heartbeat频率
+     */
     private Long heartbeatInterval;
 
     private Long checkInterval;
@@ -90,6 +93,8 @@ public class HeartBeatVo implements Serializable {
     private Map<String, Map<String, String>> additionalNotify;
 
     private Long checkMasterSlaveDelayInterval;
+
+    private Long checkMysqlBinlogInterval;
 
     private Long masterSlaveDelayTimeout;
 
@@ -387,5 +392,13 @@ public class HeartBeatVo implements Serializable {
 
     public void setAlarmMailPass(String alarmMailPass) {
         this.alarmMailPass = alarmMailPass;
+    }
+
+    public Long getCheckMysqlBinlogInterval() {
+        return checkMysqlBinlogInterval;
+    }
+
+    public void setCheckMysqlBinlogInterval(Long checkMysqlBinlogInterval) {
+        this.checkMysqlBinlogInterval = checkMysqlBinlogInterval;
     }
 }

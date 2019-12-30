@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service;
 
@@ -28,7 +29,7 @@ import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,11 +79,6 @@ public class ProjectService {
         return result.getBody();
     }
 
-    public ResultEntity queryEncoderRules() {
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/encoders");
-        return result.getBody();
-    }
-
     public ResultEntity querySinks(String queryString) {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/sinks/search", queryString);
         return result.getBody();
@@ -104,20 +100,21 @@ public class ProjectService {
         return result.getBody();
     }
 
-    public ResultEntity deleteProject(int id) throws Exception{
+    public ResultEntity deleteProject(int id) throws Exception {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/select/{id}", id);
-        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()){
-	        return result.getBody();
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()) {
+            return result.getBody();
         }
-        Project project = result.getBody().getPayload(new TypeReference<Project>() {});
+        Project project = result.getBody().getPayload(new TypeReference<Project>() {
+        });
 
         //删除project相关数据
         result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/delete/{id}", id);
-        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()){
-	        return result.getBody();
+        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()) {
+            return result.getBody();
         }
 
-	    // 删除grafana dashboard
+        // 删除grafana dashboard
         dashBoardService.deleteDashboard(project.getProjectName());
         return result.getBody();
     }
@@ -133,22 +130,26 @@ public class ProjectService {
         result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectUser/select-by-project-id/{id}", id);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
-        retMap.put("users", result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {}));
+        retMap.put("users", result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {
+        }));
 
         result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectSink/select-by-project-id/{id}", id);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
-        retMap.put("sinks", result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {}));
+        retMap.put("sinks", result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {
+        }));
 
         result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/select-by-project-id/{id}", id);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
-        retMap.put("resources", result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {}));
+        retMap.put("resources", result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {
+        }));
 
         result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectEncodeHint/select-by-project-id/{id}", id);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
-        retMap.put("encodes", result.getBody().getPayload(new TypeReference<Map<Integer, List<Map<String, Object>>>>() {}));
+        retMap.put("encodes", result.getBody().getPayload(new TypeReference<Map<Integer, List<Map<String, Object>>>>() {
+        }));
 
         result.getBody().setPayload(retMap);
         return result.getBody();
@@ -161,9 +162,9 @@ public class ProjectService {
         ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, "/projects/insert", project);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
-        int projectId = (int)result.getBody().getPayload();
+        int projectId = (int) result.getBody().getPayload();
 
-        List<ProjectUser> users =  bean.getUsers();
+        List<ProjectUser> users = bean.getUsers();
         if (users != null) {
             for (ProjectUser user : users) {
                 user.setProjectId(projectId);
@@ -218,23 +219,25 @@ public class ProjectService {
         Project project = bean.getProject();
         project.setUpdateTime(new Date());
 
-        /*由于project-resource更新的时候，调用的也是该方法。
-        *所以需要先判断要删除的resource（如果有删除的），是否正在使用。
-        * */
+        /*由于project-resource更新的时候,调用的也是该方法。
+         *所以需要先判断要删除的resource（如果有删除的）,是否正在使用。
+         * */
         List<ProjectResource> resources = bean.getResources();
         //1.先获取所有旧的resource
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/select-by-project-id/{id}", project.getId());
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
-        List<Map<String,Object>> oldResources =result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {});
+        List<Map<String, Object>> oldResources = result.getBody().getPayload(new TypeReference<List<Map<String, Object>>>() {
+        });
         //2.判断resource能否删除。
-        for(Map<String,Object> oldResource: oldResources){
+        for (Map<String, Object> oldResource : oldResources) {
             int tableId = (int) oldResource.get("id");
-            result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/status/{projectId}/{tableId}", project.getId(),tableId);
-            String oldResourceStatus = result.getBody().getPayload(new TypeReference<String>() {});
+            result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/status/{projectId}/{tableId}", project.getId(), tableId);
+            String oldResourceStatus = result.getBody().getPayload(new TypeReference<String>() {
+            });
             //如果删除了所有resource或者只删除当前resource,并且当前resource正在使用
-            if((resources == null || isDeleted(resources,project.getId(),tableId))
-                    && StringUtils.equals(ProjectResource.STATUS_USE,oldResourceStatus)){
+            if ((resources == null || isDeleted(resources, project.getId(), tableId))
+                    && StringUtils.equals(ProjectResource.STATUS_USE, oldResourceStatus)) {
                 result.getBody().setStatus(MessageCode.PROJECT_RESOURCE_IS_USING);
                 return result.getBody();
             }
@@ -257,7 +260,7 @@ public class ProjectService {
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
 
-        List<ProjectUser> users =  bean.getUsers();
+        List<ProjectUser> users = bean.getUsers();
         result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectUser/delete-by-project-id/{id}", project.getId());
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
@@ -317,13 +320,14 @@ public class ProjectService {
 
     /**
      * 判断某resoure是否要删除
+     *
      * @return 要删除true | 不删除 false
      */
-    private boolean isDeleted(List<ProjectResource> resources, int projectId,int tableId){
-        //能找到，说明没删除
-        for(ProjectResource resource:resources){
-            if(resource.getProjectId().intValue() == projectId
-                    && resource.getTableId().intValue() ==tableId){
+    private boolean isDeleted(List<ProjectResource> resources, int projectId, int tableId) {
+        //能找到,说明没删除
+        for (ProjectResource resource : resources) {
+            if (resource.getProjectId().intValue() == projectId
+                    && resource.getTableId().intValue() == tableId) {
                 return false;
             }
         }
@@ -334,12 +338,13 @@ public class ProjectService {
         return sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getPrincipal/{0}", id).getBody();
     }
 
-    public ResultEntity getMountedProjrct(String  queryString) {
+    public ResultEntity getMountedProjrct(String queryString) {
         return sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getMountedProjrct", queryString).getBody();
     }
 
     /**
-     * 根据projectId获取project信息，只有project的信息
+     * 根据projectId获取project信息,只有project的信息
+     *
      * @param projectId
      * @return Project
      */
@@ -356,7 +361,7 @@ public class ProjectService {
     public int getRunningTopoTables(int id) {
         List<ProjectTopoTable> projectTopoTables = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/getRunningTopoTables/{0}", id)
                 .getBody().getPayload(new TypeReference<List<ProjectTopoTable>>() {
-        });
+                });
         return projectTopoTables.size();
     }
 

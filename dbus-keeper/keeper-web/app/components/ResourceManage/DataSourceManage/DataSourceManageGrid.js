@@ -1,6 +1,6 @@
-import React, { PropTypes, Component } from 'react'
-import { Tooltip ,Tag,Form, Select, Input, message, Table } from 'antd'
-import { FormattedMessage } from 'react-intl'
+import React, {PropTypes, Component} from 'react'
+import {Tooltip, Tag, Form, Select, Input, message, Table} from 'antd'
+import {FormattedMessage} from 'react-intl'
 import OperatingButton from '@/app/components/common/OperatingButton'
 
 // 导入样式
@@ -12,10 +12,9 @@ const Option = Select.Option
 
 export default class DataSourceManageGrid extends Component {
 
-  constructor (props) {
+  constructor(props) {
     super(props)
-    this.state = {
-    }
+    this.state = {}
     this.tableWidth = [
       '5%',
       '10%',
@@ -39,11 +38,11 @@ export default class DataSourceManageGrid extends Component {
   /**
    * @description 默认的render
    */
-  // renderNomal = (text, record, index) => (
-  //   <div title={text} className={styles.ellipsis}>
-  //     {text}
-  //   </div>
-  // )
+    // renderNomal = (text, record, index) => (
+    //   <div title={text} className={styles.ellipsis}>
+    //     {text}
+    //   </div>
+    // )
 
   renderNomal = (text, record, index) => (
     <Tooltip title={text}>
@@ -53,7 +52,7 @@ export default class DataSourceManageGrid extends Component {
     </Tooltip>
   )
 
-  renderStatus =(text, record, index) => {
+  renderStatus = (text, record, index) => {
     let color
     switch (text) {
       case 'active':
@@ -69,7 +68,7 @@ export default class DataSourceManageGrid extends Component {
     </div>)
   }
 
-  renderTopoStatus =(text, record, index) => {
+  renderTopoStatus = (text, record, index) => {
     let color
     switch (text) {
       case 'ALL_RUNNING':
@@ -95,10 +94,13 @@ export default class DataSourceManageGrid extends Component {
         OGG Path：{record.oggOrCanalPath}<br/>
         OGG Replicat Name：{record.oggReplicatName}<br/>
         OGG Trail Prefix: {record.oggTrailName}<br/>
+        OGG Mgr Port: {record.mgrReplicatPort}<br/>
       </div>
     } else if (record.type === 'mysql') {
       title = <div>Canal Host：{record.oggOrCanalHost}<br/>
         Canal Path：{record.oggOrCanalPath}<br/>
+        Canal slaveId：{record.slaveId}<br/>
+        Slave Address：{record.slaveAddress}<br/>
       </div>
     }
 
@@ -115,7 +117,7 @@ export default class DataSourceManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onRerun, onClearFullPullAlarm, onModify, onMount, onTopo, onAdd, onDBusData} = this.props
+    const {onRerun, onClearFullPullAlarm, onModify, onMount, onTopo, onAdd, onDBusData, onOggModify, onCanalModify} = this.props
     let menus = []
     menus.push({
       text: <FormattedMessage
@@ -140,6 +142,26 @@ export default class DataSourceManageGrid extends Component {
         </span>,
         icon: 'exclamation-circle-o',
         onClick: () => onClearFullPullAlarm(record),
+      })
+    }
+    if (record.type === 'oracle') {
+      menus.push({
+        text: <FormattedMessage
+          id="app.components.resourceManage.dataSource.modifyOggConf"
+          defaultMessage="ogg配置修改"
+        />,
+        icon: 'edit',
+        onClick: () => onOggModify(record)
+      })
+    }
+    if (record.type === 'mysql') {
+      menus.push({
+        text: <FormattedMessage
+          id="app.components.resourceManage.dataSource.modifyCanalConf"
+          defaultMessage="canal配置修改"
+        />,
+        icon: 'edit',
+        onClick: () => onCanalModify(record)
       })
     }
     menus = [
@@ -176,8 +198,9 @@ export default class DataSourceManageGrid extends Component {
     return (
       <div>
         <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle' && record.type !== 'mongo'
+        && record.type !== 'db2'
         } icon="plus" onClick={() => onAdd(record)}>
-          <FormattedMessage id="app.common.addSchema" defaultMessage="添加Schema" />
+          <FormattedMessage id="app.common.addSchema" defaultMessage="添加Schema"/>
         </OperatingButton>
         <OperatingButton icon="share-alt" onClick={() => onTopo(record.id)}>
           <FormattedMessage
@@ -186,17 +209,17 @@ export default class DataSourceManageGrid extends Component {
           />
         </OperatingButton>
         <OperatingButton disabled={record.type !== 'mysql' && record.type !== 'oracle'
+        && record.type !== 'db2'
         } icon="bars" onClick={() => onDBusData(record)}>
           <FormattedMessage
             id="app.components.resourceManage.dataSource.viewDBusData"
             defaultMessage="查看DBus数据"
           />
         </OperatingButton>
-        <OperatingButton icon="ellipsis" menus={menus} />
+        <OperatingButton icon="ellipsis" menus={menus}/>
       </div>
     )
   }
-
 
 
   handleDelete = (record) => {
@@ -219,14 +242,14 @@ export default class DataSourceManageGrid extends Component {
       })
   }
 
-  render () {
+  render() {
     const {
       dataSourceList,
       onPagination,
       onShowSizeChange
     } = this.props
-    const { loading, loaded } = dataSourceList
-    const { total, pageSize, pageNum, list } = dataSourceList.result
+    const {loading, loaded} = dataSourceList
+    const {total, pageSize, pageNum, list} = dataSourceList.result
     const dataSource = dataSourceList.result && dataSourceList.result.list
 
     const pagination = {

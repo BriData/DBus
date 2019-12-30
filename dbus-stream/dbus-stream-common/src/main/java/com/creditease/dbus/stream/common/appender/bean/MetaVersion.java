@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.bean;
 
@@ -41,7 +42,9 @@ public class MetaVersion implements Serializable {
     private long trailPos;
     private int version; // 外部版本号
     private int innerVersion;
+    private Integer schemaHash; // 该版本数据对应的schema哈希值
     private String comments;
+    private Integer abandon; // 假删除标记,0或null表示未删除,1表示删除
 
     private MetaWrapper meta;
     
@@ -59,10 +62,12 @@ public class MetaVersion implements Serializable {
     public static MetaVersion parse(Map<String, Object> data) {
         MetaVersion v = new MetaVersion();
         v.setId((Long)data.get("id"));
+        v.setDsId((Long) data.get("ds_id"));
         v.setSchema(data.get("schema_name").toString());
         v.setTable(data.get("table_name").toString());
         v.setVersion((Integer)data.get("version"));
         v.setInnerVersion((Integer)data.get("inner_version"));
+        v.setSchemaHash((Integer) data.get("schema_hash"));
         v.setOffset((Long)data.get("event_offset"));
         v.setTrailPos((Long)data.get("event_pos"));
         v.setTableId((Integer)data.get("table_id"));
@@ -156,12 +161,28 @@ public class MetaVersion implements Serializable {
         return innerVersion;
     }
 
+    public Integer getSchemaHash() {
+        return schemaHash;
+    }
+
+    public void setSchemaHash(Integer schemaHash) {
+        this.schemaHash = schemaHash;
+    }
+
     public String getComments() {
         return comments;
     }
 
     public void setComments(String comments) {
         this.comments = comments;
+    }
+
+    public Integer getAbandon() {
+        return abandon;
+    }
+
+    public void setAbandon(Integer abandon) {
+        this.abandon = abandon;
     }
 
     @Override

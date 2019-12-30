@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.appender.bolt;
 
 import com.creditease.dbus.commons.*;
-//import com.creditease.dbus.msgencoder.ExternalEncoders;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.msgencoder.PluginManagerProvider;
 import com.creditease.dbus.stream.appender.exception.InitializationException;
@@ -54,6 +54,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Properties;
+
+//import com.creditease.dbus.msgencoder.ExternalEncoders;
 
 
 public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener {
@@ -252,8 +254,11 @@ public class WrapperBolt extends BaseRichBolt implements CommandHandlerListener 
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
         } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
-        }
-        else {
+        } else if (type == DbusDatasourceType.MONGO) {
+            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
+        } else if (type == DbusDatasourceType.DB2) {
+            name = "com.creditease.dbus.stream.db2.appender.bolt.processor.provider.WrapperCmdHandlerProvider";
+        } else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

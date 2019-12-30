@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,18 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.dao;
 
-import java.util.List;
-import java.util.Set;
+package com.creditease.dbus.heartbeat.dao;
 
 import com.creditease.dbus.heartbeat.vo.*;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public interface ILoadDbusConfigDao {
+
+    Map<String, String> queryAliasMapping(String key);
 
     List<DsVo> queryDsConfig(String key);
 
@@ -35,7 +39,7 @@ public interface ILoadDbusConfigDao {
 
     Set<ProjectMonitorNodeVo> queryProjectMonitorNode(String key);
 
-    ProjectNotifyEmailsVO queryNotifyEmails(String key,String projectName);
+    ProjectNotifyEmailsVO queryNotifyEmails(String key, String projectName);
 
-    List<ProjectNotifyEmailsVO> queryRelatedNotifyEmails(String key,String datasource, String schema, String table);
+    List<ProjectNotifyEmailsVO> queryRelatedNotifyEmails(String key, String datasource, String schema, String table);
 }

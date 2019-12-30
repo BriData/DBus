@@ -84,7 +84,7 @@ export default class ProjectTableGrid extends Component {
    */
   renderNomal = (text, record, index) => (
     <Tooltip title={text}>
-      <div className={styles.ellipsis}>
+      <div className={styles.ellipsis} style={{minWidth: 70}}>
         {text}
       </div>
     </Tooltip>
@@ -125,7 +125,7 @@ export default class ProjectTableGrid extends Component {
         color = 'green'
     }
     text = text ? 'Y' : 'N'
-    return (<div title={text} className={styles.ellipsis}>
+    return (<div title={text} className={styles.ellipsis} style={{minWidth: 50}}>
       <Tag color={color} style={{cursor: 'auto'}}>
         {text}
       </Tag>
@@ -157,29 +157,11 @@ export default class ProjectTableGrid extends Component {
     </div>)
   }
 
-  renderDbaEncode1  =(text, record, index) => {
-    let color
-    switch (text) {
-      case 1:
-        color = 'red'
-        break
-      default:
-        color = 'green'
-    }
-    text = text ? 'Y' : 'N'
-    return (<div title={text} className={styles.ellipsis}>
-      <Tag color={color} style={{cursor: 'auto'}}>
-        {text}
-      </Tag>
-    </div>)
-  }
-
-  renderDbaEncode = (text, record, index) => {
-    let has = record.hasDbaEncode
-    let use = record.useDbaEncode
+  renderEncode = (text, record, index) => {
+    let use = record.useEncode
 
     let color
-    switch (has) {
+    switch (use) {
       case 1:
         color = 'red'
         break
@@ -187,18 +169,16 @@ export default class ProjectTableGrid extends Component {
         color = 'green'
     }
 
-    has = has ? 'Y' : 'N'
     use = use ? 'Y' : 'N'
 
     const title = <div>
-      hasDBAEncode：{has}<br/>
-      useDBAEncode: {use}<br/>
+      Use Encode：{use}<br/>
     </div>
     return (
       <Tooltip title={title}>
-        <div className={styles.ellipsis}>
+        <div className={styles.ellipsis} style={{minWidth: 60}}>
           <Tag color={color} style={{cursor: 'auto'}}>
-            {has}
+            {use}
           </Tag>
         </div>
       </Tooltip>
@@ -285,9 +265,10 @@ export default class ProjectTableGrid extends Component {
       }
     ]
     return (
-      <div>
+      <div style={{width: 150}}>
         {record.status !== 'running' ? (
-          <OperatingButton disabled={record.topoStatus === 'new' || record.topoStatus === 'stopped'} icon="caret-right" onClick={() => onStart(record)}>
+          <OperatingButton disabled={record.topoStatus === 'new' || record.topoStatus === 'stopped'} icon="caret-right"
+                           onClick={() => onStart(record)}>
             <FormattedMessage
               id="app.components.resourceManage.dataTable.start"
               defaultMessage="启动"
@@ -306,7 +287,8 @@ export default class ProjectTableGrid extends Component {
         <OperatingButton icon="edit" onClick={() => this.props.onModifyTable(record.tableId, record.projectId, record)}>
           <FormattedMessage id="app.common.modify" defaultMessage="修改" />
         </OperatingButton>
-        <OperatingButton disabled={userInfo.roleType !== 'admin' && record.ifFullpull !== 1} icon="export" onClick={() => onInitialLoad(record)}>
+        <OperatingButton disabled={userInfo.roleType !== 'admin' && record.ifFullpull !== 1} icon="export"
+                         onClick={() => onInitialLoad(record)}>
           <FormattedMessage
             id="app.components.projectManage.projectTable.fullpull"
             defaultMessage="拉全量"
@@ -435,34 +417,14 @@ export default class ProjectTableGrid extends Component {
       },
       {
         title: <FormattedMessage
-          id="app.components.projectManage.projectTable.dbaEncodeColumn"
-          defaultMessage="DBA脱敏"
+          id="app.components.projectManage.projectTable.useEncodeColumn"
+          defaultMessage="是否脱敏"
         />,
         width: tableWidth[10],
-        dataIndex: 'hasDbaEncode',
-        key: 'hasDbaEncode',
-        render: this.renderComponent(this.renderDbaEncode)
+        dataIndex: 'useEncode',
+        key: 'useEncode',
+        render: this.renderComponent(this.renderEncode)
       },
-      /*{
-        title: <FormattedMessage
-          id="app.components.projectManage.projectTable.dbaEncodeColumn"
-          defaultMessage="DBA脱敏列"
-        />,
-        width: tableWidth[7],
-        dataIndex: 'hasDbaEncode',
-        key: 'hasDbaEncode',
-        render: this.renderComponent(this.renderDbaEncode)
-      },
-      {
-        title: <FormattedMessage
-          id="app.components.projectManage.projectTable.useDbaEncodeColumn"
-          defaultMessage="使用DBA脱敏列"
-        />,
-        width: tableWidth[7],
-        dataIndex: 'useDbaEncode',
-        key: 'useDbaEncode',
-        render: this.renderComponent(this.renderDbaEncode)
-      },*/
       {
         title: <FormattedMessage
           id="app.components.projectManage.projectTable.schemaChange"
@@ -474,6 +436,13 @@ export default class ProjectTableGrid extends Component {
         render: this.renderComponent(this.renderSchemaChangeFlag)
       },
       {
+        title: (
+          <FormattedMessage id="app.common.operate" defaultMessage="操作" />
+        ),
+        width: tableWidth[12],
+        render: this.renderComponent(this.renderOperating)
+      },
+      {
         title: <FormattedMessage
           id="app.common.user.backup"
           defaultMessage="备注"
@@ -482,13 +451,6 @@ export default class ProjectTableGrid extends Component {
         dataIndex: 'description',
         key: 'description',
         render: this.renderComponent(this.renderNomal)
-      },
-      {
-        title: (
-          <FormattedMessage id="app.common.operate" defaultMessage="操作" />
-        ),
-        width: tableWidth[13],
-        render: this.renderComponent(this.renderOperating)
       }
     ]
     const pagination = {
@@ -512,6 +474,7 @@ export default class ProjectTableGrid extends Component {
           dataSource={dataSource}
           columns={columns}
           pagination={pagination}
+          scroll={{x: true}}
           loading={loading}
         />
       </div>

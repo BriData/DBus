@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
@@ -25,16 +26,11 @@ import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.domain.model.ProjectTopology;
 import com.creditease.dbus.service.ProjectTopologyService;
 import com.creditease.dbus.utils.DBusUtils;
-
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -110,7 +106,7 @@ public class ProjectTopologyController extends BaseController {
 
     @GetMapping("/in-topics/{projectId}/{topoId}")
     public ResultEntity queryInPutTopics(@PathVariable Integer projectId,
-                                          @PathVariable Integer topoId) {
+                                         @PathVariable Integer topoId) {
         return resultEntityBuilder().payload(service.queryInPutTopics(projectId, topoId)).build();
     }
 
@@ -121,7 +117,7 @@ public class ProjectTopologyController extends BaseController {
 
     @GetMapping("/rerun-init/{projectId}/{topologyId}")
     public ResultEntity rerunInit(@PathVariable Integer projectId,
-                                    @PathVariable Integer topologyId) {
+                                  @PathVariable Integer topologyId) {
         return resultEntityBuilder().payload(service.rerunInit(projectId, topologyId)).build();
     }
 
@@ -137,6 +133,16 @@ public class ProjectTopologyController extends BaseController {
     public ResultEntity effect(@PathVariable Integer topologyId) {
         service.effectTopologyConfig(topologyId);
         return resultEntityBuilder().build();
+    }
+
+    @GetMapping("/getTopoAlias/{topoId}")
+    public ResultEntity getTopoAlias(@PathVariable Integer topoId) {
+        return resultEntityBuilder().payload(service.getTopoAlias(topoId)).build();
+    }
+
+    @PostMapping("/selectByIds")
+    public ResultEntity selectByIds(@RequestBody List<Integer> ids) {
+        return resultEntityBuilder().payload(service.selectByIds(ids)).build();
     }
 
 }

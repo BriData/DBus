@@ -91,4 +91,16 @@
     where ver_id=#{verId}
      order by column_name;
   </select>
+  <select id="selectByTableId" resultMap="BaseResultMap">
+    SELECT
+        m.*
+    FROM
+        t_data_tables t,
+        t_meta_version v,
+        t_table_meta m
+    WHERE
+        t.ver_id = v.id
+        AND v.id = m.ver_id
+        AND t.id = #{tableId};
+  </select>
 </mapper>

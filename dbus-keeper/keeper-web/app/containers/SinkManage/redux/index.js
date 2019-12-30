@@ -1,5 +1,5 @@
 /** ************导出 reducer*******************/
-export sinkHomeReducer from '@/app/components/SinkManage/redux/reducer'
+export sinkHomeReducer from '@/app/components/SinkManage/SinkList/redux/reducer'
 
 /** ************导出action*******************/
 
@@ -9,9 +9,9 @@ export {
   createSink,
   updateSink,
   deleteSink
-} from '@/app/components/SinkManage/redux/action'
+} from '@/app/components/SinkManage/SinkList/redux/action'
 
 // 同步存储action
 export {
   setSearchSinkParam
-} from '@/app/components/SinkManage/redux/action'
+} from '@/app/components/SinkManage/SinkList/redux/action'

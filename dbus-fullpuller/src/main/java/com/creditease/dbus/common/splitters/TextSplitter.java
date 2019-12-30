@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -26,9 +27,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,21 +38,20 @@
  */
 package com.creditease.dbus.common.splitters;
 
+import com.creditease.dbus.common.FullPullConstants;
+import com.creditease.dbus.common.bean.DBConfiguration;
+import com.creditease.dbus.common.exception.ValidationException;
+import com.creditease.dbus.common.format.DataDBInputSplit;
+import com.creditease.dbus.common.format.InputSplit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.creditease.dbus.common.DataPullConstants;
-import com.creditease.dbus.common.utils.DBConfiguration;
-import com.creditease.dbus.common.utils.DataDrivenDBInputFormat;
-import com.creditease.dbus.common.utils.InputSplit;
-import com.creditease.dbus.common.utils.ValidationException;
 
 
 /**
@@ -62,7 +62,7 @@ public class TextSplitter extends BigDecimalSplitter {
 
     public static final String ALLOW_TEXT_SPLITTER_PROPERTY = "org.apache.splitter.allow_text_splitter";
 
-    private Logger LOG = LoggerFactory.getLogger(getClass());
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
     private boolean useNCharStrings = false;
 
@@ -74,6 +74,7 @@ public class TextSplitter extends BigDecimalSplitter {
     }
 
     private SplitterRange rangeStyle = SplitterRange.ALL;
+
     public TextSplitter(String splitRange) {
         if (splitRange.equalsIgnoreCase("assci")) {
             this.rangeStyle = SplitterRange.ASSCI;
@@ -90,7 +91,7 @@ public class TextSplitter extends BigDecimalSplitter {
         } else {
             this.rangeStyle = SplitterRange.ALL;
         }
-        LOG.info("TextSplitter----set rangeStyle = " + this.rangeStyle.toString());
+        logger.info("TextSplitter----set rangeStyle = " + this.rangeStyle.toString());
     }
 
 
@@ -99,10 +100,10 @@ public class TextSplitter extends BigDecimalSplitter {
      * strings.  In the case where the user's strings are 'A' and 'Z', this is
      * not hard; we could create two splits from ['A', 'M') and ['M', 'Z'], 26
      * splits for strings beginning with each letter, etc.
-     *
+     * <p>
      * If a user has provided us with the strings "Ham" and "Haze", however, we
      * need to create splits that differ in the third letter.
-     *
+     * <p>
      * The algorithm used is as follows:
      * Since there are 2**16 unicode characters, we interpret characters as
      * digits in base 65536. Given a string 's' containing characters s_0, s_1
@@ -118,10 +119,10 @@ public class TextSplitter extends BigDecimalSplitter {
                     + ALLOW_TEXT_SPLITTER_PROPERTY + "=true\" property " + "passed as a parameter");
         }
 
-        LOG.warn("Generating splits for a textual index column.");
-        LOG.warn("If your database sorts in a case-insensitive order, "
+        logger.warn("Generating splits for a textual index column.");
+        logger.warn("If your database sorts in a case-insensitive order, "
                 + "this may result in a partial import or duplicate records.");
-        LOG.warn("You are strongly encouraged to choose an integral split column.");
+        logger.warn("You are strongly encouraged to choose an integral split column.");
 
         String minString = results.getString(1);
         String maxString = results.getString(2);
@@ -140,14 +141,12 @@ public class TextSplitter extends BigDecimalSplitter {
             // If the max string is null, then the min string has to be null too.
             // Just return a special split for this case.
             List<InputSplit> splits = new ArrayList<InputSplit>();
-            splits.add(new DataDrivenDBInputFormat.DataDrivenDBInputSplit(
-                    type, colName, DataPullConstants.QUERY_COND_IS_NULL, null, DataPullConstants.QUERY_COND_IS_NULL, null));
+            splits.add(new DataDBInputSplit(type, colName, FullPullConstants.QUERY_COND_IS_NULL, null, FullPullConstants.QUERY_COND_IS_NULL, null));
             return splits;
         }
 
         // Use this as a hint. May need an extra task if the size doesn't
         // divide cleanly.
-
 
 
         // If there is a common prefix between minString and maxString, establish
@@ -191,15 +190,13 @@ public class TextSplitter extends BigDecimalSplitter {
         String start = splitStrings.get(0);
         for (int i = 1; i < splitStrings.size(); i++) {
             String end = splitStrings.get(i);
-            LOG.info("TextSplitter----split_index"+ i +" : lower is "+start +"; upper is "+end+".");
+            logger.info("TextSplitter----split_index" + i + " : lower is " + start + "; upper is " + end + ".");
             if (i == splitStrings.size() - 1) {
                 // This is the last one; use a closed interval.
-                splits.add(new DataDrivenDBInputFormat.DataDrivenDBInputSplit(
-                        type, colName, " >= ", start, " <= ", end));
+                splits.add(new DataDBInputSplit(type, colName, " >= ", start, " <= ", end));
             } else {
                 // Normal open-interval case.
-                splits.add(new DataDrivenDBInputFormat.DataDrivenDBInputSplit(
-                        type, colName, " >= ", start, " < ", end));
+                splits.add(new DataDBInputSplit(type, colName, " >= ", start, " < ", end));
             }
 
             start = end;
@@ -207,8 +204,7 @@ public class TextSplitter extends BigDecimalSplitter {
 
         if (minIsNull) {
             // Add the special null split at the end.
-            splits.add(new DataDrivenDBInputFormat.DataDrivenDBInputSplit(
-                    type, colName, DataPullConstants.QUERY_COND_IS_NULL, null, DataPullConstants.QUERY_COND_IS_NULL, null));
+            splits.add(new DataDBInputSplit(type, colName, FullPullConstants.QUERY_COND_IS_NULL, null, FullPullConstants.QUERY_COND_IS_NULL, null));
         }
 
         return splits;
@@ -222,7 +218,7 @@ public class TextSplitter extends BigDecimalSplitter {
 
 
         if (minVal.compareTo(maxVal) > 0) {
-            throw new ValidationException( minVal + " is greater than " + maxVal);
+            throw new ValidationException(minVal + " is greater than " + maxVal);
         }
 
         List<BigDecimal> splitPoints = split(
@@ -233,8 +229,6 @@ public class TextSplitter extends BigDecimalSplitter {
         for (BigDecimal bd : splitPoints) {
             splitStrings.add(commonPrefix + bigDecimalToString(bd));
         }
-
-
 
 
         // Make sure that our user-specified boundaries are the first and last
@@ -274,7 +268,7 @@ public class TextSplitter extends BigDecimalSplitter {
     }
 
     //changed by Dbus team
-    public String bigDecimalToString (BigDecimal bd) {
+    public String bigDecimalToString(BigDecimal bd) {
         if (this.rangeStyle == SplitterRange.ASSCI)
             return bigDecimalToString_assci(bd);
         else if (this.rangeStyle == SplitterRange.NUMBER)
@@ -337,6 +331,7 @@ public class TextSplitter extends BigDecimalSplitter {
 
     //changed by Dbus team
     private static final BigDecimal ASSCI_ONE_PLACE = new BigDecimal(128);
+
     public BigDecimal stringToBigDecimal_assci(String str) {
         // Start with 1/65536 to compute the first digit.
 
@@ -390,7 +385,8 @@ public class TextSplitter extends BigDecimalSplitter {
     //changed by Dbus team
     private static final int NUM_MAX_CHARS = 8;
     private static final BigDecimal NUM_ONE_PLACE = new BigDecimal(10);
-    private static final char[] numCode = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    private static final char[] numCode = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+
     private int charToNumCode(int ch) {
         int code = 0;
         if (ch < (int) '0') {
@@ -445,31 +441,31 @@ public class TextSplitter extends BigDecimalSplitter {
     }
 
 
-
     private static final int MD5_MAX_CHARS = 8;
     // 0~9, a~f
     private static final BigDecimal MD5_ONE_PLACE = new BigDecimal(16);
-    private static final char[] md5Code = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    private static final char[] md5Code = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'a', 'b', 'c', 'd', 'e', 'f'};
-    private static final char[] md5CodeBig = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    private static final char[] md5CodeBig = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F'};
+
     private int charToMd5Code(int ch) {
         int code = 0;
-        if (ch < (int)'0') {
+        if (ch < (int) '0') {
             // to '0'
             code = 0;
-        } else if ((int)'0' <= ch && ch <= (int)'9') {
+        } else if ((int) '0' <= ch && ch <= (int) '9') {
             code = ch - '0';
-        } else if ((int)'9' < ch && ch < (int)'A') {
+        } else if ((int) '9' < ch && ch < (int) 'A') {
             // to '9'
             code = 9;
-        } else if ((int)'A' <= ch && ch <= (int)'F') {
+        } else if ((int) 'A' <= ch && ch <= (int) 'F') {
             code = ch - (int) 'A' + 10;
-        } else if ((int)'F' < ch && ch < (int)'a') {
+        } else if ((int) 'F' < ch && ch < (int) 'a') {
             // to 'F'
             code = 15;
-        } else if ((int)'a' <= ch && ch <= (int)'f') {
-            code = ch - (int)'a' + 10;
+        } else if ((int) 'a' <= ch && ch <= (int) 'f') {
+            code = ch - (int) 'a' + 10;
         } else {
             // to 'f'
             code = 15;
@@ -543,7 +539,7 @@ public class TextSplitter extends BigDecimalSplitter {
         //	  if (codePoint > 0x2000) {
         //		  return new char[] { (char) 0xd83d, (char) 0xde01};
         //	  }
-        return new char[] { (char) codePoint };
+        return new char[]{(char) codePoint};
     }
 
     public void setUseNCharStrings(boolean use) {

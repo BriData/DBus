@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,17 +18,8 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.stattools;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.xml.bind.PropertyException;
 
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.StatMessage;
@@ -36,16 +27,15 @@ import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.ConfUtils;
 import com.creditease.dbus.heartbeat.util.KafkaUtil;
 import com.google.common.collect.Lists;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.consumer.OffsetCommitCallback;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
+
+import javax.xml.bind.PropertyException;
+import java.io.IOException;
+import java.util.*;
 
 
 /**
@@ -65,7 +55,7 @@ public class KafkaSource {
     private int count = 0;
 
 
-    public KafkaSource () throws IOException, PropertyException  {
+    public KafkaSource() throws IOException, PropertyException {
         Properties configs = ConfUtils.getProps(CONFIG_PROPERTIES);
         statTopic = configs.getProperty(Constants.STATISTIC_TOPIC);
         if (statTopic == null) {
@@ -77,9 +67,13 @@ public class KafkaSource {
         Properties statProps = ConfUtils.getProps(CONSUMER_PROPERTIES);
         statProps.setProperty("enable.auto.commit", "false");
         List<TopicPartition> topics = Arrays.asList(statTopicPartition);
+        //security
+        if (KafkaUtil.checkSecurity()) {
+            statProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+        }
 
-        LOG.info("StatMessage: set max.poll.records=200");
-        statProps.setProperty("max.poll.records", "200");
+        LOG.info("StatMessage: set max.poll.records=1000");
+        statProps.setProperty("max.poll.records", "1000");
 
         consumer = new KafkaConsumer(statProps);
         consumer.assign(topics);
@@ -88,7 +82,7 @@ public class KafkaSource {
         String offset = configs.getProperty("kafka.offset");
         if (offset.equalsIgnoreCase("none")) {
             ; // do nothing
-        } else if  (offset.equalsIgnoreCase("begin")) {
+        } else if (offset.equalsIgnoreCase("begin")) {
             consumer.seekToBeginning(Lists.newArrayList(statTopicPartition));
         } else if (offset.equalsIgnoreCase("end")) {
             consumer.seekToEnd(Lists.newArrayList(statTopicPartition));
@@ -102,13 +96,13 @@ public class KafkaSource {
 
 
     public List<StatMessage> poll() {
-                    /* 快速取，如果没有就立刻返回 */
+        /* 快速取，如果没有就立刻返回 */
         ConsumerRecords<String, String> records = consumer.poll(1000);
         if (records.count() == 0) {
             count++;
             if (count % 60 == 0) {
                 count = 0;
-                LOG.info(String.format("KafkaSource running on %s (offset=%d).......", statTopic,  consumer.position(statTopicPartition)));
+                LOG.info(String.format("KafkaSource running on %s (offset=%d).......", statTopic, consumer.position(statTopicPartition)));
             }
             return null;
         }
@@ -151,8 +145,7 @@ public class KafkaSource {
             public void onComplete(Map<TopicPartition, OffsetAndMetadata> map, Exception e) {
                 if (e != null) {
                     LOG.warn(String.format("CommitAsync failed!!!! offset %d, Topic %s", offset, statTopic));
-                }
-                else {
+                } else {
                     ; //do nothing when OK;
                     //logger.info(String.format("OK. offset %d, Topic %s", record.offset(), record.topic()));
                 }

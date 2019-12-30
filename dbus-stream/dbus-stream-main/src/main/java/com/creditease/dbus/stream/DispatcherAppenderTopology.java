@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,21 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream;
 
 import com.creditease.dbus.commons.PropertiesHolder;
-import com.creditease.dbus.stream.appender.bolt.*;
+import com.creditease.dbus.stream.appender.bolt.DbusAppenderBolt;
+import com.creditease.dbus.stream.appender.bolt.DbusKafkaWriterBolt;
+import com.creditease.dbus.stream.appender.bolt.DispatcherBolt;
+import com.creditease.dbus.stream.appender.bolt.WrapperBolt;
 import com.creditease.dbus.stream.appender.spout.DbusKafkaSpout;
 import com.creditease.dbus.stream.appender.utils.DbusGrouping;
 import com.creditease.dbus.stream.common.Constants;
-
+import com.creditease.dbus.stream.dispatcher.Spout.Db2KafkaConsumerSpout;
 import com.creditease.dbus.stream.dispatcher.Spout.KafkaConsumerSpout;
-
+import com.creditease.dbus.stream.dispatcher.bout.Db2DispatcherBout;
+import com.creditease.dbus.stream.dispatcher.bout.Db2KafkaProducerBout;
 import com.creditease.dbus.stream.dispatcher.bout.DispatcherBout;
 import com.creditease.dbus.stream.dispatcher.bout.KafkaProducerBout;
 import org.apache.commons.cli.*;
@@ -40,13 +45,12 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.creditease.dbus.stream.common.Constants.ConfigureKey.TOPOLOGY_WORKER_CHILDOPTS;
+
 
 public class DispatcherAppenderTopology {
 
-    /**
-     * Appender部分
-     */
-
+    private static String CURRENT_JAR_INFO = "dbus-stream-main-" + com.creditease.dbus.commons.Constants.RELEASE_VERSION + ".jar";
     private static Logger logger = LoggerFactory.getLogger(DispatcherAppenderTopology.class);
     private static String zookeeper;
     private static String topologyId;
@@ -87,7 +91,7 @@ public class DispatcherAppenderTopology {
 
             if (line.hasOption("help")) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("dbus-ora-appender-1.0.jar", options);
+                formatter.printHelp(CURRENT_JAR_INFO, options);
 
                 return -1;
             } else {
@@ -107,7 +111,7 @@ public class DispatcherAppenderTopology {
 
                 if (zookeeper == null || topologyIdPrefix == null) {
                     HelpFormatter formatter = new HelpFormatter();
-                    formatter.printHelp("dbus-ora-appender-1.0.jar", options);
+                    formatter.printHelp(CURRENT_JAR_INFO, options);
                     return -1;
                 }
 
@@ -115,7 +119,7 @@ public class DispatcherAppenderTopology {
                         && !topologyType.equals(Constants.TopologyType.DISPATCHER)
                         && !topologyType.equals(Constants.TopologyType.APPENDER)) {
                     HelpFormatter formatter = new HelpFormatter();
-                    formatter.printHelp("dbus-ora-appender-1.0.jar", options);
+                    formatter.printHelp(CURRENT_JAR_INFO, options);
                     return -1;
                 }
 
@@ -162,11 +166,19 @@ public class DispatcherAppenderTopology {
             //dispatcher部分
             this.initializeDispatcher(zookeeper, Constants.ZKPath.ZK_TOPOLOGY_ROOT + "/" + dispatcherTopologyId);
 
+            if (datasourceType != null && datasourceType.equals(com.creditease.dbus.commons.Constants.DB2_CONFIG.DB2)) {
+                builder.setSpout("dispatcher-kafkaConsumerSpout", new Db2KafkaConsumerSpout(), 1);
+                builder.setBolt("dispatcher-DispatcherBout", new Db2DispatcherBout(), 1)
+                        .shuffleGrouping("dispatcher-kafkaConsumerSpout");
+                builder.setBolt("dispatcher-kafkaProducerBout", new Db2KafkaProducerBout(), 1)
+                        .shuffleGrouping("dispatcher-DispatcherBout");
+            } else {
                 builder.setSpout("dispatcher-kafkaConsumerSpout", new KafkaConsumerSpout(), 1);
                 builder.setBolt("dispatcher-DispatcherBout", new DispatcherBout(), 1)
                         .shuffleGrouping("dispatcher-kafkaConsumerSpout");
                 builder.setBolt("dispatcher-kafkaProducerBout", new KafkaProducerBout(), 1)
                         .shuffleGrouping("dispatcher-DispatcherBout");
+            }
         }
 
         // 启动类型为all，或者appender
@@ -199,8 +211,13 @@ public class DispatcherAppenderTopology {
 
     private int getConfigureValueWithDefault(String key, int defaultValue) {
         Integer num = PropertiesHolder.getIntegerValue(Constants.Properties.CONFIGURE, key);
-        return num == null ? defaultValue: num.intValue();
+        return num == null ? defaultValue : num.intValue();
     }
+
+    private String getWorkerChildopts() {
+        return PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, TOPOLOGY_WORKER_CHILDOPTS);
+    }
+
     private void start(StormTopology topology, boolean runAsLocal) throws Exception {
 
         Config conf = new Config();
@@ -242,6 +259,11 @@ public class DispatcherAppenderTopology {
         conf.setMaxSpoutPending(MaxSpoutPending);
         //设置任务在多久之内没处理完成，则这个任务处理失败
         conf.setMessageTimeoutSecs(120);
+
+        String opts = getWorkerChildopts();
+        if (opts != null && opts.trim().length() > 0) {
+            conf.put(Config.TOPOLOGY_WORKER_CHILDOPTS, opts);
+        }
 
 //        conf.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, true);
 //        conf.registerSerialization(org.apache.avro.util.Utf8.class);

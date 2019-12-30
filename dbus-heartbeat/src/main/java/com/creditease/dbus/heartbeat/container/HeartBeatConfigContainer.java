@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,16 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.container;
 
+import com.creditease.dbus.heartbeat.vo.*;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.creditease.dbus.heartbeat.vo.*;
 
 
 public class HeartBeatConfigContainer {
@@ -44,9 +46,13 @@ public class HeartBeatConfigContainer {
 
     private Set<MonitorNodeVo> monitorNodes;
 
+    private Map<String, String> aliasMapping;
+
     private Properties kafkaProducerConfig;
 
     private Properties kafkaConsumerConfig;
+
+    private CommonConfigVo conmmonConfig;
 
     private Set<TargetTopicVo> targetTopic;
 
@@ -129,6 +135,14 @@ public class HeartBeatConfigContainer {
         this.kafkaConsumerConfig = kafkaConsumerConfig;
     }
 
+    public CommonConfigVo getConmmonConfig() {
+        return conmmonConfig;
+    }
+
+    public void setConmmonConfig(CommonConfigVo conmmonConfig) {
+        this.conmmonConfig = conmmonConfig;
+    }
+
     public Set<TargetTopicVo> getTargetTopic() {
         return targetTopic;
     }
@@ -145,6 +159,14 @@ public class HeartBeatConfigContainer {
         this.cmap = cmap;
     }
 
+    public Map<String, String> getAliasMapping() {
+        return aliasMapping;
+    }
+
+    public void setAliasMapping(Map<String, String> aliasMapping) {
+        this.aliasMapping = aliasMapping;
+    }
+
     public void clear() {
         jdbc = null;
         dsVos = null;
@@ -154,5 +176,6 @@ public class HeartBeatConfigContainer {
         kafkaProducerConfig = null;
         targetTopic = null;
         cmap = null;
+        aliasMapping = null;
     }
 }

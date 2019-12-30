@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
 import com.creditease.dbus.commons.exception.UnintializedException;
@@ -30,7 +31,6 @@ import java.util.concurrent.ConcurrentMap;
 
 
 /**
- *
  * Created by Shrimp on 16/6/6.
  */
 public class PropertiesHolder {
@@ -40,8 +40,9 @@ public class PropertiesHolder {
 
     /**
      * 通过zookeeper初始化Constants
+     *
      * @param zookeeper zookeeper url字符串
-     * @param path 配置保存的根目录,配置文件必须中心化,即所有的配置文件均放置在path下
+     * @param path      配置保存的根目录,配置文件必须中心化,即所有的配置文件均放置在path下
      * @throws Exception
      */
     public static void initialize(String zookeeper, String path) throws Exception {
@@ -50,6 +51,7 @@ public class PropertiesHolder {
 
     /**
      * 获取指定配置文件的Properties对象
+     *
      * @param config 配置文件名称,不加扩展名
      * @return 返回配置文件内容
      */
@@ -60,7 +62,8 @@ public class PropertiesHolder {
     /**
      * 重载的方法
      * 获取指定配置文件的Properties对象
-     * @param confFileName 配置文件名称,不加扩展名
+     *
+     * @param confFileName      配置文件名称,不加扩展名
      * @param customizeConfPath 每个业务线的定制化配置路径，如果有的话。（config存储基础配置信息。）
      * @return 返回配置文件内容
      */
@@ -70,14 +73,15 @@ public class PropertiesHolder {
 
     /**
      * 获取指定配置文件中 key 对应的value
+     *
      * @param config 配置文件名称
-     * @param key 配置项的key值
+     * @param key    配置项的key值
      * @return 返回key对应的value
      */
     public static String getProperties(String config, String key) {
         try {
             Object val = getProperties(config).get(key);
-            if(val != null) {
+            if (val != null) {
                 return val.toString().trim();
             }
             return null;
@@ -88,14 +92,15 @@ public class PropertiesHolder {
 
     public static Integer getIntegerValue(String config, String key) {
         String value = getProperties(config, key);
-        if(value != null && value.length() > 0) {
+        if (value != null && value.length() > 0) {
             return Integer.parseInt(value);
         }
         return null;
     }
+
     public static Long getLongValue(String config, String key) {
         String value = getProperties(config, key);
-        if(value != null && value.length()>0) {
+        if (value != null && value.length() > 0) {
             return Long.parseLong(value);
         }
         return null;
@@ -103,6 +108,7 @@ public class PropertiesHolder {
 
     /**
      * 重新加载配置文件
+     *
      * @throws Exception
      */
     public static void reload() throws Exception {
@@ -129,18 +135,19 @@ public class PropertiesHolder {
 
         /**
          * 获取指定配置文件的Properties对象
+         *
          * @param config 配置文件名称,不加扩展名
          * @return 返回配置文件内容
          */
         public Properties getProperties(String config) throws Exception {
-            if(propMap.containsKey(config)) {
+            if (propMap.containsKey(config)) {
                 return propMap.get(config);
             } else {
-                if(provider == null) {
+                if (provider == null) {
                     throw new UnintializedException("PropertiesHolder has not initialized");
                 }
                 Properties properties = provider.loadProperties(config);
-                if(properties != null) {
+                if (properties != null) {
                     propMap.putIfAbsent(config, properties);
                     return properties;
                 }
@@ -150,25 +157,26 @@ public class PropertiesHolder {
 
         /**
          * 获取指定配置文件的Properties对象
-         * @param confFileName 配置文件名称,不加扩展名
+         *
+         * @param confFileName      配置文件名称,不加扩展名
          * @param customizeConfPath TODO
          * @return 返回配置文件内容
          */
         public Properties getPropertiesInculdeCustomizeConf(String confFileName, String customizeConfPath, boolean useCacheIfCached) throws Exception {
-            if(propMap.containsKey(confFileName) && useCacheIfCached) {
+            if (propMap.containsKey(confFileName) && useCacheIfCached) {
                 return propMap.get(confFileName);
             } else {
-                if(provider == null) {
+                if (provider == null) {
                     throw new UnintializedException("PropertiesHolder has not initialized");
                 }
                 Properties properties = provider.loadProperties(confFileName);
 
-                if(null != customizeConfPath && !"".equals(customizeConfPath)) {
+                if (null != customizeConfPath && !"".equals(customizeConfPath)) {
                     Properties customizeProperties = provider.loadProperties(customizeConfPath);
                     properties.putAll(customizeProperties);
                 }
 
-                if(properties != null) {
+                if (properties != null) {
                     propMap.putIfAbsent(confFileName, properties);
                     return properties;
                 }

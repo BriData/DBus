@@ -150,12 +150,19 @@ export const PROJECT_TABLE_BATCH_START_API = '/keeper/projectTable/batchStart'
 
 // 获取拉全量配置
 export const PROJECT_TABLE_GET_INITIAL_LOAD_CONF_API = '/keeper/projectTable/getProjectTableById'
+
+// 拓扑表迁移
+export const PROJECT_TABLE_MOVE_TOPO_TABLES_API = '/keeper/projectTable/moveTopoTables'
+// 获取同一别名的topologys
+export const PROJECT_TABLE_GET_TOPO_ALIAS_API = '/keeper/project-topos/getTopoAlias'
+
 // 保存拉全量配置
 export const PROJECT_TABLE_SAVE_INITIAL_LOAD_CONF_API = '/keeper/fullpull/updateCondition'
 // 拉全量
 export const PROJECT_TABLE_INITIAL_LOAD_API = '/keeper/projectTable/initialLoad'
 
-
+// 获取表的数据量
+export const TABLE_GET_TABLE_ROWS_API = '/keeper/tables/getTableRows'
 // projectTable startTable
 // projectTable stopTable
 // projectTable  delectTable

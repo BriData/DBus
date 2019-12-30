@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.mapper;
 
@@ -46,7 +47,7 @@ public interface DataTableRuleMapper {
 
     int saveAllRules(List<DataTableRule> list);
 
-    List<RuleInfo> getAsRuleInfo(@Param("tableId") Integer tableId,@Param("ruleTypeName") String ruleTypeName);
+    List<RuleInfo> getAsRuleInfo(@Param("tableId") Integer tableId, @Param("ruleTypeName") String ruleTypeName);
 
     int insertRuleGroupVersion(HashMap<String, Object> ruleGroupVersion);
 

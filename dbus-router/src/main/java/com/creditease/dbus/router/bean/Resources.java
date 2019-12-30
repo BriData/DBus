@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.bean;
 
 import java.io.Serializable;
@@ -30,6 +31,10 @@ public class Resources implements Serializable {
     private Long tableId;
 
     private String dsName;
+
+    private String originDsName;
+
+    private String alias;
 
     private String schemaName;
 
@@ -75,5 +80,21 @@ public class Resources implements Serializable {
 
     public void setTopicName(String topicName) {
         this.topicName = topicName;
+    }
+
+    public String getOriginDsName() {
+        return originDsName;
+    }
+
+    public void setOriginDsName(String originDsName) {
+        this.originDsName = originDsName;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 }

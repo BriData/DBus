@@ -82,3 +82,9 @@ export const DATA_SOURCE_GET_SCHEMA_TABLE_LIST = createActionTypes('dataSource/d
 
 // DataSource 清楚schema 和 schema table数据
 export const DATA_SOURCE_CLEAN_SCHEMA_TABLE = 'dataSource/dataSourceManager/DATA_SOURCE_CLEAN_SCHEMA_TABLE'
+
+export const OGG_CANAL_CONF_GET_BY_DS_NAME = createActionTypes('dataSource/dataSourceManager/OGG_CANAL_CONF_GET_BY_DS_NAME', [
+  'LOAD',
+  'SUCCESS',
+  'FAIL'
+])

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,46 +18,30 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Inherited;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.mapper.EncodePluginsMapper;
 import com.creditease.dbus.domain.mapper.ProjectMapper;
+import com.creditease.dbus.domain.mapper.TopologyJarMapper;
 import com.creditease.dbus.domain.model.EncodePlugins;
 import com.creditease.dbus.domain.model.Project;
+import com.creditease.dbus.domain.model.TopologyJar;
 import com.creditease.dbus.encoders.Encoder;
 import com.creditease.dbus.encoders.PluginManager;
 import com.creditease.dbus.encoders.PluginScanner;
+import com.creditease.dbus.utils.StormToplogyOpHelper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.reflections.Configuration;
 import org.reflections.Reflections;
@@ -69,6 +53,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Inherited;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 /**
  * Created by mal on 2018/4/19.
  */
@@ -78,100 +73,59 @@ public class JarManagerService {
     private static Pattern pattern = Pattern.compile("([\\\\/]{1}[\\d\\w\\-_\\.]+){3}[\\\\/]{1}[\\d\\w\\-_\\.]+\\.jar");
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static final String DBUS_JARS_BASE_PATH = "dbus.jars.base.path";
-
-    public static final String DBUS_ROUTER_JARS_BASE_PATH = "dbus.router.jars.base.path";
-
-    public static final String DBUS_ENCODE_PLUGINS_JARS_BASE_PATH = "dbus.encode.plugins.jars.base.path";
-
-    public static final String DBUS_KERBEROS_KEYTAB_FILE_BASE_PATH = "dbus.kerberos.keytab.file.base.path";
-
     @Autowired
     private IZkService zkService;
-
     @Autowired
     private EncodePluginsMapper encodePluginsMapper;
-
     @Autowired
     private ProjectMapper projectMapper;
-
-    public List<String> queryVersion(String category) throws Exception {
-        String pathKey = DBUS_JARS_BASE_PATH;
-        if (StringUtils.equals(category, "router")) pathKey = DBUS_ROUTER_JARS_BASE_PATH;
-        String baseDir = obtainBaseDir(pathKey);
-
-        Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        String user = props.getProperty("user");
-        String stormNimbusHost = props.getProperty("storm.nimbus.host");
-        String port = props.getProperty("storm.nimbus.port");
-
-        // 0:user name, 1:nimbus host, 2:ssh port,
-        String cmd = MessageFormat.format("ssh {0}@{1} -p {2} find {3} -maxdepth 1 -a -type d | sed '1d'",
-                user, stormNimbusHost, port, baseDir) + " | awk -F '/' '{print $NF}'";
-        logger.info("cmd command: {}", cmd);
-
-        List<String> versions = new ArrayList<>();
-        execCmd(cmd, versions);
-        return versions;
-    }
-
-    public List<String> queryType(String category, String version) throws Exception {
-        String pathKey = DBUS_JARS_BASE_PATH;
-        if (StringUtils.equals(category, "router")) pathKey = DBUS_ROUTER_JARS_BASE_PATH;
-        String baseDir = obtainBaseDir(pathKey);
-        String sourcePath = StringUtils.join(new String[]{baseDir, version}, File.separator);
-
-        Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        String user = props.getProperty("user");
-        String stormNimbusHost = props.getProperty("storm.nimbus.host");
-        String port = props.getProperty("storm.nimbus.port");
-
-        // 0:user name, 1:nimbus host, 2:ssh port,
-        String cmd = MessageFormat.format("ssh {0}@{1} -p {2} find {3} -maxdepth 1 -a -type d | sed '1d'",
-                user, stormNimbusHost, port, sourcePath) + " | awk -F '/' '{print $NF}'";
-        logger.info("cmd command: {}", cmd);
-
-        List<String> types = new ArrayList<>();
-        execCmd(cmd, types);
-        return types;
-    }
+    @Autowired
+    private TopologyJarMapper topologyJarMapper;
+    @Autowired
+    private StormToplogyOpHelper stormTopoHelper;
 
     public int uploads(String category, String version, String type, MultipartFile jarFile) {
         int success = 1;
         File file = null;
         try {
-            String pathKey = DBUS_JARS_BASE_PATH;
-            if (StringUtils.equals(category, "router")) pathKey = DBUS_ROUTER_JARS_BASE_PATH;
-
             file = new File(SystemUtils.getUserDir(), System.currentTimeMillis() + ".jar");
             jarFile.transferTo(file);
 
-            String baseDir = obtainBaseDir(pathKey);
+            Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+            String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+            String stormNimbusHost = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+            String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+            String baseDir = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_JARS_PATH);
+
             long time = System.currentTimeMillis();
             String minorVersion = StringUtils.join(new String[]{DateFormatUtils.format(time, "yyyyMMdd"), DateFormatUtils.format(time, "HHmmss")}, "_");
-            String savePath = StringUtils.join(new String[]{baseDir, version, type, minorVersion}, File.separator);
-
-            Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-            String user = props.getProperty("user");
-            String stormNimbusHost = props.getProperty("storm.nimbus.host");
-            String port = props.getProperty("storm.nimbus.port");
+            String savePath = StringUtils.join(new String[]{baseDir, version, type, minorVersion}, "/");
 
             // 0:ssh port, 1:user name, 2:nimbus host, 3:path
-            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} mkdir -pv {3}",
-                    port, user, stormNimbusHost, savePath);
+            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} mkdir -pv {3}", port, user, stormNimbusHost, savePath);
             logger.info("mdkir command: {}", cmd);
             int retVal = execCmd(cmd, null);
             if (retVal == 0) {
                 logger.info("mkdir success.");
                 // 0:ssh port, 1:source path, 2:user name, 3:nimbus host, 4:dest path
                 cmd = MessageFormat.format("scp -P {0} {1} {2}@{3}:{4}",
-                        port, file.getPath(), user, stormNimbusHost, savePath + File.separator + jarFile.getOriginalFilename());
+                        port, file.getPath(), user, stormNimbusHost, savePath + "/" + jarFile.getOriginalFilename());
                 logger.info("scp command: {}", cmd);
                 retVal = execCmd(cmd, null);
                 if (retVal == 0) {
                     logger.info("scp success.");
                 }
             }
+            TopologyJar topologyJar = new TopologyJar();
+            topologyJar.setName(jarFile.getOriginalFilename());
+            topologyJar.setCategory(category);
+            topologyJar.setVersion(version);
+            topologyJar.setType(type);
+            topologyJar.setMinorVersion(minorVersion);
+            topologyJar.setPath(savePath + "/" + jarFile.getOriginalFilename());
+            topologyJar.setCreateTime(new Date());
+            topologyJar.setUpdateTime(new Date());
+            topologyJarMapper.insert(topologyJar);
 
         } catch (Exception e) {
             success = 0;
@@ -181,68 +135,134 @@ public class JarManagerService {
         return success;
     }
 
-    public int delete(String category, String version, String type, String minorVersion, String fileName) {
-        int success = 1;
+    public int batchDelete(List<Integer> ids) {
+        int ret = 0;
+        for (Integer id : ids) {
+            ret += delete(id);
+        }
+        return ret;
+    }
+
+    public int delete(Integer id) {
+        TopologyJar topologyJar = topologyJarMapper.selectByPrimaryKey(id);
         try {
-            String pathKey = DBUS_JARS_BASE_PATH;
-            if (StringUtils.equals(category, "router")) pathKey = DBUS_ROUTER_JARS_BASE_PATH;
-            String baseDir = obtainBaseDir(pathKey);
-            String parentPath = StringUtils.join(new String[]{baseDir, version, type, minorVersion}, File.separator);
-            String filePath = StringUtils.join(new String[]{parentPath, fileName}, File.separator);
-
             Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-            String user = props.getProperty("user");
-            String stormNimbusHost = props.getProperty("storm.nimbus.host");
-            String port = props.getProperty("storm.nimbus.port");
+            String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+            String stormNimbusHost = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+            String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
 
-            // 0:ssh port, 1:user name, 2:nimbus host, 3:path
-            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} rm -rf {3} {4}",
-                    port, user, stormNimbusHost, filePath, parentPath);
+            String path = topologyJar.getPath();
+            String parentPath = path.substring(0, path.lastIndexOf("/"));
+            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} rm -rf {3}", port, user, stormNimbusHost, parentPath);
             logger.info("mdkir command: {}", cmd);
             int retVal = execCmd(cmd, null);
             if (retVal == 0) {
                 logger.info("rm success.");
             }
+            return topologyJarMapper.deleteByPrimaryKey(topologyJar.getId());
         } catch (Exception e) {
-            success = 0;
+            return 0;
         }
-        return success;
     }
 
-    public int batchDelete(List<Map<String, String>> records) {
-        int ret = 0;
-        for (Map<String, String> record : records) {
-            ret += delete(record.get("category"), record.get("version"), record.get("type"), record.get("minorVersion"), record.get("fileName"));
+    public List<String> queryType(String category, String version) {
+        ArrayList<String> list = new ArrayList<>();
+        if (StringUtils.equals(category, "router")) {
+            list.add(KeeperConstants.TYPE_ROUTER);
+        } else if (StringUtils.equals(category, "sinker")) {
+            list.add(KeeperConstants.TYPE_SINKER);
+        } else {
+            list.add(KeeperConstants.TYPE_MYSQL_EXTRACTOR);
+            list.add(KeeperConstants.TYPE_DISPATCHER_APPENDER);
+            list.add(KeeperConstants.TYPE_LOG_PROCESSOR);
+            list.add(KeeperConstants.TYPE_SPLITTER_PULLER);
         }
-        return ret;
+        return list;
     }
 
-    public List<Map<String, String>> queryJarInfos(String category, String version, String type) throws Exception {
-        List<Map<String, String>> jarInfos = new ArrayList<>();
-        String pathKey = DBUS_JARS_BASE_PATH;
-        if (StringUtils.equals(category, "router")) pathKey = DBUS_ROUTER_JARS_BASE_PATH;
-        String baseDir = obtainBaseDir(pathKey);
+    public List<String> queryVersion(String category) {
+        HashMap<Object, Object> param = new HashMap<>();
+        param.put("category", category);
+        Set<String> collect = topologyJarMapper.search(param).stream().map(TopologyJar::getVersion).collect(Collectors.toSet());
+        ArrayList<String> list = new ArrayList<>();
+        list.addAll(collect);
+        if (list.isEmpty()) {
+            list.add(KeeperConstants.RELEASE_VERSION);
+        }
+        return list;
+    }
 
+    public List<TopologyJar> queryJarInfos(String category, String version, String type) {
+        category = category == null ? "normal" : category;
+        HashMap<Object, Object> param = new HashMap<>();
+        param.put("category", category);
+        param.put("version", version);
+        param.put("type", type);
+        return topologyJarMapper.search(param);
+    }
+
+    public Integer syncJarInfos() throws Exception {
+        Map<String, Map<String, String>> jarInfos = getJarInfos();
+        List<TopologyJar> topologyJars = topologyJarMapper.selectAll();
+        //去除数据库无效的jar包记录
+        Iterator<TopologyJar> iterator = topologyJars.iterator();
+        while (iterator.hasNext()) {
+            TopologyJar jar = iterator.next();
+            if (null == jarInfos.get(jar.getPath())) {
+                topologyJarMapper.deleteByPrimaryKey(jar.getId());
+                iterator.remove();
+                logger.info("delete topology jar {}", JSON.toJSONString(jar));
+            }
+        }
+        HashMap<String, TopologyJar> topologyJarsMap = new HashMap<>();
+        for (TopologyJar topologyJar : topologyJars) {
+            topologyJarsMap.put(topologyJar.getPath(), topologyJar);
+        }
+        jarInfos.entrySet().forEach(entry -> {
+            TopologyJar jar = topologyJarsMap.get(entry.getKey());
+            Map<String, String> value = entry.getValue();
+            if (jar == null) {
+                TopologyJar topologyJarNew = new TopologyJar();
+                topologyJarNew.setCategory(getCategory(value.get("type")));
+                topologyJarNew.setName(value.get("name"));
+                topologyJarNew.setType(value.get("type"));
+                topologyJarNew.setVersion(value.get("version"));
+                topologyJarNew.setMinorVersion(value.get("minorVersion"));
+                topologyJarNew.setPath(value.get("path"));
+                topologyJarNew.setCreateTime(new Date());
+                topologyJarNew.setUpdateTime(new Date());
+                topologyJarMapper.insert(topologyJarNew);
+                logger.info("new topology jar {}", JSON.toJSONString(topologyJarNew));
+            }
+        });
+        return 0;
+    }
+
+    private String getCategory(String type) {
+        if ("router".equals(type)) {
+            return "router";
+        } else if ("sinker".equals(type)) {
+            return "sinker";
+        } else {
+            return "normal";
+        }
+    }
+
+    private Map<String, Map<String, String>> getJarInfos() throws Exception {
+        Map<String, Map<String, String>> jarInfos = new HashMap<>();
         Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        String user = props.getProperty("user");
-        String stormNimbusHost = props.getProperty("storm.nimbus.host");
-        String port = props.getProperty("storm.nimbus.port");
+        String baseDir = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_JARS_PATH);
+        String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+        String stormNimbusHost = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+        String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
 
-        // 0:user name, 1:nimbus host, 2:ssh port
-        String cmd = MessageFormat.format("ssh {0}@{1} -p {2} find {3} -type f -a -name \"*.jar\"",
-                user, stormNimbusHost, port, baseDir);
+        String cmd = MessageFormat.format("ssh {0}@{1} -p {2} find {3} -type f -a -name \"*.jar\"", user, stormNimbusHost, port, baseDir);
         logger.info("cmd command: {}", cmd);
 
         List<String> jars = new ArrayList<>();
         int retVal = execCmd(cmd, jars);
         if (retVal == 0) {
             logger.info("obtain jars info success.");
-            Map<String, Map<String, String>> records = new TreeMap<>(new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    return o1.compareTo(o2) * -1;
-                }
-            });
             for (String jarPath : jars) {
                 Map<String, String> record = new HashMap<>();
                 Matcher m = pattern.matcher(jarPath);
@@ -251,32 +271,17 @@ public class JarManagerService {
                     record.put("version", arrs[1]);
                     record.put("type", arrs[2]);
                     record.put("minorVersion", arrs[3]);
-                    record.put("fileName", arrs[4]);
+                    record.put("name", arrs[4]);
                     record.put("path", jarPath);
-                    if (StringUtils.isBlank(version) && StringUtils.isBlank(type)) {
-                        records.put(arrs[3], record);
-                    } else if (StringUtils.isNotBlank(version) &&
-                            StringUtils.isNotBlank(type) &&
-                            StringUtils.contains(arrs[1], version) &&
-                            StringUtils.contains(arrs[2], type)) {
-                        records.put(arrs[3], record);
-                    } else if (StringUtils.isNotBlank(version) &&
-                            StringUtils.isBlank(type) &&
-                            StringUtils.contains(arrs[1], version)) {
-                        records.put(arrs[3], record);
-                    } else if (StringUtils.isNotBlank(type) &&
-                            StringUtils.isBlank(version) &&
-                            StringUtils.contains(arrs[2], type)) {
-                        records.put(arrs[3], record);
-                    }
+                    jarInfos.put(jarPath, record);
                 }
-            }
-
-            for (Map.Entry<String, Map<String, String>> entry : records.entrySet()) {
-                jarInfos.add(entry.getValue());
             }
         }
         return jarInfos;
+    }
+
+    public Integer updateJar(TopologyJar jar) {
+        return topologyJarMapper.updateByPrimaryKey(jar);
     }
 
     private String obtainBaseDir(String proName) throws Exception {
@@ -284,56 +289,14 @@ public class JarManagerService {
         return props.getProperty(proName);
     }
 
-    public int uploadsEncodePlugin(String name, Integer projectId, MultipartFile jarFile) throws Exception {
+    public int uploadsEncodePlugin(String name, Integer projectId, MultipartFile jarFile) {
         int retVal = 0;
         File file = null;
-        //C:/dbus_encoder_plugins_jars/0/20180809_145823/encoder-plugins-0.5.0.jar
         try {
-            String pathKey = DBUS_ENCODE_PLUGINS_JARS_BASE_PATH;
-
             file = new File(SystemUtils.getUserDir(), System.currentTimeMillis() + ".jar");
             jarFile.transferTo(file);
-
-            String baseDir = obtainBaseDir(pathKey);
-            long time = System.currentTimeMillis();
-            String minorVersion = StringUtils.join(new String[]{DateFormatUtils.format(time, "yyyyMMdd"), DateFormatUtils.format(time, "HHmmss")}, "_");
-            String savePath = StringUtils.join(new String[]{baseDir, projectId.toString(), minorVersion}, File.separator);
-
-            Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-            String user = props.getProperty("user");
-            String stormNimbusHost = props.getProperty("storm.nimbus.host");
-            String port = props.getProperty("storm.nimbus.port");
-
-            String destPath = savePath + File.separator + jarFile.getOriginalFilename();
-            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} mkdir -pv {3}",
-                    port, user, stormNimbusHost, savePath);
-            logger.info("mdkir command: {}", cmd);
-            retVal = execCmd(cmd, null);
-            if (retVal == 0) {
-                logger.info("mkdir success.");
-                // 0:ssh port, 1:source path, 2:user name, 3:nimbus host, 4:dest path
-                cmd = MessageFormat.format("scp -P {0} {1} {2}@{3}:{4}",
-                        port, file.getPath(), user, stormNimbusHost, destPath);
-                logger.info("scp command: {}", cmd);
-                retVal = execCmd(cmd, null);
-                if (retVal == 0) {
-                    logger.info("scp success.");
-                    //解析jar包 获取被注解Encoder标识类的type合集
-                    String filePath = file.getPath();
-                    String types = getPluginsEncoderTypes(filePath);
-                    if (StringUtils.isBlank(types)) {
-                        return MessageCode.ENCODE_PLUGIN_JAR_IS_WRONG;
-                    }
-                    types = types.substring(0, types.length() - 1);
-                    EncodePlugins encodePlugin = new EncodePlugins();
-                    encodePlugin.setName(name);
-                    encodePlugin.setPath(destPath);
-                    encodePlugin.setProjectId(projectId);
-                    encodePlugin.setStatus(KeeperConstants.ACTIVE);
-                    encodePlugin.setEncoders(types);
-                    encodePluginsMapper.insert(encodePlugin);
-                }
-            }
+            String destPath = uploadsEncodePlugin(file, jarFile.getOriginalFilename(), projectId);
+            getAndSaveEncodePlugins(name, file, projectId, destPath);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -342,11 +305,68 @@ public class JarManagerService {
         return retVal;
     }
 
-    public int uploadsKeytab(Integer projectId, String principal, MultipartFile jarFile) throws Exception {
-        String baseDir = obtainBaseDir(DBUS_KERBEROS_KEYTAB_FILE_BASE_PATH);
+    private String uploadsEncodePlugin(File file, String fileName, Integer projectId) throws Exception {
+        Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+        String baseDir = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_ENCODE_JARS_PATH);
         long time = System.currentTimeMillis();
         String minorVersion = StringUtils.join(new String[]{DateFormatUtils.format(time, "yyyyMMdd"), DateFormatUtils.format(time, "HHmmss")}, "_");
-        String savePath = StringUtils.join(new String[]{projectId.toString(), minorVersion}, File.separator);
+        String savePath = StringUtils.join(new String[]{baseDir, projectId.toString(), minorVersion}, "/");
+
+        String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+        String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+        String destPath = savePath + "/" + fileName;
+        for (String host : getStormSupervisors()) {
+            String cmd = MessageFormat.format("ssh -p {0} {1}@{2} mkdir -pv {3}", port, user, host, savePath);
+            logger.info("mdkir command: {}", cmd);
+            int result = execCmd(cmd, null);
+            if (result == 0) {
+                logger.info("mkdir success.");
+                cmd = MessageFormat.format("scp -P {0} {1} {2}@{3}:{4}", port, file.getPath(), user, host, destPath);
+                logger.info("scp command: {}", cmd);
+                execCmd(cmd, null);
+            }
+        }
+        logger.info("scp encode plugins success.");
+        return destPath;
+    }
+
+    private int getAndSaveEncodePlugins(String name, File file, Integer projectId, String destPath) throws Exception {
+        //解析jar包 获取被注解Encoder标识类的type合集
+        String filePath = file.getPath();
+        String types = getPluginsEncoderTypes(filePath);
+        if (StringUtils.isBlank(types)) {
+            return MessageCode.ENCODE_PLUGIN_JAR_IS_WRONG;
+        }
+        types = types.substring(0, types.length() - 1);
+        EncodePlugins encodePlugin = new EncodePlugins();
+        encodePlugin.setName(name);
+        encodePlugin.setPath(destPath);
+        encodePlugin.setProjectId(projectId);
+        encodePlugin.setStatus(KeeperConstants.ACTIVE);
+        encodePlugin.setEncoders(types);
+        encodePluginsMapper.insert(encodePlugin);
+        return 0;
+    }
+
+    private ArrayList<String> getStormSupervisors() {
+        ArrayList<String> list = new ArrayList<>();
+        try {
+            JSONArray supervisors = JSONObject.parseObject(stormTopoHelper.supervisorSummary()).getJSONArray("supervisors");
+            for (int i = 0; i < supervisors.size(); i++) {
+                JSONObject supervisor = (JSONObject) supervisors.get(i);
+                list.add(supervisor.getString("host"));
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return list;
+    }
+
+    public int uploadsKeytab(Integer projectId, String principal, MultipartFile jarFile) throws Exception {
+        String baseDir = obtainBaseDir(KeeperConstants.GLOBAL_CONF_KEY_KEYTAB_FILE_PATH);
+        long time = System.currentTimeMillis();
+        String minorVersion = StringUtils.join(new String[]{DateFormatUtils.format(time, "yyyyMMdd"), DateFormatUtils.format(time, "HHmmss")}, "_");
+        String savePath = StringUtils.join(new String[]{projectId.toString(), minorVersion}, "/");
         File saveDir = new File(baseDir, savePath);
         if (!saveDir.exists()) saveDir.mkdirs();
         File file = new File(saveDir, jarFile.getOriginalFilename());
@@ -362,7 +382,6 @@ public class JarManagerService {
         project.setKeytabPath(file.getPath());
         project.setPrincipal(principal);
         projectMapper.updateByPrimaryKey(project);
-
         return 0;
     }
 
@@ -395,13 +414,103 @@ public class JarManagerService {
             return num;
         }
         EncodePlugins encodePlugins = encodePluginsMapper.selectByPrimaryKey(id);
-        String path = encodePlugins.getPath();
-        File file = new File(path);
-        File parentFile = file.getParentFile();
-        if (file.exists()) file.delete();
-        if (parentFile != null && parentFile.exists()) parentFile.delete();
-        encodePluginsMapper.deleteByPrimaryKey(id);
+        try {
+            Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+            String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+            String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+
+            String path = encodePlugins.getPath();
+            String parentPath = path.substring(0, path.lastIndexOf("/"));
+            for (String host : getStormSupervisors()) {
+                String cmd = MessageFormat.format("ssh -p {0} {1}@{2} rm -rf {3}", port, user, host, parentPath);
+                logger.info("mdkir command: {}", cmd);
+                int retVal = execCmd(cmd, null);
+                if (retVal == 0) {
+                    logger.info("rm success.");
+                }
+            }
+            encodePluginsMapper.deleteByPrimaryKey(id);
+        } catch (Exception e) {
+            return 0;
+        }
         return 0;
+    }
+
+    public int initDbusJars() {
+        try {
+            Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
+            String user = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_USER);
+            String host = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_STORM_NIMBUS_HOST);
+            String port = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_CLUSTER_SERVER_SSH_PORT);
+            String homePath = props.getProperty(KeeperConstants.GLOBAL_CONF_KEY_JARS_PATH);
+
+            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_LOG_PROCESSOR, KeeperConstants.JAR_NAME_LOG_PROCESSOR);
+            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_LOG_PROCESSOR);
+
+            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_MYSQL_EXTRACTOR, KeeperConstants.JAR_NAME_MYSQL_EXTRACTOR);
+            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_MYSQL_EXTRACTOR);
+
+            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_DISPATCHER_APPENDER, KeeperConstants.JAR_NAME_DISPATCHER_APPENDER);
+            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_DISPATCHER_APPENDER);
+
+            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_SPLITTER_PULLER, KeeperConstants.JAR_NAME_SPLITTER_PULLER);
+            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_SPLITTER_PULLER);
+
+            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_ROUTER, KeeperConstants.TYPE_ROUTER, KeeperConstants.JAR_NAME_ROUTER);
+            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_ROUTER);
+
+            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_SINKER, KeeperConstants.TYPE_SINKER, KeeperConstants.JAR_NAME_SINKER);
+            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_SINKER);
+
+            syncJarInfos();
+            initEncodePlugins();
+            return 0;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return MessageCode.EXCEPTION;
+        }
+    }
+
+    private void initEncodePlugins() throws Exception {
+        File file = new File(SystemUtils.getUserDir() + "/../extlib/" + KeeperConstants.JAR_NAME_ENCODER_PLUGINS);
+        String name = KeeperConstants.JAR_NAME_ENCODER_PLUGINS.substring(0, KeeperConstants.JAR_NAME_ENCODER_PLUGINS.lastIndexOf("."));
+        String destPath = uploadsEncodePlugin(file, name, 0);
+        EncodePlugins encodePlugin = new EncodePlugins();
+        encodePlugin.setName(name);
+        encodePlugin.setPath(destPath);
+        encodePlugin.setProjectId(0);
+        encodePlugin.setStatus(KeeperConstants.ACTIVE);
+        encodePlugin.setEncoders("md5,default-value,murmur3,regex,replace");
+        encodePluginsMapper.insert(encodePlugin);
+    }
+
+    private void uploadStormJars(String user, String host, String port, String homePath, String category, String type, String jarName) {
+        long time = System.currentTimeMillis();
+        String minorVersion = StringUtils.join(new String[]{DateFormatUtils.format(time, "yyyyMMdd"), DateFormatUtils.format(time, "HHmmss")}, "_");
+        String savePath = StringUtils.join(new String[]{homePath, KeeperConstants.RELEASE_VERSION, type, minorVersion}, "/");
+        String cmd = MessageFormat.format("ssh -p {0} {1}@{2} mkdir -pv {3}", port, user, host, savePath);
+        logger.info("mdkir command: {}", cmd);
+        int retVal = execCmd(cmd, null);
+        if (retVal == 0) {
+            logger.info("mkdir success.");
+            File file = new File(SystemUtils.getUserDir() + "/../extlib/" + jarName);
+            cmd = MessageFormat.format("scp -P {0} {1} {2}@{3}:{4}", port, file.getPath(), user, host, savePath + "/" + jarName);
+            logger.info("scp command: {}", cmd);
+            retVal = execCmd(cmd, null);
+            if (retVal == 0) {
+                logger.info("scp success.");
+            }
+        }
+        TopologyJar topologyJar = new TopologyJar();
+        topologyJar.setName(jarName);
+        topologyJar.setCategory(category);
+        topologyJar.setVersion(KeeperConstants.RELEASE_VERSION);
+        topologyJar.setType(type);
+        topologyJar.setMinorVersion(minorVersion);
+        topologyJar.setPath(savePath + "/" + jarName);
+        topologyJar.setCreateTime(new Date());
+        topologyJar.setUpdateTime(new Date());
+        topologyJarMapper.insert(topologyJar);
     }
 
     class ReflectionsPluginScanner extends Reflections implements PluginScanner {

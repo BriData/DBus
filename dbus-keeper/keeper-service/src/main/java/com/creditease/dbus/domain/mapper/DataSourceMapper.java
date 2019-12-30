@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.mapper;
 
@@ -37,7 +38,7 @@ public interface DataSourceMapper {
 
     int updateByPrimaryKey(DataSource record);
 
-    List<Map<String,Object>> search(Map<String, Object> param);
+    List<Map<String, Object>> search(Map<String, Object> param);
 
     List<DataSource> getDataSourceByName(Map<String, Object> param);
 
@@ -45,10 +46,12 @@ public interface DataSourceMapper {
 
     void updateDsStatusByPrimaryKey(Map<String, Object> param);
 
-    List<Map<String,Object>> getDSNames();
+    List<Map<String, Object>> getDSNames();
 
     List<DataSource> getDataSourceByDsTypes(@Param("list") List<String> dsTypes);
 
     List<DataSource> getDataSourceByDsType(String dsType);
+
+    DataSource getBySchemaId(Integer schemaId);
 
 }

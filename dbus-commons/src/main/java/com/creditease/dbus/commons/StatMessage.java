@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.annotation.JSONField;
 
 
 /**
@@ -58,10 +59,10 @@ public class StatMessage {
 
     private long offset;
 
-    @JSONField(format="yyyy-MM-dd HH:mm:ss.SSS")
+    @JSONField(format = "yyyy-MM-dd HH:mm:ss.SSS")
     private Date checkpointTime;
 
-    @JSONField(format="yyyy-MM-dd HH:mm:ss.SSS")
+    @JSONField(format = "yyyy-MM-dd HH:mm:ss.SSS")
     private Date localTime;
     private Map<String, Object> payload;
 
@@ -72,7 +73,7 @@ public class StatMessage {
         return JSON.parseObject(jsonString, StatMessage.class);
     }
 
-    public String toJSONString () {
+    public String toJSONString() {
         compute();
         return JSON.toJSONString(this);
     }
@@ -87,7 +88,7 @@ public class StatMessage {
         this.type = type;
     }
 
-    public void addCount(long i)  {
+    public void addCount(long i) {
         this.count += i;
     }
 
@@ -110,14 +111,14 @@ public class StatMessage {
         }
     }
 
-    private void compute () {
+    private void compute() {
         this.checkpointTime = new Date(this.checkpointMS);
         this.localTime = new Date(this.localMS);
 
         this.latencyMS = localMS - checkpointMS;
     }
 
-    public void cleanUp () {
+    public void cleanUp() {
 
         this.checkpointMS = 0;
         this.txTimeMS = 0;
@@ -187,7 +188,7 @@ public class StatMessage {
         this.count = count;
     }
 
-    public void addErrorCount(long i)  {
+    public void addErrorCount(long i) {
         this.errorCount += i;
     }
 
@@ -199,7 +200,7 @@ public class StatMessage {
         this.errorCount = errorCount;
     }
 
-    public void addWarningCount(long i)  {
+    public void addWarningCount(long i) {
         this.warningCount += i;
     }
 

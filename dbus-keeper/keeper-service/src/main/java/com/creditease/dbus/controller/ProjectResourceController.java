@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@
  * >>
  */
 
-package com.creditease.dbus.controller;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.domain.model.ProjectResource;
 import com.creditease.dbus.service.ProjectResourceService;
-
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/3/21.
@@ -76,41 +76,41 @@ public class ProjectResourceController extends BaseController {
                                String tableName,
                                @RequestParam(defaultValue = "1") Integer pageNum,
                                @RequestParam(defaultValue = "10") Integer pageSize,
-                               Integer projectId){
-        PageInfo<Map<String,Object>> page = service.queryResource(dsName,schemaName,tableName,pageNum,pageSize,projectId);
+                               Integer projectId) {
+        PageInfo<Map<String, Object>> page = service.queryResource(dsName, schemaName, tableName, pageNum, pageSize, projectId);
         return resultEntityBuilder().payload(page).build();
     }
 
     @GetMapping("/project-resource")
     public ResultEntity getProjectResource(String dsName,
-                               String schemaName,
-                               String tableName,
-                               @RequestParam(defaultValue = "1") Integer pageNum,
-                               @RequestParam(defaultValue = "10") Integer pageSize,
-                               @RequestParam Integer projectId){
-        PageInfo<Map<String,Object>> page = service.queryProjectResource(dsName,schemaName,tableName,pageNum,pageSize,projectId);
+                                           String schemaName,
+                                           String tableName,
+                                           @RequestParam(defaultValue = "1") Integer pageNum,
+                                           @RequestParam(defaultValue = "10") Integer pageSize,
+                                           @RequestParam Integer projectId) {
+        PageInfo<Map<String, Object>> page = service.queryProjectResource(dsName, schemaName, tableName, pageNum, pageSize, projectId);
         return resultEntityBuilder().payload(page).build();
     }
 
     @GetMapping("/datasourceNames")
-    public ResultEntity getDatasourceNames(@RequestParam(required = false) Integer projectId){
-        List<Map<String,Object>> dsNames = service.getDatasourceNames(projectId);
+    public ResultEntity getDatasourceNames(@RequestParam(required = false) Integer projectId) {
+        List<Map<String, Object>> dsNames = service.getDatasourceNames(projectId);
         return resultEntityBuilder().payload(dsNames).build();
     }
 
     @GetMapping("/project-names")
-    public ResultEntity getProjectNames(){
+    public ResultEntity getProjectNames() {
         return resultEntityBuilder().payload(service.getProjectNames()).build();
     }
 
     @GetMapping("/{projectId}/{tableId}")
-    public ResultEntity getResourceByPIdAndTId(@PathVariable Integer projectId,@PathVariable Integer tableId){
+    public ResultEntity getResourceByPIdAndTId(@PathVariable Integer projectId, @PathVariable Integer tableId) {
         return resultEntityBuilder().payload(service.getByPIdAndTId(projectId, tableId)).build();
     }
 
     @GetMapping("/status/{projectId}/{tableId}")
-    public ResultEntity checkResourceStatus(@PathVariable Integer projectId,@PathVariable Integer tableId){
-        return resultEntityBuilder().payload(service.checkStatus(projectId,tableId)).build();
+    public ResultEntity checkResourceStatus(@PathVariable Integer projectId, @PathVariable Integer tableId) {
+        return resultEntityBuilder().payload(service.checkStatus(projectId, tableId)).build();
     }
 
 

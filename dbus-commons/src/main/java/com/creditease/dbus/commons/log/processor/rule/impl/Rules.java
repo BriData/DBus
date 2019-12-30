@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons.log.processor.rule.impl;
 
@@ -113,6 +114,12 @@ public enum Rules {
         public IRule getRule() {
             return new ExcludeFieldRule();
         }
+    },
+    FLATTEN_JSON_ARRAY("flattenJsonArray") {
+        @Override
+        public IRule getRule() {
+            return new FlattenJsonArrayRule();
+        }
     };
 
 
@@ -125,22 +132,39 @@ public enum Rules {
     public abstract IRule getRule();
 
     public static Rules fromStr(String strValue) {
-        switch(strValue) {
-            case    "filter": return Rules.FILTER;
-            case    "keyFilter": return Rules.KEYFILTER;
-            case    "trim": return Rules.TRIM;
-            case    "replace": return Rules.REPLACE;
-            case    "split": return Rules.SPLIT;
-            case    "subString": return Rules.SUBSTRING;
-            case    "concat": return Rules.CONCAT;
-            case    "select": return Rules.SELECT;
-            case    "saveAs": return Rules.SAVEAS;
-            case    "prefixOrAppend": return Rules.PREFIXORAPPEND;
-            case    "regexExtract": return Rules.REGEXEXTRACT;
-            case    "toIndex": return Rules.TOINDEX;
-            case    "flattenUms": return Rules.FLATTENUMS;
-            case    "jsonPath": return Rules.JSONPATH;
-            case    "excludeField": return Rules.EXCLUDEFIELDRULE;
+        switch (strValue) {
+            case "filter":
+                return Rules.FILTER;
+            case "keyFilter":
+                return Rules.KEYFILTER;
+            case "trim":
+                return Rules.TRIM;
+            case "replace":
+                return Rules.REPLACE;
+            case "split":
+                return Rules.SPLIT;
+            case "subString":
+                return Rules.SUBSTRING;
+            case "concat":
+                return Rules.CONCAT;
+            case "select":
+                return Rules.SELECT;
+            case "saveAs":
+                return Rules.SAVEAS;
+            case "prefixOrAppend":
+                return Rules.PREFIXORAPPEND;
+            case "regexExtract":
+                return Rules.REGEXEXTRACT;
+            case "toIndex":
+                return Rules.TOINDEX;
+            case "flattenUms":
+                return Rules.FLATTENUMS;
+            case "jsonPath":
+                return Rules.JSONPATH;
+            case "excludeField":
+                return Rules.EXCLUDEFIELDRULE;
+            case "flattenJsonArray":
+                return Rules.FLATTEN_JSON_ARRAY;
             default:
                 throw new RuntimeException("Invalid str value: " + strValue + "for conversion to Rules");
         }

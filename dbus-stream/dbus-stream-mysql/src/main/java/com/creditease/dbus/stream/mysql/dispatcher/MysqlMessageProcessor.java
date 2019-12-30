@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.mysql.dispatcher;
 
@@ -86,9 +87,9 @@ public class MysqlMessageProcessor extends MessageProcessor {
         CanalEntry.Entry entry = message.getEntry();
 
         CanalEntry.EventType eventType = entry.getHeader().getEventType();
-        if(eventType != CanalEntry.EventType.INSERT)  {
+        if (eventType != CanalEntry.EventType.INSERT) {
             //skip it.
-            logger.info ("Skipped a FULL_PULL_REQUESTS message which is not INSERT Type! :" + eventType.toString());
+            logger.info("Skipped a FULL_PULL_REQUESTS message which is not INSERT Type! :" + eventType.toString());
             return -1;
         }
 
@@ -113,12 +114,12 @@ public class MysqlMessageProcessor extends MessageProcessor {
             }
         }
 
-        if (dsName == null || schema == null || table == null)  {
+        if (dsName == null || schema == null || table == null) {
             throw new RuntimeException("解压FULL_PULL_REQUESTS 发现 dsName 或 schema 或 table为空.");
         }
 
         if (!dsName.equalsIgnoreCase(dsInfo.getDbSourceName())) {
-            logger.info("Skipped other datasource FULL_PULL_REQUESTS! : {}.{}.{}" , dsName, schema, table);
+            logger.info("Skipped other datasource FULL_PULL_REQUESTS! : {}.{}.{}", dsName, schema, table);
             return -1;
         }
 
@@ -137,16 +138,25 @@ public class MysqlMessageProcessor extends MessageProcessor {
         CanalEntry.Entry entry = message.getEntry();
 
         CanalEntry.EventType eventType = entry.getHeader().getEventType();
-        if(eventType != CanalEntry.EventType.INSERT)  {
+        if (eventType != CanalEntry.EventType.INSERT) {
             //skip it.
-            logger.info ("Skipped a DB_HEARTBEAT_MONITOR message which is not INSERT Type! :" + eventType.toString());
+            logger.info("Skipped a DB_HEARTBEAT_MONITOR message which is not INSERT Type! :" + eventType.toString());
             return -1;
         }
 
         CanalEntry.RowChange rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
         List<CanalEntry.RowData> dataList = rowChange.getRowDatasList();
+        /**
+         * 以前代码dataList.size() 必须是1条数据，发现生产中有奇怪数据，心跳表数据居然不止一个心跳数据，推测是 insert ... select ...
+         * 这种情况我们不处理，打算直接将这个心跳包抛弃。
+         */
+//        if (dataList.size() != 1) {
+//            throw new RuntimeException(String.format("DB_HEARTBEAT_MONITOR 发现 %d 条bach数据，应该只有一条", dataList.size()));
+//        }
         if (dataList.size() != 1) {
-            throw new RuntimeException(String.format("DB_HEARTBEAT_MONITOR 发现 %d 条bach数据，应该只有一条", dataList.size()));
+            logger.error(String.format("Skipped a DB_HEARTBEAT_MONITOR message. DB_HEARTBEAT_MONITOR 发现 %d 条bach数据，应该只有一条, 语句是%s",
+                    dataList.size(), rowChange.getSql()));
+            return -1;
         }
 
         String dsName = null;
@@ -165,19 +175,18 @@ public class MysqlMessageProcessor extends MessageProcessor {
                 packetJson = column.getValue();
         }
 
-        if (dsName == null || schemaName == null || tableName == null || packetJson == null)  {
+        if (dsName == null || schemaName == null || tableName == null || packetJson == null) {
             throw new RuntimeException("DB_HEARTBEAT_MONITOR 发现 dsName 或 schema 或 table, 或 packetJson 为空.");
         }
 
         if (!dsName.equalsIgnoreCase(dsInfo.getDbSourceName())) {
-            logger.info("Skipped other datasource HeartBeat! : {}.{}.{}" , dsName, schemaName, tableName);
+            logger.info("Skipped other datasource HeartBeat! : {}.{}.{}", dsName, schemaName, tableName);
             return -1;
         }
 
-        //logger.info(String.format("Get DB_HEARTBEAT_MONITOR message : %s.%s", schemaName, tableName));
-
+        logger.debug(String.format("Get DB_HEARTBEAT_MONITOR message : %s.%s, packetJson: %s", schemaName, tableName, packetJson));
         if (packetJson.indexOf("checkpoint") >= 0) {
-
+            logger.debug(String.format("Get DB_HEARTBEAT_MONITOR message, prepare set stat message. "));
             HeartBeatPacket packet = HeartBeatPacket.parse(packetJson);
             statMeter(schemaName, tableName, packet.getTime(), packet.getTxtime());
         }
@@ -185,7 +194,7 @@ public class MysqlMessageProcessor extends MessageProcessor {
         List<IGenericMessage> subList = map.get(schemaName);
         if (subList != null) {
             subList.add(message);
-        } else  {
+        } else {
             subList = new ArrayList<>();
             subList.add(message);
             map.put(schemaName, subList);

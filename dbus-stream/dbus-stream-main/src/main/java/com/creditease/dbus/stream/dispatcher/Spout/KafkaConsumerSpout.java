@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.dispatcher.Spout;
 
@@ -69,7 +70,6 @@ public class KafkaConsumerSpout extends BaseRichSpout {
     private DBusConsumerRecord<String, byte[]> reloadRecord = null;
 
     /**
-     *
      * @param reloadJson: reload control msg json
      */
     private void reloadConfig(String reloadJson) {
@@ -149,7 +149,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
     }
 
     @Override
-    public void close () {
+    public void close() {
         if (consumer != null) {
             consumer.close();
             consumer = null;
@@ -191,9 +191,10 @@ public class KafkaConsumerSpout extends BaseRichSpout {
 
     /**
      * delay Print message
+     *
      * @return
      */
-    private boolean canPrintNow () {
+    private boolean canPrintNow() {
         suppressLoggingCount++;
         if (suppressLoggingCount % 10000 == 0) {
             suppressLoggingCount = 0;
@@ -236,7 +237,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
                 return;
             }
             long after = System.currentTimeMillis();
-            logger.info(String.format("Spout got %d records......, poll() used_time: %d ms",  records.count(), after - before));
+            logger.info(String.format("Spout got %d records......, poll() used_time: %d ms", records.count(), after - before));
 
             for (ConsumerRecord<String, byte[]> record : records) {
                 DBusConsumerRecord<String, byte[]> dbusRecord = new DBusConsumerRecord(record);
@@ -246,7 +247,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
                 }
 
                 executingCount++;
-                logger.debug(String.format("Got Data: topic=%s, offset=%d, serializedValueSize=%d",  record.topic(), record.offset(), record.serializedValueSize()));
+                logger.debug(String.format("Got Data: topic=%s, offset=%d, serializedValueSize=%d", record.topic(), record.offset(), record.serializedValueSize()));
                 this.collector.emit(new Values(dbusRecord), new Pair<Long, String>(record.offset(), dsInfo.getDataTopic()));
             }
         } catch (Exception ex) {
@@ -273,8 +274,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
             public void onComplete(Map<TopicPartition, OffsetAndMetadata> map, Exception e) {
                 if (e != null) {
                     logger.warn(String.format("OK-CommitAsync failed!!!! offset %d, Topic %s", topicOffset.getKey(), topicOffset.getValue()));
-                }
-                else {
+                } else {
                     ; //do nothing when OK;
                     //logger.info(String.format("OK. offset %d, Topic %s", record.offset(), record.topic()));
                 }
@@ -284,7 +284,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
         consumer.commitAsync(offsetMap, callback);
     }
 
-    private void seekOffsetBack(Pair<Long, String>  topicOffset) {
+    private void seekOffsetBack(Pair<Long, String> topicOffset) {
         TopicPartition partition;
         if (topicOffset.getValue().equalsIgnoreCase(dsInfo.getCtrlTopic())) {
             partition = ctrlTopicPartition;
@@ -296,8 +296,8 @@ public class KafkaConsumerSpout extends BaseRichSpout {
 
     @Override
     public void ack(Object msgId) {
-        try{
-            Pair<Long, String> topicOffset = (Pair<Long, String>)msgId;
+        try {
+            Pair<Long, String> topicOffset = (Pair<Long, String>) msgId;
             if (topicOffset.getValue().equalsIgnoreCase(dsInfo.getCtrlTopic())) {
                 commitOffset(topicOffset);
             } else {
@@ -339,18 +339,18 @@ public class KafkaConsumerSpout extends BaseRichSpout {
     }
 
 
-
     /**
      * Failed should be abnormal case. I guess the reason inlcudes:
-     *      1)  timeout
-     *      2)  buffer overflow (or write kafka)
-     *      3)  unknown reason
+     * 1)  timeout
+     * 2)  buffer overflow (or write kafka)
+     * 3)  unknown reason
+     *
      * @param msgId
      */
     @Override
     public void fail(Object msgId) {
         try {
-            Pair<Long, String> topicOffset = (Pair<Long, String>)msgId;
+            Pair<Long, String> topicOffset = (Pair<Long, String>) msgId;
             if (topicOffset.getValue().equalsIgnoreCase(dsInfo.getCtrlTopic())) {
                 commitOffset(topicOffset);
                 return;
@@ -389,7 +389,7 @@ public class KafkaConsumerSpout extends BaseRichSpout {
                 }
             }
 
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("KafkaConsumerSpout fail():", ex);
             collector.reportError(ex);
             throw ex;

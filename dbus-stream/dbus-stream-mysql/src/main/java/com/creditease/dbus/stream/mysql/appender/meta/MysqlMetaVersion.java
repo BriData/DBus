@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,19 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.mysql.appender.meta;
 
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 
 public class MysqlMetaVersion extends MetaVersion {
-	private boolean needCompare; //是否需要比较，发生ddl事件需要进行meta信息比较，判断meta信息是否兼容，从而决定是否升版本
+    private boolean needCompare; //是否需要比较，发生ddl事件需要进行meta信息比较，判断meta信息是否兼容，从而决定是否升版本
 
-	public boolean isNeedCompare() {
-		return needCompare;
-	}
+    public boolean isNeedCompare() {
+        return needCompare;
+    }
 
-	public void setNeedCompare(boolean needCompare) {
-		this.needCompare = needCompare;
-	}
+    public void setNeedCompare(boolean needCompare) {
+        this.needCompare = needCompare;
+    }
 }

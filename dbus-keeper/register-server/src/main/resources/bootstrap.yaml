@@ -1,0 +1,11 @@
+spring:
+  application:
+    version: v1
+    cnname: dbus注册中心-v1
+    name: dbus-keeper-registry-${spring.application.version}
+  cloud:
+    config:
+      profile: ${spring.cloud.config.profile}
+      label: ${spring.cloud.config.label}
+      uri: ${spring.cloud.config.uri}
+

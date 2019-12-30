@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor;
+
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.extractor.bolt.KafkaProducerBolt;
 import com.creditease.dbus.extractor.spout.CanalClientSpout;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
@@ -36,22 +32,20 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.creditease.dbus.extractor.common.utils.Constants;
-
 /**
  * Created by ximeiwang on 2017/8/16.
  */
 public class MysqlExtractorTopology {
     //TODO
     private static Logger logger = LoggerFactory.getLogger(MysqlExtractorTopology.class);
-    private static String CURRENT_JAR_INFO = "dbus-mysql-extractor-0.4.0.jar";
+    private static String CURRENT_JAR_INFO = "dbus-mysql-extractor-" + Constants.RELEASE_VERSION + ".jar";
     private static String zkServers;
     private static String topologyId;
     private static String extractorTopologyId;
     private static boolean runAsLocal;
 
     //解析命令行传参，获取zookeeper servers和topology ID
-    private int parseCommandArgs (String[] args) {
+    private int parseCommandArgs(String[] args) {
         Options options = new Options();
         options.addOption("zk", "zookeeper", true, "the zookeeper address for properties files.");
         options.addOption("tid", "topology_id", true, "the unique id as topology name and root node name in zookeeper.");
@@ -76,14 +70,14 @@ public class MysqlExtractorTopology {
                 }
             }
             return 0;
-        } catch( ParseException exp ) {
-            logger.error("Parsing failed.  Reason: " + exp.getMessage() );
+        } catch (ParseException exp) {
+            logger.error("Parsing failed.  Reason: " + exp.getMessage());
             exp.printStackTrace();
             return -2;
         }
     }
 
-    public void buildTopology (String[] args){
+    public void buildTopology(String[] args) {
         //TODO
         if (parseCommandArgs(args) != 0) {
             return;
@@ -115,6 +109,7 @@ public class MysqlExtractorTopology {
             cluster.submitTopology(extractorTopologyId, conf, builder.createTopology());
         }
     }
+
     public static void main(String[] args) {
         MysqlExtractorTopology top = new MysqlExtractorTopology();
         top.buildTopology(args);

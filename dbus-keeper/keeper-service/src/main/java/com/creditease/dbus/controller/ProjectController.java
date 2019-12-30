@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.controller;
 
-import java.util.Map;
+package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
@@ -28,10 +27,11 @@ import com.creditease.dbus.domain.model.Project;
 import com.creditease.dbus.service.ProjectService;
 import com.creditease.dbus.utils.DBusUtils;
 import com.github.pagehelper.PageInfo;
-
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * Created by mal on 2018/3/21.
@@ -45,13 +45,12 @@ public class ProjectController extends BaseController {
 
     @GetMapping("/resources")
     public ResultEntity queryResources(String dsName,
-                                  String schemaName,
-                                  String tableName,
-                                  int pageNum,
-                                  int pageSize,
-                                  String sortby,
-                                  String order,
-                                  @RequestParam(required = false) Integer hasDbaEncode) {
+                                       String schemaName,
+                                       String tableName,
+                                       int pageNum,
+                                       int pageSize,
+                                       String sortby,
+                                       String order) {
         sortby = DBusUtils.underscoresNaming(sortby);
         if (!StringUtils.isBlank(order)) {
             if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
@@ -59,7 +58,7 @@ public class ProjectController extends BaseController {
                 order = null;
             }
         }
-        PageInfo<Map<String, Object>> page = service.queryResources(dsName, schemaName, tableName, pageNum, pageSize, sortby, order, hasDbaEncode);
+        PageInfo<Map<String, Object>> page = service.queryResources(dsName, schemaName, tableName, pageNum, pageSize, sortby, order);
         return resultEntityBuilder().payload(page).build();
     }
 
@@ -100,13 +99,8 @@ public class ProjectController extends BaseController {
         return resultEntityBuilder().payload(service.queryUserRelationProjects(param)).build();
     }
 
-    @GetMapping("/encoders")
-    public ResultEntity queryEncoderRules() throws Exception {
-        return resultEntityBuilder().payload(service.queryEncoderRules()).build();
-    }
-
     @GetMapping("/getPrincipal/{id}")
-    public ResultEntity getPrincipal(@PathVariable("id") int id){
+    public ResultEntity getPrincipal(@PathVariable("id") int id) {
         return resultEntityBuilder().payload(service.getPrincipal(id)).build();
     }
 
@@ -124,7 +118,7 @@ public class ProjectController extends BaseController {
                 order = null;
             }
         }
-        PageInfo<Project> page = service.search( pageNum, pageSize, sortby, order);
+        PageInfo<Project> page = service.search(pageNum, pageSize, sortby, order);
         return resultEntityBuilder().payload(page).build();
     }
 
@@ -134,7 +128,7 @@ public class ProjectController extends BaseController {
     }
 
     @GetMapping("/getAllResourcesByQuery")
-    public ResultEntity getAllResourcesByQuery(String dsName,String schemaName,String tableName){
+    public ResultEntity getAllResourcesByQuery(String dsName, String schemaName, String tableName) {
         return resultEntityBuilder().payload(service.getAllResourcesByQuery(dsName, schemaName, tableName)).build();
     }
 

@@ -7,7 +7,9 @@
     <modules>
         <module>dbus-stream-common</module>
         <module>dbus-stream-oracle</module>
+        <module>dbus-stream-mongo</module>
         <module>dbus-stream-mysql</module>
+        <module>dbus-stream-db2</module>
         <module>dbus-stream-main</module>
 
     </modules>
@@ -15,9 +17,9 @@
     <parent>
         <groupId>com.creditease.dbus</groupId>
         <artifactId>dbus-main</artifactId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
     </parent>
-    <artifactId>dbus-stream_1.3</artifactId>
+    <artifactId>dbus-stream</artifactId>
 
 
 </project>

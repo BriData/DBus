@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons.log.processor.parse;
 
@@ -43,11 +44,11 @@ public class ParseRuleGrammar {
 
             pr.setFilterKey(rg.getFilterKey());
 
-            if(!StringUtils.equals(ruleType.name, Rules.FLATTENUMS.name) && !StringUtils.equals(ruleType.name, Rules.KEYFILTER.name)) {
+            if (!StringUtils.equals(ruleType.name, Rules.FLATTENUMS.name) && !StringUtils.equals(ruleType.name, Rules.KEYFILTER.name)) {
                 pr.setScope(parseScope(rg.getRuleScope(), dataColumnSize));
             }
 
-            if(!StringUtils.equals(ruleType.name, Rules.JSONPATH.name)) {
+            if (!StringUtils.equals(ruleType.name, Rules.JSONPATH.name)) {
                 pr.setOperate(rg.getRuleOperate());
             }
 
@@ -66,7 +67,7 @@ public class ParseRuleGrammar {
                 pr.setParamter(rg.getRuleParamter());
             }
 
-            if(!StringUtils.isEmpty(rg.getRuleType()) && !StringUtils.equals(ruleType.name, Rules.SUBSTRING.name)) {
+            if (!StringUtils.isEmpty(rg.getRuleType()) && !StringUtils.equals(ruleType.name, Rules.SUBSTRING.name)) {
                 pr.setRuleType(rg.getRuleType());
             }
             rst.add(pr);
@@ -76,7 +77,7 @@ public class ParseRuleGrammar {
     }
 
     private static boolean parseFilterOperate(String ruleOperate) {
-        if(StringUtils.equals("==",ruleOperate)) {
+        if (StringUtils.equals("==", ruleOperate)) {
             return true;
         } else {
             return false;
@@ -89,7 +90,7 @@ public class ParseRuleGrammar {
         if (StringUtils.equals("0:", param) || StringUtils.equals("*", param)) {
             ret = all(dataColumnSize);
         } else if (singlePattern.matcher(param).matches()) {
-            ret = single(param,dataColumnSize);
+            ret = single(param, dataColumnSize);
         } else if (rangePattern.matcher(param).matches()) {
             ret = range(param, dataColumnSize);
         } else if (enumPattern.matcher(param).matches()) {
@@ -106,7 +107,7 @@ public class ParseRuleGrammar {
 
     private static List<Integer> single(String param, int dataColumnSize) {
         int num = NumberUtils.toInt(param);
-        if(param.contains("-")) {
+        if (param.contains("-")) {
             num = NumberUtils.toInt(param) + dataColumnSize;
         }
         return seeds(num, num);
@@ -116,7 +117,7 @@ public class ParseRuleGrammar {
         String[] arrs = StringUtils.split(param, ",");
         List<Integer> list = new ArrayList<>();
         for (String item : arrs) {
-            if(item.contains("-")) {
+            if (item.contains("-")) {
                 list.add(dataColumnSize + NumberUtils.toInt(item));
             } else {
                 list.add(NumberUtils.toInt(item));
@@ -128,24 +129,24 @@ public class ParseRuleGrammar {
     private static List<Integer> range(String param, int dataColumnSize) {
         String[] arrs = StringUtils.split(param, ":");
         int start = 0, end = 0;
-        if(arrs.length == 0) {
+        if (arrs.length == 0) {
             return new ArrayList<>();
-        } else if(arrs.length == 1) {
+        } else if (arrs.length == 1) {
             start = NumberUtils.toInt(arrs[0]);
-            if(arrs[0].contains("-")) {
+            if (arrs[0].contains("-")) {
                 start = NumberUtils.toInt(arrs[0]) + dataColumnSize;
             }
             end = dataColumnSize;
-        } else if(arrs.length == 2) {
+        } else if (arrs.length == 2) {
             start = NumberUtils.toInt(arrs[0]);
             end = NumberUtils.toInt(arrs[1]);
-            if(start == end) {
+            if (start == end) {
                 return new ArrayList<>();
             }
-            if(arrs[0].contains("-")) {
+            if (arrs[0].contains("-")) {
                 start = NumberUtils.toInt(arrs[0]) + dataColumnSize;
             }
-            if(arrs[1].contains("-")) {
+            if (arrs[1].contains("-")) {
                 end = NumberUtils.toInt(arrs[1]) + dataColumnSize;
             }
         }
@@ -158,7 +159,7 @@ public class ParseRuleGrammar {
 
     private static List<Integer> seeds(int start, int end) {
         List<Integer> ret = new ArrayList<>();
-        if(start == end) {
+        if (start == end) {
             ret.add(start);
         }
         for (int i = start; i < end; i++) {
@@ -187,26 +188,26 @@ public class ParseRuleGrammar {
         System.out.println("60:-60:" + rangePattern.matcher("60:-60").matches());
 
         System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("0::" + parseScope("0:",100));
-        System.out.println("*:" + parseScope("*",100));
-        System.out.println("-5:-1:" + parseScope("-5:-1",100));
-        System.out.println("0:5:" + parseScope("0:5",100));
-        System.out.println("0:0:" + parseScope("0:0",100));
-        System.out.println("1:1:" + parseScope("1:1",100));
+        System.out.println("0::" + parseScope("0:", 100));
+        System.out.println("*:" + parseScope("*", 100));
+        System.out.println("-5:-1:" + parseScope("-5:-1", 100));
+        System.out.println("0:5:" + parseScope("0:5", 100));
+        System.out.println("0:0:" + parseScope("0:0", 100));
+        System.out.println("1:1:" + parseScope("1:1", 100));
         System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("12,17,23,28:" + parseScope("12,17,23,28",100));
-        System.out.println("-1,-3,-5,-7:" + parseScope("-1,-3,-5,-7",100));
-        System.out.println("-1,-3,-5:" + parseScope("-1,-3,-5",100));
-        System.out.println("1,2:" + parseScope("1,2",100));
-        System.out.println("12,3,7,9:" + parseScope("12,3,7,9",100));
+        System.out.println("12,17,23,28:" + parseScope("12,17,23,28", 100));
+        System.out.println("-1,-3,-5,-7:" + parseScope("-1,-3,-5,-7", 100));
+        System.out.println("-1,-3,-5:" + parseScope("-1,-3,-5", 100));
+        System.out.println("1,2:" + parseScope("1,2", 100));
+        System.out.println("12,3,7,9:" + parseScope("12,3,7,9", 100));
         System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("0:" + parseScope("0",100));
-        System.out.println("1:" + parseScope("1",100));
-        System.out.println("-1:" + parseScope("-1",100));
-        System.out.println("-99:" + parseScope("-99",100));
+        System.out.println("0:" + parseScope("0", 100));
+        System.out.println("1:" + parseScope("1", 100));
+        System.out.println("-1:" + parseScope("-1", 100));
+        System.out.println("-99:" + parseScope("-99", 100));
         System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("60:-60:" + parseScope("60:-60",100));
-        System.out.println("50:-50:" + parseScope("50:-50",100));
+        System.out.println("60:-60:" + parseScope("60:-60", 100));
+        System.out.println("50:-50:" + parseScope("50:-50", 100));
 
 
     }

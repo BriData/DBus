@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.event.impl;
 
-import java.util.*;
-
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
 import com.creditease.dbus.heartbeat.dao.IDbusDataDao;
@@ -33,21 +31,15 @@ import com.creditease.dbus.heartbeat.type.MaasMessage;
 import com.creditease.dbus.heartbeat.type.MaasMessage.DataSource;
 import com.creditease.dbus.heartbeat.type.MaasMessage.SchemaInfo;
 import com.creditease.dbus.heartbeat.type.MaasMessage.SchemaInfo.Column;
-import com.creditease.dbus.heartbeat.type.ReceivedMaasMessage;
-import com.creditease.dbus.heartbeat.type.ReceivedMaasMessage.Data_Source;
-import com.creditease.dbus.heartbeat.type.ReceivedMaasMessage.Data_Source.Server;
 import com.creditease.dbus.heartbeat.util.Constants;
-
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.TopicPartition;
+
+import java.util.*;
 
 /**
  * Created by dashencui on 2017/9/12.
@@ -69,15 +61,15 @@ public class MaasEvent extends AbstractEvent {
     protected TopicPartition partition0 = null;
 
 
-    public MaasEvent(String topic,String dataTopic){
+    public MaasEvent(String topic, String dataTopic) {
         super(01);
         this.topic = topic;
         this.dataTopic = dataTopic;
         dao = new DbusDataDaoImpl();
         Properties props = HeartBeatConfigContainer.getInstance().getmaasConf().getConsumerProp();
         Properties producerProps = HeartBeatConfigContainer.getInstance().getmaasConf().getProducerProp();
-        try{
-            LoggerFactory.getLogger().info("[topic]   ...."+topic);
+        try {
+            LoggerFactory.getLogger().info("[topic]   ...." + topic);
             LoggerFactory.getLogger().info("[maas-event]  initial.........................");
             dataConsumer = new KafkaConsumer<>(props);
             partition0 = new TopicPartition(this.topic, 0);
@@ -86,18 +78,18 @@ public class MaasEvent extends AbstractEvent {
 
             statProducer = new KafkaProducer<>(producerProps);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             LoggerFactory.getLogger().error(e.getMessage(), e);
         }
     }
 
     @Override
-    public void run(){
+    public void run() {
         String key = "";
         String value = "";
         try {
-            while (isRun.get()){
+            while (isRun.get()) {
                 try {
                     ConsumerRecords<String, String> records = dataConsumer.poll(1000);
                     if (records.isEmpty()) {
@@ -105,7 +97,7 @@ public class MaasEvent extends AbstractEvent {
                         if (waitingTimes >= 30) {
                             waitingTimes = 0;
                             boolean is_success = dao.testQuery(Constants.CONFIG_DB_KEY);
-                            LoggerFactory.getLogger().info("[maas-event]  connection is success: {}",is_success);
+                            LoggerFactory.getLogger().info("[maas-event]  connection is success: {}", is_success);
                             LoggerFactory.getLogger().info("[maas-event]  polling ....");
                         }
                         continue;
@@ -119,7 +111,7 @@ public class MaasEvent extends AbstractEvent {
                         key = record.key();
                         value = record.value();
 
-                        Map<String,String> maas_map= value2map(value);
+                        Map<String, String> maas_map = value2map(value);
                         String host = maas_map.get("host");
                         String port = maas_map.get("port");
                         String instance_name = maas_map.get("instance_name");
@@ -127,31 +119,30 @@ public class MaasEvent extends AbstractEvent {
                         String schemaName = maas_map.get("schemaName");
                         String tableName = maas_map.get("tableName");
                         //根据读到的数据确定表
-                        int count_ds_id = dao.queryCountDsId(Constants.CONFIG_DB_KEY,host,port,instance_name);
-                        LoggerFactory.getLogger().info("[maas-event]  ds id count: {}",count_ds_id);
+                        int count_ds_id = dao.queryCountDsId(Constants.CONFIG_DB_KEY, host, port, instance_name);
+                        LoggerFactory.getLogger().info("[maas-event]  ds id count: {}", count_ds_id);
                         List<Long> ver_id_list = new ArrayList<>();
-                        if(count_ds_id == 1){
-                            ver_id_list = dao.queryDsFromDbusData(Constants.CONFIG_DB_KEY,host,port,instance_name,schemaName,tableName);
-                        }
-                        else {
-                            ver_id_list = dao.queryDsFromDbusData_use_dsname(Constants.CONFIG_DB_KEY,ds_name,schemaName,tableName);
+                        if (count_ds_id == 1) {
+                            ver_id_list = dao.queryDsFromDbusData(Constants.CONFIG_DB_KEY, host, port, instance_name, schemaName, tableName);
+                        } else {
+                            ver_id_list = dao.queryDsFromDbusData_use_dsname(Constants.CONFIG_DB_KEY, ds_name, schemaName, tableName);
                         }
 
-                        LoggerFactory.getLogger().info("[maas-event]  ver id list {}",ver_id_list);
+                        LoggerFactory.getLogger().info("[maas-event]  ver id list {}", ver_id_list);
 
-                        if(ver_id_list.isEmpty()){
-                            LoggerFactory.getLogger().info("[maas-event] ","没有找到数据源");
-                            producerSend(this.dataTopic,"DBUS","没有找到数据");
+                        if (ver_id_list.isEmpty()) {
+                            LoggerFactory.getLogger().info("[maas-event] ", "没有找到数据源");
+                            producerSend(this.dataTopic, "DBUS", "没有找到数据");
                             continue;
                         }
-                        if(!tableName.isEmpty()){
+                        if (!tableName.isEmpty()) {
                             /*有指定表的情况，发一条消息到指定kafka*/
 
                             long ver_id = ver_id_list.get(0);
                             MaasMessage data_topic_message = new MaasMessage();
-                            DataSource dataSource = dao.queryDsInfoFromDbusData(Constants.CONFIG_DB_KEY,ver_id);//获得数据源信息
-                            String table_comment = dao.queryTableComment(Constants.CONFIG_DB_KEY,ver_id,schemaName);//获取表解释
-                            List<Column> column_list = dao.queryColumsUseVerid(Constants.CONFIG_DB_KEY,ver_id);//获得所有列信息
+                            DataSource dataSource = dao.queryDsInfoFromDbusData(Constants.CONFIG_DB_KEY, ver_id);//获得数据源信息
+                            String table_comment = dao.queryTableComment(Constants.CONFIG_DB_KEY, ver_id, schemaName);//获取表解释
+                            List<Column> column_list = dao.queryColumsUseVerid(Constants.CONFIG_DB_KEY, ver_id);//获得所有列信息
 
                             //构造要发送的消息
                             data_topic_message.setData_source(dataSource);
@@ -167,15 +158,14 @@ public class MaasEvent extends AbstractEvent {
                             //发送消息
                             String data_message = data_topic_message.toString();
                             LoggerFactory.getLogger().info("发送的消息 " + data_message);
-                            producerSend(this.dataTopic,"DBUS",data_message);
-                        }
-                        else {
-                            for(Long ver_id :  ver_id_list){
+                            producerSend(this.dataTopic, "DBUS", data_message);
+                        } else {
+                            for (Long ver_id : ver_id_list) {
                                 MaasMessage data_topic_message = new MaasMessage();
-                                DataSource dataSource = dao.queryDsInfoFromDbusData(Constants.CONFIG_DB_KEY,ver_id);//获得数据源信息
-                                tableName = dao.queryTableName(Constants.CONFIG_DB_KEY,ver_id,schemaName);
-                                String table_comment = dao.queryTableComment(Constants.CONFIG_DB_KEY,ver_id,schemaName);//获取表解释
-                                List<Column> column_list = dao.queryColumsUseVerid(Constants.CONFIG_DB_KEY,ver_id);//获得所有列信息
+                                DataSource dataSource = dao.queryDsInfoFromDbusData(Constants.CONFIG_DB_KEY, ver_id);//获得数据源信息
+                                tableName = dao.queryTableName(Constants.CONFIG_DB_KEY, ver_id, schemaName);
+                                String table_comment = dao.queryTableComment(Constants.CONFIG_DB_KEY, ver_id, schemaName);//获取表解释
+                                List<Column> column_list = dao.queryColumsUseVerid(Constants.CONFIG_DB_KEY, ver_id);//获得所有列信息
 
                                 //构造要发送的消息
                                 data_topic_message.setData_source(dataSource);
@@ -191,7 +181,7 @@ public class MaasEvent extends AbstractEvent {
                                 //发送消息
                                 String data_message = data_topic_message.toString();
                                 LoggerFactory.getLogger().info("发送的消息 " + data_message);
-                                producerSend(this.dataTopic,"DBUS",data_message);
+                                producerSend(this.dataTopic, "DBUS", data_message);
                             }
 
                         }
@@ -203,8 +193,7 @@ public class MaasEvent extends AbstractEvent {
             }
         } catch (Exception e) {
             LoggerFactory.getLogger().error("[maas-event] topic: " + topic + " ,key:" + key, e);
-        }
-        finally {
+        } finally {
             if (dataConsumer != null) {
                 dataConsumer.commitSync();
                 dataConsumer.close();
@@ -223,7 +212,7 @@ public class MaasEvent extends AbstractEvent {
     public boolean producerSend(String topic, final String key, String msg) {
         boolean isOk = true;
         try {
-            LOG.info("dataTopic"+topic);
+            LOG.info("dataTopic" + topic);
             statProducer.send(new ProducerRecord<String, String>(topic, key, msg), new Callback() {
                 public void onCompletion(RecordMetadata metadata, Exception e) {
                     if (e != null)
@@ -241,11 +230,11 @@ public class MaasEvent extends AbstractEvent {
         return isOk;
     }
 
-    public Map<String,String> value2map(String value){
+    public Map<String, String> value2map(String value) {
         JSONObject jsonValue = JSONObject.parseObject(value);
-        LoggerFactory.getLogger().info("[maas-event] jsonValue"+jsonValue.toJSONString());
+        LoggerFactory.getLogger().info("[maas-event] jsonValue" + jsonValue.toJSONString());
         JSONObject ds = jsonValue.getJSONObject("data_source");
-        LoggerFactory.getLogger().info("[maas-event] data_source"+ds.toJSONString());
+        LoggerFactory.getLogger().info("[maas-event] data_source" + ds.toJSONString());
         JSONObject server = ds.getJSONObject("Server");
         String host = server.getString("host");
         String port = server.getString("port");
@@ -253,13 +242,13 @@ public class MaasEvent extends AbstractEvent {
         String ds_name = ds.getString("ds_name");
         String schemaName = jsonValue.getString("owner");
         String tableName = jsonValue.getString("object_name");
-        Map<String,String> maas_map= new HashMap<String,String>();
-        maas_map.put("host",host);
-        maas_map.put("port",port);
-        maas_map.put("instance_name",instance_name);
-        maas_map.put("ds_name",ds_name);
-        maas_map.put("schemaName",schemaName);
-        maas_map.put("tableName",tableName);
+        Map<String, String> maas_map = new HashMap<String, String>();
+        maas_map.put("host", host);
+        maas_map.put("port", port);
+        maas_map.put("instance_name", instance_name);
+        maas_map.put("ds_name", ds_name);
+        maas_map.put("schemaName", schemaName);
+        maas_map.put("tableName", tableName);
         return maas_map;
     }
 

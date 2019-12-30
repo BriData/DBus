@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,40 +18,24 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringReader;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ControlMessage;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.KeeperConstants;
+import com.creditease.dbus.domain.mapper.NameAliasMappingMapper;
 import com.creditease.dbus.domain.mapper.ProjectMapper;
 import com.creditease.dbus.domain.mapper.ProjectTopologyMapper;
+import com.creditease.dbus.domain.model.NameAliasMapping;
 import com.creditease.dbus.domain.model.Project;
 import com.creditease.dbus.domain.model.ProjectTopology;
+import com.creditease.dbus.domain.model.TopologyJar;
+import com.creditease.dbus.utils.SecurityConfProvider;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -67,8 +51,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.creditease.dbus.commons.Constants.ROUTER;
 import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS;
+
 
 /**
  * Created by mal on 2018/4/12.
@@ -85,7 +74,13 @@ public class ProjectTopologyService {
     private ProjectMapper projectMapper;
 
     @Autowired
+    private NameAliasMappingMapper nameAliasMappingMapper;
+
+    @Autowired
     private IZkService zkService;
+
+    @Autowired
+    private JarManagerService jarManagerService;
 
     public int existTopoName(String topoName) {
         return mapper.selectCountByTopoName(topoName);
@@ -96,6 +91,16 @@ public class ProjectTopologyService {
         Project project = projectMapper.selectByPrimaryKey(record.getProjectId());
         generateTopologyConfig(project.getProjectName(), record.getTopoName(), record.getTopoConfig());
         generateTopologyOthersConfig(project.getProjectName(), record);
+
+        // 为router迁移表扩容,增加拓扑名的映射别名
+        NameAliasMapping nam = new NameAliasMapping();
+        nam.setNameId(record.getId());
+        nam.setName(record.getTopoName());
+        nam.setAlias(record.getAlias());
+        // 1代表router类型别名
+        nam.setType(NameAliasMapping.routerType);
+        nameAliasMappingMapper.insert(nam);
+
         return record.getId();
     }
 
@@ -226,15 +231,46 @@ public class ProjectTopologyService {
     }
 
     public int update(ProjectTopology record) {
+        if (StringUtils.isNoneBlank(record.getTopoName())) {
+            Map<String, Object> param = new HashMap<>();
+            param.put("nameId", record.getId());
+            param.put("name", record.getTopoName());
+            param.put("type", 1);
+            NameAliasMapping nam = nameAliasMappingMapper.selectByCondition(param);
+            if (nam == null || nam.getId() == null) {
+                nam = new NameAliasMapping();
+                nam.setNameId(record.getId());
+                nam.setName(record.getTopoName());
+                nam.setAlias(record.getAlias());
+                nam.setType(NameAliasMapping.routerType);
+                nameAliasMappingMapper.insert(nam);
+            } else {
+                nam.setAlias(record.getAlias());
+                nam.setUpdateTime(new Date());
+                nameAliasMappingMapper.updateByPrimaryKey(nam);
+            }
+        }
         record.setUpdateTime(new Date());
         return mapper.updateByPrimaryKey(record);
     }
 
     public ProjectTopology select(Integer topoId) {
-        return mapper.selectByPrimaryKey(topoId);
+        ProjectTopology pt = mapper.selectByPrimaryKey(topoId);
+        if (pt != null && pt.getId() != null) {
+            Map<String, Object> param = new HashMap<>();
+            param.put("nameId", pt.getId());
+            param.put("name", pt.getTopoName());
+            param.put("type", 1);
+            NameAliasMapping nam = nameAliasMappingMapper.selectByCondition(param);
+            if (nam != null) {
+                pt.setAlias(nam.getAlias());
+            }
+        }
+        return pt;
     }
 
     public int delete(Integer projectId) {
+
         ProjectTopology pt = this.select(projectId);
         if (pt != null) {
             Project project = projectMapper.selectByPrimaryKey(pt.getProjectId());
@@ -242,7 +278,19 @@ public class ProjectTopologyService {
                 deleteZkConf(project.getProjectName(), pt.getTopoName());
             }
         }
+
+        // 删除相应别名映射
+        Map<String, Object> param = new HashMap<>();
+        param.put("nameId", pt.getId());
+        param.put("name", pt.getTopoName());
+        param.put("type", 1);
+        NameAliasMapping nam = nameAliasMappingMapper.selectByCondition(param);
+        if (nam != null && nam.getId() != null) {
+            nameAliasMappingMapper.deleteByPrimaryKey(nam.getId());
+        }
+
         return mapper.deleteByPrimaryKey(projectId);
+
     }
 
     private void deleteZkConf(String projectCode, String topologyName) {
@@ -258,44 +306,11 @@ public class ProjectTopologyService {
     }
 
     public List<String> queryJarVersions() throws Exception {
-        String baseDir = obtainBaseDir();
-        Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        String user = props.getProperty("user");
-        String stormNimbusHost = props.getProperty("storm.nimbus.host");
-        String port = props.getProperty("storm.nimbus.port");
-
-        // 0:user name, 1:nimbus host, 2:ssh port,
-        String cmd = MessageFormat.format("ssh {0}@{1} -p {2} find {3} -maxdepth 1 -a -type d | sed '1d'",
-                user, stormNimbusHost, port, baseDir) + " | awk -F '/' '{print $NF}'";
-        logger.info("cmd command: {}", cmd);
-
-        List<String> versions = new ArrayList<>();
-        int retVal = execCmd(cmd, versions);
-        if (retVal == 0) {
-            logger.info("obtain router jar version success");
-        }
-        return versions;
+        return jarManagerService.queryVersion("router");
     }
 
     public List<String> queryJarPackages(String version) throws Exception {
-        String baseDir = StringUtils.joinWith(File.separator, obtainBaseDir(), version);
-        Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        String user = props.getProperty("user");
-        String stormNimbusHost = props.getProperty("storm.nimbus.host");
-        String port = props.getProperty("storm.nimbus.port");
-
-        // 0:user name, 1:nimbus host, 2:ssh port
-        String cmd = MessageFormat.format("ssh {0}@{1} -p {2} find {3} -type f -a -name \"*.jar\"",
-                user, stormNimbusHost, port, baseDir);
-        logger.info("cmd command: {}", cmd);
-
-        List<String> jars = new ArrayList<>();
-        int retVal = execCmd(cmd, jars);
-        if (retVal == 0) {
-            logger.info("obtain router jars success");
-        }
-
-        return jars;
+        return jarManagerService.queryJarInfos("router", version, "router").stream().map(TopologyJar::getPath).collect(Collectors.toList());
     }
 
     public PageInfo search(Integer projectId,
@@ -330,6 +345,9 @@ public class ProjectTopologyService {
             Properties props = zkService.getProperties(KeeperConstants.KEEPER_CONSUMER_CONF);
             props.put("group.id", StringUtils.joinWith(".", props.getProperty("group.id"), "pts"));
             props.put("client.id", StringUtils.joinWith(".", props.getProperty("client.id"), "pts"));
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
             consumer = new KafkaConsumer<String, byte[]>(props);
             List<Map<String, Object>> inTopics = this.queryInPutTopics(projectId, topoId);
             // outputTopic
@@ -374,6 +392,9 @@ public class ProjectTopologyService {
             Properties props = zkService.getProperties(KeeperConstants.KEEPER_CTLMSG_PRODUCER_CONF);
             Properties globalConf = zkService.getProperties(KeeperConstants.GLOBAL_CONF);
             props.setProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, globalConf.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
             producer = new KafkaProducer<>(props);
             producer.send(new ProducerRecord<String, byte[]>(topic, ctrlMsg.getBytes()), new Callback() {
                 @Override
@@ -411,12 +432,15 @@ public class ProjectTopologyService {
             Properties props = zkService.getProperties(KeeperConstants.KEEPER_CTLMSG_PRODUCER_CONF);
             Properties globalConf = zkService.getProperties(KeeperConstants.GLOBAL_CONF);
             props.setProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, globalConf.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
             producer = new KafkaProducer<>(props);
 
             // 发送重跑控制信息
             if (!StringUtils.equals(newConfig.getProperty("router.topic.offset"), oldConfig.getProperty("router.topic.offset"))) {
                 ControlMessage ctrlMsg = new ControlMessage(System.currentTimeMillis(), ControlType.ROUTER_TOPOLOGY_RERUN.name().toUpperCase(), "dbus-web");
-                Map<String ,Object> payload = new HashMap<>();
+                Map<String, Object> payload = new HashMap<>();
                 payload.put("projectTopoId", pt.getId());
                 payload.put("isFromEffect", true);
                 payload.put("offset", newConfig.getProperty("router.topic.offset"));
@@ -434,7 +458,7 @@ public class ProjectTopologyService {
 //            if (!StringUtils.equals(newConfig.getProperty("stat.topic"), oldConfig.getProperty("stat.topic")) ||
 //                    !StringUtils.equals(newConfig.getProperty("stat.url"), oldConfig.getProperty("stat.url"))) {
             ControlMessage ctrlMsg = new ControlMessage(System.currentTimeMillis(), ControlType.ROUTER_TOPOLOGY_EFFECT.name().toUpperCase(), "dbus-web");
-            Map<String ,Object> payload = new HashMap<>();
+            Map<String, Object> payload = new HashMap<>();
             payload.put("projectTopoId", pt.getId());
             ctrlMsg.setPayload(payload);
             String topic = StringUtils.joinWith("_", topologyCode, "ctrl");
@@ -497,70 +521,12 @@ public class ProjectTopologyService {
         return mapper.selectInPutTopics(map);
     }
 
-    private String obtainBaseDir() throws Exception {
-        Properties props = zkService.getProperties(Constants.COMMON_ROOT + "/" + Constants.GLOBAL_PROPERTIES);
-        return props.getProperty(JarManagerService.DBUS_ROUTER_JARS_BASE_PATH);
+    public List<NameAliasMapping> getTopoAlias(Integer topoId) {
+        return nameAliasMappingMapper.getTargetTopoByTopoId(topoId);
     }
 
-    private int execCmd(String cmd, List<String> lines) {
-        int exitValue = -1;
-        try {
-            Process process = Runtime.getRuntime().exec(cmd);
-            Thread outThread = new Thread(new StreamRunnable(process.getInputStream(), lines));
-            // Thread errThread = new Thread(new StreamRunnable(process.getErrorStream(), lines));
-            outThread.start();
-            // errThread.start();
-            exitValue = process.waitFor();
-            if (lines != null)
-                logger.info("result: " + JSON.toJSONString(lines));
-            if (exitValue != 0) process.destroyForcibly();
-        } catch (Exception e) {
-            logger.error("execCmd error", e);
-            exitValue = -1;
-        }
-        return exitValue;
-    }
-
-    class StreamRunnable implements Runnable {
-
-        private Reader reader = null;
-
-        private BufferedReader br = null;
-
-        List<String> lines = null;
-
-        public StreamRunnable(InputStream is, List<String> lines) {
-            Reader reader = new InputStreamReader(is);
-            br = new BufferedReader(reader);
-            this.lines = lines;
-        }
-
-        @Override
-        public void run() {
-            try {
-                String line = br.readLine();
-                while (org.apache.commons.lang.StringUtils.isNotBlank(line)) {
-                    logger.info(line);
-                    if (lines != null)
-                        lines.add(line);
-                    line = br.readLine();
-                }
-            } catch (Exception e) {
-                logger.error("stream runnable error", e);
-            } finally {
-                close(br);
-                close(reader);
-            }
-        }
-
-        private void close(Closeable closeable) {
-            try {
-                if (closeable != null)
-                    closeable.close();
-            } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
+    public List<Map<String, Object>> selectByIds(List<Integer> ids) {
+        return mapper.selectByIds(ids);
     }
 
 }

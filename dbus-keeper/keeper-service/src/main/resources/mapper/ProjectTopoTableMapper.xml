@@ -106,81 +106,6 @@
      dsource.id = dtable.ds_id
     <if test="projectId != null">AND topotable.project_id= #{projectId,jdbcType=INTEGER}</if>
   </select>
-  <!--<select id="searchTable" parameterType="java.util.Map" resultType="java.util.Map">
-    SELECT
-    t_table_tmp.*,
-    IF (tdec.table_id, 1, 0) hasDbaEncode,
-    IF (
-    tptteoc.project_topo_table_id,
-    1,
-    0
-    ) useDbaEncode
-    FROM
-    (
-    SELECT
-    topotable.id tableId,
-    project.id projectId,
-    project.project_name projectName,
-    project.project_display_name projectDisplayName,
-    topotable.topo_id topoId,
-    dtable.id sourcetableId,
-    dsource.ds_type dsType,
-    dsource.ds_name dsName,
-    dtable.schema_name schemaName,
-    dtable.table_name tableName,
-    dtable.table_name_alias tableNameAlias,
-    dtable.physical_table_regex physicalTableRegex,
-    metaversion.version version,
-    topology.topo_name topoName,
-    topology.status topoStatus,
-    dtable.output_topic inputTopic,
-    topotable.output_topic outputTopic,
-    topotable.status,
-    topotable.output_type outputType,
-    topotable.schema_change_flag schemaChangeFlag,
-    dtable.description,
-    resource.fullpull_enable_flag ifFullpull
-    FROM
-    t_dbus_datasource dsource,
-    t_data_tables dtable,
-    t_project project,
-    t_project_topo_table topotable,
-    t_project_topo topology,
-    t_project_resource resource,
-    t_meta_version metaversion
-    WHERE
-    resource.project_id = topotable.project_id
-    AND resource.table_id = topotable.table_id
-    AND dtable.id = topotable.table_id
-    AND topotable.project_id = project.id
-    AND dtable.ds_id = dsource.id
-    AND topology.id = topotable.topo_id
-    AND dtable.ver_id = metaversion.id
-    <if test="dsName != null">AND dsource.ds_name like "%"#{dsName}"%"</if>
-    <if test="schemaName != null">AND dschema.schema_name like "%"#{schemaName}"%"</if>
-    <if test="tableName != null">AND dtable.table_name like "%"#{tableName}"%"</if>
-    <if test="projectId != null">AND topotable.project_id=#{projectId}</if>
-    <if test="topoId != null">AND topotable.topo_id=#{topoId}</if>
-    ) t_table_tmp
-    LEFT JOIN (
-    SELECT DISTINCT
-    table_id
-    FROM
-    t_dba_encode_columns
-    GROUP BY
-    table_id
-    ) tdec ON t_table_tmp.sourceTableId = tdec.table_id
-    LEFT JOIN (
-    SELECT DISTINCT
-    project_topo_table_id
-    FROM
-    t_project_topo_table_encode_output_columns
-    WHERE
-    encode_source = 0
-    GROUP BY
-    project_topo_table_id
-    ) tptteoc ON t_table_tmp.tableId = tptteoc.project_topo_table_id
-  </select>-->
   <select id="searchTable" parameterType="java.util.Map" resultType="java.util.Map">
     SELECT
       topotable.id tableId,
@@ -227,63 +152,54 @@
       <if test="projectId != null">AND topotable.project_id=#{projectId}</if>
       <if test="topoId != null">AND topotable.topo_id=#{topoId}</if>
   </select>
-  <select id="getDbaEncodeTable" parameterType="java.util.List" resultType="java.lang.Long">
-    SELECT table_id tableId FROM t_dba_encode_columns WHERE table_id IN
+  <select id="getUseEncodeTables" parameterType="java.util.List" resultType="java.lang.Long">
+    SELECT    pt.table_id tableId    FROM
+    t_project_topo_table pt
+    JOIN t_project_topo_table_encode_output_columns pc ON pt.id = pc.project_topo_table_id
+    WHERE    pc.special_approve = 0
+    AND pt.table_id IN
     <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
       #{item}
     </foreach>
-    GROUP BY table_id
-  </select>
-  <select id="getDbaEncodeProjectTable" parameterType="java.util.List" resultType="java.lang.Long">
-    SELECT project_topo_table_id topoTableId FROM t_project_topo_table_encode_output_columns
-    WHERE encode_source = 0 AND  project_topo_table_id IN
+    UNION
+    SELECT    c.table_id tableId    FROM
+    t_encode_columns c
+    WHERE    c.table_id IN
     <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
       #{item}
     </foreach>
-    GROUP BY project_topo_table_id
   </select>
   <select id="selectByTableId" parameterType="java.lang.Integer" resultType="java.util.Map">
     SELECT
-        t_topo_table_tmp.*,
-    IF (tdec.table_id, 1, 0) hasDbaEncode
+      topotable.id tableId,
+      topotable.topo_id topoId,
+      dsource.ds_type dsType,
+      dsource.ds_name dsName,
+      dschema.schema_name schemaName,
+      dtable.table_name tableName,
+      dtable.description,
+      dtable.id sourceTableId,
+      resource.fullpull_enable_flag ifFullpull,
+      topotable.sink_id sinkId,
+      topotable.output_type outputType,
+      topotable.output_topic outputTopic,
+      topotable.output_list_type outputListType,
+      topotable.project_id projectId,
+      topotable.meta_ver version
+
     FROM
-        (
-		SELECT
-			topotable.id tableId,
-			topotable.topo_id topoId,
-			dsource.ds_type dsType,
-			dsource.ds_name dsName,
-			dtable.schema_name schemaName,
-			dtable.table_name tableName,
-			dtable.description,
-			dtable.id sourceTableId,
-			resource.fullpull_enable_flag ifFullpull,
-			topotable.sink_id sinkId,
-			topotable.output_type outputType,
-			topotable.output_topic outputTopic,
-			topotable.output_list_type outputListType,
-			topotable.project_id projectId,
-			topotable.meta_ver version
-		FROM
-			t_dbus_datasource dsource,
-			t_data_tables dtable,
-			t_project_topo_table topotable,
-			t_project_resource resource
-		WHERE
-			dtable.id = topotable.table_id
-		AND dtable.ds_id = dsource.id
-		AND topotable.id = #{projectTableId}
-		AND resource.table_id = topotable.table_id
-		AND resource.project_id = topotable.project_id
-	) t_topo_table_tmp
-    LEFT JOIN (
-        SELECT DISTINCT
-            table_id
-        FROM
-            t_dba_encode_columns
-        GROUP BY
-            table_id
-    ) tdec ON t_topo_table_tmp.sourceTableId = tdec.table_id
+      t_dbus_datasource dsource,
+      t_data_schema dschema,
+      t_data_tables dtable,
+      t_project_topo_table topotable,
+      t_project_resource resource
+    WHERE
+      dtable.id=topotable.table_id AND
+      dtable.ds_id = dsource.id AND
+      dtable.schema_id = dschema.id AND
+      topotable.id = #{projectTableId} AND
+      resource.table_id = topotable.table_id AND
+      resource.project_id = topotable.project_id
   </select>
   <select id="selectNameByTopic" parameterType="java.util.Map" resultType="java.lang.String">
     SELECT DISTINCT
@@ -492,4 +408,13 @@
         #{item}
       </foreach>
   </select>
+  <update id="updateTopoIdByTopoTableIds">
+    UPDATE t_project_topo_table
+      SET topo_id = #{topoId}
+    WHERE
+      id IN
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
 </mapper>

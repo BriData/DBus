@@ -1,37 +1,38 @@
 {
-    "data": [
-        { "name": "dashboard", "text": "Dashboard", "icon": "laptop" },
-        { "name": "user", "text": "User", "icon": "user" },
-        { "name": "setting", "text": "Setting", "icon": "setting" }
-      ],
-      "project": [
-        { "name": "home", "id": "app.components.menu.projectList", "text":"项目列表", "icon": "appstore-o","href":"/project-manage"},
-        { "name": "resource", "id": "app.components.menu.resource","text":"资源管理", "icon": "hdd"},
-        { "name": "topology", "id": "app.components.menu.topologyManage","text":"拓扑管理", "icon": "share-alt"  },
-        { "name": "table",  "id": "app.components.menu.table","text":"项目表管理", "icon": "layout"  },
-        { "name": "sink", "id": "app.components.menu.sink", "text":"Sink", "icon": "usb" },
-        { "name": "user", "id": "app.components.menu.user", "text":"用户管理", "icon": "solution" },
-        { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量历史技术表", "icon": "switcher"},
-        { "name": "monitor", "id": "app.components.navigator.sourceMonitor","text":"贴源监控","icon": "area-chart" }
-    ],
-    "setting": [
-        { "name": "dashboard", "text": "dashboard2", "icon": "laptop" },
-        { "name": "user", "text": "user2", "icon": "user" },
-        { "name": "setting", "text": "setting2", "icon": "setting" }
-    ],
-    "monitor": [
-        { "name": "dashboard", "text": "dashboard3", "icon": "laptop" },
-        { "name": "user", "text": "user3", "icon": "user" },
-        { "name": "setting", "text": "setting3", "icon": "setting" }
-    ],
-    "sink": [
-        { "name": "dashboard", "text": "dashboard3", "icon": "laptop" },
-        { "name": "user", "text": "user3", "icon": "user" },
-        { "name": "setting", "text": "setting3", "icon": "setting" }
-    ],
-    "user": [
-        { "name": "dashboard", "text": "dashboard4", "icon": "laptop" },
-        { "name": "user", "text": "user4", "icon": "user" },
-        { "name": "setting", "text": "setting4", "icon": "setting" }
-    ]
+  "data": [
+    { "name": "dashboard", "text": "Dashboard", "icon": "laptop" },
+    { "name": "user", "text": "User", "icon": "user" },
+    { "name": "setting", "text": "Setting", "icon": "setting" }
+  ],
+  "project": [
+    { "name": "home", "id": "app.components.menu.projectList", "text":"项目列表", "icon": "appstore-o","href":"/project-manage"},
+    { "name": "resource", "id": "app.components.menu.resource","text":"资源管理", "icon": "hdd"},
+    { "name": "topology", "id": "app.components.menu.topologyManage","text":"拓扑管理", "icon": "share-alt"  },
+    { "name": "table",  "id": "app.components.menu.table","text":"项目表管理", "icon": "layout"  },
+    { "name": "sink", "id": "app.components.menu.sink", "text":"Sink", "icon": "usb" },
+    { "name": "user", "id": "app.components.menu.user", "text":"用户管理", "icon": "solution" },
+    { "name": "fullpull-history", "id": "app.components.menu.fullPullHistory","text":"全量历史技术表", "icon": "switcher"},
+    { "name": "monitor", "id": "app.components.navigator.sourceMonitor","text":"贴源监控","icon": "area-chart" },
+    { "name": "user-key-download-manager", "id": "app.components.navigator.downloadKey","text":"下载密钥","icon": "key" }
+  ],
+  "setting": [
+    { "name": "dashboard", "text": "dashboard2", "icon": "laptop" },
+    { "name": "user", "text": "user2", "icon": "user" },
+    { "name": "setting", "text": "setting2", "icon": "setting" }
+  ],
+  "monitor": [
+    { "name": "dashboard", "text": "dashboard3", "icon": "laptop" },
+    { "name": "user", "text": "user3", "icon": "user" },
+    { "name": "setting", "text": "setting3", "icon": "setting" }
+  ],
+  "sink": [
+    { "name": "dashboard", "text": "dashboard3", "icon": "laptop" },
+    { "name": "user", "text": "user3", "icon": "user" },
+    { "name": "setting", "text": "setting3", "icon": "setting" }
+  ],
+  "user": [
+    { "name": "dashboard", "text": "dashboard4", "icon": "laptop" },
+    { "name": "user", "text": "user4", "icon": "user" },
+    { "name": "setting", "text": "setting4", "icon": "setting" }
+  ]
 }

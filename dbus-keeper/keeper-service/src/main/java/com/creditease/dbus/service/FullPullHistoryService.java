@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service;
 
@@ -42,7 +43,7 @@ public class FullPullHistoryService {
 
     public PageInfo<FullPullHistory> search(Integer pageNum, Integer pageSize, Integer userId, String roleType, HashMap<String, Object> param) {
         PageHelper.startPage(pageNum, pageSize);
-        if(!"admin".equals(roleType)){
+        if (!"admin".equals(roleType)) {
             param.put("userId", userId);
         }
         List<FullPullHistory> list = mapper.search(param);
@@ -74,5 +75,13 @@ public class FullPullHistoryService {
 
     public void update(FullPullHistory history) {
         mapper.updateByPrimaryKey(history);
+    }
+
+    public FullPullHistory getById(Long id) {
+        return mapper.selectByPrimaryKey(id);
+    }
+
+    public Long getMaxId() {
+        return mapper.getMaxId();
     }
 }

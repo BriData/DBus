@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.oracle.appender.avro;
 
 import com.creditease.dbus.commons.MetaWrapper;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.commons.exception.InitializationException;
 import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
+import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import com.google.common.io.ByteStreams;
 
@@ -83,12 +84,14 @@ public class AvroSchemaTemplate {
 
     /**
      * 新版的oracle forbigdata解决了函数索引的问题，这里判断是否配置了需要忽略虚拟列和隐藏列
+     *
      * @return
      */
     private static boolean includeVirtualFields() {
         Integer configValue = PropertiesHolder.getIntegerValue(Constants.Properties.CONFIGURE, Constants.ConfigureKey.IGNORE_VIRTUAL_FIELDS);
         return configValue == null || configValue == 0;
     }
+
     /**
      * 生成datasource.schema.table格式的key值
      */

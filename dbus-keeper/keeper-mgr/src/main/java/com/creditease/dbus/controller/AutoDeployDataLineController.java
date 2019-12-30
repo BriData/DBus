@@ -1,18 +1,37 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
+import com.creditease.dbus.bean.DeployInfoBean;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.service.AutoDeployDataLineService;
 import com.creditease.dbus.service.DataSourceService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -31,7 +50,7 @@ public class AutoDeployDataLineController extends BaseController {
     @Autowired
     private DataSourceService dataSourceService;
 
-    @RequestMapping(path = "getOggConf")
+    @GetMapping(path = "getOggConf")
     public ResultEntity getOggConf(String dsName) {
         try {
             JSONObject result = service.getOggConf(dsName);
@@ -53,7 +72,7 @@ public class AutoDeployDataLineController extends BaseController {
         }
     }
 
-    @RequestMapping(path = "getCanalConf")
+    @GetMapping(path = "getCanalConf")
     public ResultEntity getCanalConf(String dsName) {
         try {
             JSONObject result = service.getCanalConf(dsName);
@@ -75,7 +94,7 @@ public class AutoDeployDataLineController extends BaseController {
         }
     }
 
-    @RequestMapping(path = "autoAddLine")
+    @GetMapping(path = "autoAddLine")
     public ResultEntity autoAddLine(String dsName, String canalUser, String canalPass) {
         try {
             DataSource dataSource = dataSourceService.getDataSourceByDsName(dsName);
@@ -95,12 +114,43 @@ public class AutoDeployDataLineController extends BaseController {
         }
     }
 
-    @RequestMapping(path = "getOggTrailName")
-    public ResultEntity getOggTrailName() {
+    @GetMapping(path = "getOggTrailName")
+    public ResultEntity getOggTrailName(Integer number) {
         try {
-            return resultEntityBuilder().payload(service.getOggTrailName()).build();
+            return resultEntityBuilder().payload(service.getOggTrailName(number)).build();
         } catch (Exception e) {
             logger.error("Exception encountered while getOggTrailName ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    /**
+     * 机器部署配置获取
+     *
+     * @return
+     */
+    @GetMapping(path = "getOggCanalDeployInfo")
+    public ResultEntity getOggCanalDeployInfo() {
+        try {
+            return resultEntityBuilder().payload(service.getOggCanalDeployInfo()).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while getOggCanalDeployInfo ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    /**
+     * 机器部署配置更新
+     *
+     * @return
+     */
+    @PostMapping(path = "updateOggCanalDeployInfo")
+    public ResultEntity updateOggCanalDeployInfo(@RequestBody DeployInfoBean deployInfoBean) {
+        try {
+            service.updateOggCanalDeployInfo(deployInfoBean);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while updateOggCanalDeployInfo ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

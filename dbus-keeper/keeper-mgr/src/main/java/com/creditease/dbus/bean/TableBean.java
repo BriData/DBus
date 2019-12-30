@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@
  * >>
  */
 
-package com.creditease.dbus.bean;
-import com.creditease.dbus.domain.model.ProjectTopoTable;
 
-import java.util.List;
+package com.creditease.dbus.bean;
+
 import java.util.Map;
 
 /**
@@ -44,7 +43,7 @@ public class TableBean {
 
     private Integer sinkId;
 
-    Map<Integer,ProjectTopoTableEncodeOutputColumnsBean> encodes;
+    Map<Integer, ProjectTableEncodeColumnsBean> encodes;
 
     public Integer getId() {
         return Id;
@@ -94,11 +93,11 @@ public class TableBean {
         this.sinkId = sinkId;
     }
 
-    public Map<Integer, ProjectTopoTableEncodeOutputColumnsBean> getEncodes() {
+    public Map<Integer, ProjectTableEncodeColumnsBean> getEncodes() {
         return encodes;
     }
 
-    public void setEncodes(Map<Integer, ProjectTopoTableEncodeOutputColumnsBean> encodes) {
+    public void setEncodes(Map<Integer, ProjectTableEncodeColumnsBean> encodes) {
         this.encodes = encodes;
     }
 

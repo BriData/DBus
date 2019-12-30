@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.appender.meta;
 
@@ -266,11 +267,14 @@ public class OraMetaFetcher implements MetaFetcher {
         // 查询到指定版本的meta则返回,否则返回当前版本的meta信息
         if (verMeta != null) {
             // copy default value
-            for (MetaWrapper.MetaCell cell : currMeta.getColumns()) {
-                if (cell.getDefaultValue() != null && verMeta.contains(cell.getColumnName())) {
-                    verMeta.get(cell.getColumnName()).setDefaultValue(cell.getDefaultValue());
-                } else {
-                    logger.warn("copy default value of {}", cell.getOwner() + "." + cell.getTableName() + "." + cell.getColumnName());
+            // 表rename时,历史表里有meta,当前版本为null, fix这个bug
+            if (currMeta != null) {
+                for (MetaWrapper.MetaCell cell : currMeta.getColumns()) {
+                    if (cell.getDefaultValue() != null && verMeta.contains(cell.getColumnName())) {
+                        verMeta.get(cell.getColumnName()).setDefaultValue(cell.getDefaultValue());
+                    } else {
+                        logger.warn("copy default value of {}", cell.getOwner() + "." + cell.getTableName() + "." + cell.getColumnName());
+                    }
                 }
             }
             return verMeta;

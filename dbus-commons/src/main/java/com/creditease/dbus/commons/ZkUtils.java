@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
 import org.slf4j.Logger;
@@ -28,14 +29,13 @@ import java.util.Properties;
 public class ZkUtils {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static Properties getProperties (String zkServers, String path) throws Exception {
+    public static Properties getProperties(String zkServers, String path) throws Exception {
         ZkService zkService = null;
         try {
             zkService = new ZkService(zkServers);
 
             return zkService.getProperties(path);
-        }
-        finally {
+        } finally {
             if (zkService != null) {
                 zkService.close();
             }
@@ -48,9 +48,8 @@ public class ZkUtils {
             zkService = new ZkService(zkServers);
 
             byte[] data = zkService.getData(path);
-            return new String(data,"UTF-8");
-        }
-        finally {
+            return new String(data, "UTF-8");
+        } finally {
             if (zkService != null) {
                 zkService.close();
             }
@@ -59,14 +58,13 @@ public class ZkUtils {
     }
 
 
-    public static void setProperties (String zkServers, String path, Properties props) throws Exception {
+    public static void setProperties(String zkServers, String path, Properties props) throws Exception {
         ZkService zkService = null;
         try {
             zkService = new ZkService(zkServers);
 
             zkService.setProperties(path, props);
-        }
-        finally {
+        } finally {
             if (zkService != null) {
                 zkService.close();
             }

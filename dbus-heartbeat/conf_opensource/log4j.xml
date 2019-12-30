@@ -4,9 +4,9 @@
 
     <!-- 控制台Appender -->
     <appender name="console_out" class="org.apache.log4j.ConsoleAppender">
-        <param name="Target" value="System.out" />
+        <param name="Target" value="System.out"/>
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="[%t] %-5p: %d{yyy/MM/dd HH:mm:ss.SSS} %C{1} %L - %m%n" />
+            <param name="ConversionPattern" value="[%t] %-5p: %d{yyy/MM/dd HH:mm:ss.SSS} %C{1} %L - %m%n"/>
         </layout>
     </appender>
 
@@ -19,7 +19,7 @@
         <param name="ImmediateFlush" value="true"/>
         <param name="Encoding" value="UTF-8"/>
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="[%t] %-5p: %d{yyy/MM/dd HH:mm:ss.SSS} %C{1} %L - %m%n" />
+            <param name="ConversionPattern" value="[%t] %-5p: %d{yyy/MM/dd HH:mm:ss.SSS} %C{1} %L - %m%n"/>
         </layout>
     </appender>
 
@@ -38,7 +38,7 @@
     <!-- Root Logger -->
     <root>
         <priority value="warn"/>
-        <appender-ref ref="console_out" />
+        <appender-ref ref="console_out"/>
     </root>
 
 </log4j:configuration>

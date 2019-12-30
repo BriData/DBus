@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.kafka;
 
@@ -50,7 +51,7 @@ public class TopicInfo {
         bean.setOffset(Long.parseLong(data.get("offset").toString()));
         bean.setParameter(data.get("parameter"));
         Object date = data.get("time");
-        if(date != null) {
+        if (date != null) {
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             try {
                 bean.setTime(df.parse(date.toString()));

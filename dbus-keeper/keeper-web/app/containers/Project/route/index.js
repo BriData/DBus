@@ -12,6 +12,7 @@ import UserWrapper from '@/app/containers/project/UserWrapper'
 import ResourceWrapper from '@/app/containers/project/ResourceWrapper'
 import FullpullWrapper from '@/app/containers/Project/FullpullWrapper'
 import MonitorWrapper from '@/app/containers/Project/MonitorWrapper'
+import UserKeyDownloadWrapper from '@/app/containers/Project/UserKeyDownloadWrapper'
 // HOCFactory({'siderHidden': true})(App)
 // 导出路由
 export default (store) => [
@@ -55,6 +56,10 @@ export default (store) => [
       {
         path: '/project/monitor',
         component: MonitorWrapper
+      },
+      {
+        path: '/project/user-key-download-manager',
+        component: UserKeyDownloadWrapper
       },
 
     ]

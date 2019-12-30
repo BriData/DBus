@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,11 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.common.utils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-
 import com.creditease.dbus.commons.Constants;
-import com.creditease.dbus.commons.ControlMessage;
-import com.creditease.dbus.commons.CtlMessageResult;
-import com.creditease.dbus.commons.CtlMessageResultSender;
-import com.creditease.dbus.commons.ZkService;
+import com.creditease.dbus.commons.*;
 import com.creditease.dbus.extractor.container.DataSourceContainer;
 import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
 import com.creditease.dbus.extractor.container.TableMatchContainer;
@@ -38,11 +31,15 @@ import com.creditease.dbus.extractor.dao.impl.LoadDbusConfigDaoImpl;
 import com.creditease.dbus.extractor.vo.ExtractorVo;
 import com.creditease.dbus.extractor.vo.JdbcVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 
 public class ZKHelper {
@@ -61,9 +58,10 @@ public class ZKHelper {
         try {
             zkService = new ZkService(this.zkServers);
         } catch (Exception e) {
-            logger.error("Create new zkservice failed. Exception:" , e);
+            logger.error("Create new zkservice failed. Exception:", e);
         }
     }
+
     public void loadJdbcConfig() throws Exception {
         //TODO
         String path = extractorRoot + extractorName + "/jdbc.properties";
@@ -73,55 +71,65 @@ public class ZKHelper {
         ExtractorConfigContainer.getInstances().setJdbc(jdbc);
         for (JdbcVo conf : jdbc)
             DataSourceContainer.getInstances().register(conf);
-        logger.info("jdbc.properties:{}",jdbcConfigs);
+        logger.info("jdbc.properties:{}", jdbcConfigs);
     }
-    public void loadOutputTopic(){
-        ILoadDbusConfigDao dbusDao =  new LoadDbusConfigDaoImpl();
+
+    public void loadOutputTopic() {
+        ILoadDbusConfigDao dbusDao = new LoadDbusConfigDaoImpl();
         Set<OutputTopicVo> topics = dbusDao.queryOutputTopic(Constants.CONFIG_DB_KEY);
         ExtractorConfigContainer.getInstances().setOutputTopic(topics);
         //ExtractorConfigContainer.getInstances().setControlTopic();//todo 参数
-        logger.info("output topics:{}",topics);
+        logger.info("output topics:{}", topics);
     }
 
     //此处的tableregex是从zookeeper的config.property中读取的，要改 20180307 review
-    public void loadExtractorConifg(){
+    public void loadExtractorConifg() {
         //TODO
         String path = extractorRoot + extractorName + "/config.properties";
-        try{
+        try {
             Properties extractorConfigs = zkService.getProperties(path);
             ExtractorVo extVo = extractorConfigParse(extractorConfigs);
             ExtractorConfigContainer.getInstances().setExtractorConfig(extVo);
             // TableMatchContainer.getInstance().addTableRegex(extVo.getPartitionTableRegex());
-            logger.info("extractor configs:{}",extVo);
-        }catch (Exception e){
+            logger.info("extractor configs:{}", extVo);
+        } catch (Exception e) {
             //logger.info(e.getMessage());
             throw new RuntimeException("load extractor config: " + path + "配置信息出错.", e);
         }
     }
-    public void loadKafkaProducerConfig(){
+
+    public void loadKafkaProducerConfig() {
         //TODO
         String path = extractorRoot + extractorName + "/producer.properties";
-        try{
+        try {
             Properties kafkaProducerConfigs = zkService.getProperties(path);
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                kafkaProducerConfigs.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
             ExtractorConfigContainer.getInstances().setKafkaProducerConfig(kafkaProducerConfigs);
-            logger.info("kafka producer configs:{}",kafkaProducerConfigs);
-        }catch (Exception e){
+            logger.info("kafka producer configs:{}", kafkaProducerConfigs);
+        } catch (Exception e) {
             throw new RuntimeException("load extractor config: " + path + "配置信息出错.", e);
         }
     }
-    public void loadKafkaConsumerConfig(){
+
+    public void loadKafkaConsumerConfig() {
         //TODO
         String path = extractorRoot + extractorName + "/consumer.properties";
-        try{
+        try {
             Properties kafkaConsumerConfigs = zkService.getProperties(path);
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                kafkaConsumerConfigs.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
             ExtractorConfigContainer.getInstances().setKafkaConsumerConfig(kafkaConsumerConfigs);
-            logger.info("kafka consumer configs:{}",kafkaConsumerConfigs);
-        }catch (Exception e){
+            logger.info("kafka consumer configs:{}", kafkaConsumerConfigs);
+        } catch (Exception e) {
             throw new RuntimeException("load extractor config: " + path + "配置信息出错.", e);
         }
     }
-    public void loadFilter(){
-        ILoadDbusConfigDao dbusDao =  new LoadDbusConfigDaoImpl();
+
+    public void loadFilter() {
+        ILoadDbusConfigDao dbusDao = new LoadDbusConfigDaoImpl();
 
         String dsName = ExtractorConfigContainer.getInstances().getExtractorConfig().getDbName();
         List<String> ret = dbusDao.queryActiveTable(dsName, Constants.CONFIG_DB_KEY);
@@ -132,15 +140,15 @@ public class ZKHelper {
         logger.info("active tables filter is :{}", filter);
         //存储到zookeeper中
         String path = extractorRoot + extractorName + "/filter.properties";
-        try{
-            if(!zkService.isExists(path)){
+        try {
+            if (!zkService.isExists(path)) {
                 zkService.createNode(path, null);
             }
             Properties filterProp = new Properties();
             filterProp.setProperty("", filter);
             zkService.setData(path, filter.getBytes());
             logger.info("saved filter information to zookeeper, path is {}, filter is {}", path, filter);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.info("save filter info into zookeeper exception，{}", e);
         }
     }
@@ -167,7 +175,7 @@ public class ZKHelper {
                 zkService = null;
                 System.out.println("close zookeeper connect");
             }
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Close Zookeeper error:" + ex.getMessage());
         }
     }
@@ -194,6 +202,7 @@ public class ZKHelper {
         }
         return confs;
     }
+
     private ExtractorVo extractorConfigParse(Properties prop) {
         //TODO
         ExtractorVo extVo = new ExtractorVo();

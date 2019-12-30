@@ -41,7 +41,9 @@ export default class BathchRestatrTopoSearch extends Component {
       'log_ums',
       'log_flume',
       'log_filebeat',
+      'log_json',
       'jsonlog',
+      'db2'
     ]
     return (
       <div className="form-search">

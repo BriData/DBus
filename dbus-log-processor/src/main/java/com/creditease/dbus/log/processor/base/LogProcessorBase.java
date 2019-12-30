@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.log.processor.base;
 
 import com.creditease.dbus.log.processor.container.DataSourceContainer;
@@ -26,12 +27,13 @@ import com.creditease.dbus.log.processor.helper.ZkHelper;
 import com.creditease.dbus.log.processor.util.Constants;
 import com.creditease.dbus.log.processor.vo.DBusDataSource;
 import com.creditease.dbus.log.processor.vo.RuleInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by Administrator on 2017/10/12.

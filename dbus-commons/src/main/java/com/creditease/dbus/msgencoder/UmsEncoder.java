@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.msgencoder;
 
-import java.util.List;
-
 import com.creditease.dbus.commons.DbusMessage;
+
+import java.util.List;
 
 /**
  * Created by zhangyf on 2018/5/4.

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.mysql.appender.protobuf.parser;
 
@@ -36,70 +37,70 @@ import java.util.List;
 
 /**
  * mysql binlog protobuf解析器
- * @author xiongmao
  *
+ * @author xiongmao
  */
 public class BinlogProtobufParser {
-	private Logger logger = LoggerFactory.getLogger(getClass());
-	
-	private static BinlogProtobufParser parser;
-	
-	private BinlogProtobufParser(){
-	}
-	
-	public static BinlogProtobufParser getInstance(){
-		if(parser==null){
-			synchronized(BinlogProtobufParser.class){
-				if(parser==null){
-					parser = new BinlogProtobufParser();
-				}
-			}
-		}
-		return parser;
-	}
-	
-	public List<EntryHeader> getHeader(byte[] input) throws Exception{
-		CanalPacket.Messages msg=null;
-		List<EntryHeader> list = new ArrayList<>();
-		try {
-			msg = CanalPacket.Messages.parseFrom(input);
-			List<ByteString> lst = msg.getMessagesList();
-			for(ByteString bs :lst){
-				Entry entry = Entry.parseFrom(bs);
-				Header header = entry.getHeader();
-				EntryHeader entryHeader = new EntryHeader(header);
-				list.add(entryHeader);
-			}
-		} catch (InvalidProtocolBufferException e) {
-			throw e;
-		} catch (ProtobufParseException e){
-			throw e;
-		}
-		return list;
-	}
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
-	public List<MessageEntry> getEntry(byte[] input) throws Exception{
-		CanalPacket.Messages msg=null;
-		List<MessageEntry> list = new ArrayList<>();
-		try {
-			CanalPacket.Messages.Builder msgBuilder = CanalPacket.Messages.newBuilder();
-		//	msg = CanalPacket.Messages.parseFrom(input);
-			msg = msgBuilder.mergeFrom(input).build();
-			List<ByteString> lst = msg.getMessagesList();
-			for(ByteString bs :lst){
-				Entry.Builder entryBuilder = Entry.newBuilder();
-				Entry entry = entryBuilder.mergeFrom(bs).build();
-			//	Entry entry = CanalEntry.Entry.parseFrom(bs);
-				MessageEntry msgEntry = new MessageEntry(entry);
-				list.add(msgEntry);
-				entryBuilder.clear();
-			}
-			msgBuilder.clear();
-		} catch (InvalidProtocolBufferException e) {
-			throw e;
-		} catch (ProtobufParseException e){
-			throw e;
-		}
-		return list;
-	}
+    private static BinlogProtobufParser parser;
+
+    private BinlogProtobufParser() {
+    }
+
+    public static BinlogProtobufParser getInstance() {
+        if (parser == null) {
+            synchronized (BinlogProtobufParser.class) {
+                if (parser == null) {
+                    parser = new BinlogProtobufParser();
+                }
+            }
+        }
+        return parser;
+    }
+
+    public List<EntryHeader> getHeader(byte[] input) throws Exception {
+        CanalPacket.Messages msg = null;
+        List<EntryHeader> list = new ArrayList<>();
+        try {
+            msg = CanalPacket.Messages.parseFrom(input);
+            List<ByteString> lst = msg.getMessagesList();
+            for (ByteString bs : lst) {
+                Entry entry = Entry.parseFrom(bs);
+                Header header = entry.getHeader();
+                EntryHeader entryHeader = new EntryHeader(header);
+                list.add(entryHeader);
+            }
+        } catch (InvalidProtocolBufferException e) {
+            throw e;
+        } catch (ProtobufParseException e) {
+            throw e;
+        }
+        return list;
+    }
+
+    public List<MessageEntry> getEntry(byte[] input) throws Exception {
+        CanalPacket.Messages msg = null;
+        List<MessageEntry> list = new ArrayList<>();
+        try {
+            CanalPacket.Messages.Builder msgBuilder = CanalPacket.Messages.newBuilder();
+            //	msg = CanalPacket.Messages.parseFrom(input);
+            msg = msgBuilder.mergeFrom(input).build();
+            List<ByteString> lst = msg.getMessagesList();
+            for (ByteString bs : lst) {
+                Entry.Builder entryBuilder = Entry.newBuilder();
+                Entry entry = entryBuilder.mergeFrom(bs).build();
+                //	Entry entry = CanalEntry.Entry.parseFrom(bs);
+                MessageEntry msgEntry = new MessageEntry(entry);
+                list.add(msgEntry);
+                entryBuilder.clear();
+            }
+            msgBuilder.clear();
+        } catch (InvalidProtocolBufferException e) {
+            throw e;
+        } catch (ProtobufParseException e) {
+            throw e;
+        }
+        return list;
+    }
 }

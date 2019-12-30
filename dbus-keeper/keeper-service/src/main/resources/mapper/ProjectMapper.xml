@@ -103,7 +103,7 @@
     from t_project
   </select>
   <select id="selectResources" parameterType="java.util.Map" resultType="java.util.Map">
-    <!--SELECT
+    SELECT
       dds.ds_type,
       dds.ds_name,
       dt.id,
@@ -112,12 +112,12 @@
       dt.table_name,
       mv.version,
       dt.description,
-      DATE_FORMAT(dt.create_time,'%Y-%m-%d %H:%i:%s') create_time
+      dt.create_time
     FROM
       t_dbus_datasource dds,
       t_data_schema ds,
       t_data_tables dt,
-      t_meta_version mv,
+      t_meta_version mv
     <where>
       dt.ds_id = dds.id AND
       dt.schema_id = ds.id AND
@@ -128,46 +128,8 @@
     </where>
     <if test="sortby != null">
       order by ${sortby} <if test="order != null">${order}</if>
-    </if>-->
-    select * from
-    (
-    SELECT
-      tw.*,
-      IF(tdec.table_id, 1, 0) hasDbaEncode
-    FROM
-      (SELECT
-         dds.ds_type,
-         dds.ds_name,
-         dt.id,
-         ds.schema_name,
-         dt.status,
-         dt.table_name,
-         mv.version,
-         dt.description,
-         DATE_FORMAT(dt.create_time,'%Y-%m-%d %H:%i:%s') create_time
-       FROM
-         t_dbus_datasource dds,
-         t_data_schema ds,
-         t_data_tables dt,
-         t_meta_version mv
-       <where>
-         dt.ds_id = dds.id AND
-         dt.schema_id = ds.id AND
-         dt.ver_id = mv.id
-         <if test="dsName != null">AND dds.ds_name like "%"#{dsName}"%"</if>
-         <if test="schemaName != null">AND ds.schema_name like "%"#{schemaName}"%"</if>
-         <if test="tableName != null">AND dt.table_name like "%"#{tableName}"%"</if>
-       </where>) tw
-    LEFT JOIN (SELECT distinct table_id FROM t_dba_encode_columns GROUP BY table_id) tdec ON tw.id = tdec.table_id
-    <if test="sortby != null">
-      order by ${sortby} <if test="order != null">${order}</if>
     </if>
-    ) t
-    <where>
-      <if test="hasDbaEncode != null">hasDbaEncode= #{hasDbaEncode}</if>
-    </where>
   </select>
-
   <select id="selectColumns" parameterType="java.lang.Integer" resultType="java.util.Map">
     SELECT
       t_wk.tid,
@@ -196,9 +158,8 @@
        WHERE
          dt.ver_id = tm.ver_id AND
          dt.id = #{id, jdbcType=INTEGER}) t_wk
-      LEFT JOIN t_dba_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
+      LEFT JOIN t_encode_columns ec on t_wk.tid = ec.table_id and t_wk.column_name = ec.field_name
   </select>
-
   <select id="selectProjects" parameterType="java.util.Map" resultType="java.util.Map">
     SELECT
       DISTINCT
@@ -216,7 +177,6 @@
       <if test="userId != null">tp.id = tpu.project_id AND tpu.user_id = #{userId}</if>
     </where>
   </select>
-
   <select id="selectUserRelationProjects" parameterType="java.util.Map" resultType="java.util.Map">
     SELECT
       DISTINCT
@@ -236,7 +196,6 @@
       tp.id = tpu.project_id AND
       tpu.user_id = #{userId}
   </select>
-
   <select id="getProjectBySinkId" parameterType="java.lang.Integer" resultType="com.creditease.dbus.domain.model.Project">
     select tp.id, tp.project_name,tp.project_display_name
     from t_project tp,t_project_topo_table tt

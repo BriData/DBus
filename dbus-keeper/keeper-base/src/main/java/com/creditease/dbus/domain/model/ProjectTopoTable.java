@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.model;
 
@@ -54,6 +55,8 @@ public class ProjectTopoTable {
     private String fullpullSplitStyle;
 
     private String fullpullCondition;
+
+    private String rows;
 
     public Integer getId() {
         return id;
@@ -181,5 +184,13 @@ public class ProjectTopoTable {
 
     public void setFullpullCondition(String fullpullCondition) {
         this.fullpullCondition = fullpullCondition;
+    }
+
+    public String getRows() {
+        return rows;
+    }
+
+    public void setRows(String rows) {
+        this.rows = rows;
     }
 }

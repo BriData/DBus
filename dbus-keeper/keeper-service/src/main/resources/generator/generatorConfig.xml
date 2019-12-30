@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+
+<!--
+    使用方式
+    mvn mybatis-generator:generate -X
+-->
+<generatorConfiguration>
+    <properties resource="generator/application-gen.properties"/>
+
+    <context id="Mysql" targetRuntime="MyBatis3Simple" defaultModelType="flat">
+        <commentGenerator>
+            <property name="suppressDate" value="true"/>
+            <property name="suppressAllComments" value="true"/>
+        </commentGenerator>
+        <!--<property name="beginningDelimiter" value=""/>-->
+        <!--<property name="endingDelimiter" value=""/>-->
+
+        <!--<plugin type="tk.mybatis.mapper.generator.MapperPlugin">-->
+        <!--<property name="mappers" value="tk.mybatis.springboot.util.MyMapper"/>-->
+        <!--</plugin>-->
+
+        <jdbcConnection driverClass="${spring.datasource.driver-class-name}"
+                        connectionURL="${spring.datasource.url}"
+                        userId="${spring.datasource.username}"
+                        password="${spring.datasource.password}">
+        </jdbcConnection>
+
+        <javaModelGenerator targetPackage="com.creditease.dbus.domain.model" targetProject="src/main/java"/>
+
+        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources"/>
+
+        <!--<javaClientGenerator type="ANNOTATEDMAPPER" targetPackage="com.creditease.dbus.domain.mapper" targetProject="src/main/java"/>-->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.creditease.dbus.domain.mapper"
+                             targetProject="src/main/java"/>
+
+    </context>
+</generatorConfiguration>

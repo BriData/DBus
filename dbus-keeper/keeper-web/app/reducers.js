@@ -6,8 +6,6 @@ import globalReducer from 'containers/App/reducer'
 import languageProviderReducer from 'containers/LanguageProvider/reducer'
 
 // 导入reducer
-import { loginReducer } from 'containers/Login/redux'
-import {initializationReducer} from 'containers/Initialization/redux'
 import {
   projectHomeReducer,
   projectResourceReducer,
@@ -40,11 +38,7 @@ import {
   BatchRestartTopoReducer
 } from 'containers/toolSet/redux'
 
-import {
-  ZKManageReducer,
-  GlobalConfigReducer,
-  DBAEncodeConfigReducer
-} from 'containers/ConfigManage/redux'
+import {GlobalConfigReducer, ZKManageReducer} from 'containers/ConfigManage/redux'
 
 const routeInitialState = fromJS({
   locationBeforeTransitions: null
@@ -67,8 +61,6 @@ export default function createReducer (asyncReducers) {
     route: routeReducer,
     global: globalReducer,
     language: languageProviderReducer,
-    loginReducer,
-    initializationReducer,
     projectHomeReducer,
     projectResourceReducer,
     projectTopologyReducer,
@@ -91,7 +83,6 @@ export default function createReducer (asyncReducers) {
     KafkaReaderReducer,
     ZKManageReducer,
     GlobalConfigReducer,
-    DBAEncodeConfigReducer,
     ...asyncReducers
   })
 }

@@ -86,5 +86,4 @@ export default class RuleGroupAddGroupModal extends Component {
   }
 }
 
-RuleGroupAddGroupModal.propTypes = {
-}
+RuleGroupAddGroupModal.propTypes = {}

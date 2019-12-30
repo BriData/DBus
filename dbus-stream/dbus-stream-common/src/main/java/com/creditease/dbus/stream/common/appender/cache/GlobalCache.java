@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.cache;
 
 import com.creditease.dbus.commons.exception.InitializationException;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.stream.common.appender.bean.DbusDatasource;
+import com.creditease.dbus.stream.common.appender.bean.NameAliasMapping;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
@@ -44,6 +46,7 @@ public class GlobalCache {
 
     private static class Const {
         public static final String DATASOURCE = "datasource";
+        public static final String NAME_ALIAS_MAPPING = "nameAliasMapping";
     }
 
     static {
@@ -52,7 +55,7 @@ public class GlobalCache {
 
     public static synchronized void initialize(String ds) {
         if (datasource == null) {
-            if(Strings.isNullOrEmpty(ds)) {
+            if (Strings.isNullOrEmpty(ds)) {
                 throw new IllegalArgumentException("Initial parameter can not be null or empty string");
             }
             datasource = ds;
@@ -73,6 +76,34 @@ public class GlobalCache {
         }
     }
 
+    public static NameAliasMapping getNameAliasMapping() {
+        checkInit();
+        try {
+            return (NameAliasMapping) cache.get(Const.NAME_ALIAS_MAPPING, () -> {
+                        DbusDatasource ds = getDatasource();
+                        NameAliasMapping m = DBFacadeManager.getDbFacade().getNameMapping(ds.getId());
+                        if (m == null) {
+                            m = new NameAliasMapping();
+                            m.setId(0);
+                            m.setId(ds.getId());
+                            m.setType(2);
+                            m.setName(ds.getDsName());
+                            m.setAlias(ds.getDsName());
+                            m.setTs(new Timestamp(System.currentTimeMillis()));
+                            logger.info("Name alias mapping not found, default alias[{}] used.", m.getAlias());
+                        } else {
+                            logger.warn("DBus data source alias found. Alias[{}] will be used in UMS while building namespace.", m.getAlias());
+                        }
+                        return m;
+                    }
+            );
+        } catch (Exception e) {
+            logger.error("Encounter an error while getting name alias mapping!!!", e);
+            throw new RuntimeException(e);
+        }
+
+    }
+
     public static DbusDatasourceType getDatasourceType() {
         DbusDatasource ds = getDatasource();
         if (ds != null) {
@@ -84,8 +115,9 @@ public class GlobalCache {
     public static void refreshCache() {
         cache.invalidateAll();
     }
+
     private static void checkInit() {
-        if(datasource == null) {
+        if (datasource == null) {
             throw new InitializationException("Please initialize GlobalCache with calling GlobalCache.initialize(String datasource)");
         }
     }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,19 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.type;
 
 import com.creditease.dbus.heartbeat.start.HeartBeat;
 
 /**
  * 允许更新zookeeper节点(/Dbus/Heartbeat/Control)的数据值如下:
- *   1:重新加载配置
- *   2:停止心跳,全量拉取检查,心跳检查
- *   3:启动心跳,全量拉取检查,心跳检查
- *   4:停止整个监控进程
- *   5:全量拉取开始
- *   6:全量拉取结束
+ * 1:重新加载配置
+ * 2:停止心跳,全量拉取检查,心跳检查
+ * 3:启动心跳,全量拉取检查,心跳检查
+ * 4:停止整个监控进程
+ * 5:全量拉取开始
+ * 6:全量拉取结束
  *
  * @author Liang.Ma
  * @version 1.0
@@ -88,13 +89,19 @@ public enum CommandType {
     }
 
     public static CommandType fromInt(int intValue) {
-        switch(intValue) {
-            case    1: return CommandType.RELOAD;
-            case    2: return CommandType.STOP;
-            case    3: return CommandType.START;
-            case    4: return CommandType.DESTORY;
-            case    5: return CommandType.FULL_PULLER_BEGIN;
-            case    6: return CommandType.FULL_PULLER_END;
+        switch (intValue) {
+            case 1:
+                return CommandType.RELOAD;
+            case 2:
+                return CommandType.STOP;
+            case 3:
+                return CommandType.START;
+            case 4:
+                return CommandType.DESTORY;
+            case 5:
+                return CommandType.FULL_PULLER_BEGIN;
+            case 6:
+                return CommandType.FULL_PULLER_END;
             default:
                 throw new RuntimeException("Invalid integer value for conversion to commandType");
         }

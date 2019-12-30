@@ -18,7 +18,7 @@ export default class ProjectTopologyViewTopicContent extends Component {
       <div>
         <Row>
           <Col span={4}>{<FormattedMessage id="app.components.resourceManage.dataTableName" defaultMessage="表名" />}</Col>
-          <Col span={20}>{tableName}</Col>
+          <Col style={{wordWrap: 'break-word', wordBreak: 'break-word'}} span={20}>{tableName}</Col>
         </Row>
         {outputTopic.split(',').map((topic, index) =>
           index === 0 ?

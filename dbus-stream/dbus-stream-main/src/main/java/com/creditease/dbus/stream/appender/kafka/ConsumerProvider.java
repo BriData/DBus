@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.kafka;
 
@@ -33,6 +34,7 @@ import java.util.Properties;
  */
 public interface ConsumerProvider<K, V> {
     Consumer<K, V> consumer(Properties properties, List<String> topics);
+
     default void pause(Consumer<String, byte[]> consumer, Collection<TopicInfo> topics) {
         throw new MethodNotSupportedException("Please override method 'pause(List<String> list)' in your implementation");
     }

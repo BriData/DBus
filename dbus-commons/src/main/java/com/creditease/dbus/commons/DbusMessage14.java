@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
-import com.alibaba.fastjson.JSON;
-
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -30,35 +28,37 @@ import java.util.List;
  */
 public class DbusMessage14 extends DbusMessage13 {
     public DbusMessage14(String version, ProtocolType type, String schemaNs, int batchNo) {
-        super(version, type, schemaNs,batchNo);
+        super(version, type, schemaNs, batchNo);
         this.schema = new Schema14(schemaNs, batchNo);
     }
 
     public DbusMessage14(String version, ProtocolType type, String schemaNs, int batchNo, List<Field> unsetField) {
-        super(version, type, schemaNs,batchNo);
+        super(version, type, schemaNs, batchNo);
         this.schema = new Schema14(schemaNs, batchNo, unsetField);
     }
-/*
-    @Override
-    public String toString() {
-        return JSON.toJSONString(this);
-    }
-*/
+
+    /*
+        @Override
+        public String toString() {
+            return JSON.toJSONString(this);
+        }
+    */
     public static class Schema14 extends Schema13 {
 
         private List<Field> unFields;
 
         public Schema14(String schemaNs, int batchNo) {
-            super(schemaNs,batchNo);
+            super(schemaNs, batchNo);
             //this.batchId = batchNo;
         }
-        public Schema14(String schemaNs, int batchNo,List<Field> unsetField) {
-            super(schemaNs,batchNo);
+
+        public Schema14(String schemaNs, int batchNo, List<Field> unsetField) {
+            super(schemaNs, batchNo);
             this.unFields = unsetField;
         }
 
         public List<Field> getUnFields() {
-        return unFields;
+            return unFields;
         }
 
         public void setUnFields(List<Field> unFields) {

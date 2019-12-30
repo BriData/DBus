@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.constant;
 
 /**
  * Created by zhangyf on 2018/3/21.
  */
 public class ServiceNames {
-     public static final String KEEPER_MGR = "DBUS-KEEPER-MGR";
-     public static final String KEEPER_SERVICE = "DBUS-KEEPER-SERVICE";
+    public static final String KEEPER_MGR = "DBUS-KEEPER-MGR";
+    public static final String KEEPER_SERVICE = "DBUS-KEEPER-SERVICE";
 }

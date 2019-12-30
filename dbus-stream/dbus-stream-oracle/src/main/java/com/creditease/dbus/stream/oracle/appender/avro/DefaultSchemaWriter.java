@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.oracle.appender.avro;
 
 import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.bean.AvroSchema;
+import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import org.slf4j.Logger;
@@ -40,22 +41,24 @@ public class DefaultSchemaWriter implements DBusSchemaWriter {
     private Logger logger = LoggerFactory.getLogger(DefaultSchemaWriter.class);
     private Executor executor;
     private boolean needPersistent = false;
+
     public DefaultSchemaWriter(boolean needPersistent) {
         this.needPersistent = needPersistent;
-        if(needPersistent) {
+        if (needPersistent) {
             executor = Executors.newFixedThreadPool(1);
         }
     }
+
     @Override
     public void write(final String schema, Object... args) throws Exception {
-        final String namespace = (String)args[0];
-        final String schemaName = (String)args[1];
-        final int schemaHash = (int)args[2];
+        final String namespace = (String) args[0];
+        final String schemaName = (String) args[1];
+        final int schemaHash = (int) args[2];
 
         String key = Utils.buildAvroSchemaName(schemaHash, namespace, schemaName);
         ThreadLocalCache.put(Constants.CacheNames.AVRO_SCHEMA_CACHE, key, schema);
         logger.info("write avro schema to cache completely:[key:" + key + "]");
-        if(needPersistent) {
+        if (needPersistent) {
             executor.execute(() -> {
                 AvroSchema as = new AvroSchema();
                 as.setDsId(Utils.getDatasource().getId());

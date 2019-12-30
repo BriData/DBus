@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.dispatcher;
 
@@ -72,12 +73,12 @@ public class OracleGenericMessage implements IGenericMessage {
     }
 
     @Override
-    public String getSchemaName () {
+    public String getSchemaName() {
         return schemaName;
     }
 
     @Override
-    public String getTableName () {
+    public String getTableName() {
         return tableName;
     }
 
@@ -106,7 +107,9 @@ public class OracleGenericMessage implements IGenericMessage {
     }
 
     @Override
-    public boolean isDML() { return true; }
+    public boolean isDML() {
+        return true;
+    }
 
     public void setSchemaHash(int schemaHash) {
         this.schemaHash = schemaHash;
@@ -120,7 +123,7 @@ public class OracleGenericMessage implements IGenericMessage {
         this.payload = payload;
     }
 
-    public GenericRecord generateRecord (Schema genericSchema) {
+    public GenericRecord generateRecord(Schema genericSchema) {
         GenericRecord record = new GenericData.Record(genericSchema);
 
         record.put(NAMESAPCE, this.nameSpace);

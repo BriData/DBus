@@ -2,6 +2,7 @@ import React, {PropTypes, Component} from 'react'
 import {Form, Select, Input, Row, Col, Button, Tabs, Spin, Table, message , Icon} from 'antd'
 const TabPane = Tabs.TabPane;
 const Textarea = Input.TextArea
+import AddSchemaOggModal from './AddSchemaOggModal'
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
@@ -19,6 +20,9 @@ export default class AddSchemaTable extends Component {
       tableInfos: {},
       currentSchema: null,
 
+      oggModalKey: 'oggModalKey',
+      oggModalVisible: false,
+      oggModalContent: null,
 
       nextLoading: false
     }
@@ -153,6 +157,104 @@ export default class AddSchemaTable extends Component {
       .toString(32)
       .substr(3, 8)}${key || ''}`
 
+  viewOgg = () => {
+    const {recordRowKeys, schemaInfos, tableInfos} = this.state
+    let string = ""
+    string += "NEW ADD ALTER:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...tableInfos[schemaName].map(table => {
+        return `ALTER TABLE ${schemaName}.${table.tableName} ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;\n`
+      }))
+    }))
+
+    string += "\nNEW ADD OGG:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...tableInfos[schemaName].map(table => {
+        let ret = `TABLE ${schemaName}.${table.tableName}`
+        if (table.columnName !== '无') {
+          const nameTypes = table.columnName.split(" ");
+          let colsExcept = ''
+          nameTypes.forEach((nameType, index) => {
+            if (nameType) {
+              const slashIndex = nameType.indexOf('/')
+              if (index) colsExcept += ','
+              colsExcept += nameType.substr(0, slashIndex)
+            }
+          })
+          ret += `, COLSEXCEPT ( ${colsExcept} )`
+        }
+        ret += ';\n'
+        return ret
+      }))
+    }))
+
+    string += "\nNEW ADD MAPS:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...tableInfos[schemaName].map(table => {
+        return `MAP ${schemaName}.${table.tableName} ,TARGET ${schemaName}.${table.tableName};\n`
+      }))
+    }))
+
+    string += "\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...[
+        `MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = '${schemaName}');\n`
+      ])
+    }))
+
+    string += "\n------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+
+    string += "\nALTER:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...recordRowKeys[schemaName].map(existTableName => {
+        return tableInfos[schemaName].every(table => table.tableName !== existTableName) ?
+          `ALTER TABLE ${schemaName}.${existTableName} ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;\n` :
+          ""
+      }))
+    }))
+
+    string += "\nOGG:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...recordRowKeys[schemaName].map(existTableName => {
+        return tableInfos[schemaName].every(table => table.tableName !== existTableName) ?
+          `TABLE ${schemaName}.${existTableName};\n` :
+          ""
+      }))
+    }))
+
+    string += "\nMAPS:\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...recordRowKeys[schemaName].map(existTableName => {
+        return tableInfos[schemaName].every(table => table.tableName !== existTableName) ?
+          `MAP ${schemaName}.${existTableName} ,TARGET ${schemaName}.${existTableName};\n` :
+          ""
+      }))
+    }))
+
+    string += "\n"
+    string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
+      return "".concat(...[
+        `MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
+        `MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = '${schemaName}');\n`
+      ])
+    }))
+
+    this.setState({
+      oggModalKey: this.handleRandom('oggModalKey'),
+      oggModalVisible: true,
+      oggModalContent: string
+    })
+  }
+
+  closeOgg = () => {
+    this.setState({
+      oggModalKey: this.handleRandom('oggModalKey'),
+      oggModalVisible: false
+    })
+  }
 
   render() {
     const {dataSource} = this.props
@@ -182,6 +284,9 @@ export default class AddSchemaTable extends Component {
       outputTopic: table.outputTopic || schemaInfo.targetTopic,
       physicalTableRegex: table.physicalTableRegex || table.tableName
     }))
+    if (schemaInfo.dsType !== 'mysql') {
+      tableList = tableList.filter(table => table.tableName.indexOf('$') < 0)
+    }
     const columns = [
       {
         title: (
@@ -279,6 +384,7 @@ export default class AddSchemaTable extends Component {
     }
 
 
+    const {oggModalKey, oggModalVisible, oggModalContent} = this.state
     const {nextLoading} = this.state
     return (
       <div>
@@ -375,9 +481,18 @@ export default class AddSchemaTable extends Component {
         </Spin>
         <Form autoComplete="off" style={{marginTop: 10}}>
           <FormItem {...tailFormItemLayout}>
+            {dataSource.dsType === 'oracle' && (
+              <Button style={{marginRight: 10}} onClick={this.viewOgg}>查看OGG脚本</Button>
+            )}
             <Button loading={nextLoading} type="primary" onClick={this.handleNext}>下一步</Button>
           </FormItem>
         </Form>
+        <AddSchemaOggModal
+          visible={oggModalVisible}
+          key={oggModalKey}
+          content={oggModalContent}
+          onClose={this.closeOgg}
+        />
       </div>
     )
   }

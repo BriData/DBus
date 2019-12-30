@@ -65,6 +65,25 @@ export default class DataSourceCreateTabs extends Component {
     //   }
     // }
 
+    // this.state = {
+    //   isShowCloneZk: true,
+    //   currentStep: 2,
+    //   dataSource: {
+    //     ctrlTopic: "test_dbtwo_ctrl",
+    //     dbusPwd: "db2inst",
+    //     dbusUser: "db2inst",
+    //     dsDesc: "test_dbtwo",
+    //     dsName: "test_dbtwo",
+    //     dsType: "db2",
+    //     id: 628,
+    //     masterUrl: "jdbc:db2://10.143.131.162:50001/SAMPLE",
+    //     schemaTopic: "test_dbtwo_schema",
+    //     slaveUrl: "jdbc:db2://10.143.131.162:50001/SAMPLE",
+    //     splitTopic: "test_dbtwo_split",
+    //     status: "active",
+    //     topic: "test_dbtwo",
+    //   }
+    // }
   }
 
   handleAutoCloneZkFail = () => {
@@ -116,6 +135,7 @@ export default class DataSourceCreateTabs extends Component {
           </TabPane>
           <TabPane tab="2.添加Schema和Table" key={this.tabKeyList[1]} disabled={currentStep !== 1}>
             {dataSource.dsType === 'oracle' || dataSource.dsType === 'mysql' || dataSource.dsType === 'mongo'
+            || dataSource.dsType === 'db2'
               ? (
               <AddSchemaTable
                 addSchemaTableApi={addSchemaTableApi}

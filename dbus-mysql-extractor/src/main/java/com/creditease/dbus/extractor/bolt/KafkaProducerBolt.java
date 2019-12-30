@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
  * limitations under the License.
  * >>
  */
-package com.creditease.dbus.extractor.bolt;
 
-import java.util.Map;
+package com.creditease.dbus.extractor.bolt;
 
 import com.creditease.dbus.extractor.common.utils.Constants;
 import com.creditease.dbus.extractor.common.utils.ZKHelper;
@@ -27,7 +26,6 @@ import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
 import com.creditease.dbus.extractor.container.KafkaContainer;
 import com.creditease.dbus.extractor.vo.MessageVo;
 import com.creditease.dbus.extractor.vo.OutputTopicVo;
-
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
@@ -41,6 +39,8 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Created by ximeiwang on 2017/8/15.
@@ -71,7 +71,7 @@ public class KafkaProducerBolt extends BaseRichBolt {
             zkHelper.loadOutputTopic();
             zkHelper.loadKafkaProducerConfig();
 
-            if(producer != null){
+            if (producer != null) {
                 producer.close();
                 producer = null;
             }
@@ -97,17 +97,18 @@ public class KafkaProducerBolt extends BaseRichBolt {
     }
 
     @Override
-    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector){
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         this.conf = stormConf;
         this.collector = collector;
         this.context = context;
 
         this.zkServers = (String) conf.get(Constants.ZOOKEEPER_SERVERS);
         this.extractorName = (String) conf.get(Constants.EXTRACTOR_TOPOLOGY_ID);
-        this.extractorRoot = Constants.EXTRACTOR_ROOT + "/" + "";
+        this.extractorRoot = Constants.EXTRACTOR_ROOT + "/";
         reloadConfig(null);
 
     }
+
     @Override
     public void execute(Tuple input) {
         try {
@@ -115,7 +116,7 @@ public class KafkaProducerBolt extends BaseRichBolt {
                 ConsumerRecord<String, byte[]> reloadRecord = (ConsumerRecord<String, byte[]>) input.getValueByField("reloadControl");
                 if (reloadRecord != null) {
                     String key = reloadRecord.key();
-                    if(key.equals("EXTRACTOR_RELOAD_CONF")){
+                    if (key.equals("EXTRACTOR_RELOAD_CONF")) {
                         String json = new String(reloadRecord.value(), "utf-8");
                         logger.info("kafka producer bolt receive reload configure control. the event is {}.", json);
                         reloadConfig(json);
@@ -129,16 +130,18 @@ public class KafkaProducerBolt extends BaseRichBolt {
                 sendDataToKafka(msgVo.getBatchId(), msgVo.getMessage(), input);
                 //logger.info("execute kafka send the message which batchId is {} ", msgVo.getBatchId());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.info("execute error");
         }
     }
+
     @Override
     public void cleanup() {
 
     }
+
     @Override
-    public void declareOutputFields(OutputFieldsDeclarer declarer){
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("message"));
     }
 
@@ -149,14 +152,15 @@ public class KafkaProducerBolt extends BaseRichBolt {
         producer.send(record, new Callback() {
             public void onCompletion(RecordMetadata metadata, Exception e) {
                 synchronized (collector) {
-                if (e != null) {
-                    collector.fail(input);
-                    logger.info("kafka ack failed to the message which batchId is " + batchId, e);
-                } else {
-                    collector.ack(input);
-                    logger.info("kafka ack to the message which batchId is " + batchId, e);
+                    if (e != null) {
+                        collector.fail(input);
+                        logger.error("kafka ack failed to the message which batchId is " + batchId, e);
+                    } else {
+                        collector.ack(input);
+                        logger.info("kafka ack to the message which batchId is " + batchId, e);
+                    }
                 }
-            }}
+            }
         });
     }
 }

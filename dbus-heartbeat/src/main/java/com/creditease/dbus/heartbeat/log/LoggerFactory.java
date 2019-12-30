@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.log;
 
-import org.slf4j.Logger;
+package com.creditease.dbus.heartbeat.log;
 
 import com.creditease.dbus.heartbeat.type.LoggerType;
 import com.creditease.dbus.heartbeat.util.Constants;
+import org.slf4j.Logger;
 
 public class LoggerFactory {
 
@@ -34,7 +34,7 @@ public class LoggerFactory {
                 return LoggerType.HEART_BEAT.getLogger();
             case UI:
                 return LoggerType.UI.getLogger();
-            default :
+            default:
                 throw new RuntimeException("根据logType: " + logType + "不能获得对应的Logger.");
         }
     }

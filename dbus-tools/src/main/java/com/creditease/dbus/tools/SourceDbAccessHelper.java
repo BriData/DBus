@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,16 @@
  * >>
  */
 
+
 package com.creditease.dbus.tools;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.creditease.dbus.commons.ConnectionProvider;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.tools.common.ConfUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.*;
 
 /**
  * Created by 201605240095 on 2016/7/25.
@@ -47,7 +41,7 @@ public class SourceDbAccessHelper {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    private Connection getMysqlConn () throws Exception {
+    private Connection getMysqlConn() throws Exception {
         try {
             // Parse zookeeper
             zkServer = ConfUtils.loadZKProperties().getProperty(Constants.ZOOKEEPER_SERVERS);
@@ -61,7 +55,7 @@ public class SourceDbAccessHelper {
         }
     }
 
-    private Connection createOracleDBConnection () throws Exception {
+    private Connection createOracleDBConnection() throws Exception {
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
         } catch (ClassNotFoundException e) {
@@ -81,7 +75,7 @@ public class SourceDbAccessHelper {
         }
     }
 
-    private void setLoginInfo (String ds_name) throws Exception {
+    private void setLoginInfo(String ds_name) throws Exception {
 
 
         String sqlQuery = "select slave_url, dbus_user, dbus_pwd " +
@@ -130,7 +124,7 @@ public class SourceDbAccessHelper {
         }
     }
 
-    private void closeStmt (Statement stmt) throws Exception {
+    private void closeStmt(Statement stmt) throws Exception {
         if (stmt != null) {
             try {
                 stmt.close();
@@ -142,9 +136,9 @@ public class SourceDbAccessHelper {
         }
     }
 
-    private void closeConn (Connection conn) throws Exception {
+    private void closeConn(Connection conn) throws Exception {
         try {
-            if (conn != null){
+            if (conn != null) {
                 conn.close();
             }
         } catch (SQLException e) {
@@ -155,53 +149,53 @@ public class SourceDbAccessHelper {
     }
 
     public void querySourceDb(String dsName, String sql) {
-         Connection oracleConnection = null;
-         PreparedStatement stmt = null;
-         ResultSet rs = null;
-         try {
-             setLoginInfo(dsName);
+        Connection oracleConnection = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            setLoginInfo(dsName);
 
-             oracleConnection = createOracleDBConnection();
-             stmt = oracleConnection.prepareStatement(sql);
+            oracleConnection = createOracleDBConnection();
+            stmt = oracleConnection.prepareStatement(sql);
 
-             stmt.setFetchSize(2500);
-             logger.info("Using fetchSize for next query: {}", 2500);
-             stmt.setQueryTimeout(3600);
-             logger.info("Using queryTimeout 3600 seconds");
+            stmt.setFetchSize(2500);
+            logger.info("Using fetchSize for next query: {}", 2500);
+            stmt.setQueryTimeout(3600);
+            logger.info("Using queryTimeout 3600 seconds");
 
-             rs = stmt.executeQuery();
-             ResultSetMetaData rsmd = rs.getMetaData();
-             int columnCount = rsmd.getColumnCount();
+            rs = stmt.executeQuery();
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnCount = rsmd.getColumnCount();
 
-             long count = 0;
-             logger.info("********************************************");
-             while(rs.next()) {
-                 count++;
+            long count = 0;
+            logger.info("********************************************");
+            while (rs.next()) {
+                count++;
 
-                 System.out.println(" ");
-                 String columns = "";
-                 for (int i = 1; i <= columnCount; i++) {
-                     Object obj = rs.getObject(i);
-                     columns += String.format("%s(%s): %s, ", rsmd.getColumnLabel(i),
-                             rsmd.getColumnTypeName(i), obj != null ? obj.toString() : null);
-                 }
-                 logger.info("{}:{}", count, columns);
-             }
-             logger.info("********************************************");
-         } catch (Exception e) {
-             logger.error(e.getMessage(), e);
-         } finally {
-             try {
-                 closeRS(rs);
-                 closeStmt(stmt);
-                 closeConn(oracleConnection);
-             } catch (Exception e) {
-                 logger.info("Close con/statement encountered exception.",e);
-             }
-             logger.info("Query finished.");
-         }
+                System.out.println(" ");
+                String columns = "";
+                for (int i = 1; i <= columnCount; i++) {
+                    Object obj = rs.getObject(i);
+                    columns += String.format("%s(%s): %s, ", rsmd.getColumnLabel(i),
+                            rsmd.getColumnTypeName(i), obj != null ? obj.toString() : null);
+                }
+                logger.info("{}:{}", count, columns);
+            }
+            logger.info("********************************************");
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            try {
+                closeRS(rs);
+                closeStmt(stmt);
+                closeConn(oracleConnection);
+            } catch (Exception e) {
+                logger.info("Close con/statement encountered exception.", e);
+            }
+            logger.info("Query finished.");
+        }
     }
- 
+
     public static void main(String[] args) throws Exception {
         SourceDbAccessHelper helper = new SourceDbAccessHelper();
         System.out.println(args.length);

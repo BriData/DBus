@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
  * >>
  */
 
-package com.creditease.dbus.util;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+package com.creditease.dbus.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class DateUtil {
 
@@ -34,7 +35,7 @@ public class DateUtil {
     }
 
     public static String convertLongToStr4Date(long date) {
-        // 此处HH应该大写，如果小写则输出的是12小时制的时间
+        // 此处HH应该大写,如果小写则输出的是12小时制的时间
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         return sdf.format(new Date(date));
     }

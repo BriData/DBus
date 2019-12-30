@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,22 @@
  * >>
  */
 
-package com.creditease.dbus.service;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.service;
 
 import com.creditease.dbus.domain.mapper.ProjectResourceMapper;
 import com.creditease.dbus.domain.mapper.ProjectTopoTableMapper;
 import com.creditease.dbus.domain.model.ProjectResource;
-
 import com.creditease.dbus.domain.model.ProjectTopoTable;
 import com.creditease.dbus.domain.model.TableStatus;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import io.swagger.models.auth.In;
 import org.apache.commons.collections.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/3/27.
@@ -77,39 +76,40 @@ public class ProjectResourceService {
     }
 
     /**
-     * 查询条件为空，则返回所有数据
+     * 查询条件为空,则返回所有数据
+     *
      * @param projectId 精确匹配(=)
      * @return
      */
-    public PageInfo<Map<String,Object>> queryResource(String dsName,
-                                                   String schemaName,
-                                                   String tableName,
-                                                   Integer pageNum,
-                                                   Integer pageSize,
-                                                   Integer projectId){
-        Map<String,Object> param = new HashedMap();
-        param.put("dsName",dsName == null ? dsName : dsName.trim());
-        param.put("schemaName",schemaName == null ? schemaName : schemaName.trim());
-        param.put("tableName",tableName == null ? tableName : tableName.trim());
-        param.put("projectId",projectId);
+    public PageInfo<Map<String, Object>> queryResource(String dsName,
+                                                       String schemaName,
+                                                       String tableName,
+                                                       Integer pageNum,
+                                                       Integer pageSize,
+                                                       Integer projectId) {
+        Map<String, Object> param = new HashedMap();
+        param.put("dsName", dsName == null ? dsName : dsName.trim());
+        param.put("schemaName", schemaName == null ? schemaName : schemaName.trim());
+        param.put("tableName", tableName == null ? tableName : tableName.trim());
+        param.put("projectId", projectId);
 
-        PageHelper.startPage(pageNum,pageSize);
-        //查询出基本信息，datasource,schema,table的name等信息
-        List<Map<String,Object>> resources =mapper.search(param);
+        PageHelper.startPage(pageNum, pageSize);
+        //查询出基本信息,datasource,schema,table的name等信息
+        List<Map<String, Object>> resources = mapper.search(param);
 
         //拼接其他状态字段
-        for(Map<String,Object> resource: resources){
-            int tableId =  ((Long)resource.get("tableId")).intValue();
+        for (Map<String, Object> resource : resources) {
+            int tableId = ((Long) resource.get("tableId")).intValue();
             int resourceProjectId = ((Long) resource.get("projectId")).intValue();//传入的projectId可能为null
-            //查询status,用"use"和"unuse"替换，"OK"和"abort"
-            String status =mapper.searchStatus(resourceProjectId,tableId);
-            resource.put("status",status);
+            //查询status,用"use"和"unuse"替换,"OK"和"abort"
+            String status = mapper.searchStatus(resourceProjectId, tableId);
+            resource.put("status", status);
             //脱敏要求
             String encodeRequest = mapper.searchEncodeType(tableId, projectId);
-            resource.put("mask",encodeRequest);
+            resource.put("mask", encodeRequest);
             //是否投产
             boolean ifRunning = checkRunningStatus(tableId);
-            resource.put("running",ifRunning);
+            resource.put("running", ifRunning);
 
         }
 
@@ -119,10 +119,10 @@ public class ProjectResourceService {
     /**
      * 根据sourcetableId 判断该resource是否running
      */
-    private boolean checkRunningStatus(Integer sourceTableId){
-        List<ProjectTopoTable> projectTopoTables =tableMapper.selectBySourceTableId(sourceTableId);
-        for(ProjectTopoTable table :projectTopoTables){
-            if(TableStatus.RUNNING.getValue().equals(table.getStatus())){
+    private boolean checkRunningStatus(Integer sourceTableId) {
+        List<ProjectTopoTable> projectTopoTables = tableMapper.selectBySourceTableId(sourceTableId);
+        for (ProjectTopoTable table : projectTopoTables) {
+            if (TableStatus.RUNNING.getValue().equals(table.getStatus())) {
                 return true;
             }
         }
@@ -131,35 +131,37 @@ public class ProjectResourceService {
 
     /**
      * 查询resource的使用状态
+     *
      * @param projectId
      * @param tableId
      * @return "use" or "unuse"
      */
-    public String checkStatus(int projectId,int tableId){
-        return mapper.searchStatus(projectId,tableId);
+    public String checkStatus(int projectId, int tableId) {
+        return mapper.searchStatus(projectId, tableId);
     }
 
     /**
-     * 查询条件为空，则返回所有数据
+     * 查询条件为空,则返回所有数据
+     *
      * @param projectId 精确匹配(=)
      * @return
      */
-    public PageInfo<Map<String,Object>> queryProjectResource(String dsName,
-                                                      String schemaName,
-                                                      String tableName,
-                                                      Integer pageNum,
-                                                      Integer pageSize,
-                                                      Integer projectId){
-        Map<String,Object> param = new HashedMap();
-        param.put("dsName",dsName == null ? dsName : dsName.trim());
-        param.put("schemaName",schemaName == null ? schemaName : schemaName.trim());
-        param.put("tableName",tableName == null ? tableName : tableName.trim());
-        param.put("projectId",projectId);
+    public PageInfo<Map<String, Object>> queryProjectResource(String dsName,
+                                                              String schemaName,
+                                                              String tableName,
+                                                              Integer pageNum,
+                                                              Integer pageSize,
+                                                              Integer projectId) {
+        Map<String, Object> param = new HashedMap();
+        param.put("dsName", dsName == null ? dsName : dsName.trim());
+        param.put("schemaName", schemaName == null ? schemaName : schemaName.trim());
+        param.put("tableName", tableName == null ? tableName : tableName.trim());
+        param.put("projectId", projectId);
 
-        PageHelper.startPage(pageNum,pageSize);
+        PageHelper.startPage(pageNum, pageSize);
 
-        //查询出基本信息，datasource,schema,table的name等信息
-        List<Map<String,Object>> resources =mapper.search(param);
+        //查询出基本信息,datasource,schema,table的name等信息
+        List<Map<String, Object>> resources = mapper.search(param);
 
         //去除基本查询多余的字段
         for (Map<String, Object> resource : resources) {
@@ -174,26 +176,28 @@ public class ProjectResourceService {
     }
 
     /**
-     * 获取当前project下，Resource对应的DataSource的names集合，供下拉列表
-     * @param projectId 可选参数，如果 projectId==null,则返回所有Resource下的dsname.在外层的项目管理中使用
+     * 获取当前project下,Resource对应的DataSource的names集合,供下拉列表
+     *
+     * @param projectId 可选参数,如果 projectId==null,则返回所有Resource下的dsname.在外层的项目管理中使用
      * @return
      */
-    public List<Map<String,Object>> getDatasourceNames(Integer projectId){
+    public List<Map<String, Object>> getDatasourceNames(Integer projectId) {
         return mapper.getDSNames(projectId);
     }
 
-    public List<Map<String,Object>> getProjectNames(){
+    public List<Map<String, Object>> getProjectNames() {
         return mapper.getProjectNames();
     }
 
     /**
      * 根据ProjectId和tableId获取唯一的ProjectResource信息
+     *
      * @param projectId
      * @param tableId
      * @return ProjectResource
      */
-    public ProjectResource getByPIdAndTId(Integer projectId, Integer tableId){
-        return mapper.selectByPIdTId(projectId,tableId);
+    public ProjectResource getByPIdAndTId(Integer projectId, Integer tableId) {
+        return mapper.selectByPIdTId(projectId, tableId);
     }
 
 }

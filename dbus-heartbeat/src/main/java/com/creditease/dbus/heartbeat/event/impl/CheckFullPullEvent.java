@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,18 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.event.impl;
 
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
+package com.creditease.dbus.heartbeat.event.impl;
 
 import com.creditease.dbus.commons.FullPullNodeDetailVo;
 import com.creditease.dbus.components.sms.DBusSmsFactory;
@@ -53,14 +43,17 @@ import com.creditease.dbus.heartbeat.vo.ProjectNotifyEmailsVO;
 import com.creditease.dbus.mail.DBusMailFactory;
 import com.creditease.dbus.mail.IMail;
 import com.creditease.dbus.mail.Message;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+
 /**
  * 用于检测全量拉取是否有超时。
- *
  *
  * @author Liang.Ma
  * @version 1.0
@@ -91,6 +84,7 @@ public class CheckFullPullEvent extends AbstractEvent {
 
     /**
      * 获取全量拉取的最新节点
+     *
      * @param fullPullerRootNode
      * @param curator
      * @return 子节点的全路径，之前非全路径，后面的path部分进行了拼接
@@ -100,7 +94,7 @@ public class CheckFullPullEvent extends AbstractEvent {
         List<String> flattedFullpullerNodeName = new ArrayList<>();
 
         //get all node list
-        fetchZkNodeRecursively(fullPullerRootNode,flattedFullpullerNodeName, curator);
+        fetchZkNodeRecursively(fullPullerRootNode, flattedFullpullerNodeName, curator);
 
         HashMap<String, String> map = new HashMap<>();
         for (String znode : flattedFullpullerNodeName) {
@@ -118,7 +112,7 @@ public class CheckFullPullEvent extends AbstractEvent {
 
         List<String> wkList = new ArrayList<String>();
         for (Map.Entry<String, String> entry : map.entrySet()) {
-            wkList.add(StringUtils.join(new String[] {entry.getKey(), String.valueOf(entry.getValue())}, "/"));
+            wkList.add(StringUtils.join(new String[]{entry.getKey(), String.valueOf(entry.getValue())}, "/"));
         }
         return wkList;
     }
@@ -135,7 +129,7 @@ public class CheckFullPullEvent extends AbstractEvent {
             lock.lock();
             try {
                 List<String> latestNodes = filter(monitorFullPullPath, curator);
-                for (String znode :  latestNodes) {
+                for (String znode : latestNodes) {
 
                     /*if (!isRun.get())
                         break;
@@ -214,14 +208,14 @@ public class CheckFullPullEvent extends AbstractEvent {
 
                     if (diffVal > fullPullTimeout) {
 
-                     LOG.info("znode:{},修正值:{},当前时间:{},接收到时间{},差值:{} 秒",
-                            new Object[] {path, String.valueOf(correcteValue), String.valueOf(currentTime),
-                                    String.valueOf(updTime), String.valueOf((double)diffVal/1000)});
+                        LOG.info("znode:{},修正值:{},当前时间:{},接收到时间{},差值:{} 秒",
+                                new Object[]{path, String.valueOf(correcteValue), String.valueOf(currentTime),
+                                        String.valueOf(updTime), String.valueOf((double) diffVal / 1000)});
 
                         check.setNormal(false);
 
                         //超过alarm Ttl 可以再报
-                        if( currentTime - check.getLastAlarmTime() > alarmTtl) {
+                        if (currentTime - check.getLastAlarmTime() > alarmTtl) {
                             check.setAlarmCnt(0);
                             check.setTimeoutCnt(check.getTimeoutCnt() + 1);
                         }
@@ -254,7 +248,7 @@ public class CheckFullPullEvent extends AbstractEvent {
                             }
                             if (map != null && StringUtils.equals(map.get("UseSMS").toUpperCase(), "Y")) {
                                 if (StringUtils.isNotBlank(telNos)) {
-                                    telNos = StringUtils.join(new String[] {telNos, map.get("SMSNo")}, ",");
+                                    telNos = StringUtils.join(new String[]{telNos, map.get("SMSNo")}, ",");
                                 } else {
                                     telNos = map.get("SMSNo");
                                 }
@@ -276,14 +270,13 @@ public class CheckFullPullEvent extends AbstractEvent {
                             }
                             if (map != null && StringUtils.equals(map.get("UseEmail").toUpperCase(), "Y")) {
                                 if (StringUtils.isNotBlank(email)) {
-                                    email = StringUtils.join(new String[] {email, map.get("Email")}, ",");
+                                    email = StringUtils.join(new String[]{email, map.get("Email")}, ",");
                                 } else {
                                     email = map.get("Email");
                                 }
                             }
 
                             if (ArrayUtils.getLength(db_schema) == 8) {
-                                // eg: /DBus/FullPuller/Projects/P000123_12/db8_sh_s/NEWDX_SH/TEAM/2019-01-03 14.15.33.131 - 0
                                 String projectRelatedEmail = getProjectRelatedFullpullEmail(db_schema[4], db_schema[5], db_schema[6]);
                                 if (StringUtils.isNotBlank(projectRelatedEmail)) {
                                     email += "," + projectRelatedEmail;
@@ -297,14 +290,12 @@ public class CheckFullPullEvent extends AbstractEvent {
                                 // String contents = MsgUtil.format(Constants.MAIL_FULL_PULLER, path, check.getAlarmCnt(), check.getTimeoutCnt());
                                 String contents = StringUtils.EMPTY;
                                 if (ArrayUtils.getLength(db_schema) == 6) {
-                                    // eg: /DBus/FullPuller/db8_sh_s/NEWDX_SH/TEAM/2019-01-03 14.15.33.131 - 0
                                     contents = MsgUtil.format(Constants.MAIL_FULL_PULLER_NEW,
                                             "DBus全量监控报警", db_schema[2], db_schema[3], db_schema[4], db_schema[5],
                                             DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
                                             IMail.ENV,
                                             fpNodeDetail.toHtml());
                                 } else if (ArrayUtils.getLength(db_schema) == 8) {
-                                    // eg: /DBus/FullPuller/Projects/P000123_12/db8_sh_s/NEWDX_SH/TEAM/2019-01-03 14.15.33.131 - 0
                                     contents = MsgUtil.format(Constants.MAIL_FULL_PULLER_NEW_PROJECT,
                                             "DBus全量监控报警", db_schema[3], db_schema[4], db_schema[5], db_schema[6], db_schema[7],
                                             DateUtil.convertLongToStr4Date(System.currentTimeMillis()),

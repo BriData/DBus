@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.kafka;
 
@@ -99,10 +100,11 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
         topics.addAll(controlTopics);
         topics.addAll(dataTopics);
 
-        if(DbusDatasourceType.ORACLE == GlobalCache.getDatasourceType()
-                ) {
-        	this.schemaTopics = schemaTopicProvider.provideTopics();
-	        topics.addAll(schemaTopics);
+        if (DbusDatasourceType.ORACLE == GlobalCache.getDatasourceType()
+                || DbusDatasourceType.DB2 == GlobalCache.getDatasourceType()
+        ) {
+            this.schemaTopics = schemaTopicProvider.provideTopics();
+            topics.addAll(schemaTopics);
         }
         Consumer<String, byte[]> consumer = consumerProvider.consumer(props, topics);
 
@@ -174,6 +176,7 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
         CtrlMessagePostOperation oper = CtrlMessagePostOperation.create(zkconnect);
         oper.spoutResumed(message, result);
     }
+
     @Override
     public void syncOffset(DBusConsumerRecord<String, byte[]> record) {
         logger.debug("Ack offset {topic:{},partition:{},offset:{}}", record.topic(), record.partition(), record.offset() + 1);
@@ -193,11 +196,13 @@ public class AppenderConsumer implements ConsumerListener, Closeable {
         List<TopicPartition> topics = this.dataTopics.stream().map(topic -> new TopicPartition(topic, 0)).collect(Collectors.toList());
         consumer.pause(topics);
     }
+
     @Override
     public void resumeAppender() {
         List<TopicPartition> topics = this.dataTopics.stream().map(topic -> new TopicPartition(topic, 0)).collect(Collectors.toList());
         consumer.resume(topics);
     }
+
     @Override
     public boolean filterPausedTopic(String topic) {
         return !pausedTopics.containsKey(topic);

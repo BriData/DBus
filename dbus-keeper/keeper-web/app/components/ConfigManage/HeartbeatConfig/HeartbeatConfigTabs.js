@@ -1,12 +1,13 @@
-import React, {PropTypes, Component} from 'react'
+import React, {Component} from 'react'
 import {Form, Select, Tabs} from 'antd'
-const TabPane = Tabs.TabPane;
-import { FormattedMessage } from 'react-intl'
+import {FormattedMessage} from 'react-intl'
 // 导入组件
 import BasicConfigForm from './BasicConfigForm'
 import AdvancedConfigForm from './AdvancedConfigForm'
 import TimeoutConfigForm from './TimeoutConfigForm'
 import NotifyConfigForm from './NotifyConfigForm'
+
+const TabPane = Tabs.TabPane;
 
 
 const FormItem = Form.Item
@@ -40,12 +41,18 @@ export default class HeartbeatConfigTabs extends Component {
   handleSave = () => {
     const {onSave} = this.props
     const {config} = this.state
-    onSave(JSON.stringify(config, null ,'\t'))
+    onSave(JSON.stringify(config, null, '\t'))
+  }
+
+  handleSendMailTest = () => {
+    const {onSendMailTest} = this.props
+    const {config} = this.state
+    onSendMailTest(JSON.stringify(config, null, '\t'))
   }
 
   render() {
     const {config} = this.state
-    const {allDataSchemaList} = this.props
+    const {allDataSchemaList, onSendMailTest} = this.props
     return (
       <div>
         <Tabs defaultActiveKey="basicConfig">
@@ -58,6 +65,7 @@ export default class HeartbeatConfigTabs extends Component {
               onValueChange={this.handleValueChange}
               onCheckboxChange={this.handleCheckboxChange}
               onSave={this.handleSave}
+              onSendMailTest={this.handleSendMailTest}
             />
           </TabPane>
           <TabPane tab={<FormattedMessage

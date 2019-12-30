@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,19 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.schema;
 
 import com.creditease.dbus.domain.model.DataSource;
 
-import java.sql.PreparedStatement;
-import java.util.Map;
-
-public class OracleSchemaFetcher extends SchemaFetcher{
+public class OracleSchemaFetcher extends SchemaFetcher {
     public OracleSchemaFetcher(DataSource ds) {
         super(ds);
     }
 
     @Override
     public String buildQuery() {
-        String sql ="select username schemaname from sys.dba_users order by username";
+        String sql = "select username schemaname from sys.dba_users order by username";
         return sql;
     }
 

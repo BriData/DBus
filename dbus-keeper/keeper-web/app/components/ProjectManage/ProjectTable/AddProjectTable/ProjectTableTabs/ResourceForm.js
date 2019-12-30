@@ -32,8 +32,8 @@ export default class ResourceForm extends Component {
       encodeSourceList: null,
       encodeRecord: null
     }
-    this.NomalTableWidth = ['15%', '15%', '15%', '15%', '15%', '10%', '10%']
-    this.SelectTableWidth = ['50%', '10%', '15%', '15%']
+    this.NomalTableWidth = ['15%', '15%', '15%', '15%', '10%', '20%', '10%']
+    this.SelectTableWidth = ['50%', '10%', '25%', '15%']
     this.initParams = {
       pageNum: 1,
       pageSize: 5
@@ -63,16 +63,18 @@ export default class ResourceForm extends Component {
       })
     }
   }
+
   /**
    * 初始化查询
    */
   handleInitSearch = projectId => {
     const API = GET_TABLE_PROJECT_TOPO_API
-    const { topology, onSetTopology } = this.props
+    const { topology, onSetTopology, modifyRecord } = this.props
     Request(API, { params: { projectId }, method: 'get' })
       .then(res => {
         if (res && res.status === 0) {
           const topoId =
+            (modifyRecord && `${modifyRecord.topoId}`) ||
             (topology && `${topology.topoId}`) ||
             (res.payload[0] && res.payload[0].topoId)
           // 初始化查询
@@ -342,12 +344,10 @@ export default class ResourceForm extends Component {
   handleDeleteSelectResource = () => {
     const { resourceParams, encodes, resource } = this.props
     const resourceName = resourceParams && resourceParams.resourceName
-    const resourceHasDbaEncode = resourceParams && resourceParams.resourceHasDbaEncode
     let selectDataSource = resource ? Object.values(resource) : []
     selectDataSource = selectDataSource.filter(ds => {
       const resource = `${ds.dsType} / ${ds.dsName} / ${ds.schemaName} / ${ds.tableName}`
-      if(resourceName && resource.indexOf(resourceName) === -1) return false
-      if((resourceHasDbaEncode || resourceHasDbaEncode === 0) && ds.hasDbaEncode !== resourceHasDbaEncode) return false
+      if(resourceName) return resource.indexOf(resourceName) !== -1
       return true
     })
     selectDataSource.forEach(ds => {
@@ -391,36 +391,6 @@ export default class ResourceForm extends Component {
       {`${Boolean(text)}`}
     </div>
   );
-
-  renderDbaEncode = width => (text, record, index) => {
-    let color
-    switch (text) {
-      case 1:
-        color = 'red'
-        break
-      default:
-        color = 'green'
-    }
-    text = text ? 'Y' : 'N'
-    return (<div title={text} style={this.props.tableWidthStyle(width)} className={styles.ellipsis}>
-      <Tag color={color} style={{cursor: 'auto'}}>
-        {text}
-      </Tag>
-    </div>)
-  }
-
-  renderUnifiedEncode = width => (text, record, index) => {
-    const yesOrNo = text ? '是' : '否'
-    return (
-      <div
-        title={yesOrNo}
-        className={styles.ellipsis}
-      >
-        {yesOrNo}
-      </div>
-    )
-  }
-
   /**
    * @description table resource render
    */
@@ -591,50 +561,13 @@ export default class ResourceForm extends Component {
       },
       {
         title: (
-          <FormattedMessage
-            id="app.components.projectManage.projectTable.dbaEncodeColumn"
-            defaultMessage="DBA脱敏列"
-          />
+          <FormattedMessage id="app.common.description" defaultMessage="描述" />
         ),
-        // 自定义过滤显隐
-        ...this.filterVisible('hasDbaEncode'),
-        filterDropdown: (
-          <div className={styles.filterDropdown} style={{width:100}}>
-            <Menu>
-              <Menu.Item>
-                <a href="javascript:void(0)" onClick={() => this.handleFilterSearch({
-                  hasDbaEncode: null
-                })}>All</a>
-              </Menu.Item>
-              <Menu.Item>
-                <a href="javascript:void(0)" onClick={() => this.handleFilterSearch({
-                  hasDbaEncode: 1
-                })}>Y</a>
-              </Menu.Item>
-              <Menu.Item>
-                <a href="javascript:void(0)" onClick={() => this.handleFilterSearch({
-                  hasDbaEncode: 0
-                })}>N</a>
-              </Menu.Item>
-            </Menu>
-          </div>
-        ),
-        width: this.NomalTableWidth[4],
-        dataIndex: 'hasDbaEncode',
-        key: 'hasDbaEncode',
-        render: this.renderComponent(
-          this.renderDbaEncode(this.NomalTableWidth[4])
-        )
+        width: this.NomalTableWidth[5],
+        dataIndex: 'description',
+        key: 'description',
+        render: this.renderComponent(this.renderNomal(this.NomalTableWidth[6]))
       },
-      // {
-      //   title: (
-      //     <FormattedMessage id="app.common.description" defaultMessage="描述" />
-      //   ),
-      //   width: this.NomalTableWidth[5],
-      //   dataIndex: 'description',
-      //   key: 'description',
-      //   render: this.renderComponent(this.renderNomal(this.NomalTableWidth[6]))
-      // },
       {
         title: (
           <FormattedMessage id="app.common.operate" defaultMessage="操作" />
@@ -682,49 +615,13 @@ export default class ResourceForm extends Component {
       },
       {
         title: (
-          <FormattedMessage
-            id="app.components.projectManage.projectTable.dbaEncodeColumn"
-            defaultMessage="DBA脱敏列"
-          />
+          <FormattedMessage id="app.common.description" defaultMessage="描述" />
         ),
-        // 自定义过滤显隐
-        ...this.filterVisible('resourceHasDbaEncode'),
-        filterDropdown: (
-          <div className={styles.filterDropdown} style={{width:100}}>
-            <Menu>
-              <Menu.Item>
-                <a href="javascript:void(0)" onClick={() => this.handleResourceNameSearch({
-                  resourceHasDbaEncode: null
-                })}>All</a>
-              </Menu.Item>
-              <Menu.Item>
-                <a href="javascript:void(0)" onClick={() => this.handleResourceNameSearch({
-                  resourceHasDbaEncode: 1
-                })}>Y</a>
-              </Menu.Item>
-              <Menu.Item>
-                <a href="javascript:void(0)" onClick={() => this.handleResourceNameSearch({
-                  resourceHasDbaEncode: 0
-                })}>N</a>
-              </Menu.Item>
-            </Menu>
-          </div>
-        ),
-        dataIndex: 'hasDbaEncode',
-        key: 'hasDbaEncode',
-        render: this.renderComponent(
-          this.renderDbaEncode(this.SelectTableWidth[3])
-        )
+        width: this.SelectTableWidth[2],
+        dataIndex: 'description',
+        key: 'description',
+        render: this.renderComponent(this.renderNomal(this.SelectTableWidth[3]))
       },
-      // {
-      //   title: (
-      //     <FormattedMessage id="app.common.description" defaultMessage="描述" />
-      //   ),
-      //   width: this.SelectTableWidth[2],
-      //   dataIndex: 'description',
-      //   key: 'description',
-      //   render: this.renderComponent(this.renderNomal(this.SelectTableWidth[2]))
-      // },
       {
         title: (
           <FormattedMessage id="app.common.operate" defaultMessage="操作" />
@@ -736,12 +633,10 @@ export default class ResourceForm extends Component {
     const dataSource = result && result.list
     const { resourceParams } = this.props
     const resourceName = resourceParams && resourceParams.resourceName
-    const resourceHasDbaEncode = resourceParams && resourceParams.resourceHasDbaEncode
     let selectDataSource = resource ? Object.values(resource) : []
     selectDataSource = selectDataSource.filter(ds => {
       const resource = `${ds.dsType} / ${ds.dsName} / ${ds.schemaName} / ${ds.tableName}`
-      if(resourceName && resource.indexOf(resourceName) === -1) return false
-      if((resourceHasDbaEncode || resourceHasDbaEncode === 0) && ds.hasDbaEncode !== resourceHasDbaEncode) return false
+      if(resourceName) return resource.indexOf(resourceName) !== -1
       return true
     })
     const pagination = {

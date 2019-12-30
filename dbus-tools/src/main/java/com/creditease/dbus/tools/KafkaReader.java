@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.tools;
 
 import com.creditease.dbus.tools.common.AbstractSignalHandler;
@@ -31,7 +32,9 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by 201605240095 on 2016/7/25.
@@ -48,6 +51,7 @@ public class KafkaReader extends AbstractSignalHandler {
     /**
      * run
      * Check the performance of pulling a whole table
+     *
      * @throws Exception
      */
     public void run() throws Exception {
@@ -88,6 +92,7 @@ public class KafkaReader extends AbstractSignalHandler {
 
     /**
      * createConsumer - create a new consumer
+     *
      * @return
      * @throws Exception
      */
@@ -101,10 +106,10 @@ public class KafkaReader extends AbstractSignalHandler {
         Consumer<String, String> consumer = new KafkaConsumer<>(props);
         consumer.assign(topics);
 
-        if(offset == -1){
+        if (offset == -1) {
             consumer.seekToEnd(topics);
             logger.info("Consumer seek to end");
-        }else{
+        } else {
             consumer.seek(dataTopicPartition, offset);
             logger.info(String.format("read changed as offset: %s", consumer.position(dataTopicPartition)));
         }
@@ -159,7 +164,7 @@ public class KafkaReader extends AbstractSignalHandler {
     public static void main(String[] args) throws Exception {
         KafkaReader reader = new KafkaReader();
 
-        if (reader.parseCommandArgs (args) != 0) {
+        if (reader.parseCommandArgs(args) != 0) {
             return;
         }
         reader.run();

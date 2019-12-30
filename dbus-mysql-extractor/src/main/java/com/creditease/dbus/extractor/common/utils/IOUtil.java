@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,25 @@
  * >>
  */
 
-package com.creditease.dbus.extractor.common.utils;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
+package com.creditease.dbus.extractor.common.utils;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.nio.channels.FileChannel;
+
 public class IOUtil {
-	private final static Logger logger = LoggerFactory.getLogger(IOUtil.class);
+    private final static Logger logger = LoggerFactory.getLogger(IOUtil.class);
 
     public static boolean isFile(File file) {
         boolean isOk = false;
         try {
             isOk = file.isFile();
         } catch (Exception e) {
-        	logger.error("[isFile-error]", e);
+            logger.error("[isFile-error]", e);
             isOk = false;
         }
         return isOk;
@@ -51,7 +47,7 @@ public class IOUtil {
         try {
             status = file.exists() ? 1 : 0;
         } catch (Exception e) {
-        	logger.error("[exists-error]", e);
+            logger.error("[exists-error]", e);
             status = -1;
         }
         return status;
@@ -62,7 +58,7 @@ public class IOUtil {
         try {
             isOk = file.delete();
         } catch (Exception e) {
-        	logger.error("[delete-error]", e);
+            logger.error("[delete-error]", e);
             isOk = false;
         }
         return isOk;
@@ -80,7 +76,7 @@ public class IOUtil {
                 }
             });
         } catch (Exception e) {
-        	logger.error("[listFiles-error]", e);
+            logger.error("[listFiles-error]", e);
             files = null;
         }
         return files;
@@ -91,7 +87,7 @@ public class IOUtil {
             try {
                 obj.close();
             } catch (IOException e) {
-            	logger.error("[stream-close-error]", e);
+                logger.error("[stream-close-error]", e);
             }
     }
 
@@ -100,7 +96,7 @@ public class IOUtil {
             try {
                 obj.close();
             } catch (IOException e) {
-            	logger.error("[channel-close-error]", e);
+                logger.error("[channel-close-error]", e);
             }
     }
 
@@ -110,7 +106,7 @@ public class IOUtil {
             target.getParentFile().mkdirs();
             isOk = target.createNewFile();
         } catch (IOException e) {
-        	logger.error("[file-create-error]", e);
+            logger.error("[file-create-error]", e);
             isOk = false;
         }
         return isOk;
@@ -130,7 +126,7 @@ public class IOUtil {
             targetFc.truncate(0);
             srcFc.transferTo(0, src.length(), targetFc);
         } catch (Exception e) {
-        	logger.error("[file-copy-error]", e);
+            logger.error("[file-copy-error]", e);
             isOk = false;
         } finally {
             close(srcFc);

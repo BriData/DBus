@@ -22,7 +22,10 @@ export default class ProjectTopologyForm extends Component {
       loading: false,
 
       initialTopoNamePrefix: '',
-      initialTopoNameText: ''
+      initialTopoNameText: '',
+
+      initialAliasPrefix: '',
+      initialAliasText: ''
     }
   }
 
@@ -39,7 +42,10 @@ export default class ProjectTopologyForm extends Component {
             const projectName = res.payload.project.projectName
             this.setState({
               initialTopoNamePrefix: `${projectName}_`,
-              initialTopoNameText: ''
+              initialTopoNameText: '',
+
+              initialAliasPrefix: `${projectName}_`,
+              initialAliasText: ''
             })
           }
           else {
@@ -57,7 +63,7 @@ export default class ProjectTopologyForm extends Component {
   componentWillReceiveProps = nextProps => {
     const {modalStatus, topologyInfo} = nextProps
     const {result} = topologyInfo
-    const {initialTopoNamePrefix} = this.state
+    const {initialTopoNamePrefix, initialAliasPrefix} = this.state
     if (modalStatus !== 'create' && result && Object.keys(result).length && initialTopoNamePrefix === '') {
       Request(`${GET_PROJECT_INFO_API}/${result.projectId}`, {
         method: 'get'
@@ -66,9 +72,16 @@ export default class ProjectTopologyForm extends Component {
           if (res && res.status === 0) {
             const projectName = res.payload.project.projectName
             const text = result.topoName.replace(`${projectName}_`, '')
+            let alias = result.alias
+            if (!!alias) {
+              alias = result.alias.replace(`${projectName}_`, '')
+            }
             this.setState({
               initialTopoNamePrefix: `${projectName}_`,
-              initialTopoNameText: text
+              initialTopoNameText: text,
+
+              initialAliasPrefix: `${projectName}_`,
+              initialAliasText: alias
             })
           }
           else {
@@ -86,7 +99,8 @@ export default class ProjectTopologyForm extends Component {
   /**
    * @deprecated 提交数据
    */
-  handleSubmit = () => {
+  handleSubmit = (e) => {
+    e.preventDefault()
     const {
       modalStatus,
       topologyInfo,
@@ -101,10 +115,11 @@ export default class ProjectTopologyForm extends Component {
     this.topoInfoRef.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const topoName = this.state.initialTopoNamePrefix + values.topoName
+        const alias = this.state.initialAliasPrefix + values.alias
         let param =
           modalStatus === 'create'
-            ? { ...values, projectId, status: 'new', topoName }
-            : { ...result, ...values, projectId, status: 'changed', topoName }
+            ? { ...values, projectId, status: 'new', topoName, alias }
+            : { ...result, ...values, projectId, status: 'changed', topoName, alias }
         this.setState({ loading: true })
         Request(requestAPI, {
           data: param,
@@ -131,7 +146,7 @@ export default class ProjectTopologyForm extends Component {
 
   render () {
     const { loading } = this.state
-    const {initialTopoNameText, initialTopoNamePrefix} = this.state
+    const {initialTopoNameText, initialTopoNamePrefix,initialAliasText,initialAliasPrefix} = this.state
     const {
       getTopologyTemplateApi,
       visibal,
@@ -181,6 +196,8 @@ export default class ProjectTopologyForm extends Component {
                 getTopologyTemplateApi={getTopologyTemplateApi}
                 initialTopoNameText={initialTopoNameText}
                 initialTopoNamePrefix={initialTopoNamePrefix}
+                initialAliasText={initialAliasText}
+                initialAliasPrefix={initialAliasPrefix}
         />
             ) : (
               <div style={{ height: '378px' }} />

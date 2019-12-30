@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import com.alibaba.fastjson.JSON;
@@ -25,8 +26,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.*;
 import com.creditease.dbus.commons.meta.MetaCompareResult;
 import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
+import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -35,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.InstanceAlreadyExistsException;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -108,7 +108,7 @@ public class MetaEventWarningSender {
         try {
             producer = new KafkaProducer<>(props);
         } catch (Exception e) {
-            if(!(e instanceof InstanceAlreadyExistsException)) {
+            if (!(e instanceof InstanceAlreadyExistsException)) {
                 throw e;
             }
         }

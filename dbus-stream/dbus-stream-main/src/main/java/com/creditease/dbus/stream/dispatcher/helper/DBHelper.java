@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.dispatcher.helper;
 
@@ -43,7 +44,7 @@ public class DBHelper {
     private String zkServers;
     private Connection connection = null;
 
-    public DBHelper (String zkServers) {
+    public DBHelper(String zkServers) {
         this.zkServers = zkServers;
     }
 
@@ -53,8 +54,10 @@ public class DBHelper {
         }
         return connection;
     }
+
     /**
      * read datasource_name, datatopic, ctrlTopic, dbusSchemaName from Mysql
+     *
      * @throws Exception
      */
     public void loadDsInfo(DataSourceInfo dsInfo) throws Exception {
@@ -74,10 +77,22 @@ public class DBHelper {
 
             if (rs.next()) {
                 // One row of data in the ResultSet object
+                String type = rs.getString("ds_type");
                 dsInfo.setDbSourceType(rs.getString("ds_type"));
                 dsInfo.setDataTopic(rs.getString("topic"));
                 dsInfo.setCtrlTopic(rs.getString("ctrl_topic"));
-                dsInfo.setDbusSchema(rs.getString("dbus_user"));
+
+                // dbus 默认管理库 为 dbus，mysql小写，oracle 大写
+                dsInfo.setDbusSchema("dbus");
+                if (type != null) {
+                    if (type.equalsIgnoreCase("oracle")) {
+                        dsInfo.setDbusSchema("DBUS");
+                    } else if (type.equalsIgnoreCase("mysql")) {
+                        dsInfo.setDbusSchema("dbus");
+                    } else {
+                        ;
+                    }
+                }
 
                 // Set data topic and control topic
                 if (Strings.isNullOrEmpty(dsInfo.getDbSourceType())
@@ -102,6 +117,7 @@ public class DBHelper {
 
     /**
      * getSchemaProps
+     *
      * @param dsInfo
      * @return Properties schemaTopicProps
      * ref: http://www.mkyong.com/jdbc/how-to-connect-to-mysql-with-jdbc-driver-java/
@@ -145,6 +161,55 @@ public class DBHelper {
     }
 
 
+    public Set<String> loadTablesInfo(DataSourceInfo dsInfo) throws Exception {
+
+        PreparedStatement stmt = null;
+
+        try {
+            connection = getMysqlConnection();
+            int dsId = Integer.MIN_VALUE;
+            Set<String> tables = new HashSet<>();
+
+            String sqlQuery = "select id " +
+                    "from t_dbus_datasource where ds_name = ?";
+
+            stmt = connection.prepareStatement(sqlQuery);
+            // Fill out datasource name for sql query
+            stmt.setString(1, dsInfo.getDbSourceName());
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // One row of data in the ResultSet object
+                dsId = rs.getInt(1);
+            }
+
+            if (dsId != Integer.MIN_VALUE) {
+                sqlQuery = "select SCHEMA_NAME,TABLE_NAME " +
+                        "from t_data_tables where ds_id = ? AND status = 'ok'";
+                stmt = connection.prepareStatement(sqlQuery);
+                stmt.setInt(1, dsId);
+                rs = stmt.executeQuery();
+
+                while (rs.next()) {
+                    //cdc生成的topic，都是小写的，但db2中的表都是大写的，DBus管理库中的表也是大写的，因此此处将对管理库中的表进行小写转换
+                    tables.add(StringUtils.joinWith(".", dsInfo.getDbSourceName(), rs.getString("SCHEMA_NAME").toLowerCase(), rs.getString("TABLE_NAME").toLowerCase()));
+                }
+
+                return tables;
+
+            }
+
+        } catch (Exception e) {
+            logger.error("Exception caught when setting up properties!");
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+        return null;
+    }
 
     public void close() {
         try {
@@ -152,7 +217,7 @@ public class DBHelper {
                 connection.close();
                 connection = null;
             }
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Close Mysql connection error:" + ex.getMessage());
         }
     }

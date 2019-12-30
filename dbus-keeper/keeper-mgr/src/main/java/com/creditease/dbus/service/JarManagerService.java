@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,17 @@
  * >>
  */
 
-package com.creditease.dbus.service;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.service;
 
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.base.com.creditease.dbus.utils.RequestSender;
 import com.creditease.dbus.base.com.creditease.dbus.utils.URLBuilder;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.Project;
-
-import org.apache.commons.lang.StringUtils;
+import com.creditease.dbus.domain.model.TopologyJar;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +42,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by mal on 2018/4/19.
@@ -83,8 +83,8 @@ public class JarManagerService {
         return result.getBody();
     }
 
-    public ResultEntity delete(String category, String version, String type, String minorVersion, String fileName) {
-        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/jars/delete/{0}/{1}/{2}/{3}/{4}", StringUtils.EMPTY, version, type, minorVersion, fileName, category);
+    public ResultEntity delete(Integer id) {
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/jars/delete/{0}", StringUtils.EMPTY, id);
         return result.getBody();
     }
 
@@ -98,13 +98,23 @@ public class JarManagerService {
         return result.getBody();
     }
 
-    public ResultEntity batchDelete(List<Map<String, String>> records) {
-        ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, "/jars/batch-delete", records);
+    public ResultEntity batchDelete(List<Integer> ids) {
+        ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, "/jars/batch-delete", ids);
         return result.getBody();
     }
 
     public ResultEntity queryJarInfos(String queryString) {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/jars/infos", queryString);
+        return result.getBody();
+    }
+
+    public ResultEntity syncJarInfos() {
+        ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/jars/syncJarInfos");
+        return result.getBody();
+    }
+
+    public ResultEntity updateJar(TopologyJar jar) {
+        ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, "/jars/update", jar);
         return result.getBody();
     }
 
@@ -156,7 +166,7 @@ public class JarManagerService {
         Project project = result.getBody().getPayload(Project.class);
         String fileName = project.getKeytabPath();
         String projectName = project.getProjectName();
-        if(StringUtils.isBlank(fileName)){
+        if (StringUtils.isBlank(fileName)) {
             return ResponseEntity.ok().body(new ResultEntity(21003, "请联系管理员上传密钥文件"));
         }
         File file = new File(fileName);

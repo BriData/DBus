@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.oracle.appender.bolt.processor.wrapper;
 
@@ -40,10 +41,7 @@ import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Shrimp on 16/7/4.
@@ -118,7 +116,7 @@ public class OraWrapperDefaultHandler implements BoltCommandHandler {
                     PairWrapper<String, Object> beforeWrapper = BoltCommandHandlerHelper.convertAvroRecordUseBeforeMap(data, noorderKeys);
                     // 生成meta信息
                     List<Object> beforePayloads = new ArrayList<>();
-                    beforePayloads.add(beforeWrapper.getProperties(Constants.MessageBodyKey.POS));
+                    beforePayloads.add(generateUmsId(beforeWrapper.getProperties(Constants.MessageBodyKey.POS).toString()));
                     beforePayloads.add(beforeWrapper.getProperties(Constants.MessageBodyKey.OP_TS));
                     beforePayloads.add(Constants.UmsMessage.BEFORE_UPDATE_OPERATION);
                     beforePayloads.add(generateUmsUid());
@@ -129,7 +127,7 @@ public class OraWrapperDefaultHandler implements BoltCommandHandler {
 
                 // 生成meta信息
                 List<Object> payloads = new ArrayList<>();
-                payloads.add(wrapper.getProperties(Constants.MessageBodyKey.POS));
+                payloads.add(generateUmsId(wrapper.getProperties(Constants.MessageBodyKey.POS).toString()));
                 payloads.add(wrapper.getProperties(Constants.MessageBodyKey.OP_TS));
                 payloads.add(wrapper.getProperties(Constants.MessageBodyKey.OP_TYPE).toString().toLowerCase());
                 payloads.add(generateUmsUid());
@@ -169,6 +167,21 @@ public class OraWrapperDefaultHandler implements BoltCommandHandler {
 
         if (!message.getPayload().isEmpty()) {
             emitMessage(message);
+        }
+    }
+
+    private String generateUmsId(String pos) {
+        try {
+            Properties properties = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE);
+            Long compensation = Long.parseLong(properties.getOrDefault(Constants.ConfigureKey.LOGFILE_NUM_COMPENSATION, 0).toString());
+            if (compensation == null || compensation == 0) {
+                return pos;
+            }
+            String umsId = Utils.oracleUMSID(pos, compensation);
+            logger.debug("logfile.number.compensation:{}", compensation);
+            return umsId;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

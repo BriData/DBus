@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,18 @@
  * >>
  */
 
+
 package com.creditease.dbus.service.schema;
 
+import com.creditease.dbus.domain.model.DataSchema;
+import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.domain.model.*;
 
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class SchemaFetcher {
     private DataSource ds;
@@ -49,6 +53,35 @@ public abstract class SchemaFetcher {
         }
     }
 
+    /**
+     * 为了解决加表提交的schemaName大小写与源端库查询的结果不一致的问题
+     * 该方法返回一个map
+     * map的key是schemaName.toUpperCase()
+     * map的value是schemaName的实际值
+     *
+     * @return
+     * @throws Exception
+     */
+    public Map<String, String> getSourceSchemaName() throws Exception {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = conn.prepareStatement(buildQuery());
+            resultSet = statement.executeQuery();
+            return buildSchemaNameResult(resultSet);
+        } finally {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (statement != null) {
+                statement.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
     public static SchemaFetcher getFetcher(DataSource ds) throws Exception {
         SchemaFetcher fetcher;
         DbusDatasourceType dsType = DbusDatasourceType.parse(ds.getDsType());
@@ -60,6 +93,10 @@ public abstract class SchemaFetcher {
             case ORACLE:
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 fetcher = new OracleSchemaFetcher(ds);
+                break;
+            case DB2:
+                Class.forName("com.ibm.db2.jcc.DB2Driver");
+                fetcher = new DB2SchemaFetcher(ds);
                 break;
             default:
                 throw new IllegalArgumentException();
@@ -73,6 +110,16 @@ public abstract class SchemaFetcher {
         this.conn = conn;
     }
 
+    protected Map<String, String> buildSchemaNameResult(ResultSet rs) throws SQLException {
+        HashMap<String, String> map = new HashMap<>();
+        String schemaName;
+        while (rs.next()) {
+            schemaName = rs.getString("SCHEMANAME");
+            map.put(schemaName.toUpperCase(), schemaName);
+        }
+        return map;
+    }
+
     protected List<DataSchema> buildResult(ResultSet rs) throws SQLException {
         List<DataSchema> list = new ArrayList<>();
         DataSchema schema;
@@ -83,7 +130,7 @@ public abstract class SchemaFetcher {
         //{
         //    colName = rsm.getColumnName(i + 1);
         //}
-       // System.out.println(colName);
+        // System.out.println(colName);
         while (rs.next()) {
             schema = new DataSchema();
             //if("USERNAME".equals(colName))

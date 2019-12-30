@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons;
 
 import com.creditease.dbus.commons.exception.EncodeException;
@@ -31,7 +32,7 @@ import java.util.Base64;
  * Created by Shrimp on 16/5/26.
  */
 public enum DataType {
-    STRING, INT, LONG, FLOAT, DOUBLE, BOOLEAN, DATE, DATETIME, DECIMAL, BINARY ,RAW,JSONOBJECT;
+    STRING, INT, LONG, FLOAT, DOUBLE, BOOLEAN, DATE, DATETIME, DECIMAL, BINARY, RAW, JSONOBJECT;
 
     private String value;
 
@@ -142,6 +143,53 @@ public enum DataType {
         return datatype;
     }
 
+    public static DataType convertDb2DataType(String type) {
+        type = type.toUpperCase();
+        DataType datatype = null;
+        switch (type) {
+            case "SMALLINT":
+            case "INTEGER":
+            case "INT":
+            case "YEAR":
+                datatype = DataType.INT;
+                break;
+            case "BIGINT":
+                datatype = DataType.LONG;
+                break;
+            case "FLOAT":
+                datatype = DataType.FLOAT;
+                break;
+            case "DOUBLE":
+                datatype = DataType.DOUBLE;
+                break;
+            case "DECIMAL":
+                datatype = DataType.DECIMAL;
+                break;
+            case "DATE":
+                datatype = DataType.DATE;
+                break;
+            case "TIMESTAMP":
+                datatype = DataType.DATETIME;
+                break;
+            case "DBCLOB":
+            case "BLOB":
+                datatype = DataType.BINARY;
+                break;
+            case "ENUM":
+            case "SET":
+            case "TIME":
+            case "CHAR":
+            case "VARCHAR":
+            case "TINYTEXT":
+            case "TEXT":
+                datatype = DataType.STRING;
+                break;
+            default:
+                datatype = DataType.STRING;
+                break;
+        }
+        return datatype;
+    }
 
     public static DataType convertJsonLogDataType(String type) {
         type = type.toUpperCase();
@@ -199,11 +247,18 @@ public enum DataType {
             return convertMysqlDataType(type);
         }
 
+        if (DbusDatasourceType.stringEqual(dataSourceType, DbusDatasourceType.DB2)) {
+            return convertDb2DataType(type);
+        }
 
         if (DbusDatasourceType.stringEqual(dataSourceType, DbusDatasourceType.LOG_LOGSTASH_JSON)) {
             return convertJsonLogDataType(type);
         }
 
+        //uav jsonlog
+        if (DbusDatasourceType.stringEqual(dataSourceType, DbusDatasourceType.JSONLOG)) {
+            return convertJsonLogDataType(type);
+        }
 
         // 这里复用json的类型转换函数
         if (DbusDatasourceType.stringEqual(dataSourceType, DbusDatasourceType.ES_SQL_BATCH)) {
@@ -213,12 +268,18 @@ public enum DataType {
     }
 
     public static Object convertValueByDataType(DataType type, Object value) {
-        if(value == null) return value;
+        if (value == null) return value;
         switch (type) {
             case DECIMAL:
+                // 避免OGG生成的数值类型数据出现".001"直接输出到ums的情况
+                return Double.valueOf(value.toString()).toString();
             case LONG:
-                // LONG类型直接输出字符串，避免java的long类型溢出
-                return value.toString();
+                try {
+                    return Long.valueOf(value.toString()).toString();
+                } catch (NumberFormatException e) {
+                    //溢出直接toString
+                    return value.toString();
+                }
             case INT:
                 return Double.valueOf(value.toString()).intValue();
             case DOUBLE:

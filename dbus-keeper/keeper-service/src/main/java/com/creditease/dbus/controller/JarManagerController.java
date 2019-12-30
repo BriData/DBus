@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,21 @@
  * >>
  */
 
-package com.creditease.dbus.controller;
 
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.EncodePlugins;
+import com.creditease.dbus.domain.model.TopologyJar;
 import com.creditease.dbus.service.JarManagerService;
 import com.github.pagehelper.PageInfo;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 
 /**
@@ -60,13 +54,9 @@ public class JarManagerController extends BaseController {
         return resultEntityBuilder().payload(ret).build();
     }
 
-    @GetMapping("/delete/{version}/{type}/{minorVersion}/{fileName}/{category}")
-    public ResultEntity delete(@PathVariable String version,
-                               @PathVariable String type,
-                               @PathVariable String minorVersion,
-                               @PathVariable String fileName,
-                               @PathVariable String category) {
-        int ret = service.delete(category, version, type, minorVersion, fileName);
+    @GetMapping("/delete/{id}")
+    public ResultEntity delete(@PathVariable Integer id) {
+        int ret = service.delete(id);
         return resultEntityBuilder().payload(ret).build();
     }
 
@@ -86,9 +76,19 @@ public class JarManagerController extends BaseController {
         return resultEntityBuilder().payload(service.queryJarInfos(category, version, type)).build();
     }
 
+    @GetMapping("/syncJarInfos")
+    public ResultEntity syncJarInfos() throws Exception {
+        return resultEntityBuilder().status(service.syncJarInfos()).build();
+    }
+
     @PostMapping("/batch-delete")
-    public ResultEntity batchDelete(@RequestBody List<Map<String, String>> records) {
-        return resultEntityBuilder().payload(service.batchDelete(records)).build();
+    public ResultEntity batchDelete(@RequestBody List<Integer> ids) {
+        return resultEntityBuilder().payload(service.batchDelete(ids)).build();
+    }
+
+    @PostMapping("/update")
+    public ResultEntity updateJar(@RequestBody TopologyJar jar) {
+        return resultEntityBuilder().payload(service.updateJar(jar)).build();
     }
 
     @PostMapping("/uploads-encode-plugin/{name}/{projectId}")
@@ -113,14 +113,14 @@ public class JarManagerController extends BaseController {
 
     @GetMapping(path = "/delete-encode-plugin/{id}")
     public ResultEntity deleteEncodePlugin(@PathVariable Integer id) {
-        try{
+        try {
             int i = service.deleteEncodePlugin(id);
             if (i > 0) {
                 return resultEntityBuilder().status(MessageCode.PLUGIN_IS_USING).build();
             }
             return resultEntityBuilder().payload(i).build();
-        }catch (Exception e){
-            logger.error("Error encountered while uploadsEncodePlugin .",e);
+        } catch (Exception e) {
+            logger.error("Error encountered while uploadsEncodePlugin .", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }
@@ -137,4 +137,8 @@ public class JarManagerController extends BaseController {
         }
     }
 
+    @GetMapping("/initDbusJars")
+    public ResultEntity initDbusJars() {
+        return resultEntityBuilder().status(service.initDbusJars()).build();
+    }
 }

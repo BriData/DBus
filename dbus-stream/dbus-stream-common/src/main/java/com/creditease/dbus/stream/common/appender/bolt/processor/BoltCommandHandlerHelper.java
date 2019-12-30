@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
@@ -175,6 +176,30 @@ public class BoltCommandHandlerHelper {
         return wrapper;
     }
 
+    public static <T extends Object> PairWrapper<String, Object> convertDB2AvroRecord(GenericRecord record) {
+        PairWrapper<String, Object> wrapper = new PairWrapper<>();
+        Map<String, Object> map = convert2map(record);
+
+        Schema schema = record.getSchema();
+        List<Schema.Field> fields = schema.getFields();
+
+        for (Schema.Field field : fields) {
+            String key = field.name();
+            Object value = record.get(key);
+            addPairWrapperProperties(wrapper, key, value);
+        }
+
+        Long timeStamp = System.currentTimeMillis();
+        addPairWrapperProperties(wrapper, "op_ts", DateUtil.convertLongToStr4Date(timeStamp));
+        addPairWrapperProperties(wrapper, "pos", timeStamp);
+
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            addPairWrapperValue(wrapper, entry.getKey(), entry.getValue());
+        }
+
+        return wrapper;
+    }
 
     private static <T> T getFromRecord(String key, GenericRecord record) {
         return (T) record.get(key);
@@ -352,13 +377,13 @@ public class BoltCommandHandlerHelper {
             // 发邮件给管理员
             String content =
                     "您好:\n" +
-                    "  报警类型: 数据脱敏异常\n" +
-                    "  数据源:" + Utils.getDatasource().getDsName() + "\n" +
-                    "  数据库:" + version.getSchema() + "\n" +
-                    "  表名: " + version.getTable() + "\n" +
-                    "  脱敏列：" + column.getFieldName() +"\n" +
-                    "  异常信息：" + e.getMessage() + "\n" +
-                    "请及时处理.\n";
+                            "  报警类型: 数据脱敏异常\n" +
+                            "  数据源:" + Utils.getDatasource().getDsName() + "\n" +
+                            "  数据库:" + version.getSchema() + "\n" +
+                            "  表名: " + version.getTable() + "\n" +
+                            "  脱敏列：" + column.getFieldName() + "\n" +
+                            "  异常信息：" + e.getMessage() + "\n" +
+                            "请及时处理.\n";
             writeEmailMessage("Dbus数据脱敏异常", content, version.getSchema(), producer);
         } catch (Exception e1) {
             logger.error("exception data process error.", e1);

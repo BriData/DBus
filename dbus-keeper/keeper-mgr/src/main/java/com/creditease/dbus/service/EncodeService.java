@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
 import com.creditease.dbus.base.ResultEntity;
@@ -31,14 +32,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class EncodeService {
 
-	@Autowired
-	private RequestSender sender;
+    @Autowired
+    private RequestSender sender;
 
-	private static final String KEEPER_SERVICE = ServiceNames.KEEPER_SERVICE;
-	private Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String KEEPER_SERVICE = ServiceNames.KEEPER_SERVICE;
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
-	public ResultEntity searchEncodeColumns(String queryString) {
-		return sender.get(KEEPER_SERVICE, "/encode/search", queryString).getBody();
-	}
+    public ResultEntity searchEncodeColumns(String queryString) {
+        return sender.get(KEEPER_SERVICE, "/encode/search", queryString).getBody();
+    }
 
 }

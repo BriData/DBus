@@ -26,6 +26,7 @@ CREATE TABLE `t_data_schema` (
   `status` varchar(32) NOT NULL DEFAULT '' COMMENT '状态 active/inactive',
   `src_topic` varchar(64) NOT NULL DEFAULT '' COMMENT '源topic',
   `target_topic` varchar(64) NOT NULL DEFAULT '' COMMENT '目表topic',
+  `db_vip` varchar(32) DEFAULT NULL COMMENT 'schema对应数据库虚IP',
   `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建时间',
   `description` varchar(128) DEFAULT NULL COMMENT 'schema描述信息',
   PRIMARY KEY (`id`),
@@ -57,28 +58,11 @@ CREATE TABLE `t_data_tables` (
   `fullpull_col` varchar(255) DEFAULT '' COMMENT '全量分片列:配置column名称',
   `fullpull_split_shard_size` varchar(255) DEFAULT '' COMMENT '全量分片大小配置:配置-1代表不分片',
   `fullpull_split_style` varchar(255) DEFAULT '' COMMENT '全量分片类型:MD5',
+  `fullpull_condition` varchar(512) DEFAULT NULL COMMENT '全量条件',
   `is_open` int(1) DEFAULT '0' COMMENT 'mongo是否展开节点,0不展开,1一级展开',
   `is_auto_complete` tinyint(4) DEFAULT '0' COMMENT 'mongoDB的表是否补全数据；如果开启，增量中更新操作会回查并补全数据',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_sid_tabname` (`schema_id`,`table_name`) USING BTREE
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Table structure for t_dba_encode_columns
--- ----------------------------
-DROP TABLE IF EXISTS `t_dba_encode_columns`;
-CREATE TABLE `t_dba_encode_columns` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `table_id` int(11) DEFAULT NULL COMMENT '表ID',
-  `field_name` varchar(64) DEFAULT NULL COMMENT '字段名称',
-  `plugin_id` int(11) DEFAULT NULL COMMENT '脱敏插件ID',
-  `encode_type` varchar(64) DEFAULT NULL COMMENT '脱敏方式',
-  `encode_param` varchar(4096) DEFAULT NULL COMMENT '脱敏使用的参数',
-  `desc_` varchar(64) DEFAULT NULL COMMENT '描述',
-  `truncate` int(1) DEFAULT '0' COMMENT '1:当字符串类型字段值脱敏后超出源表字段长度时按照源表字段长度截取 0:不做截取操作',
-  `override` tinyint(4) DEFAULT NULL COMMENT '是否覆盖当前脱敏配置(0:不覆盖,1:覆盖)',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -123,6 +107,23 @@ CREATE TABLE `t_ddl_event` (
   `ddl_type` varchar(64) NOT NULL,
   `ddl` varchar(3000) NOT NULL,
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for t_encode_columns
+-- ----------------------------
+DROP TABLE IF EXISTS `t_encode_columns`;
+CREATE TABLE `t_encode_columns` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `table_id` int(11) DEFAULT NULL COMMENT '表ID',
+  `field_name` varchar(64) DEFAULT NULL COMMENT '字段名称',
+  `plugin_id` int(11) DEFAULT NULL COMMENT '脱敏插件ID',
+  `encode_type` varchar(64) DEFAULT NULL COMMENT '脱敏方式',
+  `encode_param` varchar(4096) DEFAULT NULL COMMENT '脱敏使用的参数',
+  `desc_` varchar(64) DEFAULT NULL COMMENT '描述',
+  `truncate` int(1) DEFAULT '0' COMMENT '1:当字符串类型字段值脱敏后超出源表字段长度时按照源表字段长度截取 0:不做截取操作',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
@@ -173,6 +174,7 @@ CREATE TABLE `t_fullpull_history` (
   `last_shard_msg_offset` bigint(20) DEFAULT NULL,
   `split_column` varchar(64) DEFAULT NULL,
   `fullpull_condition` varchar(512) DEFAULT NULL,
+  `current_shard_offset` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -189,6 +191,7 @@ CREATE TABLE `t_meta_version` (
   `table_name` varchar(64) NOT NULL DEFAULT '' COMMENT '表名',
   `version` int(11) NOT NULL COMMENT '版本号',
   `inner_version` int(11) NOT NULL COMMENT '内部版本号',
+  `schema_hash` int(11) DEFAULT NULL COMMENT '该版本数据对应的schema哈希值',
   `event_offset` bigint(20) DEFAULT NULL COMMENT '触发version变更的消息在kafka中的offset值',
   `event_pos` bigint(20) DEFAULT NULL COMMENT '触发version变更的消息在trail文件中的pos值',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日期',
@@ -196,6 +199,20 @@ CREATE TABLE `t_meta_version` (
   PRIMARY KEY (`id`),
   KEY `idx_event_offset` (`event_offset`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='t_table_meta的版本信息';
+
+-- ----------------------------
+-- Table structure for t_name_alias_mapping
+-- ----------------------------
+DROP TABLE IF EXISTS `t_name_alias_mapping`;
+CREATE TABLE `t_name_alias_mapping` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `type` int(2) NOT NULL COMMENT '别名类型1,router拓扑别名;2,增量拓扑别名',
+  `name` varchar(64) NOT NULL COMMENT '名称',
+  `name_id` int(11) NOT NULL COMMENT '名称对应ID',
+  `alias` varchar(64) NOT NULL COMMENT '别名',
+  `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_plain_log_rule_group
@@ -479,6 +496,54 @@ CREATE TABLE `t_sink` (
   `url` varchar(512) DEFAULT NULL,
   `update_time` datetime DEFAULT NULL,
   `is_global` tinyint(4) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_sinker_name_unique` (`sink_name`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for t_sinker_topo
+-- ----------------------------
+DROP TABLE IF EXISTS `t_sinker_topo`;
+CREATE TABLE `t_sinker_topo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sinker_name` varchar(64) DEFAULT NULL,
+  `sinker_conf` varchar(1024) DEFAULT NULL,
+  `jar_id` int(11) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `description` varchar(128) DEFAULT NULL,
+  `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for t_sinker_topo_schema
+-- ----------------------------
+DROP TABLE IF EXISTS `t_sinker_topo_schema`;
+CREATE TABLE `t_sinker_topo_schema` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sinker_topo_id` int(11) DEFAULT NULL,
+  `sinker_name` varchar(64) DEFAULT NULL,
+  `ds_id` int(11) DEFAULT NULL,
+  `ds_name` varchar(32) DEFAULT NULL,
+  `schema_id` int(11) DEFAULT NULL,
+  `schema_name` varchar(32) DEFAULT NULL,
+  `target_topic` varchar(64) DEFAULT NULL,
+  `description` varchar(128) DEFAULT NULL,
+  `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_schema_id_unique` (`schema_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for t_storm_topology
+-- ----------------------------
+DROP TABLE IF EXISTS `t_storm_topology`;
+CREATE TABLE `t_storm_topology` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `topology_name` varchar(128) NOT NULL,
+  `ds_id` int(11) NOT NULL,
+  `jar_name` varchar(512) DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
@@ -521,11 +586,29 @@ CREATE TABLE `t_table_meta` (
   `is_pk` varchar(1) NOT NULL DEFAULT '' COMMENT '是否为主键Y/N',
   `pk_position` int(2) DEFAULT NULL COMMENT '主键的顺序',
   `alter_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '创建/修改的时间',
-  `comments` varchar(512) DEFAULT NULL COMMENT '列注释',
+  `comments` varchar(1024) DEFAULT NULL COMMENT '列注释',
   `default_value` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_table_meta` (`ver_id`,`column_name`,`original_ser`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='抓取的源表数据meta信息';
+
+-- ----------------------------
+-- Table structure for t_topology_jar
+-- ----------------------------
+DROP TABLE IF EXISTS `t_topology_jar`;
+CREATE TABLE `t_topology_jar` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `category` varchar(255) DEFAULT NULL,
+  `version` varchar(255) DEFAULT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `path` varchar(255) DEFAULT NULL,
+  `minor_version` varchar(255) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_user
@@ -544,16 +627,6 @@ CREATE TABLE `t_user` (
   UNIQUE KEY `idx_user_email` (`email`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
--- ----------------------------
--- Table structure for t_name_alias_mapping
--- ----------------------------
-DROP TABLE IF EXISTS `t_name_alias_mapping`;
-CREATE TABLE `t_name_alias_mapping` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `type` int(2) NOT NULL COMMENT '别名类型1,router拓扑别名;2,增量拓扑别名',
-  `name` varchar(64) NOT NULL COMMENT '名称',
-  `name_id` int(11) NOT NULL COMMENT '名称对应ID',
-  `alias` varchar(64) NOT NULL COMMENT '别名',
-  `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='别名表';
+-- 默认管理员账号admin/12345678
+INSERT INTO `t_user` (`id`, `role_type`, `status`, `user_name`, `password`, `email`, `phone_num`, `update_time`)
+VALUES ('1', 'admin', 'active', 'admin', '25d55ad283aa400af464c76d713c07ad', 'admin', '', current_timestamp);

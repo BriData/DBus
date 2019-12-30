@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.mysql.appender.spout.processor;
 
 import com.creditease.dbus.stream.common.appender.spout.processor.*;
@@ -27,10 +28,10 @@ import com.creditease.dbus.stream.common.appender.spout.processor.*;
  * Created by Shrimp on 16/8/23.
  */
 public class MysqlMessageHandler extends AbstractMessageHandler {
-	
-	private RecordProcessor<String, byte[]> controlProcessor;
-	private RecordProcessor<String, byte[]> initialLoadProcessor;
-	private RecordProcessor<String, byte[]> defaultProcessor;
+
+    private RecordProcessor<String, byte[]> controlProcessor;
+    private RecordProcessor<String, byte[]> initialLoadProcessor;
+    private RecordProcessor<String, byte[]> defaultProcessor;
 
     public MysqlMessageHandler(RecordProcessListener rpListener, ConsumerListener consumerListener) {
         super(rpListener, consumerListener);
@@ -40,18 +41,18 @@ public class MysqlMessageHandler extends AbstractMessageHandler {
 
     private void createProcessors() {
         //TODO 这里可以实现处理器的创建, 具体的RecordProcessor可以放在com.creditease.dbus.spout.processor.mysql包下
-    	this.controlProcessor = new CtrlEventProcessor(listener, consumerListener);
-    	this.initialLoadProcessor = new MysqlInitialLoadProcessor(controlTopics, listener, consumerListener);
-    	this.defaultProcessor = new MysqlDefaultProcessor(listener, consumerListener);
+        this.controlProcessor = new CtrlEventProcessor(listener, consumerListener);
+        this.initialLoadProcessor = new MysqlInitialLoadProcessor(controlTopics, listener, consumerListener);
+        this.defaultProcessor = new MysqlDefaultProcessor(listener, consumerListener);
     }
 
     @Override
     protected RecordProcessor<String, byte[]> chooseProcessor(String recordKey, String topic) {
         if (recordKey != null && recordKey.startsWith(initialLoadTableNs)) {
-        	return initialLoadProcessor;
+            return initialLoadProcessor;
         }
-        if(controlTopics.contains(topic)) {
-        	return controlProcessor;
+        if (controlTopics.contains(topic)) {
+            return controlProcessor;
         }
         return defaultProcessor; //defaultProcessor;
     }

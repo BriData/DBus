@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.log.handler.impl;
 
 
@@ -18,12 +39,12 @@ public class DeployFileConfigHandler extends AbstractHandler {
     public void checkDeploy(BufferedWriter bw) throws Exception {
         LogCheckConfigBean lccb = AutoCheckConfigContainer.getInstance().getAutoCheckConf();
         String logType = lccb.getLogType();
-        if(StringUtils.equals(logType, "filebeat")) {
-             deployFilebeat(lccb, bw);
-        } else if(StringUtils.equals(logType, "flume")) {
-             deployFlume(lccb, bw);
-        } else if(StringUtils.equals(logType, "logstash")) {
-             deployLogstash(lccb, bw);
+        if (StringUtils.equals(logType, "filebeat")) {
+            deployFilebeat(lccb, bw);
+        } else if (StringUtils.equals(logType, "flume")) {
+            deployFlume(lccb, bw);
+        } else if (StringUtils.equals(logType, "logstash")) {
+            deployLogstash(lccb, bw);
         } else {
             bw.write("日志类型错误！请检查配置项!\n");
             System.out.println("ERROR: 日志类型错误！请检查log.type配置项！");
@@ -44,11 +65,11 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         //利用文件模板，仅对多个抽取路径有效
         //1. 删除所要修改的配置文件
-        if(filebeatConfigFile.exists())
+        if (filebeatConfigFile.exists())
             FileUtils.deleteFile(filebeatConfigFilePath);
 
         //2. 复制要修改的配置文件
-        if(!filebeatTemplateFile.exists()) {
+        if (!filebeatTemplateFile.exists()) {
             System.out.println("ERROR: [" + filebeatTemplateFile + "] is not exist!");
             bw.write(filebeatTemplateFile + " is not exist!");
             updateConfigProcessExit(bw);
@@ -57,11 +78,11 @@ public class DeployFileConfigHandler extends AbstractHandler {
         FileUtils.copyFileUsingFileChannels(filebeatTemplateFile, filebeatConfigFile);
 
         //3. 对复制文件追加内容
-        String []extractFilePaths = StringUtils.split(filebeatExtractFilePath,",");
+        String[] extractFilePaths = StringUtils.split(filebeatExtractFilePath, ",");
         //构造多个抽取路径
         for (int i = 0; i < extractFilePaths.length; i++) {
             File file = new File(extractFilePaths[i]);
-            if(FileUtils.checkFileAndFolderIsExist(extractFilePaths[i])) {
+            if (FileUtils.checkFileAndFolderIsExist(extractFilePaths[i])) {
                 String filebeatFileExtractSection = buildFilebeatFileExtractSection(extractFilePaths[i]);
                 FileUtils.insert(filebeatConfigFilePath, 22, filebeatFileExtractSection);
             } else {
@@ -108,7 +129,6 @@ public class DeployFileConfigHandler extends AbstractHandler {
         String flumeDstTopic = lccb.getFlumeDstTopic();
 
 
-
         String flumeConfigFilePath = StringUtils.joinWith("/", flumeBasePath, "conf/flume-conf.properties");
         File flumeConfigFile = new File(flumeConfigFilePath);
         String flumeTemplateFilePath = StringUtils.joinWith("/", flumeBasePath, "conf/flume-conf.properties.template");
@@ -116,11 +136,11 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         //利用文件模板
         //1. 删除所要修改的配置文件
-        if(flumeConfigFile.exists())
+        if (flumeConfigFile.exists())
             FileUtils.deleteFile(flumeConfigFilePath);
 
         //2. 复制要修改的配置文件
-        if(!flumeTemplateFile.exists()) {
+        if (!flumeTemplateFile.exists()) {
             System.out.println("ERROR: [" + flumeConfigFilePath + "] is not exist!");
             bw.write(flumeConfigFilePath + " is not exist!");
             updateConfigProcessExit(bw);
@@ -128,7 +148,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         FileUtils.copyFileUsingFileChannels(flumeTemplateFile, flumeConfigFile);
 
-        if(!flumeConfigFile.exists()) {
+        if (!flumeConfigFile.exists()) {
             System.out.println("ERROR: [" + flumeConfigFilePath + "] is not exist!");
             bw.write(flumeConfigFilePath + " is not exist!");
             updateConfigProcessExit(bw);
@@ -147,7 +167,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
 
         File flumeExtractFile = new File(flumeExtractFilePath);
-        if(FileUtils.checkFileAndFolderIsExist(flumeExtractFilePath)) {
+        if (FileUtils.checkFileAndFolderIsExist(flumeExtractFilePath)) {
             //替换抽取文件路径，flume比较特殊，目前只允许配置一个文件路径，可以是文件夹
             String oldExtractFileStr = "agent.sources.r_hb_0.filegroups.hblf";
             String newExtractFileStr = buildFlumeExtractFileStr(flumeExtractFilePath);
@@ -163,7 +183,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
         }
 
 
-        if(FileUtils.checkFileAndFolderIsExist(flumeHeartbeatFilePath)) {
+        if (FileUtils.checkFileAndFolderIsExist(flumeHeartbeatFilePath)) {
             //替换心跳日志文件路径
             String oldHBFilePathStr = "agent.sources.r_dahb.filegroups.dahblf";
             String newHBFilePathStr = buildFlumeHBExtractFilePathStr(flumeHeartbeatFilePath);
@@ -227,11 +247,11 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         //利用文件模板
         //1. 删除所要修改的配置文件
-        if(logstashConfigFile.exists())
+        if (logstashConfigFile.exists())
             FileUtils.deleteFile(logstashConfigFilePath);
 
         //2. 复制要修改的配置文件
-        if(!logstashTemplateFile.exists()) {
+        if (!logstashTemplateFile.exists()) {
             System.out.println("ERROR: [" + logstashConfigFilePath + "] is not exist!");
             bw.write(logstashConfigFilePath + " is not exist!");
             updateConfigProcessExit(bw);
@@ -239,21 +259,21 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         FileUtils.copyFileUsingFileChannels(logstashTemplateFile, logstashConfigFile);
 
-        if(!logstashConfigFile.exists()) {
+        if (!logstashConfigFile.exists()) {
             System.out.println("ERROR: [" + logstashConfigFilePath + "] is not exist!");
             bw.write(logstashConfigFilePath + " is not exist!");
             updateConfigProcessExit(bw);
         }
 
 
-        if(!logstashConfigFile.exists()) {
+        if (!logstashConfigFile.exists()) {
             System.out.println("ERROR: " + logstashConfigFilePath + " is not exist!");
             bw.write(logstashConfigFilePath + " is not exist!");
             updateConfigProcessExit(bw);
         }
 
         File logstashExtractFile = new File(logstashExtractFilePath);
-        if(FileUtils.checkFileAndFolderIsExist(logstashExtractFilePath)) {
+        if (FileUtils.checkFileAndFolderIsExist(logstashExtractFilePath)) {
             //修改logstash文件抽取路径
             String oldExtractFilePathStr = "path => [";
             String newExtractFilePathStr = buildLogstashExtractFilePathStr(logstashExtractFilePath);
@@ -271,7 +291,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
         //修改抽取文件是从开始读，还是从末端读，可以为beginning或end
         String oldLogstashFileStartPositionStr = "start_position => ";
-        if(!StringUtils.equals(logstashFileStartPosition, "beginning") && !StringUtils.equals(logstashFileStartPosition, "end")) {
+        if (!StringUtils.equals(logstashFileStartPosition, "beginning") && !StringUtils.equals(logstashFileStartPosition, "end")) {
             System.out.println("ERROR: " + logstashFileStartPosition + " is error，should be beginning or end!");
             bw.write(logstashFileStartPosition + "  is error，should be beginning or end!");
             bw.newLine();
@@ -309,10 +329,10 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private String buildFilebeatFileExtractSection(String filePath) {
-        return  "\n- type: log\n" +
+        return "\n- type: log\n" +
                 "  enabled: true\n" +
                 "  paths:\n" +
-                "    - "+ filePath + "\n" +
+                "    - " + filePath + "\n" +
                 "  fields_under_root: true\n" +
                 "  fields:\n" +
                 "    type: data_log\n" +
@@ -320,10 +340,10 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private String buildFilebeatHBExtractSection(String filePath) {
-        return  "\n- type: log\n" +
+        return "\n- type: log\n" +
                 "  enabled: true\n" +
                 "  paths:\n" +
-                "    - "+ filePath + "\n" +
+                "    - " + filePath + "\n" +
                 "  fields_under_root: true\n" +
                 "  fields:\n" +
                 "    type: dbus-heartbeat\n" +
@@ -331,7 +351,7 @@ public class DeployFileConfigHandler extends AbstractHandler {
     }
 
     private String buildLogstashHBExtractSection() {
-        return  "\nheartbeat {\n" +
+        return "\nheartbeat {\n" +
                 "        message => \"epoch\"\n" +
                 "        interval => 60\n" +
                 "        type => \"dbus-heartbeat\"\n" +
@@ -340,80 +360,80 @@ public class DeployFileConfigHandler extends AbstractHandler {
 
     private String buildFilebeatKafkaBrokerConfig(String kafkaBroker) {
         String newHost;
-        String []arr = StringUtils.split(kafkaBroker, ",");
+        String[] arr = StringUtils.split(kafkaBroker, ",");
         StringBuffer sb = new StringBuffer("  hosts: [");
-        for(int i = 0; i < arr.length; i++) {
+        for (int i = 0; i < arr.length; i++) {
             sb.append("\"");
             sb.append(arr[i]);
             sb.append("\"");
-            if(i != arr.length -1) {
+            if (i != arr.length - 1) {
                 sb.append(",");
             }
         }
         sb.append("]");
 
-        return  sb.toString();
+        return sb.toString();
     }
 
     private String buildFilebeatKafkaTopicConfig(String topic) {
-        return  "  topic: '" + topic + "'";
+        return "  topic: '" + topic + "'";
     }
 
     private String buildFlumeHeartbeat(String host) {
-        return  "agent.sources.r_hb_0.interceptors.i_sr_2.replaceString={\\\"message\\\":\\\"$1\\\", \\\"type\\\":\\\"dbus_log\\\", \\\"host\\\":\\\"" + host + "\\\"}";
+        return "agent.sources.r_hb_0.interceptors.i_sr_2.replaceString={\\\"message\\\":\\\"$1\\\", \\\"type\\\":\\\"dbus_log\\\", \\\"host\\\":\\\"" + host + "\\\"}";
     }
 
     private String buildFlumeSincedbStr(String path) {
-        return  "agent.sources.r_hb_0.positionFile=" + path;
+        return "agent.sources.r_hb_0.positionFile=" + path;
     }
 
-    private  String buildFlumeExtractFileStr(String path) {
-        return  "agent.sources.r_hb_0.filegroups.hblf=" + path + " ";
+    private String buildFlumeExtractFileStr(String path) {
+        return "agent.sources.r_hb_0.filegroups.hblf=" + path + " ";
     }
 
-    private  String buildFlumeHBSincedbStr(String path) {
-        return  "agent.sources.r_dahb.positionFile=" + path;
+    private String buildFlumeHBSincedbStr(String path) {
+        return "agent.sources.r_dahb.positionFile=" + path;
     }
 
-    private  String buildFlumeHBExtractFilePathStr(String path) {
-        return  "agent.sources.r_dahb.filegroups.dahblf=" + path + " ";
+    private String buildFlumeHBExtractFilePathStr(String path) {
+        return "agent.sources.r_dahb.filegroups.dahblf=" + path + " ";
     }
 
-    private  String buildFlumeTopic(String topic) {
-        return  "agent.sinks.k.kafka.topic=" + topic;
+    private String buildFlumeTopic(String topic) {
+        return "agent.sinks.k.kafka.topic=" + topic;
     }
 
-    private  String buildFlumeKafkaBrokerStr(String kafkaBroker) {
-        return  "agent.sinks.k.kafka.bootstrap.servers=" + kafkaBroker;
+    private String buildFlumeKafkaBrokerStr(String kafkaBroker) {
+        return "agent.sinks.k.kafka.bootstrap.servers=" + kafkaBroker;
     }
 
-    private  String buildLogstashExtractFilePathStr(String path) {
-        return  "\tpath => [\"" + path + "\"] ";
+    private String buildLogstashExtractFilePathStr(String path) {
+        return "\tpath => [\"" + path + "\"] ";
     }
 
 
-    private  String buildLogstashExtractFileSincedbStr(String path) {
-        return  "\tsincedb_path => \"" + path + "\"] ";
+    private String buildLogstashExtractFileSincedbStr(String path) {
+        return "\tsincedb_path => \"" + path + "\"] ";
     }
 
-    private  String buildLogstashDsTypeStr(String type) {
-        return  "type => \"" + type + "\" ";
+    private String buildLogstashDsTypeStr(String type) {
+        return "type => \"" + type + "\" ";
     }
 
-    private  String buildLogstashFileStartPosition(String position) {
-        return  "\tstart_position => \"" + position + "\" ";
+    private String buildLogstashFileStartPosition(String position) {
+        return "\tstart_position => \"" + position + "\" ";
     }
 
-    private  String buildLogstashFileFilterType(String type) {
-        return  "\tif [type] == \"" + type + "\" { ";
+    private String buildLogstashFileFilterType(String type) {
+        return "\tif [type] == \"" + type + "\" { ";
     }
 
-    private  String buildLogstashKafkaBroker(String kafkaBroker) {
-        return  "\tbootstrap_servers => \"" + kafkaBroker + "\" ";
+    private String buildLogstashKafkaBroker(String kafkaBroker) {
+        return "\tbootstrap_servers => \"" + kafkaBroker + "\" ";
     }
 
-    private  String buildLogstashTopic(String topic) {
-        return  "\ttopic_id => \"" + topic + "\" ";
+    private String buildLogstashTopic(String topic) {
+        return "\ttopic_id => \"" + topic + "\" ";
     }
 
 }

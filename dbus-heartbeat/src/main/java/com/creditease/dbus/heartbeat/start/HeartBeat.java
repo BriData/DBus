@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,17 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.start;
-
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang.SystemUtils;
 
 import com.creditease.dbus.heartbeat.handler.IHandler;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.Constants;
+import org.apache.commons.lang.SystemUtils;
+
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class HeartBeat {
 
@@ -47,7 +47,7 @@ public abstract class HeartBeat {
         }
 //        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + userDir + "/conf/log4j.xml");
 //        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + userDir + "/conf_creditease_setting/log4j.xml");
-        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/conf/log4j.xml");
+        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG, "file:" + SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/conf/log4j.xml");
     }
 
     protected List<IHandler> handlers = new ArrayList<IHandler>();

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.bean;
 
@@ -33,9 +34,13 @@ public class DataTable implements Serializable {
     public static final String STATUS_ABORT = DATA_STATUS_ABORT;
     public static final String STATUS_WAITING = DATA_STATUS_WAITING;
 
-    /** meta变更标志，初始值，未接收到meta变更事件*/
+    /**
+     * meta变更标志，初始值，未接收到meta变更事件
+     */
     public static final int META_FLAG_DEFAULT = 0;
-    /** meta变更标志已经接收到meta变更事件，系统需要同步meta*/
+    /**
+     * meta变更标志已经接收到meta变更事件，系统需要同步meta
+     */
     public static final int META_FLAG_CHANGED = 1;
 
     private Long id;
@@ -76,6 +81,7 @@ public class DataTable implements Serializable {
     public boolean isMetaChanged() {
         return META_FLAG_CHANGED == metaChangeFlg;
     }
+
     public int getMetaChangeFlg() {
         return metaChangeFlg;
     }
@@ -87,6 +93,7 @@ public class DataTable implements Serializable {
     public boolean isPartationTable() {
         return !tableName.equals(physicalTableRegex);
     }
+
     public boolean isOk() {
         return STATUS_OK.equals(this.status);
     }
@@ -98,9 +105,11 @@ public class DataTable implements Serializable {
     public void waiting() {
         setStatus(STATUS_WAITING);
     }
+
     public void ok() {
         setStatus(STATUS_OK);
     }
+
     public void abort() {
         setStatus(STATUS_ABORT);
     }

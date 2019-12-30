@@ -1,6 +1,6 @@
-import React, { PropTypes, Component } from 'react'
-import {Tooltip, Popconfirm, Form, Select, Input, message, Table } from 'antd'
-import { FormattedMessage } from 'react-intl'
+import React, {Component} from 'react'
+import {Form, Popconfirm, Select, Table, Tooltip} from 'antd'
+import {FormattedMessage} from 'react-intl'
 import OperatingButton from '@/app/components/common/OperatingButton'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -9,7 +9,7 @@ const FormItem = Form.Item
 const Option = Select.Option
 
 export default class JarManageGrid extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
       versionVisible: false,
@@ -39,14 +39,17 @@ export default class JarManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const { onDelete } = this.props
+    const {onDelete, onModify} = this.props
     return (
       <div>
-        <Popconfirm title={'确认删除？'} onConfirm={() => onDelete([record])} okText="Yes" cancelText="No">
+        <Popconfirm title={'确认删除？'} onConfirm={() => onDelete(record.id)} okText="Yes" cancelText="No">
           <OperatingButton icon="delete">
-            <FormattedMessage id="app.common.delete" defaultMessage="删除" />
+            <FormattedMessage id="app.common.delete" defaultMessage="删除"/>
           </OperatingButton>
         </Popconfirm>
+        <OperatingButton icon="edit" onClick={() => onModify(record)}>
+          <FormattedMessage id="app.common.modify" defaultMessage="编辑"/>
+        </OperatingButton>
       </div>
     )
   };
@@ -64,52 +67,92 @@ export default class JarManageGrid extends Component {
     }
   });
 
-  render () {
-    const { tableWidth, jarInfos, onSelectChange } = this.props
+  render() {
+    const {tableWidth, jarInfos, onSelectChange} = this.props
     const columns = [
+      {
+        title: <FormattedMessage
+          id="app.common.id"
+          defaultMessage="ID"
+        />,
+        width: tableWidth[1],
+        dataIndex: 'id',
+        key: 'id',
+        render: this.renderComponent(this.renderNomal),
+      },
+      {
+        title: <FormattedMessage
+          id="app.components.resourceManage.jarManager.category"
+          defaultMessage="Category"
+        />,
+        width: tableWidth[2],
+        dataIndex: 'category',
+        key: 'category',
+        render: this.renderComponent(this.renderNomal),
+      },
       {
         title: <FormattedMessage
           id="app.common.version"
           defaultMessage="版本"
         />,
-        width: tableWidth[1],
+        width: tableWidth[3],
         dataIndex: 'version',
         key: 'version',
         render: this.renderComponent(this.renderNomal),
       },
       {
         title: <FormattedMessage
-          id="app.common.type"
-          defaultMessage="类型"
+          id="app.components.resourceManage.jarManager.type"
+          defaultMessage="Type"
         />,
-        width: tableWidth[2],
+        width: tableWidth[4],
         dataIndex: 'type',
         key: 'type',
         render: this.renderComponent(this.renderNomal),
       },
       {
         title: <FormattedMessage
-          id="app.components.resourceManage.minorVersion"
+          id="app.components.resourceManage.jarManager.name"
+          defaultMessage="Jar包名称"
+        />,
+        width: tableWidth[5],
+        dataIndex: 'name',
+        key: 'name',
+        render: this.renderComponent(this.renderNomal),
+      },
+      {
+        title: <FormattedMessage
+          id="app.components.resourceManage.jarManager.minorVersion"
           defaultMessage="小版本"
         />,
-        width: tableWidth[3],
+        width: tableWidth[6],
         dataIndex: 'minorVersion',
         key: 'minorVersion',
         render: this.renderComponent(this.renderNomal)
       },
       {
         title: <FormattedMessage
-          id="app.components.resourceManage.jarPath"
+          id="app.components.resourceManage.jarManager.path"
           defaultMessage="Jar包路径"
         />,
-        width: tableWidth[4],
+        width: tableWidth[7],
         dataIndex: 'path',
         key: 'path',
         render: this.renderComponent(this.renderNomal)
       },
       {
+        title: <FormattedMessage
+          id="app.common.description"
+          defaultMessage="描述"
+        />,
+        width: tableWidth[8],
+        dataIndex: 'description',
+        key: 'description',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
         title: (
-          <FormattedMessage id="app.common.operate" defaultMessage="操作" />
+          <FormattedMessage id="app.common.operate" defaultMessage="操作"/>
         ),
         width: tableWidth[0],
         key: 'operate',

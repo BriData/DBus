@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,36 +18,30 @@
  * >>
  */
 
-package com.creditease.dbus.heartbeat.type;
 
-import java.util.Set;
+package com.creditease.dbus.heartbeat.type;
 
 import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.commons.ControlVo;
 import com.creditease.dbus.commons.CtlMessageResult;
-import com.creditease.dbus.heartbeat.container.AlarmResultContainer;
-import com.creditease.dbus.heartbeat.container.CuratorContainer;
-import com.creditease.dbus.heartbeat.container.DataSourceContainer;
-import com.creditease.dbus.heartbeat.container.EventContainer;
-import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
-import com.creditease.dbus.heartbeat.container.KafkaConsumerContainer;
-import com.creditease.dbus.heartbeat.container.LifeCycleContainer;
+import com.creditease.dbus.heartbeat.container.*;
 import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
-
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 
+import java.util.Set;
+
 /**
  * 通过监控zookeeper节点(/dbus/heartbeat/control)数据变化,实现如下控制:
- *   1. 重新加载配置
- *   2. 停止心跳,全量拉取检查,心跳检查
- *   3. 启动心跳,全量拉取检查,心跳检查
- *   4. 停止整个监控进程
- *   5. 拉取全量
- *
- *   控制参数JSON格式: {"cmdType":0,"args":"cm"}
+ * 1. 重新加载配置
+ * 2. 停止心跳,全量拉取检查,心跳检查
+ * 3. 启动心跳,全量拉取检查,心跳检查
+ * 4. 停止整个监控进程
+ * 5. 拉取全量
+ * <p>
+ * 控制参数JSON格式: {"cmdType":0,"args":"cm"}
  *
  * @author Liang.Ma
  * @version 1.0
@@ -90,8 +84,8 @@ public enum WatcherType implements Watcher {
                     }
                     break;
                 }
-            default:
-                break;
+                default:
+                    break;
             }
         }
     };
@@ -157,10 +151,10 @@ public enum WatcherType implements Watcher {
 
         try {
             EventContainer.getInstances().fullPullerLock();
-            for(String schema : schemas){
+            for (String schema : schemas) {
                 EventContainer.getInstances().putSkipSchema(schema);
-                if(!schema.equals(ctrlVo.getArgs())){
-                     LoggerFactory.getLogger().info("[command-control] 心跳检查受影响的schema:{}", schema);
+                if (!schema.equals(ctrlVo.getArgs())) {
+                    LoggerFactory.getLogger().info("[command-control] 心跳检查受影响的schema:{}", schema);
                 }
             }
         } catch (Exception e) {
@@ -170,7 +164,7 @@ public enum WatcherType implements Watcher {
         }
 
         Set<String> targetTopics = EventContainer.getInstances().getTargetTopic(ctrlVo.getArgs());
-        for(String topic : targetTopics){
+        for (String topic : targetTopics) {
             EventContainer.getInstances().putSkipTargetTopic(topic);
         }
         LoggerFactory.getLogger().info("[command-control] 完成执行开启全量拉取通知.");
@@ -181,8 +175,8 @@ public enum WatcherType implements Watcher {
         LoggerFactory.getLogger().info("[command-control] 结束拉取全量的schema:{}", ctrlVo.getArgs());
         // Set<String> schemas = EventContainer.getInstances().getSchemasOfTargetTopic(ctrlVo.getArgs());
         Set<String> targetTopics = EventContainer.getInstances().getTargetTopic(ctrlVo.getArgs());
-        for(String topic : targetTopics){
-        //    EventContainer.getInstance().setKafkaOffsetToLargest(targetTopic);//不能放在这儿，kafkaConsumer为非线程安全的
+        for (String topic : targetTopics) {
+            //    EventContainer.getInstance().setKafkaOffsetToLargest(targetTopic);//不能放在这儿，kafkaConsumer为非线程安全的
             EventContainer.getInstances().removeSkipTargetTopic(topic);
         }
         /*

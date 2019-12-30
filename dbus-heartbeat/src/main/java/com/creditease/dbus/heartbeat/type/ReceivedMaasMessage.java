@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.heartbeat.type;
 
@@ -51,7 +52,8 @@ public class ReceivedMaasMessage {
     public void setObject_name(String object_name) {
         this.object_name = object_name;
     }
-    public static class Data_Source{
+
+    public static class Data_Source {
         private Server server;
         private String instance_name;
         private String ds_name;
@@ -80,7 +82,7 @@ public class ReceivedMaasMessage {
             this.ds_name = ds_name;
         }
 
-        public static class Server{
+        public static class Server {
             private String host;
             private String port;
 

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.heartbeat.type;
 
@@ -124,13 +125,13 @@ public class MaasMessage {
             }
 
             @Override
-            public boolean equals(Object server){
-                if(this == server) return true;
-                if(server == null ) return  false;
-                if(getClass() != server.getClass() ) return  false;
+            public boolean equals(Object server) {
+                if (this == server) return true;
+                if (server == null) return false;
+                if (getClass() != server.getClass()) return false;
 
-                Server server1 =  (Server) server;
-                if(! host.equals(server1.host)) return false;
+                Server server1 = (Server) server;
+                if (!host.equals(server1.host)) return false;
                 return host.equals(server1.host) && port.equals(server1.port);
             }
 
@@ -142,6 +143,7 @@ public class MaasMessage {
             }
         }
     }
+
     public static class SchemaInfo {
         private String table_name;
         private String table_comment;
@@ -214,25 +216,45 @@ public class MaasMessage {
                 this.column_comment = column_comment;
             }
 
-            public String getData_length(){return data_length;}
+            public String getData_length() {
+                return data_length;
+            }
 
-            public void setData_length(String data_length){this.data_length = data_length;}
+            public void setData_length(String data_length) {
+                this.data_length = data_length;
+            }
 
-            public String getData_precision(){return data_precision;}
+            public String getData_precision() {
+                return data_precision;
+            }
 
-            public void setData_precision(String data_precision){this.data_precision = data_precision;}
+            public void setData_precision(String data_precision) {
+                this.data_precision = data_precision;
+            }
 
-            public String getData_scale(){return data_scale;}
+            public String getData_scale() {
+                return data_scale;
+            }
 
-            public void setData_scale(String data_scale){this.data_scale = data_scale;}
+            public void setData_scale(String data_scale) {
+                this.data_scale = data_scale;
+            }
 
-            public String getIs_pk(){return is_pk;}
+            public String getIs_pk() {
+                return is_pk;
+            }
 
-            public void setIs_pk(String is_pk){this.is_pk = is_pk;}
+            public void setIs_pk(String is_pk) {
+                this.is_pk = is_pk;
+            }
 
-            public String getPk_position(){return pk_position;}
+            public String getPk_position() {
+                return pk_position;
+            }
 
-            public void setPk_position(String pk_position){this.pk_position = pk_position;}
+            public void setPk_position(String pk_position) {
+                this.pk_position = pk_position;
+            }
         }
     }
 

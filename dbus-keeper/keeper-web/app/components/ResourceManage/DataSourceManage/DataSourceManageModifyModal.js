@@ -93,6 +93,14 @@ export default class DataSourceManageModifyModal extends Component {
                   })(<Input disabled={true} size="default" type="text" />)}
                 </FormItem>
                 <FormItem label={<FormattedMessage
+                  id="app.common.alias"
+                  defaultMessage="数据源别名"
+                />} {...formItemLayout}>
+                  {getFieldDecorator('dsNameAlias', {
+                    initialValue: result.dsNameAlias,
+                  })(<Input size="default" type="text" />)}
+                </FormItem>
+                <FormItem label={<FormattedMessage
                   id="app.components.resourceManage.dataSourceType"
                   defaultMessage="数据源类型"
                 />} {...formItemLayout}>

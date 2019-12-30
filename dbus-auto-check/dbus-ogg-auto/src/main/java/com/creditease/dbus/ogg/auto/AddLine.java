@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.ogg.auto;
 
 import com.creditease.dbus.ogg.utils.FileUtil;
@@ -73,10 +94,10 @@ public class AddLine {
     }
 
     private static void newSchema() throws Exception {
-        if (StringUtils.isNotBlank(schemaName)) {
-            System.out.println("add schema." + schemaName);
-            addSchemaToParamFile();
-        }
+        //if (StringUtils.isNotBlank(schemaName)) {
+        //    System.out.println("add schema." + schemaName);
+        //    addSchemaToParamFile();
+        //}
         if (StringUtils.isNotBlank(tableNames)) {
             System.out.println("add tables." + tableNames);
             addTableToParamFile();
@@ -123,7 +144,7 @@ public class AddLine {
         }
     }
 
-    private static void addSchemaToParamFile() throws Exception {
+    /*private static void addSchemaToParamFile() throws Exception {
         BufferedWriter bw = null;
         BufferedReader br = null;
         try {
@@ -202,7 +223,7 @@ public class AddLine {
                 br.close();
             }
         }
-    }
+    }*/
 
     private static void addTableToParamFile() throws Exception {
         BufferedWriter bw = null;
@@ -284,18 +305,18 @@ public class AddLine {
             if (line.hasOption("dirprmPath")) {
                 dirprmPath = line.getOptionValue("dirprmPath");
             }
-            if (line.hasOption("NLS_LANG")) {
+            if (line.hasOption("NLS_LANG") && StringUtils.isNotBlank(line.getOptionValue("NLS_LANG"))) {
                 NLS_LANG = line.getOptionValue("NLS_LANG");
             } else {
                 NLS_LANG = "AMERICAN_AMERICA.AL32UTF8";
             }
             if (line.hasOption("replicatName")) {
-                replicatName = line.getOptionValue("replicatName");
+                replicatName = line.getOptionValue("replicatName").toLowerCase();
             } else {
                 replicatName = dsName;
             }
-            paramFilePath = dirprmPath + "/" + replicatName.toLowerCase() + ".prm";
-            proFilePath = dirprmPath + "/" + replicatName.toLowerCase() + ".props";
+            paramFilePath = dirprmPath + "/" + replicatName + ".prm";
+            proFilePath = dirprmPath + "/" + replicatName + ".props";
             kafkaProducerPath = dirprmPath + "/kafka_producer.properties";
             if (line.hasOption("bootstrap.servers")) {
                 bootstrapServers = line.getOptionValue("bootstrap.servers");

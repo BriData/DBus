@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.model;
 
@@ -82,6 +83,8 @@ public class FullPullHistory {
     private String splitColumn;
 
     private String fullpullCondition;
+
+    private Long currentShardOffset;
 
     public Long getId() {
         return id;
@@ -321,5 +324,13 @@ public class FullPullHistory {
 
     public void setFullpullCondition(String fullpullCondition) {
         this.fullpullCondition = fullpullCondition;
+    }
+
+    public Long getCurrentShardOffset() {
+        return currentShardOffset;
+    }
+
+    public void setCurrentShardOffset(Long currentShardOffset) {
+        this.currentShardOffset = currentShardOffset;
     }
 }

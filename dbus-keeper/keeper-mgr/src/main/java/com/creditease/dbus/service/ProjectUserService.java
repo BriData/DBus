@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service;
 
@@ -37,12 +38,12 @@ public class ProjectUserService {
     @Autowired
     private RequestSender sender;
 
-    public ResultEntity getUsersByProId(Integer projectId){
+    public ResultEntity getUsersByProId(Integer projectId) {
         ResponseEntity<ResultEntity> result = result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectUser/select-by-project-id/{id}", projectId);
         return result.getBody();
     }
 
-    public ResponseEntity<ResultEntity> getUsersByProIdToResponse(Integer projectId){
+    public ResponseEntity<ResultEntity> getUsersByProIdToResponse(Integer projectId) {
         return sender.get(ServiceNames.KEEPER_SERVICE, "/projectUser/select-by-project-id/{id}", projectId);
     }
 }

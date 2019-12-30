@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor.kafkawriter;
 
-import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
-import com.creditease.dbus.stream.common.appender.bolt.processor.listener.KafkaBoltHandlerListener;
+import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
-import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
+import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
+import com.creditease.dbus.stream.common.appender.bolt.processor.listener.KafkaBoltHandlerListener;
 import org.apache.storm.tuple.Tuple;
 
 /**
@@ -33,6 +34,7 @@ import org.apache.storm.tuple.Tuple;
  */
 public class IncrementTerminationHandler implements BoltCommandHandler {
     private KafkaBoltHandlerListener listener;
+
     public IncrementTerminationHandler(KafkaBoltHandlerListener listener) {
         this.listener = listener;
     }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.mysql.appender.bolt.processor.appender;
 
 import com.creditease.dbus.commons.DbusMessage;
@@ -28,14 +29,14 @@ import com.creditease.dbus.commons.meta.MetaCompareResult;
 import com.creditease.dbus.commons.meta.MysqlMetaComparator;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.DdlEvent;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.bean.TableComments;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
 import com.creditease.dbus.stream.common.appender.bolt.processor.MetaEventWarningSender;
 import com.creditease.dbus.stream.common.appender.bolt.processor.MetaVerController;
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
-import com.creditease.dbus.stream.common.appender.bean.EmitData;
-import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.meta.MetaFetcherManager;
@@ -55,11 +56,11 @@ import java.util.List;
 
 /**
  * 处理mysql 同步meta
- * @author xiongmao
  *
+ * @author xiongmao
  */
 public class MaMetaSyncEventHandler implements BoltCommandHandler {
-	private Logger logger = LoggerFactory.getLogger(getClass());
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private CommandHandlerListener listener;
     private MetaEventWarningSender sender;
 
@@ -67,31 +68,31 @@ public class MaMetaSyncEventHandler implements BoltCommandHandler {
         this.listener = listener;
         this.sender = new MetaEventWarningSender();
     }
-    
+
     @Override
     public void handle(Tuple tuple) {
-    	try{
-    		EmitData emitData = (EmitData) tuple.getValueByField(Constants.EmitFields.DATA);
-    		List<MessageEntry> datas = emitData.get(EmitData.MESSAGE);
-    		long offset = emitData.get(EmitData.OFFSET);
+        try {
+            EmitData emitData = (EmitData) tuple.getValueByField(Constants.EmitFields.DATA);
+            List<MessageEntry> datas = emitData.get(EmitData.MESSAGE);
+            long offset = emitData.get(EmitData.OFFSET);
 
             logger.debug("[BEGIN] receive data,offset:{}", offset);
-            
-            for(MessageEntry msgEntry : datas){
-            	long pos = Long.parseLong(msgEntry.getEntryHeader().getPos());
-            	syncMeta(msgEntry, pos, offset, tuple);
+
+            for (MessageEntry msgEntry : datas) {
+                long pos = Long.parseLong(msgEntry.getEntryHeader().getPos());
+                syncMeta(msgEntry, pos, offset, tuple);
             }
-    	} catch (Exception e){
-    		logger.error("Error when processing data", e);
+        } catch (Exception e) {
+            logger.error("Error when processing data", e);
             throw new RuntimeException(e);
-    	}
+        }
     }
-    
+
     private void syncMeta(MessageEntry msgEntry, long pos, long offset, Tuple input) throws Exception {
-    	logger.info("Received a meta sync message {}",msgEntry.getSql());
-    	//处理表结构变化消息,包含truncate和alter
-    //	String ddlType = StringUtils.substringBefore(msgEntry.getSql(), " ").toUpperCase();
-    	EntryHeader header = msgEntry.getEntryHeader();
+        logger.info("Received a meta sync message {}", msgEntry.getSql());
+        //处理表结构变化消息,包含truncate和alter
+        //	String ddlType = StringUtils.substringBefore(msgEntry.getSql(), " ").toUpperCase();
+        EntryHeader header = msgEntry.getEntryHeader();
         if (header.isTruncate()) {
             MetaVersion version = MetaVerController.getSuitableVersion(header.getSchemaName(), header.getTableName(), pos, offset);
             if (version == null) {
@@ -156,6 +157,7 @@ public class MaMetaSyncEventHandler implements BoltCommandHandler {
 
         }
     }
+
     private DdlEvent generateDdlEvent(MetaVersion version, MessageEntry msgEntry) {
 
         EntryHeader entryHeader = msgEntry.getEntryHeader();
@@ -203,14 +205,14 @@ public class MaMetaSyncEventHandler implements BoltCommandHandler {
         sender.sendMaasAppenderMessage(maasAppenderMessage);
     }
 
-    public static void main(String[] args){
-    	Date date = new Date();
-    	DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    public static void main(String[] args) {
+        Date date = new Date();
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
         System.out.println(format.format(date));
-    	
-    	Timestamp ts = new Timestamp(1473755543000L);
+
+        Timestamp ts = new Timestamp(1473755543000L);
         System.out.println(ts.toString());
-    	date = ts;
+        date = ts;
         System.out.println(format.format(date));
     }
 }

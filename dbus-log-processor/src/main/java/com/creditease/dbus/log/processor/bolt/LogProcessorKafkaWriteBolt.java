@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.log.processor.bolt;
 
@@ -89,7 +90,7 @@ public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
                 }
                 case Constants.EMIT_DATA_TYPE_HEARTBEAT: {
                     String outputTopic = (String) input.getValueByField("outputTopic");
-                    HeartBeatWindowInfo hbwi = (HeartBeatWindowInfo)input.getValueByField("value");
+                    HeartBeatWindowInfo hbwi = (HeartBeatWindowInfo) input.getValueByField("value");
                     String strTs = DateUtil.convertLongToStr4Date(hbwi.getTimestamp());
                     logger.info("heartbeat info [ time: {}, table：{} , status: {}]", strTs, StringUtils.joinWith("|", hbwi.getHost(), hbwi.getNamespace()), hbwi.getStatus());
                     writeDataToTopic(outputTopic, buildKey(hbwi.getDbusMessage(), hbwi.getTimestamp(), hbwi.getStatus()), hbwi.getDbusMessage().toString(), input);
@@ -103,14 +104,14 @@ public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
                 }
                 case Constants.EMIT_DATA_TYPE_STAT: {
                     String outputTopic = (String) input.getValueByField("outputTopic");
-                    StatWindowInfo swi = (StatWindowInfo)input.getValueByField("value");
+                    StatWindowInfo swi = (StatWindowInfo) input.getValueByField("value");
                     String strTs = DateUtil.convertLongToStr4Date(swi.getTimestamp());
                     logger.info("stat info [ time: {}, table：{}, success:{}, readKafkaCount: {}]",
                             strTs, StringUtils.joinWith("|", swi.getHost(), swi.getNamespace()), swi.getSuccessCnt(), swi.getReadKafkaCount());
                     writeDataToTopic(outputTopic, "", getStatMessage(swi).toJSONString(), input);
                     break;
                 }
-                default :
+                default:
                     break;
             }
         } catch (Exception e) {
@@ -138,7 +139,7 @@ public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
         String ns = dbusMessage.getSchema().getNamespace();
 
         //TODO joinWith
-        return StringUtils.join(type, "." , ns, "." + opts + ".", "wh_placeholder");
+        return StringUtils.join(type, ".", ns, "." + opts + ".", "wh_placeholder");
     }
 
     private String buildKey(DbusMessage dbusMessage, Long timeStamp, String status) {
@@ -146,7 +147,7 @@ public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
         // data_increment_heartbeat.mysql.db1.schema1.table1.5.0.0.1481245701166|1481245700947|ok.wh_placeholder
         String type = dbusMessage.getProtocol().getType();
         String ns = dbusMessage.getSchema().getNamespace();
-        return StringUtils.join(type, "." , inner.logProcessorConf.getProperty("log.type"), ".", ns, ".", timeStamp, "|", timeStamp, "|", status, ".wh_placeholder");
+        return StringUtils.join(type, ".", inner.logProcessorConf.getProperty("log.type"), ".", ns, ".", timeStamp, "|", timeStamp, "|", status, ".wh_placeholder");
     }
 
     private StatMessage getStatMessage(StatWindowInfo swi) {
@@ -180,7 +181,7 @@ public class LogProcessorKafkaWriteBolt extends BaseRichBolt {
             ControlType cmd = ControlType.getCommand(JSONObject.parseObject(value).getString("type"));
             switch (cmd) {
                 case LOG_PROCESSOR_RELOAD_CONFIG: {
-                    logger.info("LogProcessorKafkaWriteBolt-{} 收到reload消息！Type: {}, Values: {} " , context.getThisTaskId(), cmd, value);
+                    logger.info("LogProcessorKafkaWriteBolt-{} 收到reload消息！Type: {}, Values: {} ", context.getThisTaskId(), cmd, value);
                     inner.close(true);
                     if (producer != null) producer.close();
                     init();

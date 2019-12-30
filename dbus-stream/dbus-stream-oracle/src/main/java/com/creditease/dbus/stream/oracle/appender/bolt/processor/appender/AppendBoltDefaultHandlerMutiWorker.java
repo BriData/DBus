@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.oracle.appender.bolt.processor.appender;
 
 import com.alibaba.fastjson.JSON;
@@ -25,6 +26,9 @@ import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.commons.MetaWrapper;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.stream.common.Constants;
+import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandlerHelper;
 import com.creditease.dbus.stream.common.appender.bolt.processor.MetaVerController;
@@ -32,9 +36,6 @@ import com.creditease.dbus.stream.common.appender.bolt.processor.listener.Comman
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
 import com.creditease.dbus.stream.common.appender.meta.MetaFetcherManager;
-import com.creditease.dbus.stream.common.appender.bean.DataTable;
-import com.creditease.dbus.stream.common.appender.bean.EmitData;
-import com.creditease.dbus.stream.common.appender.bean.MetaVersion;
 import com.creditease.dbus.stream.common.appender.utils.DBFacadeManager;
 import com.creditease.dbus.stream.common.appender.utils.PairWrapper;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
@@ -124,10 +125,12 @@ public class AppendBoltDefaultHandlerMutiWorker implements BoltCommandHandler {
                 }
             }
 
-            long pos = Long.parseLong(results.get(0).get(Constants.MessageBodyKey.POS).toString());
-
+//            long pos = Long.parseLong(results.get(0).get(Constants.MessageBodyKey.POS).toString());
+//            MetaVersion version = MetaVerController.getSuitableVersion(dbSchema, tableName, pos, offset);
             //TODO 2.获取version以及meta信息
-            MetaVersion version = MetaVerController.getSuitableVersion(dbSchema, tableName, pos, offset);
+            int schemaHash = dataList.get(0).getSchemaHash();
+            MetaVersion version = MetaVerController.getOraSuitableVersion(dbSchema, tableName, schemaHash);
+
             if (version == null) {
                 // topology中的spout、和上级bolt存在table和version是否存在的验证，正常逻辑不会执行到这里
                 logger.error("table[{}.{}] or version not found, data was ignored.", schemaName, tableName);

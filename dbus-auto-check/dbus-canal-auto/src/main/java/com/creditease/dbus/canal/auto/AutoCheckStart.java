@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.canal.auto;
 
 import com.creditease.dbus.canal.bean.DeployPropsBean;
@@ -50,7 +71,7 @@ public class AutoCheckStart {
             bw = new BufferedWriter(osw);
             FileUtils.init(bw);
 
-            writeAndPrint( "************************************* CANAL CHECK BEGIN! ************************************");
+            writeAndPrint("************************************* CANAL CHECK BEGIN! ************************************");
 
             //1.检测canal账号可用性（与源端db的连通性）
             DBUtils.checkDBAccount(deployProps);
@@ -59,10 +80,10 @@ public class AutoCheckStart {
             //3.根目录创建canal.log和instance.log的软连接,方便日志查看
             CanalUtils.copyLogfiles(currentPath, deployProps.getDsName());
 
-            writeAndPrint( "**************************************** CANAL CHECK SUCCESS ********************************");
+            writeAndPrint("**************************************** CANAL CHECK SUCCESS ********************************");
         } catch (Exception e) {
             e.printStackTrace();
-            writeAndPrint( "***************************************** CANAL CHECK FAIL! *********************************");
+            writeAndPrint("***************************************** CANAL CHECK FAIL! *********************************");
         } finally {
             if (bw != null) {
                 bw.flush();

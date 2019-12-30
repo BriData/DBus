@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.mysql.appender.protobuf.protocol;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
@@ -25,21 +26,21 @@ import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
 import java.io.Serializable;
 import java.util.List;
 
-public class MsgColumn  implements Serializable {
-	private List<RowData> rowDataLst;
-	
-	public MsgColumn(){	
-	}
+public class MsgColumn implements Serializable {
+    private List<RowData> rowDataLst;
 
-	public List<RowData> getRowDataLst() {
-		return rowDataLst;
-	}
+    public MsgColumn() {
+    }
 
-	public void setRowDataLst(List<RowData> rowDataLst) {
-		this.rowDataLst = rowDataLst;
-	}
-	
-	public int getCount(){
-		return rowDataLst.size();
-	}
+    public List<RowData> getRowDataLst() {
+        return rowDataLst;
+    }
+
+    public void setRowDataLst(List<RowData> rowDataLst) {
+        this.rowDataLst = rowDataLst;
+    }
+
+    public int getCount() {
+        return rowDataLst.size();
+    }
 }

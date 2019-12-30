@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.bolt;
 
@@ -212,9 +213,12 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
     @Override
     public void sendHeartbeat(DbusMessage message, String topic, String key) {
         ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, message.toString());
-        producer.send(record);
-        //  logger.info("Write heartbeat message to kafka:{topic:{}, key:{}}", record.topic(), record.key());
-        //logger.info("Write heartbeat message to kafka:{topic:{}, key:{}, message:{}}", record.topic(), record.key(), record.value());
+        producer.send(record, (metadata, e) -> {
+            if (e != null) {
+                logger.warn("write heartbeat message error.", e);
+            }
+        });
+        logger.debug("Write heartbeat message to kafka:{topic:{}, key:{}, message:{}}", record.topic(), record.key(), record.value());
     }
 
     @Override
@@ -253,8 +257,11 @@ public class DbusKafkaWriterBolt extends BaseRichBolt implements KafkaBoltHandle
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
         } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
-        }
-        else {
+        } else if (type == DbusDatasourceType.MONGO) {
+            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
+        } else if (type == DbusDatasourceType.DB2) {
+            name = "com.creditease.dbus.stream.db2.appender.bolt.processor.provider.KafkaWriterCmdHandlerProvider";
+        } else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.meta;
 
 import com.creditease.dbus.commons.MetaWrapper;
@@ -32,6 +33,7 @@ public interface MetaComparator {
         ADD_FIELD(1, "adding field"), DROP_FIELD(2, "drop field"), TYPE_CHANGED(3, "field type changed");
         private String description;
         private int result;
+
         private FiledCompareResult(int result, String description) {
             this.result = result;
             this.description = description;

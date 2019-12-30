@@ -228,7 +228,7 @@ filebeat将数据抽取到Kafka topic后，DBus程序就可以对该topic数据�
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-3.png](img/install-filebeat-source/install-filebeat-source-add-table-3.png)
 
-* **升级版本:** 首先使规则组的Status状态变为active，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本）。
+* **升级版本:** 首先使规则组的Status状态变为失效(灰色)，然后点击升级版本（每次增加、删除或修改规则组后，都应该对该表升一次版本），然后再生效规则组。
 
    ![img/install-filebeat-source/install-filebeat-source-add-table-5.png](img/install-filebeat-source/install-filebeat-source-add-table-5.png)
 

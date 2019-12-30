@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.constant;
 
 /**
@@ -26,14 +27,15 @@ package com.creditease.dbus.constant;
  * Desc: project的状态
  */
 public enum ProjectStatus {
-    ACTIVE("active"),INACTIVE("inactive");
+    ACTIVE("active"), INACTIVE("inactive");
 
     private String status;
 
-    ProjectStatus(String status){
+    ProjectStatus(String status) {
         this.status = status;
     }
-    public String getStatus(){
+
+    public String getStatus() {
         return status;
     }
 }

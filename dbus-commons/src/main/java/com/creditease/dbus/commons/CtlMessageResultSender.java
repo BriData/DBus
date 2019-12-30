@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.commons;
 
@@ -63,7 +64,7 @@ public class CtlMessageResultSender {
             if (!zk.isExists(parentNodePath)) {
                 zk.createNode(parentNodePath, null);
             }
-            if(cleanOldNodes){
+            if (cleanOldNodes) {
                 List<String> children = zk.getChildren(parentNodePath);
                 for (String child : children) {
                     zk.deleteNode(buildNode(child));
@@ -81,9 +82,9 @@ public class CtlMessageResultSender {
                 zk.setData(buildRoot(), JSON.toJSONString(result.getOriginalMessage(), true).getBytes(UTF8));
             }
             String nodePath = buildNode(node);
-            if(zk.isExists(nodePath)) {
+            if (zk.isExists(nodePath)) {
                 zk.setData(nodePath, result.toString().getBytes(UTF8));
-            }else{
+            } else {
                 zk.createNode(nodePath, result.toString().getBytes(UTF8));
             }
         } catch (Exception e) {

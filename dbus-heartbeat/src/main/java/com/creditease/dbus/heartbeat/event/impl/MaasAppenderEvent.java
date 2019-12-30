@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.event.impl;
 
 
 import com.alibaba.fastjson.JSON;
-import com.creditease.dbus.commons.ControlMessage;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.MaasAppenderMessage;
 import com.creditease.dbus.heartbeat.container.HeartBeatConfigContainer;
@@ -35,7 +35,6 @@ import com.creditease.dbus.heartbeat.type.MaasMessage.DataSource;
 import com.creditease.dbus.heartbeat.type.MaasMessage.SchemaInfo;
 import com.creditease.dbus.heartbeat.type.MaasMessage.SchemaInfo.Column;
 import com.creditease.dbus.heartbeat.util.Constants;
-import com.creditease.dbus.heartbeat.util.JsonUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -69,15 +68,15 @@ public class MaasAppenderEvent extends AbstractEvent {
     protected TopicPartition partition0 = null;
 
 
-    public MaasAppenderEvent(String topic,String dataTopic){
+    public MaasAppenderEvent(String topic, String dataTopic) {
         super(01);
         this.topic = topic;
         this.dataTopic = dataTopic;
         dao = new DbusDataDaoImpl();
         Properties props = HeartBeatConfigContainer.getInstance().getKafkaConsumerConfig();
         Properties producerProps = HeartBeatConfigContainer.getInstance().getmaasConf().getProducerProp();
-        try{
-            LoggerFactory.getLogger().info("[topic]   ...."+topic);
+        try {
+            LoggerFactory.getLogger().info("[topic]   ...." + topic);
             LoggerFactory.getLogger().info("[maas-appender-event]  initial.........................");
             dataConsumer = new KafkaConsumer<>(props);
             partition0 = new TopicPartition(this.topic, 0);
@@ -86,7 +85,7 @@ public class MaasAppenderEvent extends AbstractEvent {
 
             statProducer = new KafkaProducer<>(producerProps);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -104,7 +103,7 @@ public class MaasAppenderEvent extends AbstractEvent {
                         if (waitingTimes >= 30) {
                             waitingTimes = 0;
                             boolean is_success = dao.testQuery(Constants.CONFIG_DB_KEY);
-                            LoggerFactory.getLogger().info("[maas-event]  connection is success: {}",is_success);
+                            LoggerFactory.getLogger().info("[maas-event]  connection is success: {}", is_success);
                             LoggerFactory.getLogger().info("[MaasAppenderEvent]  polling ....");
                         }
                         continue;
@@ -131,31 +130,30 @@ public class MaasAppenderEvent extends AbstractEvent {
                             String tableName = maasAppenderMessage.getTableName();
 
                             MaasMessage data_topic_message = new MaasMessage();
-                            DataSource dataSource = dao.queryDsInfoUseDsId(Constants.CONFIG_DB_KEY,dsId);
+                            DataSource dataSource = dao.queryDsInfoUseDsId(Constants.CONFIG_DB_KEY, dsId);
                             data_topic_message.setData_source(dataSource);//统一设置数据源信息
                             data_topic_message.setObject_owner(schemaName);//统一设置属主信息
 
-                            if(maasAppenderMessage.getType().equals(MaasAppenderMessage.Type.ALTER)){
+                            if (maasAppenderMessage.getType().equals(MaasAppenderMessage.Type.ALTER)) {
                                 //ALTER情况，设置所有列
-                                List<Column> columnList = dao.queryColumsUseMore(Constants.CONFIG_DB_KEY,dsId,schemaName,tableName);
-                                String table_comment = dao.queryTableComment2(Constants.CONFIG_DB_KEY,dsId,schemaName,tableName);
-                                setMessageAlter(data_topic_message,maasAppenderMessage,columnList,table_comment);
-                            }
-                            else if(maasAppenderMessage.getType().equals(MaasAppenderMessage.Type.COMMENT_COLUMN)){
+                                List<Column> columnList = dao.queryColumsUseMore(Constants.CONFIG_DB_KEY, dsId, schemaName, tableName);
+                                String table_comment = dao.queryTableComment2(Constants.CONFIG_DB_KEY, dsId, schemaName, tableName);
+                                setMessageAlter(data_topic_message, maasAppenderMessage, columnList, table_comment);
+                            } else if (maasAppenderMessage.getType().equals(MaasAppenderMessage.Type.COMMENT_COLUMN)) {
                                 //COMMENT_COLUMN 情况
                                 String columnName = maasAppenderMessage.getColumnName();
-                                Column column = dao.queryColumForAppender(Constants.CONFIG_DB_KEY,dsId,schemaName,tableName,columnName);
-                                setMessageColumn(data_topic_message,maasAppenderMessage,column);
+                                Column column = dao.queryColumForAppender(Constants.CONFIG_DB_KEY, dsId, schemaName, tableName, columnName);
+                                setMessageColumn(data_topic_message, maasAppenderMessage, column);
 
-                            }else if(maasAppenderMessage.getType().equals(MaasAppenderMessage.Type.COMMENT_TABLE)){
+                            } else if (maasAppenderMessage.getType().equals(MaasAppenderMessage.Type.COMMENT_TABLE)) {
                                 //COMMENT_TABLE 情况
-                                setMessageTable(data_topic_message,maasAppenderMessage);
+                                setMessageTable(data_topic_message, maasAppenderMessage);
                             }
 
                             String data_message = data_topic_message.toString();
                             LoggerFactory.getLogger().info("发送的消息 " + data_message);
                             LoggerFactory.getLogger().info("发送消息datatopic " + this.dataTopic);
-                            producerSend(this.dataTopic,"DBUS",data_message);
+                            producerSend(this.dataTopic, "DBUS", data_message);
                         }
                     }
                 } catch (Exception e) {
@@ -199,7 +197,7 @@ public class MaasAppenderEvent extends AbstractEvent {
         return isOk;
     }
 
-    public void setMessageAlter(MaasMessage data_topic_message, MaasAppenderMessage maasAppenderMessage, List<Column> columnList,String tableComment){
+    public void setMessageAlter(MaasMessage data_topic_message, MaasAppenderMessage maasAppenderMessage, List<Column> columnList, String tableComment) {
         SchemaInfo schemaInfo = new SchemaInfo();
         schemaInfo.setTable_name(maasAppenderMessage.getTableName());
         schemaInfo.setTable_comment(tableComment);
@@ -209,7 +207,7 @@ public class MaasAppenderEvent extends AbstractEvent {
         data_topic_message.setMessage_type("incr");
     }
 
-    public void setMessageColumn(MaasMessage data_topic_message,MaasAppenderMessage maasAppenderMessage,Column column){
+    public void setMessageColumn(MaasMessage data_topic_message, MaasAppenderMessage maasAppenderMessage, Column column) {
         SchemaInfo schemaInfo = new SchemaInfo();
         schemaInfo.setTable_name(maasAppenderMessage.getTableName());
         schemaInfo.setTable_comment(maasAppenderMessage.getTableComment());
@@ -221,7 +219,7 @@ public class MaasAppenderEvent extends AbstractEvent {
         data_topic_message.setMessage_type("incr");
     }
 
-    public void setMessageTable(MaasMessage data_topic_message,MaasAppenderMessage maasAppenderMessage){
+    public void setMessageTable(MaasMessage data_topic_message, MaasAppenderMessage maasAppenderMessage) {
         SchemaInfo schemaInfo = new SchemaInfo();
         schemaInfo.setTable_name(maasAppenderMessage.getTableName());
         schemaInfo.setTable_comment(maasAppenderMessage.getTableComment());

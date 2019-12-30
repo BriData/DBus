@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,23 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.manager;
 
-import com.creditease.dbus.extractor.container.*;
+import com.creditease.dbus.extractor.container.DataSourceContainer;
+import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
+import com.creditease.dbus.extractor.container.KafkaContainer;
+import com.creditease.dbus.extractor.container.TableMatchContainer;
 
 public class ContainerMng {
-	private ContainerMng(){
-	}
-	
-	public static void clearAllContainer(){
-		//MsgStatusContainer.getInstance().clear();
-		KafkaContainer.getInstance().clear();
-		ExtractorConfigContainer.getInstances().clear();
-		DataSourceContainer.getInstances().clear();
-		TableMatchContainer.getInstance().clear();
-	}
+    private ContainerMng() {
+    }
+
+    public static void clearAllContainer() {
+        //MsgStatusContainer.getInstance().clear();
+        KafkaContainer.getInstance().clear();
+        ExtractorConfigContainer.getInstances().clear();
+        DataSourceContainer.getInstances().clear();
+        TableMatchContainer.getInstance().clear();
+    }
 }

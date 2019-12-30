@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@
  * >>
  */
 
-package com.creditease.dbus.router.dao;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
+package com.creditease.dbus.router.dao;
 
 import com.creditease.dbus.encoders.EncodePlugin;
 import com.creditease.dbus.router.bean.FixColumnOutPutMeta;
 import com.creditease.dbus.router.bean.Resources;
 import com.creditease.dbus.router.bean.Sink;
 import com.creditease.dbus.router.encode.DBusRouterEncodeColumn;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mal on 2018/5/22.

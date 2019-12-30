@@ -4068,9 +4068,10 @@ image-size@~0.5.0:
   version "0.5.1"
   resolved "http://registry.npm.taobao.org/image-size/download/image-size-0.5.1.tgz#28eea8548a4b1443480ddddc1e083ae54652439f"
 
-image-webpack-loader@2.0.0:
+image-webpack-loader@^2.0.0:
   version "2.0.0"
-  resolved "https://registry.yarnpkg.com/image-webpack-loader/-/image-webpack-loader-2.0.0.tgz#d6bed8aa7db2cabcd90cd13932df191ab185b5e4"
+  resolved "https://registry.npm.taobao.org/image-webpack-loader/download/image-webpack-loader-2.0.0.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fimage-webpack-loader%2Fdownload%2Fimage-webpack-loader-2.0.0.tgz#d6bed8aa7db2cabcd90cd13932df191ab185b5e4"
+  integrity sha1-1r7Yqn2yyrzZDNE5Mt8ZGrGFteQ=
   dependencies:
     file-loader "*"
     imagemin "^5.2.2"

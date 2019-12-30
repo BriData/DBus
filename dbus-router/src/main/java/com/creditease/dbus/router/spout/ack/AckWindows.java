@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.spout.ack;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 import com.creditease.dbus.router.bean.Ack;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Created by Administrator on 2018/6/4.
@@ -70,14 +66,15 @@ public class AckWindows {
     }
 
     public void ack(Ack ackVo) {
-        logger.info("topic:{}, partaiton:{}, offset:{}, trigger ack.", ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
+        logger.debug("topic:{}, partaiton:{}, offset:{}, trigger ack.", ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
         doAckOrFail(ackVo, Ack.OK);
         flush();
     }
 
     public void fail(Ack ackVo) {
-        logger.info("topic:{}, partaiton:{}, offset:{}, trigger fail.", ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
-        if (StringUtils.endsWith(ackVo.getTopic(), "_ctrl")) ackBooks.get(obtainKey(ackVo)).get(ackVo.getOffset()).setStatus(Ack.OK);
+        logger.debug("topic:{}, partaiton:{}, offset:{}, trigger fail.", ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
+        if (StringUtils.endsWith(ackVo.getTopic(), "_ctrl"))
+            ackBooks.get(obtainKey(ackVo)).get(ackVo.getOffset()).setStatus(Ack.OK);
         else doAckOrFail(ackVo, Ack.FAIL);
         flush();
     }
@@ -92,12 +89,12 @@ public class AckWindows {
     private void doAckOrFail(Ack ackVo, int status) {
         Map<Long, Ack> book = ackBooks.get(obtainKey(ackVo));
         if (book == null || book.isEmpty()) {
-            logger.info("topic:{}, partaiton:{}, offset:{}, 发生过fail,已将队列清空,执行跳过处理.",
+            logger.debug("topic:{}, partaiton:{}, offset:{}, 发生过fail,已将队列清空,执行跳过处理.",
                     ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
             return;
         }
         if (book.get(ackVo.getOffset()) == null) {
-            logger.info("topic:{}, partaiton:{}, offset:{}, 发生过fail,已将该ack对象清空,执行跳过处理.",
+            logger.debug("topic:{}, partaiton:{}, offset:{}, 发生过fail,已将该ack对象清空,执行跳过处理.",
                     ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
             return;
         }
@@ -146,6 +143,6 @@ public class AckWindows {
 
     public void clear() {
         flush();
-        for (String key : ackBooks.keySet())  ackBooks.get(key).clear();
+        for (String key : ackBooks.keySet()) ackBooks.get(key).clear();
     }
 }

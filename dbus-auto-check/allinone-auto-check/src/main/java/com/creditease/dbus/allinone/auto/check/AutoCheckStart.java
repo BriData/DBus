@@ -1,4 +1,31 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.allinone.auto.check;
+
+import com.creditease.dbus.allinone.auto.check.handler.IHandler;
+import com.creditease.dbus.allinone.auto.check.handler.impl.*;
+import com.creditease.dbus.commons.Constants;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,18 +36,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.creditease.dbus.allinone.auto.check.handler.IHandler;
-import com.creditease.dbus.allinone.auto.check.handler.impl.CheckBaseComponentsHandler;
-import com.creditease.dbus.allinone.auto.check.handler.impl.CheckCanalHandler;
-import com.creditease.dbus.allinone.auto.check.handler.impl.CheckDbHandler;
-import com.creditease.dbus.allinone.auto.check.handler.impl.CheckFlowLineHandler;
-import com.creditease.dbus.allinone.auto.check.handler.impl.CheckTopologyHandler;
-import com.creditease.dbus.allinone.auto.check.handler.impl.LoadAutoCheckFileConfigHandler;
-import com.creditease.dbus.commons.Constants;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.SystemUtils;
-
 /**
  * Created by Administrator on 2018/8/1.
  */
@@ -28,7 +43,7 @@ public class AutoCheckStart {
 
     static {
         System.setProperty("logs.home", SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/logs/");
-        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG,"file:" + SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/conf/log4j.xml");
+        System.setProperty(Constants.SYS_PROPS_LOG4J_CONFIG, "file:" + SystemUtils.USER_DIR.replaceAll("\\\\", "/") + "/conf/log4j.xml");
     }
 
     public static void main(String[] args) {

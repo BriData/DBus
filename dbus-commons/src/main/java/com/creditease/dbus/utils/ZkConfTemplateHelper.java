@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.utils;
 
@@ -34,13 +35,6 @@ import java.util.Set;
 public class ZkConfTemplateHelper {
 
     public static String[] ZK_CONF_PATHS = {
-            "Topology/dbus-fulldata-splitter/byte-producer-config.properties",
-            "Topology/dbus-fulldata-splitter/common-config.properties",
-            "Topology/dbus-fulldata-splitter/consumer-config.properties",
-            "Topology/dbus-fulldata-splitter/oracle-config.properties",
-            "Topology/dbus-fulldata-splitter/string-producer-config.properties",
-            "Topology/dbus-fulldata-splitter/placeholder-fullsplitter/common-config.properties",
-
             "Topology/dbus-fulldata-puller/byte-producer-config.properties",
             "Topology/dbus-fulldata-puller/common-config.properties",
             "Topology/dbus-fulldata-puller/consumer-config.properties",
@@ -92,14 +86,24 @@ public class ZkConfTemplateHelper {
         Set<String> logZkConfRootNodes = new HashSet<>();
         logZkConfRootNodes.add("Topology/" + "placeholder-log-processor");
 
+        Set<String> sinkerZkConfRootNodes = new HashSet<>();
+        sinkerZkConfRootNodes.add("Sinker/placeholder-sinker");
+
         zkConfTemplateRootPathsOfDsType.put(DbusDatasourceType.ORACLE.name().toLowerCase(), dbBaseZkConfRootNodes);
         zkConfTemplateRootPathsOfDsType.put(DbusDatasourceType.MONGO.name().toLowerCase(), mongoZkConfRootNodes);
+        zkConfTemplateRootPathsOfDsType.put(DbusDatasourceType.DB2.name().toLowerCase(), dbBaseZkConfRootNodes);
         zkConfTemplateRootPathsOfDsType.put(DbusDatasourceType.MYSQL.name().toLowerCase(), mysqlZkConfRootNodes);
         // log类共享同一个模板
         zkConfTemplateRootPathsOfDsType.put(DbusDatasourceType.ALIAS_FOR_ALL_LOG_DS_TYPE.toLowerCase(), logZkConfRootNodes);
+        // sinker
+        zkConfTemplateRootPathsOfDsType.put("sinker", sinkerZkConfRootNodes);
     }
 
     public static Set<String> getZkConfRootNodesSetForDs(DbusDatasourceType dsType) {
         return zkConfTemplateRootPathsOfDsType.get(DbusDatasourceType.getAliasOfDsType(dsType));
+    }
+
+    public static Set<String> getZkConfRootNodesSetForSinker(String type) {
+        return zkConfTemplateRootPathsOfDsType.get(type);
     }
 }

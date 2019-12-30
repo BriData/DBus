@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.appender.bolt;
 
 import com.creditease.dbus.commons.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.stream.appender.exception.InitializationException;
-import com.creditease.dbus.stream.common.appender.kafka.DataOutputTopicProvider;
-import com.creditease.dbus.stream.common.appender.kafka.TopicProvider;
 import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
@@ -34,6 +33,8 @@ import com.creditease.dbus.stream.common.appender.bolt.processor.listener.Heartb
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.cache.ThreadLocalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
+import com.creditease.dbus.stream.common.appender.kafka.DataOutputTopicProvider;
+import com.creditease.dbus.stream.common.appender.kafka.TopicProvider;
 import com.creditease.dbus.stream.common.appender.utils.Utils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -191,12 +192,15 @@ public class DbusHeartBeatBolt extends BaseRichBolt implements HeartbeatHandlerL
         }*/
         DbusDatasourceType type = GlobalCache.getDatasourceType();
         String name;
-        if(type == DbusDatasourceType.ORACLE) {
+        if (type == DbusDatasourceType.ORACLE) {
             name = "com.creditease.dbus.stream.oracle.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
-        } else if(type == DbusDatasourceType.MYSQL) {
+        } else if (type == DbusDatasourceType.MYSQL) {
             name = "com.creditease.dbus.stream.mysql.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
-        }
-        else {
+        } else if (type == DbusDatasourceType.MONGO) {
+            name = "com.creditease.dbus.stream.mongo.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
+        } else if (type == DbusDatasourceType.DB2) {
+            name = "com.creditease.dbus.stream.db2.appender.bolt.processor.provider.HeartbeatCmdHandlerProvider";
+        } else {
             throw new IllegalArgumentException("Illegal argument [" + type.toString() + "] for building BoltCommandHandler map!");
         }
         Class<?> clazz = Class.forName(name);

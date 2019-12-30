@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.spout.processor;
 
 import com.creditease.dbus.commons.ControlMessage;
@@ -28,10 +29,8 @@ import com.creditease.dbus.stream.common.appender.spout.cmds.CtrlCommand;
 import com.creditease.dbus.stream.common.appender.spout.cmds.TopicResumeCmd;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.storm.tuple.Values;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 

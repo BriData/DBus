@@ -81,4 +81,17 @@
   <delete id="deleteByProjectId" parameterType="java.lang.Integer">
     delete from t_project_topo_table_meta_version where project_id = #{projectId}
   </delete>
+  <update id="updateTopoIdByTopoTableIds">
+    UPDATE t_project_topo_table_meta_version pm,
+      t_project_topo_table pt
+      SET pm.topo_id = #{topoId}
+    WHERE
+      pm.table_id = pt.table_id
+      AND pm.topo_id = pt.topo_id
+      AND pm.project_id = pt.project_id
+      AND pt.id IN
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
 </mapper>

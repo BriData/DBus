@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.tools;
 
 /**
  * Created by dongwang47 on 2016/8/19.
  */
-public interface IGenericMessage  {
+public interface IGenericMessage {
     public String getNameSpace();
 
     public String getSchemaName();

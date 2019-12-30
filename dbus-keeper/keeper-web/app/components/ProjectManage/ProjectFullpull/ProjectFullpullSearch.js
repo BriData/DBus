@@ -68,7 +68,8 @@ export default class ProjectFullpullSearch extends Component {
                 }
               >
                 {getFieldDecorator('projectName', {
-                  initialValue: query.projectName ? query.projectName : project[1] ? `${project[1].projectName}` : `${project[0].projectName}`
+                  initialValue: query.projectName
+                  // initialValue: query.projectName ? query.projectName : project[1] ? `${project[1].projectName}` : `${project[0].projectName}`
                 })(
                   <Select
                     showSearch

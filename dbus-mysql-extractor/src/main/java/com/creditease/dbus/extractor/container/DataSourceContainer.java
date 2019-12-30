@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,25 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.container;
+
+import com.creditease.dbus.extractor.vo.JdbcVo;
+import org.apache.commons.dbcp.BasicDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.dbcp.BasicDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.creditease.dbus.extractor.vo.JdbcVo;
-
 public class DataSourceContainer {
 
     private static DataSourceContainer container;
     private static final Logger logger = LoggerFactory.getLogger(DataSourceContainer.class);
 
-    private ConcurrentHashMap<String, BasicDataSource> cmap = 
+    private ConcurrentHashMap<String, BasicDataSource> cmap =
             new ConcurrentHashMap<String, BasicDataSource>();
 
     private DataSourceContainer() {
@@ -66,7 +66,7 @@ public class DataSourceContainer {
             bds.setMinIdle(conf.getMinIdle());
             cmap.put(conf.getKey(), bds);
         } catch (Exception e) {
-        	logger.error("[db container init key " + conf.getKey() + " datasource error!]", e);
+            logger.error("[db container init key " + conf.getKey() + " datasource error!]", e);
             isOk = false;
         }
         return isOk;
@@ -78,7 +78,7 @@ public class DataSourceContainer {
             if (cmap.containsKey(key))
                 conn = cmap.get(key).getConnection();
         } catch (SQLException e) {
-        	logger.error("[db container get key: " + key + " conn error!]", e);
+            logger.error("[db container get key: " + key + " conn error!]", e);
         }
         return conn;
     }
@@ -88,7 +88,7 @@ public class DataSourceContainer {
             if (cmap.containsKey(key))
                 cmap.get(key).close();
         } catch (SQLException e) {
-        	logger.error("[db container close key: " + key + " datasource error!]", e);
+            logger.error("[db container close key: " + key + " datasource error!]", e);
         }
     }
 

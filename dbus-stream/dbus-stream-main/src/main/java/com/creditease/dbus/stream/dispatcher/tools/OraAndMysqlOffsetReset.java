@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.stream.dispatcher.tools;
 
 import com.creditease.dbus.stream.common.DataSourceInfo;
@@ -29,13 +50,13 @@ public class OraAndMysqlOffsetReset implements OffsetResetProvider {
         List<TopicPartition> topicPartitions = (List<TopicPartition>) args[0];
         String topicOffsets = dsInfo.getDataTopicOffset();
 
-        for(TopicPartition tp : topicPartitions) {
-            if(StringUtils.equals(topicOffsets, "none")) {
+        for (TopicPartition tp : topicPartitions) {
+            if (StringUtils.equals(topicOffsets, "none")) {
                 break;
-            } else if(StringUtils.equals(topicOffsets, "begin")) {
+            } else if (StringUtils.equals(topicOffsets, "begin")) {
                 consumer.seekToBeginning(topicPartitions);
                 logger.info(String.format("Offset seek to begin, changed as: %d", consumer.position(tp)));
-            } else if(StringUtils.equals(topicOffsets, "end")) {
+            } else if (StringUtils.equals(topicOffsets, "end")) {
                 consumer.seekToEnd(topicPartitions);
                 logger.info(String.format("Offset seek to end, changed as: %d", consumer.position(tp)));
             } else {

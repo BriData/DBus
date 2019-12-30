@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,16 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
-import com.creditease.dbus.base.ResultEntity;
-import com.creditease.dbus.base.ResultEntityBuilder;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.mapper.UserMapper;
 import com.creditease.dbus.domain.model.User;
 import com.creditease.dbus.utils.DBusUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import org.apache.commons.beanutils.BeanMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -75,12 +72,12 @@ public class UserService {
         mapper.deleteByPrimaryKey(id);
     }
 
-	public int modifyPassword(String oldPassword, String newPassword, Integer id) {
+    public int modifyPassword(String oldPassword, String newPassword, Integer id) {
         User user = mapper.selectByPrimaryKey(id);
-        if(!user.getPassword().equals(oldPassword)){
+        if (!user.getPassword().equals(oldPassword)) {
             return MessageCode.OLD_PASSWORD_WRONG;
         }
         mapper.modifyPassword(newPassword, id);
         return 0;
-	}
+    }
 }

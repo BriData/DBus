@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dbus-keeper</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -52,6 +52,12 @@
                     <artifactId>log4j-over-slf4j</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework.security.kerberos/spring-security-kerberos-web -->
+        <dependency>
+            <groupId>org.springframework.security.kerberos</groupId>
+            <artifactId>spring-security-kerberos-client</artifactId>
+            <version>1.0.0.RELEASE</version>
         </dependency>
     </dependencies>
 </project>

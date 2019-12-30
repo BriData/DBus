@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.TopologyJarMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.TopologyJar">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="category" jdbcType="VARCHAR" property="category" />
+    <result column="version" jdbcType="VARCHAR" property="version" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="path" jdbcType="VARCHAR" property="path" />
+    <result column="minor_version" jdbcType="VARCHAR" property="minorVersion" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_topology_jar
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.TopologyJar">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_topology_jar (category, version, type, name,
+      path, minor_version, description,
+      update_time, create_time)
+    values (#{category,jdbcType=VARCHAR}, #{version,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR},
+      #{path,jdbcType=VARCHAR}, #{minorVersion,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR},
+      #{updateTime,jdbcType=TIMESTAMP}, #{createTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.TopologyJar">
+    update t_topology_jar
+    set category = #{category,jdbcType=VARCHAR},
+      version = #{version,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      name = #{name,jdbcType=VARCHAR},
+      path = #{path,jdbcType=VARCHAR},
+      minor_version = #{minorVersion,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      create_time = #{createTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, category, version, type, name, path, minor_version, description, update_time, create_time
+    from t_topology_jar
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, category, version, type, name, path, minor_version, description, update_time, create_time
+    from t_topology_jar
+  </select>
+  <select id="search" resultMap="BaseResultMap">
+    select id, category, version, type, name, path, minor_version, description, update_time, create_time
+    from t_topology_jar
+    <where>
+      <if test="category != null and category != ''">and category = #{category,jdbcType=VARCHAR}</if>
+      <if test="version != null and version != ''">and version = #{version,jdbcType=VARCHAR}</if>
+      <if test="type != null and type != ''">and type = #{type,jdbcType=VARCHAR}</if>
+    </where>
+    order by minor_version desc
+  </select>
+</mapper>

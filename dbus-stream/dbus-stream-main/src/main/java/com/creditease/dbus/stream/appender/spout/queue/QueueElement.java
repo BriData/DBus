@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.appender.spout.queue;
 
@@ -44,7 +45,7 @@ public class QueueElement {
     }
 
     public void fail() {
-        if(!isOk()) {
+        if (!isOk()) {
             this.status = FAIL;
             logger.info("message[topic:{},partition:{},offset:{},emitcount:{}] status was set to {}.",
                     record.topic(), record.partition(), record.offset(), this.emitCount, "'fail'");
@@ -99,11 +100,12 @@ public class QueueElement {
 
     private void minusEmitCount() {
         emitCount--;
-        if(emitCount < 0) {
+        if (emitCount < 0) {
             emitCount = 0;
             logger.error("Impossible!!! key:{},status:{},record:[{}.{}]", key, status, record.topic(), record.partition());
         }
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

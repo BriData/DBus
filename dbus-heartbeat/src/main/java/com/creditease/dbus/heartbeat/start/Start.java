@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.start;
 
-import com.creditease.dbus.heartbeat.handler.impl.*;
-import org.apache.commons.lang.SystemUtils;
-
 import com.creditease.dbus.heartbeat.handler.IHandler;
+import com.creditease.dbus.heartbeat.handler.impl.*;
 import com.creditease.dbus.heartbeat.type.CommandType;
 import com.creditease.dbus.heartbeat.type.LoggerType;
 import com.creditease.dbus.heartbeat.util.Constants;
+import org.apache.commons.lang.SystemUtils;
 
 public class Start extends HeartBeat {
 
@@ -35,7 +35,7 @@ public class Start extends HeartBeat {
         String logBasePath = System.getProperty(
                 Constants.SYS_PROPS_LOG_BASE_PATH, SystemUtils.USER_DIR);
         // 设置log4j日志保存目录
-        System.setProperty(Constants.SYS_PROPS_LOG_HOME, 
+        System.setProperty(Constants.SYS_PROPS_LOG_HOME,
                 logBasePath.replaceAll("\\\\", "/") + "/logs/heartbeat");
         // 设置日志类型
         System.setProperty(Constants.SYS_PROPS_LOG_TYPE, LoggerType.HEART_BEAT.getName());

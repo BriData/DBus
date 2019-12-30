@@ -1,0 +1,11 @@
+server.port: 19090
+spring:
+  application:
+    version: v1
+    cnname: dbus配置中心-v1
+    name: dbus-keeper-config-${spring.application.version}
+
+spring.profiles.active: native
+spring.cloud.config.server.native.searchLocations: file:C:\config\dbus
+
+management.security.enabled: false

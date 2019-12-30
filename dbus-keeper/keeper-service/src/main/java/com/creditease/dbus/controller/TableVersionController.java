@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.controller;
 
@@ -37,39 +38,39 @@ import java.util.List;
 @RequestMapping("/table-version")
 public class TableVersionController extends BaseController {
 
-	@Autowired
-	private TableVersionService tableVersionService;
+    @Autowired
+    private TableVersionService tableVersionService;
 
-	@PostMapping(path = "update", consumes = "application/json")
-	public ResultEntity updateDataTables(@RequestBody TableVersion tableVersion) {
-		try {
-			int id = tableVersionService.update(tableVersion);
-			return resultEntityBuilder().payload(id).build();
-		} catch (Exception e) {
-			logger.error("Error encountered while update tableVersion .", e);
-			return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
-		}
-	}
+    @PostMapping(path = "update", consumes = "application/json")
+    public ResultEntity updateDataTables(@RequestBody TableVersion tableVersion) {
+        try {
+            int id = tableVersionService.update(tableVersion);
+            return resultEntityBuilder().payload(id).build();
+        } catch (Exception e) {
+            logger.error("Error encountered while update tableVersion .", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
 
-	@GetMapping(path = "/get-by-table-id/{tableId}")
-	public ResultEntity getVersionListByTableId(@PathVariable Integer tableId) {
-		try {
-			List<TableVersion> tableVersionsList = tableVersionService.getVersionListByTableId(tableId);
-			return resultEntityBuilder().payload(tableVersionsList).build();
-		} catch (Exception e) {
-			logger.error("Error encountered while update tableVersion .", e);
-			return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
-		}
-	}
+    @GetMapping(path = "/get-by-table-id/{tableId}")
+    public ResultEntity getVersionListByTableId(@PathVariable Integer tableId) {
+        try {
+            List<TableVersion> tableVersionsList = tableVersionService.getVersionListByTableId(tableId);
+            return resultEntityBuilder().payload(tableVersionsList).build();
+        } catch (Exception e) {
+            logger.error("Error encountered while update tableVersion .", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
 
-	@GetMapping(path = "get/{id}")
-	public ResultEntity getById(@PathVariable Integer id) {
-		try {
-			TableVersion tableVersion = tableVersionService.getById(id);
-			return resultEntityBuilder().payload(tableVersion).build();
-		} catch (Exception e) {
-			logger.error("Error encountered while update tableVersion .", e);
-			return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
-		}
-	}
+    @GetMapping(path = "get/{id}")
+    public ResultEntity getById(@PathVariable Integer id) {
+        try {
+            TableVersion tableVersion = tableVersionService.getById(id);
+            return resultEntityBuilder().payload(tableVersion).build();
+        } catch (Exception e) {
+            logger.error("Error encountered while update tableVersion .", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
 }

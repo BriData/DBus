@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.commons.log.processor.adapter;
 
 import com.alibaba.fastjson.JSON;
@@ -27,7 +28,6 @@ import com.alibaba.fastjson.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class LogUmsAdapter implements Iterator<String> {
 
@@ -50,16 +50,16 @@ public class LogUmsAdapter implements Iterator<String> {
         String namespace = (String) schema.get("namespace");
 
         List<String> fieldList = new ArrayList<>();
-        for(int i = 0; i < fields.size(); i++) {
+        for (int i = 0; i < fields.size(); i++) {
             JSONObject field = fields.getJSONObject(i);
             fieldList.add((String) field.get("name"));
         }
 
-        for(int i = 0; i < payload.size(); i++) {
+        for (int i = 0; i < payload.size(); i++) {
             JSONObject ret = new JSONObject();
             JSONObject tuple = payload.getJSONObject(i);
             JSONArray val = tuple.getJSONArray("tuple");
-            for(int j = 0; j < val.size(); j++) {
+            for (int j = 0; j < val.size(); j++) {
                 ret.put(fieldList.get(j), val.get(j));
             }
             ret.put("namespace", namespace);

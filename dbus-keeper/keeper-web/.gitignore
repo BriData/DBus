@@ -7,5 +7,6 @@ stats.json
 # Cruft
 .DS_Store
 npm-debug.log
+yarn-error.log
 .idea
 .vscode

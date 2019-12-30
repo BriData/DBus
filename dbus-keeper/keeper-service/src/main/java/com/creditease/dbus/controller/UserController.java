@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
  * >>
  */
 
-package com.creditease.dbus.controller;
 
-import java.util.Date;
+package com.creditease.dbus.controller;
 
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
@@ -30,14 +29,15 @@ import com.creditease.dbus.domain.model.User;
 import com.creditease.dbus.service.UserService;
 import com.creditease.dbus.utils.DBusUtils;
 import com.github.pagehelper.PageInfo;
-
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping(path = "/users")
@@ -45,7 +45,7 @@ public class UserController extends BaseController {
     @Autowired
     private UserService service;
 
-    @ApiOperation(value="create user")
+    @ApiOperation(value = "create user")
     @ApiImplicitParam(name = "user", required = true, dataType = "User")
     @PostMapping(path = "create", consumes = "application/json")
     public ResultEntity createUser(@RequestBody User user) {
@@ -61,7 +61,8 @@ public class UserController extends BaseController {
         }
         return resultEntityBuilder().payload(user).build();
     }
-    @ApiOperation(value="update user info", notes="update user by user id")
+
+    @ApiOperation(value = "update user info", notes = "update user by user id")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "id", value = "user id", required = true, dataType = "int"),
             @ApiImplicitParam(name = "user", value = "User object contains basic items", required = true, dataType = "User"),
@@ -86,7 +87,7 @@ public class UserController extends BaseController {
         }
     }
 
-    @ApiOperation(value="delete user", notes="delete user by path variable: id")
+    @ApiOperation(value = "delete user", notes = "delete user by path variable: id")
     @ApiImplicitParam(name = "id", value = "user id", required = true, dataType = "int")
     @GetMapping("delete/{id}")
     public ResultEntity delete(@PathVariable Integer id) {
@@ -99,7 +100,7 @@ public class UserController extends BaseController {
         return builder.build();
     }
 
-    @ApiOperation(value="get user", notes="get user information by path variable: id")
+    @ApiOperation(value = "get user", notes = "get user information by path variable: id")
     @ApiImplicitParam(name = "id", value = "user id", required = true, dataType = "int")
     @GetMapping("{id}")
     public ResultEntity getUser(@PathVariable Integer id) {
@@ -114,7 +115,8 @@ public class UserController extends BaseController {
         }
         return rb.payload(user).build();
     }
-    @ApiOperation(value="get by email", notes="get user information by email")
+
+    @ApiOperation(value = "get by email", notes = "get user information by email")
     @ApiImplicitParam(name = "email", value = "email", required = true, dataType = "String")
     @GetMapping("/query-by-email")
     public ResultEntity queryByEmail(String email) {
@@ -127,10 +129,10 @@ public class UserController extends BaseController {
         return builder.payload(user).build();
     }
 
-    @ApiOperation(value="search users", notes="search users by conditions")
+    @ApiOperation(value = "search users", notes = "search users by conditions")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "user", value = "User entity.", dataType = "User"),
-            @ApiImplicitParam(name = "pageNum", value = "page num",  dataType = "int"),
+            @ApiImplicitParam(name = "pageNum", value = "page num", dataType = "int"),
             @ApiImplicitParam(name = "pageSize", value = "page size", dataType = "int"),
             @ApiImplicitParam(name = "sortby", value = "sort by field", dataType = "String"),
             @ApiImplicitParam(name = "order", value = "order: asc/desc", dataType = "String")

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.heartbeat.vo;
 
 public class DsVo extends JdbcVo {
@@ -27,10 +28,14 @@ public class DsVo extends JdbcVo {
      */
     private static final long serialVersionUID = -3754507199183909433L;
 
-    /** 数据源分库 */
+    /**
+     * 数据源分库
+     */
     private String dsPartition;
 
-    /** slave url */
+    /**
+     * slave url
+     */
     private String slvaeUrl;
 
     public String getDsPartition() {

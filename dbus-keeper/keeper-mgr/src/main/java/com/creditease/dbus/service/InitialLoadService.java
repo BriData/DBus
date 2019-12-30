@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service;
 
@@ -117,7 +118,7 @@ public class InitialLoadService {
     }
 
 
-    public void oracleInitialLoadBySql( DataTable table, long seqno) throws Exception {
+    public void oracleInitialLoadBySql(DataTable table, long seqno) throws Exception {
         Class.forName("oracle.jdbc.driver.OracleDriver");
         Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
         PreparedStatement pst = null;
@@ -171,7 +172,7 @@ public class InitialLoadService {
 
     }
 
-    public void mysqlInitialLoadBySql( DataTable table, long seqno) throws Exception {
+    public void mysqlInitialLoadBySql(DataTable table, long seqno) throws Exception {
         Class.forName("com.mysql.jdbc.Driver");
         Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
         PreparedStatement pst = null;
@@ -227,6 +228,60 @@ public class InitialLoadService {
         }
     }
 
+    public void db2InitialLoadBySql(DataTable table, long seqno) throws Exception {
+        Class.forName("com.ibm.db2.jcc.DB2Driver");
+        Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
+        PreparedStatement pst = null;
+        try {
+            String sql = "insert into db_full_pull_requests(" +
+                    "seqno," +
+                    "schema_name," +
+                    "table_name," +
+                    "scn_no," +
+                    "split_col," +
+                    "split_bounding_query," +
+                    "pull_target_cols," +
+                    "pull_req_create_time," +
+                    "pull_start_time," +
+                    "pull_end_time," +
+                    "pull_status," +
+                    "pull_remark)" +
+                    "  values(" +
+                    "?," +
+                    "upper(?)," +
+                    "upper(?)," +
+                    "null," +
+                    "null," +
+                    "null," +
+                    "null," +
+                    "current_timestamp," +
+                    "null," +
+                    "null," +
+                    "null," +
+                    "?" +
+                    ")";
+
+            pst = conn.prepareStatement(sql);
+            pst.setLong(1, seqno);
+            pst.setString(2, table.getSchemaName());
+            pst.setString(3, table.getTableName());
+            pst.setString(4, table.getDsName());
+
+            pst.executeUpdate();
+            logger.info("Insert into source table db_full_pull_requests ok, masterUrl:{}, ds:{}, schema:{}, table:{}", table.getMasterUrl(), table.getDsName(), table.getSchemaName(), table.getTableName());
+        } catch (Exception e) {
+            logger.error("Error insert into oracle source table db_full_pull_requests ds:{}, schema:{}, table:{}, exception:{} ", table.getDsName(), table.getSchemaName(), table.getTableName(), e);
+        } finally {
+            if (pst != null) {
+                pst.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+
+    }
+
 
     public String getMysqlTables(Connection conn, DataTable tab) throws Exception {
         String sql = "select table_name from information_schema.tables t where t.table_schema = ?";
@@ -274,7 +329,7 @@ public class InitialLoadService {
             logger.info("正则表达式为：{}", table.getPhysicalTableRegex());
             while (rs.next()) {
                 name = rs.getString("TABLE_NAME");
-                logger.info("查询到表名：{}", name);
+                //logger.info("查询到表名：{}", name);
                 Matcher matcher = p.matcher(name);
                 if (matcher.matches()) {
                     logger.info("匹配到表名：{}", name);

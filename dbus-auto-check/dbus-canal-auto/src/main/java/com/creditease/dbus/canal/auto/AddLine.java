@@ -1,3 +1,24 @@
+/*-
+ * <<
+ * DBus
+ * ==
+ * Copyright (C) 2016 - 2019 Bridata
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+
 package com.creditease.dbus.canal.auto;
 
 
@@ -19,6 +40,7 @@ public class AddLine {
     public static String address = null;
     public static String user = null;
     public static String pass = null;
+    public static Integer slaveId = null;
     public static String userDir = System.getProperty("user.dir");
 
 
@@ -45,7 +67,9 @@ public class AddLine {
             bw.write("#canal用户名\n");
             bw.write("canal.user=" + user + "\n");
             bw.write("#canal密码，替换成自己配置的\n");
-            bw.write("canal.pwd=" + pass);
+            bw.write("canal.pwd=" + pass + "\n");
+            bw.write("#canal slave id\n");
+            bw.write("canal.slaveId=" + slaveId);
             bw.flush();
         } catch (Exception e) {
             System.out.println("Exception when edit file :" + userDir + "/conf/canal-auto.properties");
@@ -67,6 +91,7 @@ public class AddLine {
         options.addOption("a", "address", true, "");
         options.addOption("u", "user", true, "");
         options.addOption("p", "pass", true, "");
+        options.addOption("s", "slaveId", true, "");
 
 
         CommandLineParser parser = new DefaultParser();
@@ -86,6 +111,9 @@ public class AddLine {
             }
             if (line.hasOption("pass")) {
                 pass = line.getOptionValue("pass");
+            }
+            if (line.hasOption("slaveId")) {
+                slaveId = Integer.parseInt(line.getOptionValue("slaveId"));
             }
         } catch (ParseException e) {
             throw e;

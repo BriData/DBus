@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.stream.common.appender.metrics;
 
@@ -59,5 +60,6 @@ public class AverageMetricReporter implements DBusMetricReporter {
     }
 
     public static void main(String[] args) {
-        System.out.println(String.format("%-38s exec total time MS: %-15d exec count:%-15d avg time MS:%-10f", "A-ser-time[dispatcher->appender]", 1111, 1111, 0.8838383838));    }
+        System.out.println(String.format("%-38s exec total time MS: %-15d exec count:%-15d avg time MS:%-10f", "A-ser-time[dispatcher->appender]", 1111, 1111, 0.8838383838));
+    }
 }

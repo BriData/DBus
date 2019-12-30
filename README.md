@@ -108,13 +108,13 @@ DBUS源端数据采集大体来说分为2部分：
 
 # 其他
 
-##### 编译代码
+##### 编译打包代码
 
-关于编译代码，参考 [compile](docs/compile-code.md)
+关于编译代码，参考 [compile](docs/more-compile-code.md)
 
 ##### 版本相关:
 
-建议版本：0.5.0
+建议版本：0.6.0
 
 下载发布包：请参考：[downloads](https://github.com/BriData/DBus/releases)
 
@@ -136,8 +136,14 @@ DBus 自身使用 Apache v2.0 协议
 
 ##### 交流和问题反馈:
 
-邮件交流： [bridata@126.com](mailto:bridata@126.com)
+邮件交流： 
 
 提交issue ： [issue](https://github.com/BriData/DBus/issues)
 
-微信群交流： ![weixin](https://github.com/BriData/DBus/raw/master/img/0weixi.png)
+## Get Help
+
+The fastest way to get response from our developers is to send email to our mail list [edp_support@groups.163.com](mailto:edp_support@groups.163.com) or [bridata@126.com](mailto:bridata@126.com)
+
+and welcome to join our WeChat group for online discussion.
+
+![](docs/img/WeChat.jpg)

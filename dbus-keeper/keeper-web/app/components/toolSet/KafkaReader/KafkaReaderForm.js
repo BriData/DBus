@@ -2,16 +2,13 @@
  * @author xiancangao
  * @description  基本信息设置
  */
-import React, {PropTypes, Component} from 'react'
-import {Form, Row, Col, message, Input, Button, Select} from 'antd'
-import JSONTree from 'react-json-tree'
+import React, {Component, PropTypes} from 'react'
+import {Button, Col, Form, Input, message, Row, Select} from 'antd'
 import {FormattedMessage} from 'react-intl'
-import dateFormat from 'dateformat'
 import {KAFKA_READER_GET_OFFSET_RANGE_API} from '@/app/containers/toolSet/api'
 import Request from "@/app/utils/request";
 import styles from "./res/styles/index.less";
 
-const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
 @Form.create({warppedComponentRef: true})
@@ -265,7 +262,7 @@ export default class KafkaReaderForm extends Component {
             </Col>
           </Row>
         </Form>
-        <div style={{background: "#fff",padding: "10px", border: "1px solid #ddd"}}>
+        <div style={{background: "#fff", padding: "10px", border: "1px solid #ddd"}}>
           {
             content ?
               (<div

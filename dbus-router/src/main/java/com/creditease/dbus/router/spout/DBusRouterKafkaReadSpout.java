@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,10 @@
  * >>
  */
 
+
 package com.creditease.dbus.router.spout;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.Constants;
@@ -39,13 +34,9 @@ import com.creditease.dbus.router.bean.Resources;
 import com.creditease.dbus.router.spout.ack.AckCallBack;
 import com.creditease.dbus.router.spout.ack.AckWindows;
 import com.creditease.dbus.router.util.DBusRouterConstants;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.storm.spout.SpoutOutputCollector;
@@ -56,6 +47,8 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Created by mal on 2018/5/22.
@@ -97,6 +90,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
                 } else if (isAssign(record.key())) {
                     emitUmsData(record);
                 }
+                logger.info("kafka read spout emit {}", record.offset());
             }
         } catch (Exception e) {
             logger.error("spout next tuple error.", e);
@@ -166,7 +160,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
         destroy();
         inner.close(true);
         init();
-        inner.zkHelper.saveReloadStatus(ctrl, "DbusRouterKafkaReadSpout-" + context.getThisTaskId() , true);
+        inner.zkHelper.saveReloadStatus(ctrl, "DbusRouterKafkaReadSpout-" + context.getThisTaskId(), true);
         logger.info("spout reload completed.");
     }
 
@@ -239,7 +233,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
     private void emitCtrlData(ConsumerRecord<String, byte[]> record) {
         Ack ackVo = obtainAck(record);
         ackWindows.add(ackVo);
-        this.collector.emit("ctrlStream", new Values(obtainEmitWarp(record, "ctrl", null)), ackVo);
+        this.collector.emit("ctrlStream", new Values(obtainEmitWarp(record, "ctrl", null, record.offset())), ackVo);
     }
 
     private void emitUmsData(ConsumerRecord<String, byte[]> record) {
@@ -247,7 +241,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
         String nameSpace = StringUtils.joinWith(".", vals[2], vals[3], vals[4]);
         Ack ackVo = obtainAck(record);
         ackWindows.add(ackVo);
-        this.collector.emit("umsOrHbStream", new Values(obtainEmitWarp(record, record.key(), nameSpace), nameSpace), ackVo);
+        this.collector.emit("umsOrHbStream", new Values(obtainEmitWarp(record, record.key(), nameSpace, record.offset()), nameSpace), ackVo);
     }
 
     private Ack obtainAck(ConsumerRecord<String, byte[]> record) {
@@ -258,7 +252,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
         return ack;
     }
 
-    private EmitWarp<ConsumerRecord<String, byte[]>> obtainEmitWarp(ConsumerRecord<String, byte[]> record, String key, String namespace) {
+    private EmitWarp<ConsumerRecord<String, byte[]>> obtainEmitWarp(ConsumerRecord<String, byte[]> record, String key, String namespace, long offset) {
         String tempKey = key;
         if (!StringUtils.equals("ctrl", key)) {
             // eg. data_increment_heartbeat.oracle.db4_3.AMQUE.T_CONTACT_INFO.3.0.0.1531709399507|1531709398879|ok.wh_placeholder
@@ -266,12 +260,14 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
             // String[] arr = ArrayUtils.insert(5, StringUtils.split(key, "."), inner.topologyId);
             // tempKey = StringUtils.joinWith(".", arr);
             String[] arr = StringUtils.split(key, ".");
-            arr[2] = StringUtils.joinWith("!", arr[2], inner.topologyId);
+            // arr[2] = StringUtils.joinWith("!", arr[2], inner.topologyId);
+            arr[2] = StringUtils.joinWith("!", arr[2], inner.alias);
             tempKey = StringUtils.joinWith(".", arr);
         }
         EmitWarp<ConsumerRecord<String, byte[]>> data = new EmitWarp<>(tempKey);
         data.setData(record);
         data.setTableId(readSpoutConfig.getNamespaceTableIdPair().get(namespace));
+        data.setOffset(offset);
         return data;
     }
 
@@ -311,11 +307,19 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
                     offsets.put(tp, new OffsetAndMetadata(ackVo.getOffset()));
                     logger.info("call consumer commitSync topic:{}, partition:{}, offset:{}",
                             ackVo.getTopic(), ackVo.getPartition(), ackVo.getOffset());
-                    consumer.commitSync(offsets);
+                    consumer.commitAsync(offsets, new OffsetCommitCallback() {
+                        @Override
+                        public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
+                            if (exception != null) {
+                                logger.error(String.format("commitAsync fail: %s", JSON.toJSONString(offsets)), exception);
+                            }
+                        }
+                    });
                 } else {
                     logger.warn(String.format("do not find key:%s of TopicPartition", key));
                 }
             }
+
             @Override
             public void fail(Ack ackVo) {
                 String key = StringUtils.joinWith("_", ackVo.getTopic(), String.valueOf(ackVo.getPartition()));
@@ -335,13 +339,26 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
         List<TopicPartition> assignTopics = new ArrayList<>();
         if (!isCtrl) {
             Properties props = inner.zkHelper.loadKafkaConsumerConf();
+            if (StringUtils.equals(inner.zkHelper.getSecurityConf(), Constants.SECURITY_CONFIG_TRUE_VALUE))
+                props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
             logger.info("read spout create consumer.");
             consumer = new KafkaConsumer<>(props);
         }
         assignTopics(consumer.partitionsFor(obtainCtrlTopic()), assignTopics);
-        for (String topic : readSpoutConfig.getTopics())
+        for (String topic : readSpoutConfig.getTopics()) {
+            logger.info("assign topic: {}", topic);
             assignTopics(consumer.partitionsFor(topic), assignTopics);
+        }
+        logger.info("assignTopics: {}", JSON.toJSONString(assignTopics));
         consumer.assign(assignTopics);
+        printTopicPosition(assignTopics);
+    }
+
+    private void printTopicPosition(List<TopicPartition> assignTopics) {
+        for (TopicPartition tp : assignTopics) {
+            long position = consumer.position(tp);
+            logger.info("topic:{}, partition:{}, position:{}", tp.topic(), tp.partition(), position);
+        }
     }
 
     private void assignTopics(List<PartitionInfo> topicInfo, List<TopicPartition> assignTopics) {
@@ -366,18 +383,18 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
             case "none":
                 break;
             case "begin":
-                    for (String topic : topics)
-                        if(readSpoutConfig.getTopicMap().get(topic) != null)
-                            consumer.seekToBeginning(readSpoutConfig.getTopicMap().get(topic));
+                for (String topic : topics)
+                    if (readSpoutConfig.getTopicMap().get(topic) != null)
+                        consumer.seekToBeginning(readSpoutConfig.getTopicMap().get(topic));
                 break;
             case "end":
-                    for (String topic : topics)
-                        if (readSpoutConfig.getTopicMap().get(topic) != null)
-                            consumer.seekToEnd(readSpoutConfig.getTopicMap().get(topic));
+                for (String topic : topics)
+                    if (readSpoutConfig.getTopicMap().get(topic) != null)
+                        consumer.seekToEnd(readSpoutConfig.getTopicMap().get(topic));
                 break;
             default:
                 JSONArray jsonArray = JSONArray.parseArray(strOffset);
-                for (int i=0; i<jsonArray.size(); i++) {
+                for (int i = 0; i < jsonArray.size(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     String topic = jsonObject.getString("topic");
                     String offsetParis = jsonObject.getString("offsetParis");
@@ -389,7 +406,7 @@ public class DBusRouterKafkaReadSpout extends BaseRichSpout {
                             if (val.length == 2) {
                                 offset = Long.parseLong(val[1]);
                             }
-                            if (readSpoutConfig.getTopicPartitionMap().get(key) !=  null) {
+                            if (readSpoutConfig.getTopicPartitionMap().get(key) != null) {
                                 if (offset != -1) {
                                     logger.info("topic:{}, partition:{}, seek position:{}", topic, val[0], offset);
                                     consumer.seek(readSpoutConfig.getTopicPartitionMap().get(key), offset);

@@ -7,6 +7,7 @@ import React, { PropTypes, Component } from 'react'
 import { Popconfirm,Tooltip, Tag, Table, Button, Input } from 'antd'
 import { FormattedMessage } from 'react-intl'
 import { fromJS } from 'immutable'
+import { message} from 'antd'
 import OperatingButton from '@/app/components/common/OperatingButton'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -74,6 +75,15 @@ export default class ProjectTopologyGrid extends Component {
     </div>)
   }
 
+  handleValidateError = (value, record) => {
+    if (!record.alias) {
+      message.warn("别名不能为空,请先配置别名")
+      return false
+    }
+    const {onStartOrStopTopo} = this.props
+    onStartOrStopTopo(value, record)
+  };
+
   /**
    * @description selectTable的 option render
    */
@@ -121,7 +131,7 @@ export default class ProjectTopologyGrid extends Component {
               id="app.components.resourceManage.dataTable.start"
               defaultMessage="启动"
             />?
-          </span>} onConfirm={() => onStartOrStopTopo('start',record)} okText="Yes" cancelText="No">
+          </span>} onConfirm={() => this.handleValidateError('start',record)} okText="Yes" cancelText="No">
             <OperatingButton icon="caret-right">
               <FormattedMessage
                 id="app.components.resourceManage.dataTable.start"
@@ -135,7 +145,7 @@ export default class ProjectTopologyGrid extends Component {
               id="app.components.resourceManage.dataTable.stop"
               defaultMessage="停止"
             />?
-          </span>} onConfirm={() => onStartOrStopTopo('stop',record)} okText="Yes" cancelText="No">
+          </span>} onConfirm={() => this.handleValidateError('stop',record)} okText="Yes" cancelText="No">
             <OperatingButton icon="pause">
               <FormattedMessage
                 id="app.components.resourceManage.dataTable.stop"
@@ -190,6 +200,18 @@ export default class ProjectTopologyGrid extends Component {
         width: tableWidth[1],
         dataIndex: 'topoName',
         key: 'topoName',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: (
+          <FormattedMessage
+            id="app.common.alias"
+            defaultMessage="别名"
+          />
+        ),
+        width: tableWidth[1],
+        dataIndex: 'alias',
+        key: 'alias',
         render: this.renderComponent(this.renderNomal)
       },
       {

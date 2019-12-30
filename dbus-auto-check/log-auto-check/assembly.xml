@@ -17,6 +17,7 @@
         <fileSet>
             <directory>${project.basedir}/sh</directory>
             <outputDirectory>/</outputDirectory>
+            <fileMode>0755</fileMode>
         </fileSet>
     </fileSets>
     <dependencySets>

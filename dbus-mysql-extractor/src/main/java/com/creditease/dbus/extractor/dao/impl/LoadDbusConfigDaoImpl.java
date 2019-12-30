@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,17 @@
  * >>
  */
 
+
 package com.creditease.dbus.extractor.dao.impl;
+
+import com.creditease.dbus.extractor.common.utils.DBUtil;
+import com.creditease.dbus.extractor.container.DataSourceContainer;
+import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
+import com.creditease.dbus.extractor.dao.ILoadDbusConfigDao;
+import com.creditease.dbus.extractor.vo.ExtractorVo;
+import com.creditease.dbus.extractor.vo.OutputTopicVo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,20 +38,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.creditease.dbus.extractor.common.utils.DBUtil;
-import com.creditease.dbus.extractor.container.DataSourceContainer;
-import com.creditease.dbus.extractor.container.ExtractorConfigContainer;
-import com.creditease.dbus.extractor.dao.ILoadDbusConfigDao;
-import com.creditease.dbus.extractor.vo.ExtractorVo;
-import com.creditease.dbus.extractor.vo.OutputTopicVo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
 
-	private final static Logger logger = LoggerFactory.getLogger(LoadDbusConfigDaoImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(LoadDbusConfigDaoImpl.class);
+
     private String getQueryConfigSql() {
         StringBuilder sql = new StringBuilder();
         sql.append(" select ");
@@ -70,15 +71,15 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
             ps.setString(2, extVo.getDbType());
             rs = ps.executeQuery();
             while (rs.next()) {
-            	OutputTopicVo vo = new OutputTopicVo();
-            	vo.setDsName(rs.getString("ds_name"));
-            	vo.setDsType(rs.getString("ds_type"));
-            	vo.setTopic(rs.getString("topic"));
+                OutputTopicVo vo = new OutputTopicVo();
+                vo.setDsName(rs.getString("ds_name"));
+                vo.setDsType(rs.getString("ds_type"));
+                vo.setTopic(rs.getString("topic"));
                 vo.setControlTopic(rs.getString("ctrl_topic"));
-            	set.add(vo);
+                set.add(vo);
             }
         } catch (Exception e) {
-        	logger.error("[db-LoadDbusConfigDao]", e);
+            logger.error("[db-LoadDbusConfigDao]", e);
         } finally {
             DBUtil.close(rs);
             DBUtil.close(ps);
@@ -110,6 +111,7 @@ public class LoadDbusConfigDaoImpl implements ILoadDbusConfigDao {
         sql.append("     and tdt.status <> 'inactive'");
         return sql.toString();
     }
+
     @Override
     public List<String> queryActiveTable(String dsName, String key) {
         List<String> ret = new ArrayList<>();

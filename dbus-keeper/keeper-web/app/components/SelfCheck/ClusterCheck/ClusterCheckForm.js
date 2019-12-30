@@ -2,10 +2,11 @@
  * @author xiancangao
  * @description  基本信息设置
  */
-import { FormattedMessage } from 'react-intl'
-import React, {PropTypes, Component} from 'react'
-import {Tag, Row, Col, Icon, Tooltip, Form, Input, Button, Select, Table} from 'antd'
+import {FormattedMessage} from 'react-intl'
+import React, {Component, PropTypes} from 'react'
+import {Button, Col, Form, Icon, Input, Row, Select, Table, Tag, Tooltip} from 'antd'
 import styles from './res/styles/index.less'
+
 const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
@@ -13,12 +14,11 @@ const FormItem = Form.Item
 export default class ClusterCheckForm extends Component {
   constructor (props) {
     super(props)
-    this.state = {
-    }
+    this.state = {}
   }
 
   renderComponent = render => (text, record, index) =>
-    render(text, record, index);
+    render(text, record, index)
 
   /**
    * @description table默认的render
@@ -31,10 +31,26 @@ export default class ClusterCheckForm extends Component {
     </Tooltip>
   )
 
-  renderStatus =(text, record, index) => {
+  renderStatus = (text, record, index) => {
     let color
     switch (text) {
       case 'ok':
+        color = 'green'
+        break
+      default:
+        color = 'red'
+    }
+    return (<div title={text} className={styles.ellipsis}>
+      <Tag color={color} style={{cursor: 'auto'}}>
+        {text}
+      </Tag>
+    </div>)
+  }
+
+  renderOggStatus = (text, record, index) => {
+    let color
+    switch (text) {
+      case 'RUNNING':
         color = 'green'
         break
       default:
@@ -65,7 +81,7 @@ export default class ClusterCheckForm extends Component {
     const tailFormItemLayout = {
       wrapperCol: {
         span: 18,
-        offset: 3,
+        offset: 3
       }
     }
     const titleItemLayout = {
@@ -75,12 +91,12 @@ export default class ClusterCheckForm extends Component {
       }
     }
     const {checkResult} = this.props
-    const {grafanaUrl, influxdbUrl,heartBeatLeader, kafkaBrokers, nimbuses, stormSSHSecretFree, supervisors, zkStats} = checkResult
+    const {grafanaUrl, influxdbUrl, heartBeatLeader, kafkaBrokers, nimbuses, supervisors, zkStats, loading} = checkResult
     return (
       <div className="form-search">
         <Form autoComplete="off" layout="horizontal">
           <FormItem {...tailFormItemLayout}>
-            <Button type="primary" onClick={this.handleCheckCluster}>
+            <Button loading={loading} type="primary" onClick={this.handleCheckCluster}>
               <FormattedMessage
                 id="app.components.clusterCheck.clusterCheck.checkClusterStatus"
                 defaultMessage="查询集群状态"
@@ -91,29 +107,18 @@ export default class ClusterCheckForm extends Component {
             <Row>
               <Col span={3}>
                 Grafana：
-                  {grafanaUrl === 'ok' ? (
-                    <Icon style={{color: 'green'}} type="check-circle" />
-                  ) : (
-                    <Icon style={{color: 'red'}} type="close-circle" />
-                  )}
+                {grafanaUrl === 'ok' ? (
+                  <Icon style={{color: 'green'}} type="check-circle"/>
+                ) : (
+                  <Icon style={{color: 'red'}} type="close-circle"/>
+                )}
               </Col>
               <Col span={3}>
                 Influxdb：
                 {influxdbUrl === 'ok' ? (
-                  <Icon style={{color: 'green'}} type="check-circle" />
+                  <Icon style={{color: 'green'}} type="check-circle"/>
                 ) : (
-                  <Icon style={{color: 'red'}} type="close-circle" />
-                )}
-              </Col>
-              <Col span={6}>
-                <FormattedMessage
-                  id="app.components.clusterCheck.clusterCheck.stormSSH"
-                  defaultMessage="Storm服务器免密登录"
-                />：
-                {stormSSHSecretFree === 'ok' ? (
-                  <Icon style={{color: 'green'}} type="check-circle" />
-                ) : (
-                  <Icon style={{color: 'red'}} type="close-circle" />
+                  <Icon style={{color: 'red'}} type="close-circle"/>
                 )}
               </Col>
             </Row>
@@ -154,7 +159,7 @@ export default class ClusterCheckForm extends Component {
                   dataIndex: 'state',
                   key: 'state',
                   render: this.renderComponent(this.renderStatus)
-                },
+                }
               ]}
             />
           </FormItem>
@@ -191,7 +196,7 @@ export default class ClusterCheckForm extends Component {
                   dataIndex: 'state',
                   key: 'state',
                   render: this.renderComponent(this.renderStatus)
-                },
+                }
               ]}
             />
           </FormItem>
@@ -231,7 +236,7 @@ export default class ClusterCheckForm extends Component {
                   dataIndex: 'state',
                   key: 'state',
                   render: this.renderComponent(this.renderStatus)
-                },
+                }
               ]}
             />
           </FormItem>
@@ -287,7 +292,7 @@ export default class ClusterCheckForm extends Component {
                   dataIndex: 'nimbusUpTime',
                   key: 'nimbusUpTime',
                   render: this.renderComponent(this.renderNomal)
-                },
+                }
               ]}
             />
           </FormItem>
@@ -358,7 +363,7 @@ export default class ClusterCheckForm extends Component {
                   dataIndex: 'version',
                   key: 'version',
                   render: this.renderComponent(this.renderNomal)
-                },
+                }
               ]}
             />
           </FormItem>
@@ -369,5 +374,5 @@ export default class ClusterCheckForm extends Component {
 }
 
 ClusterCheckForm.propTypes = {
-  form: PropTypes.object,
+  form: PropTypes.object
 }

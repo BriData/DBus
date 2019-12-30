@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.domain.mapper;
+
+import com.creditease.dbus.domain.model.ProjectSink;
 
 import java.util.List;
 import java.util.Map;
-
-import com.creditease.dbus.domain.model.ProjectSink;
 
 public interface ProjectSinkMapper {
     int deleteByPrimaryKey(Integer id);
@@ -40,5 +41,5 @@ public interface ProjectSinkMapper {
 
     int deleteByProjectId(Integer id);
 
-	int getBySinkId(Integer id);
+    int getBySinkId(Integer id);
 }

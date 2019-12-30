@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.domain.mapper;
 
@@ -40,8 +41,10 @@ public interface FullPullHistoryMapper {
 
     List<Long> searchIdsByUid(int userId);
 
-    List<Map<String,Object>> getDSNames(Map<String, Object> param);
+    List<Map<String, Object>> getDSNames(Map<String, Object> param);
 
-    List<Map<String,Object>> getProjectNames(Map<String, Object> param);
+    List<Map<String, Object>> getProjectNames(Map<String, Object> param);
+
+    Long getMaxId();
 
 }

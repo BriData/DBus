@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.log.processor.dao;
 
 import com.creditease.dbus.log.processor.vo.DBusDataSource;
 import com.creditease.dbus.log.processor.vo.RuleInfo;
+
 import java.util.List;
 
 /**
@@ -29,12 +31,12 @@ import java.util.List;
  */
 public interface IProcessorLogDao {
 
-     DBusDataSource loadDBusDataSourceConf(String key, String dsName);
+    DBusDataSource loadDBusDataSourceConf(String key, String dsName);
 
-     List<RuleInfo> loadActiveTableRuleInfo(String key, String dsName);
+    List<RuleInfo> loadActiveTableRuleInfo(String key, String dsName);
 
-     void updateTableStatus(String key, String dsName, String schemaName, String tableName, String status);
+    void updateTableStatus(String key, String dsName, String schemaName, String tableName, String status);
 
-     List<RuleInfo> loadAbortTableRuleInfo(String key, String dsName);
+    List<RuleInfo> loadAbortTableRuleInfo(String key, String dsName);
 
 }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus;
 
 import org.springframework.boot.SpringApplication;
@@ -30,7 +31,7 @@ import org.springframework.cloud.config.server.EnableConfigServer;
  */
 @SpringBootApplication
 @EnableConfigServer
-@EnableDiscoveryClient
+//@EnableDiscoveryClient
 public class ConfigServerApp {
     public static void main(String[] args) {
         SpringApplication.run(ConfigServerApp.class, args);

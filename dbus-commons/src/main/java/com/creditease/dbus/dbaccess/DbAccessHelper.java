@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,18 @@
  * >>
  */
 
+
 package com.creditease.dbus.dbaccess;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
-
-import javax.sql.DataSource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.creditease.dbus.commons.PropertiesHolder;
 
 /**
  * Created by Shrimp on 16/5/17.
@@ -43,11 +41,12 @@ public class DbAccessHelper implements IDbAccessHelper {
     private DataSource ds;
     private Connection conn = null;
     private PreparedStatement ps = null;
+
     public DbAccessHelper(Properties properties) throws Exception {
         DataSourceProvider provider = new DruidDataSourceProvider(properties);
         this.ds = provider.provideDataSource();
     }
-    
+
     @Override
     public ResultSet executeSql(String sql) throws Exception {
         try {
@@ -62,21 +61,19 @@ public class DbAccessHelper implements IDbAccessHelper {
             throw se;
         }
     }
-    
+
     @Override
     public void close() {
         if (ps != null)
             try {
                 ps.close();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 logger.error("PreparedStatement closing failed!");
             }
         if (conn != null)
             try {
                 conn.close();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 logger.error("DB connection closing failed!");
             }
     }

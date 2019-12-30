@@ -1,14 +1,14 @@
-import React, { PropTypes, Component } from 'react'
-import { getUserInfo } from '@/app/utils/request'
+import React, {PropTypes, Component} from 'react'
+import {getUserInfo} from '@/app/utils/request'
 
 export default class Permission extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {}
   }
 
-  componentWillMount () {
-    const { type, redirect, code } = this.props
+  componentWillMount() {
+    const {type, redirect, code} = this.props
     this.flag = true
     switch (type) {
       case 'menu':
@@ -23,6 +23,7 @@ export default class Permission extends Component {
         break
     }
   }
+
   /**
    * @description 判断一级菜单是否存在
    */
@@ -31,28 +32,30 @@ export default class Permission extends Component {
     return topMenuArray.filter(item => item === code)
   };
 
-  handleFilterRouter = menus => {};
-  render () {
-    const { children } = this.props
+  handleFilterRouter = menus => {
+  };
+
+  render() {
+    const {children} = this.props
     return <span>{children}</span>
   }
 }
 
-export function getMenus (rotype) {
+export function getMenus(rotype) {
   if (rotype === 'admin') {
     return {
       topMenu: require('@/app/assets/json/topMenu.json').admin,
-      leftMenu: require('@/app/assets/json/leftMenu/admin.json'),
+      leftMenu: require('@/app/assets/json/leftMenu/admin.json')
     }
   } else {
     return {
       topMenu: require('@/app/assets/json/topMenu.json').user,
-      leftMenu: require('@/app/assets/json/leftMenu/user.json'),
+      leftMenu: require('@/app/assets/json/leftMenu/user.json')
     }
   }
 }
 
-export function filterRouter (code) {
+export function filterRouter(code) {
   if (!getUserInfo()) {
     return false
   }
@@ -63,11 +66,11 @@ export function filterRouter (code) {
 }
 
 // 根据权限过滤路由
-export function routerPermission (routes) {
+export function routerPermission(routes) {
   let temporary = []
   routes.slice(0, routes.length - 1).forEach(item => {
     const code = item.path.substring(1)
-    if (code === 'login' || code === 'register' || code === 'init') {
+    if (code === 'login' || code === 'register' || code === 'init' || code === 'handle') {
       temporary.push(item)
     } else if (code === 'project-manage') {
       if (!filterRouter(code)) {

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  * limitations under the License.
  * >>
  */
+
 
 package com.creditease.dbus.service.table;
 
@@ -33,8 +34,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class MongoTableFetcher{
+public class MongoTableFetcher {
     private DataSource ds;
+
     public MongoTableFetcher(DataSource ds) {
         this.ds = ds;
     }
@@ -76,7 +78,7 @@ public class MongoTableFetcher{
         return list;
     }
 
-    public List<List<TableMeta>> fetchTableField(Map<String, Object> params, List<Map<String, Object>> paramsList){
+    public List<List<TableMeta>> fetchTableField(Map<String, Object> params, List<Map<String, Object>> paramsList) {
         List<List<TableMeta>> ret = new ArrayList<>();
         for (Map<String, Object> map : paramsList) {
             ret.add(new ArrayList<>());

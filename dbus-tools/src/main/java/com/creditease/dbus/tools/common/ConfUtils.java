@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2017 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.tools.common;
 
-import com.creditease.dbus.commons.PropertiesUtils;
-import com.google.common.io.Resources;
 import org.apache.commons.lang.SystemUtils;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Properties;
 
 public class ConfUtils {
@@ -35,8 +32,8 @@ public class ConfUtils {
         return getProps("zk.properties");
     }
 
-    public static String toConfPath(String fileName)  {
-        String path = String.format("%s/conf/%s", SystemUtils.USER_DIR.replaceAll("\\\\", "/"), fileName);
+    public static String toConfPath(String fileName) {
+        String path = String.format("%s/../conf/%s", SystemUtils.USER_DIR.replaceAll("\\\\", "/"), fileName);
         return path;
     }
 
@@ -56,7 +53,7 @@ public class ConfUtils {
         }
     }
 
-    public static byte[] toByteArray(String configFile) throws IOException{
+    public static byte[] toByteArray(String configFile) throws IOException {
         FileInputStream fis = null;
 
         try {

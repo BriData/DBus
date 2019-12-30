@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import com.creditease.dbus.stream.common.Constants;
-import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
 import com.creditease.dbus.stream.common.appender.bean.EmitData;
+import com.creditease.dbus.stream.common.appender.bolt.processor.listener.CommandHandlerListener;
 import com.creditease.dbus.stream.common.appender.spout.cmds.TopicResumeCmd;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
@@ -31,7 +32,8 @@ import org.slf4j.LoggerFactory;
 public class WrapperResumeHandler implements BoltCommandHandler {
     private Logger logger = LoggerFactory.getLogger(getClass());
     CommandHandlerListener listener;
-    public WrapperResumeHandler( CommandHandlerListener listener) {
+
+    public WrapperResumeHandler(CommandHandlerListener listener) {
         this.listener = listener;
     }
 

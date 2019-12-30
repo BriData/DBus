@@ -2,14 +2,14 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,10 @@
  * >>
  */
 
+
 package com.creditease.dbus.service;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.creditease.dbus.base.ResultEntity;
@@ -40,9 +40,10 @@ import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.*;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.utils.ControlMessageSenderProvider;
 import com.creditease.dbus.utils.ControlMessageSender;
+import com.creditease.dbus.utils.ControlMessageSenderProvider;
 import com.creditease.dbus.utils.OrderedProperties;
+import com.creditease.dbus.utils.SecurityConfProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Joiner;
 import org.apache.commons.collections.map.HashedMap;
@@ -64,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS;
 
@@ -83,10 +85,9 @@ public class TableService {
     private AutoDeployDataLineService autoDeployDataLineService;
 
     private static Logger logger = LoggerFactory.getLogger(TableService.class);
-    private static final String INITIAL_LOAD_DATA = "load-data";
 
 
-    public Integer activateDataTable(Integer id, Map<String, String> map) throws Exception {
+    public Integer activateDataTable(Integer id, Map<String, String> map) {
         ActiveTableParam param;
         try {
             param = ActiveTableParam.build(map);
@@ -100,43 +101,8 @@ public class TableService {
             logger.info("tables : can not found table by id.");
             return MessageCode.TABLE_NOT_FOUND_BY_ID;
         }
-        if (INITIAL_LOAD_DATA.equalsIgnoreCase(map.get("type"))) {
-            DbusDatasourceType dsType = DbusDatasourceType.parse(table.getDsType());
-            InitialLoadService ilService = InitialLoadService.getService();
-
-            FullPullHistory fullPullHistory = new FullPullHistory();
-            Date date = new Date();
-            fullPullHistory.setId(date.getTime());
-            fullPullHistory.setType("normal");
-            fullPullHistory.setDsName(table.getDsName());
-            fullPullHistory.setSchemaName(table.getSchemaName());
-            fullPullHistory.setTableName(table.getTableName());
-            fullPullHistory.setState("init");
-            fullPullHistory.setInitTime(date);
-            fullPullHistory.setUpdateTime(date);
-            sender.post(ServiceNames.KEEPER_SERVICE, "/fullPullHistory/create", fullPullHistory);
-
-            if (DbusDatasourceType.ORACLE == dsType) {
-                logger.info("Activate oracle table");
-                // 处理oracle拉全量
-                ilService.oracleInitialLoadBySql(table, date.getTime());
-            } else if (DbusDatasourceType.MYSQL == dsType) {
-                logger.info("Activate mysql table");
-                // 处理mysql拉全量
-                ilService.mysqlInitialLoadBySql(table, date.getTime());
-            } else if (DbusDatasourceType.MONGO == dsType) {
-                logger.info("Activate mysql table");
-                // 处理mongo拉全量
-                ilService.mongoInitialLoadBySql(table, date.getTime());
-            }
-            else {
-                logger.error("Illegal datasource type:" + table.getDsType());
-                return MessageCode.TYPE_OF_TABLE_CAN_NOT_FULLPULL;
-                // throw new IllegalArgumentException("Illegal datasource type:" + table.getDsType());
-            }
-        } else {
-
-            // 不用拉全量的情况下直接发送 APPENDER_TOPIC_RESUME message 激活 appender
+        if ("no-load-data".equalsIgnoreCase(map.get("type"))) {
+            // 直接发送 APPENDER_TOPIC_RESUME message 激活 appender
             ControlMessageSender sender = ControlMessageSenderProvider.getControlMessageSender(zkService);
             ControlMessage message = new ControlMessage();
             message.setId(System.currentTimeMillis());
@@ -224,7 +190,7 @@ public class TableService {
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
 
-        //TODO mongo的表更新完后，自动reload
+        //TODO mongo的表更新完后,自动reload
         DataTable table = getTableById(dataTable.getId());//Integer dsId, String dsName, String dsType) {
         if (DbusDatasourceType.MONGO == DbusDatasourceType.parse(table.getDsType())
                 && KeeperConstants.OK.equals(table.getStatus())) {
@@ -303,6 +269,15 @@ public class TableService {
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/get-by-schema-id/{0}", schemaId);
         return result.getBody().getPayload(new TypeReference<List<DataTable>>() {
         });
+    }
+
+    /**
+     * 根据ID获取指定table表的数据数量
+     *
+     * @param id 数据源ID
+     */
+    public String getTableRows(Integer id) {
+        return sender.get(ServiceNames.KEEPER_SERVICE, "/tables/getTableRows/{tableId}", id).getBody().getPayload(String.class);
     }
 
     /**
@@ -467,6 +442,9 @@ public class TableService {
         consumerProps.setProperty("group.id", "plain.log.reader");
         Properties globalConf = zkService.getProperties(KeeperConstants.GLOBAL_CONF);
         consumerProps.setProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, globalConf.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+        if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+            consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+        }
         KafkaConsumer<String, String> consumer = null;
         try {
             consumer = new KafkaConsumer(consumerProps);
@@ -508,83 +486,112 @@ public class TableService {
 
         DbusDatasourceType dsType = DbusDatasourceType.parse(map.get("dsType").toString().toLowerCase());
 
+        logger.info("dsType: {}", dsType.name());
+
         List<Long> offset = new ArrayList<>();
         long kafkaOffset = Long.parseLong(map.get("kafkaOffset").toString());
 
         for (int i = 0; i < valuesList.size(); i++) {
 
-            List<String> rowList = valuesList.get(i);
+            List<String> row = valuesList.get(i);
 
             if (dsType.equals(DbusDatasourceType.LOG_UMS)) {
                 if (executeRules.size() == 0) {
-                    data.add(rowList);
+                    data.add(row);
                     offset.add(kafkaOffset + i);
                 } else {
-                    LogUmsAdapter adapter = new LogUmsAdapter(rowList.get(0));
+                    LogUmsAdapter adapter = new LogUmsAdapter(row.get(0));
                     while (adapter.hasNext()) {
-                        rowList = new ArrayList() {{
+                        List<String> rowWk = new ArrayList() {{
                             add(adapter.next());
                         }};
+
+                        List<List<String>> datas = new ArrayList<>();
+                        datas.add(rowWk);
+
                         for (RuleInfo rule : executeRules) {
                             String ruleGramar = rule.getRuleGrammar();
                             List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
                             Rules rules = Rules.fromStr(rule.getRuleTypeName());
-                            rowList = rules.getRule().transform(rowList, grammar, rules);
-                            if (rowList.isEmpty()) break;
+                            datas = rules.getRule().transform(datas, grammar, rules);
+                            if (datas.isEmpty()) break;
                         }
-                        if (!rowList.isEmpty()) {
-                            data.add(rowList);
-                            offset.add(kafkaOffset + i);
+                        if (!datas.isEmpty()) {
+                            for (List<String> item : datas) {
+                                data.add(item);
+                                offset.add(kafkaOffset + i);
+                            }
                         }
                     }
                 }
             } else if (dsType.equals(DbusDatasourceType.LOG_LOGSTASH)
-                    || dsType.equals(DbusDatasourceType.LOG_LOGSTASH_JSON)) {
+                    || dsType.equals(DbusDatasourceType.LOG_LOGSTASH_JSON)
+                    || dsType.equals(DbusDatasourceType.LOG_JSON)) {
+
+                List<List<String>> datas = new ArrayList<>();
+                datas.add(row);
+
                 for (RuleInfo rule : executeRules) {
                     String ruleGramar = rule.getRuleGrammar();
                     List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
                     Rules rules = Rules.fromStr(rule.getRuleTypeName());
-                    rowList = rules.getRule().transform(rowList, grammar, rules);
-                    if (rowList.isEmpty()) break;
+                    datas = rules.getRule().transform(datas, grammar, rules);
+                    if (datas.isEmpty())
+                        break;
                 }
-                if (!rowList.isEmpty()) {
-                    data.add(rowList);
-                    offset.add(kafkaOffset + i);
+                if (!datas.isEmpty()) {
+                    for (List<String> item : datas) {
+                        data.add(item);
+                        offset.add(kafkaOffset + i);
+                    }
                 }
             } else if (dsType.equals(DbusDatasourceType.LOG_FLUME)) {
-                LogFlumeAdapter adapter = new LogFlumeAdapter(keysList.get(i).get(0), rowList.get(0));
+                LogFlumeAdapter adapter = new LogFlumeAdapter(keysList.get(i).get(0), row.get(0));
                 while (adapter.hasNext()) {
-                    rowList = new ArrayList() {{
+                    List<String> rowWk = new ArrayList() {{
                         add(adapter.next());
                     }};
+
+                    List<List<String>> datas = new ArrayList<>();
+                    datas.add(rowWk);
+
                     for (RuleInfo rule : executeRules) {
                         String ruleGramar = rule.getRuleGrammar();
                         List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
                         Rules rules = Rules.fromStr(rule.getRuleTypeName());
-                        rowList = rules.getRule().transform(rowList, grammar, rules);
-                        if (rowList.isEmpty()) break;
+                        datas = rules.getRule().transform(datas, grammar, rules);
+                        if (datas.isEmpty())
+                            break;
                     }
-                    if (!rowList.isEmpty()) {
-                        data.add(rowList);
-                        offset.add(kafkaOffset + i);
+                    if (!datas.isEmpty()) {
+                        for (List<String> item : datas) {
+                            data.add(item);
+                            offset.add(kafkaOffset + i);
+                        }
                     }
                 }
             } else if (dsType.equals(DbusDatasourceType.LOG_FILEBEAT)) {
-                LogFilebeatAdapter adapter = new LogFilebeatAdapter(rowList.get(0));
+                LogFilebeatAdapter adapter = new LogFilebeatAdapter(row.get(0));
                 while (adapter.hasNext()) {
-                    rowList = new ArrayList() {{
+                    List<String> rowWk = new ArrayList() {{
                         add(adapter.next());
                     }};
+
+                    List<List<String>> datas = new ArrayList<>();
+                    datas.add(rowWk);
+
                     for (RuleInfo rule : executeRules) {
                         String ruleGramar = rule.getRuleGrammar();
                         List<RuleGrammar> grammar = JSON.parseArray(ruleGramar, RuleGrammar.class);
                         Rules rules = Rules.fromStr(rule.getRuleTypeName());
-                        rowList = rules.getRule().transform(rowList, grammar, rules);
-                        if (rowList.isEmpty()) break;
+                        datas = rules.getRule().transform(datas, grammar, rules);
+                        if (datas.isEmpty()) break;
                     }
-                    if (!rowList.isEmpty()) {
-                        data.add(rowList);
-                        offset.add(kafkaOffset + i);
+                    if (!datas.isEmpty()) {
+                        for (List<String> item : datas) {
+                            data.add(item);
+                            offset.add(kafkaOffset + i);
+                        }
                     }
                 }
             }
@@ -601,6 +608,8 @@ public class TableService {
                     || dsType.equals(DbusDatasourceType.LOG_FLUME)
                     || dsType.equals(DbusDatasourceType.LOG_FILEBEAT)) {
                 ret.put("dataType", "JSON");
+            } else if (dsType.equals(DbusDatasourceType.LOG_JSON)) {
+                ret.put("dataType", "STRING");
             }
         } else {
             String lastRule = executeRules.get(executeRules.size() - 1).getRuleTypeName();
@@ -630,6 +639,9 @@ public class TableService {
             consumerProps.setProperty("group.id", "plain.log.reader");
             Properties globalConf = zkService.getProperties(KeeperConstants.GLOBAL_CONF);
             consumerProps.setProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS, globalConf.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
+            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            }
             consumer = new KafkaConsumer(consumerProps);
 
             TopicPartition dataTopicPartition = new TopicPartition(topic, 0);
@@ -653,7 +665,10 @@ public class TableService {
                             add(JSON.toJSONString(value));
                         }};
                         valuesList.add(values);
-                    } else if (dsType.equals(DbusDatasourceType.LOG_FLUME) || dsType.equals(DbusDatasourceType.LOG_FILEBEAT) || dsType.equals(DbusDatasourceType.LOG_UMS)) {
+                    } else if (dsType.equals(DbusDatasourceType.LOG_FLUME) ||
+                            dsType.equals(DbusDatasourceType.LOG_FILEBEAT) ||
+                            dsType.equals(DbusDatasourceType.LOG_JSON) ||
+                            dsType.equals(DbusDatasourceType.LOG_UMS)) {
                         ArrayList<String> values = new ArrayList<String>() {{
                             add(record.value());
                         }};
@@ -712,7 +727,7 @@ public class TableService {
             param.put("URL", ds.getSlaveUrl());
         }
 
-        //执行sql语句，返回结果
+        //执行sql语句,返回结果
         result = sender.post(ServiceNames.KEEPER_SERVICE, "tables/execute-sql", param);
         return result.getBody();
     }
@@ -731,23 +746,29 @@ public class TableService {
     public List<RiderTable> riderSearch(Integer userId, String userRole) throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<RiderTable> listRider = new ArrayList<RiderTable>();
+        NameAliasMapping[] nameAliasMappings = sender.get(ServiceNames.KEEPER_SERVICE, "/alias/searchAll").getBody()
+                .getPayload(NameAliasMapping[].class);
+        Map<Integer, String> aliasMap = Arrays.asList(nameAliasMappings).stream().filter(alias -> alias.getType().equals(NameAliasMapping.datasourceType))
+                .collect(Collectors.toMap(NameAliasMapping::getNameId, NameAliasMapping::getAlias));
         //管理员获取的是不带topoName的namespace
         if ("admin".equalsIgnoreCase(userRole)) {
-            List<DataTable> tables = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findAllTables")
-                    .getBody().getPayload(new TypeReference<List<DataTable>>() {
-                    });
-            boolean flag = false;
+            DataTable[] tables = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findAllTables").getBody().getPayload(DataTable[].class);
             for (DataTable table : tables) {
+                boolean flag = false;
                 if (table.getTableName().equals(table.getPhysicalTableRegex())) {
                     flag = true;
                 }
                 String dsType = table.getDsType();
+                String dsName = table.getDsName();
+                if (StringUtils.isNotBlank(aliasMap.get(table.getDsId()))) {
+                    dsName = aliasMap.get(table.getDsId());
+                }
                 String namespace;
                 if (flag) {
-                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s", dsType, table.getDsName(), table.getSchemaName(),
+                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s", dsType, dsName, table.getSchemaName(),
                             table.getTableName(), table.getVersion(), "0", "0");
                 } else {
-                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s", dsType, table.getDsName(), table.getSchemaName(),
+                    namespace = String.format("%s.%s.%s.%s.%s.%s.%s", dsType, dsName, table.getSchemaName(),
                             table.getTableName(), table.getVersion(), "0", table.getPhysicalTableRegex());
                 }
                 RiderTable rTable = new RiderTable();
@@ -756,7 +777,7 @@ public class TableService {
                 rTable.setId(table.getId());
                 rTable.setCreateTime(table.getCreateTime());
                 Properties globalConf = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
-                rTable.setKafka(globalConf.getProperty("bootstrap.servers"));
+                rTable.setKafka(globalConf.getProperty(GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS));
                 listRider.add(rTable);
             }
         } else {
@@ -764,18 +785,22 @@ public class TableService {
             List<HashMap<String, Object>> list = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/findTablesByUserId/{0}", userId)
                     .getBody().getPayload(new TypeReference<List<HashMap<String, Object>>>() {
                     });
-            boolean flag = false;
             for (HashMap<String, Object> table : list) {
+                boolean flag = false;
                 if (table.get("table_name").equals(table.get("physical_table_regex"))) {
                     flag = true;
                 }
                 String dsType = (String) table.get("ds_type");
+                String dsName = (String) table.get("ds_name");
+                if (StringUtils.isNotBlank(aliasMap.get(table.get("ds_id")))) {
+                    dsName = aliasMap.get(table.get("ds_id"));
+                }
                 String namespace;
                 if (flag) {
-                    namespace = String.format("%s.%s!%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("topo_name"),
+                    namespace = String.format("%s.%s!%s.%s.%s.%s.%s.%s", dsType, dsName, table.get("topo_name"),
                             table.get("schema_name"), table.get("table_name"), table.get("version"), "0", "0");
                 } else {
-                    namespace = String.format("%s.%s!%s.%s.%s.%s.%s.%s", dsType, table.get("ds_name"), table.get("topo_name"),
+                    namespace = String.format("%s.%s!%s.%s.%s.%s.%s.%s", dsType, dsName, table.get("topo_name"),
                             table.get("schema_name"), table.get("table_name"), table.get("version"), "0", table.get("physical_table_regex"));
                 }
                 RiderTable rTable = new RiderTable();
@@ -807,14 +832,14 @@ public class TableService {
     }
 
     public ResultEntity batchStartTableByTableIds(ArrayList<Integer> tableIds) {
-        return startOrStopTableByTableIds(tableIds,"ok");
+        return startOrStopTableByTableIds(tableIds, "ok");
     }
 
     public ResultEntity batchStopTableByTableIds(ArrayList<Integer> tableIds) {
-        return startOrStopTableByTableIds(tableIds,"abort");
+        return startOrStopTableByTableIds(tableIds, "abort");
     }
 
-    private ResultEntity startOrStopTableByTableIds(ArrayList<Integer> tableIds,String status) {
+    private ResultEntity startOrStopTableByTableIds(ArrayList<Integer> tableIds, String status) {
         String query = "/tables/startOrStopTableByTableIds?status=" + status;
         ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, query, tableIds);
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success()) {
@@ -841,7 +866,7 @@ public class TableService {
         return result.getBody();
     }
 
-    public ResultEntity importRulesByTableId(Integer tableId, MultipartFile uploadFile) throws Exception{
+    public ResultEntity importRulesByTableId(Integer tableId, MultipartFile uploadFile) throws Exception {
         File saveDir = new File(SystemUtils.getJavaIoTmpDir(), String.valueOf(System.currentTimeMillis()));
         if (!saveDir.exists()) saveDir.mkdirs();
         File tempFile = new File(saveDir, uploadFile.getOriginalFilename());
@@ -849,7 +874,7 @@ public class TableService {
         StringBuilder sb = new StringBuilder();
         BufferedReader br = null;
         try {
-             br = new BufferedReader(new FileReader(tempFile));
+            br = new BufferedReader(new FileReader(tempFile));
             String line = null;
             while ((line = br.readLine()) != null) {
                 sb.append(line);
@@ -862,7 +887,7 @@ public class TableService {
                 tempFile.delete();
             }
         }
-        return sender.post(ServiceNames.KEEPER_SERVICE, "/tables/importRulesByTableId/"+tableId, sb.toString()).getBody();
+        return sender.post(ServiceNames.KEEPER_SERVICE, "/tables/importRulesByTableId/" + tableId, sb.toString()).getBody();
     }
 
     public void exportRulesByTableId(Integer tableId, HttpServletResponse response) {
@@ -880,6 +905,10 @@ public class TableService {
         } catch (IOException e) {
             logger.error("Exception when export rules by tableid {}", tableId);
         }
+    }
+
+    public ResultEntity moveSourceTables(Map<String, Object> param) {
+        return sender.post(ServiceNames.KEEPER_SERVICE, "/tables/moveSourceTables", param).getBody();
     }
 
     public static class InitialLoadStatus {
@@ -968,7 +997,7 @@ public class TableService {
     }
 
     /**
-     * 根据dsId 和 schemaName 查询，某scheme下的table,不分页
+     * 根据dsId 和 schemaName 查询,某scheme下的table,不分页
      *
      * @return
      */
@@ -977,4 +1006,15 @@ public class TableService {
         return result.getBody();
     }
 
+    public ResultEntity reInitTableMeta(Integer tableId) {
+        ResultEntity body = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/reInitTableMeta/{tableId}", tableId).getBody();
+        DataTable dataTable = body.getPayload(DataTable.class);
+        toolSetService.reloadConfig(dataTable.getDsId(), dataTable.getDsName(), ToolSetService.APPENDER_RELOAD_CONFIG);
+        return body;
+    }
+
+    public List<DataTable> getTablesByDsId(Integer dsId) {
+        DataTable[] payload = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/getTablesByDsId/{dsId}", dsId).getBody().getPayload(DataTable[].class);
+        return payload == null ? null : Arrays.asList(payload);
+    }
 }

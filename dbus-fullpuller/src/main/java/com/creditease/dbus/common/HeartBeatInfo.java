@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.common;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,15 +28,19 @@ public class HeartBeatInfo {
     private String cmdType;
     @JsonProperty("args")
     private String args;
+
     public String getCmdType() {
         return cmdType;
     }
+
     public void setCmdType(String cmdType) {
         this.cmdType = cmdType;
     }
+
     public String getArgs() {
         return args;
     }
+
     public void setArgs(String args) {
         this.args = args;
     }

@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor.kafkawriter;
 
 import com.creditease.dbus.stream.common.appender.bolt.processor.BoltCommandHandler;
@@ -32,10 +33,12 @@ import org.apache.storm.tuple.Tuple;
 public class ReloadCommandHandler implements BoltCommandHandler {
     private CommandHandlerListener listener;
     private BoltCommandHandler handler;
+
     public ReloadCommandHandler(CommandHandlerListener listener) {
         this.listener = listener;
         this.handler = new FilteredReloadCommandHandler(listener);
     }
+
     @Override
     public void handle(Tuple tuple) {
         handler.handle(tuple);

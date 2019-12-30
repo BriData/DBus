@@ -2,7 +2,7 @@
  * <<
  * DBus
  * ==
- * Copyright (C) 2016 - 2018 Bridata
+ * Copyright (C) 2016 - 2019 Bridata
  * ==
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
  * >>
  */
 
+
 package com.creditease.dbus.stream.common.appender.bolt.processor;
 
 import avro.shaded.com.google.common.collect.Maps;
+import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.stream.common.appender.cache.GlobalCache;
 import com.creditease.dbus.stream.common.appender.enums.Command;
-import com.creditease.dbus.enums.DbusDatasourceType;
 
 import java.util.Map;
 
@@ -38,6 +39,7 @@ public class BoltHandlerManager {
     private BoltCommandHandlerProvider provider;
 
     private DbusDatasourceType datasourceType;
+
     public BoltHandlerManager(BoltCommandHandlerProvider provider) {
         this.provider = provider;
         this.datasourceType = GlobalCache.getDatasourceType();
@@ -46,13 +48,13 @@ public class BoltHandlerManager {
     }
 
     public BoltCommandHandler getHandler(Command cmd) {
-        if(handlers.containsKey(cmd)) {
+        if (handlers.containsKey(cmd)) {
             return handlers.get(cmd);
         }
 
-        if(defaultHandler != null) return defaultHandler;
+        if (defaultHandler != null) return defaultHandler;
 
-        throw new RuntimeException("No command handler was found by key:"+cmd);
+        throw new RuntimeException("No command handler was found by key:" + cmd);
     }
 
     private void buildCommandHandlers() {
@@ -64,7 +66,7 @@ public class BoltHandlerManager {
     }
 
     private void addHandler(Command cmd, BoltCommandHandler handler) {
-        if(!handlers.containsKey(cmd)) {
+        if (!handlers.containsKey(cmd)) {
             handlers.put(cmd, handler);
         }
     }
