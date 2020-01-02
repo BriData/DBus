@@ -109,6 +109,7 @@ public class DBusKeeperInitJars {
 
     private static void initKeeperConfig(Properties pro) throws Exception {
         System.out.println("本地配置中心配置初始化...");
+        executeNormalCmd("mkdir -pv ../conf/keeperConfig");
         executeNormalCmd("cp -rf ../conf/keeperConfigTemplates/dbus-keeper-registry-v1-release.yaml ../conf/keeperConfig/dbus-keeper-registry-v1-release.yaml");
         executeNormalCmd("cp -rf ../conf/keeperConfigTemplates/dbus-keeper-gateway-v1-release.yaml ../conf/keeperConfig/dbus-keeper-gateway-v1-release.yaml");
         executeNormalCmd("cp -rf ../conf/keeperConfigTemplates/dbus-keeper-mgr-v1-release.yaml ../conf/keeperConfig/dbus-keeper-mgr-v1-release.yaml");
