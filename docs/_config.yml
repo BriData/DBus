@@ -10,6 +10,6 @@ include:
   - _static
   - _modules
 
-DBUS_VERSION_SHORT: 0.5.0
+DBUS_VERSION_SHORT: 0.6.0
 SCALA_BINARY_VERSION: "2.11"
 SCALA_VERSION: "2.11.8"
