@@ -259,8 +259,10 @@ public class DataSchemaService {
 
     public int rerun(Integer dsId, String dsName, String schemaName, Long offset) throws Exception {
         String path = "/DBus/Topology/" + dsName + "-appender/spout_kafka_consumer_nextoffset";
+        DataSchema dataSchema = sender.get(KEEPER_SERVICE, "/dataschema/manager-schema",
+                "dsId=" + dsId + "&schemaName=" + schemaName).getBody().getPayload(DataSchema.class);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(dsName + "." + schemaName, offset);
+        jsonObject.put(dataSchema.getSrcTopic(), offset);
         byte[] data = zkService.getData(path);
         String value = new String(data, KeeperConstants.UTF8);
         if (value != null && StringUtils.isNotBlank(value.toString()) && !"{}".equals(value)) {

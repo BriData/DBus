@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Shrimp on 16/5/20.
@@ -183,6 +184,7 @@ public class DbusMessageBuilder {
      */
     private void validateAndConvert(Object[] tuple) {
         List<DbusMessage.Field> fields = message.getSchema().getFields();
+
         if (tuple.length != fields.size()) {
             throw new IllegalArgumentException(String.format("Data fields length != schema field length!!  data_length=%d, schema_length=%d",
                     tuple.length, fields.size()));
@@ -205,6 +207,11 @@ public class DbusMessageBuilder {
                 throw e;
             } catch (NullPointerException e) {
                 logger.error("NullPointerException Data type '{}' of filed '{}'", field.dataType(), field.getName());
+                throw e;
+            } catch (Exception e) {
+                String columns = fields.stream().map(f -> f.getName() + ":" + f.getType()).collect(Collectors.joining(","));
+                logger.error("index '{}',namespace '{}', data type '{}' , filed '{}' , value '{}', columns '{}' ", i, message.getSchema().getNamespace(),
+                        field.dataType(), field.getName(), value, columns, e);
                 throw e;
             }
         }

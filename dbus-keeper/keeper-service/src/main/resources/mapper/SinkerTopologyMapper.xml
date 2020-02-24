@@ -39,7 +39,7 @@
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select t.id, t.sinker_name, t.sinker_conf, t.jar_id, t.status, t.description, t.update_time, j.name jar_name ,j.path jar_path
-    from t_sinker_topo t join t_topology_jar j on t.jar_id = j.id
+    from t_sinker_topo t left join t_topology_jar j on t.jar_id = j.id
     where t.id = #{id,jdbcType=INTEGER}
   </select>
   <select id="selectAll" resultMap="BaseResultMap">

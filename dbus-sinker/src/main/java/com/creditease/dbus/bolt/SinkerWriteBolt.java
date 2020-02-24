@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,28 +126,32 @@ public class SinkerWriteBolt extends BaseRichBolt {
                 logger.info("[write hdfs] topic: {}, offset: {}, key: {}, size:{}, cost time: {}",
                         record.topic(), record.offset(), record.key(), sb.length(), System.currentTimeMillis() - start);
             } catch (Exception e) {
-                statManger.remove(record.key(), totalCnt);
+                statManger.remove(statKey, totalCnt);
                 throw e;
             }
         }
     }
 
     private void sendStatAndHeartBeat(DBusConsumerRecord<String, byte[]> data) {
+        //之前的heartbeatKey
+        //data_increment_heartbeat.mysql.mysql_db5.ip_settle.fin_credit_repayment_bill.0.0.0.1578894885250|1578894877783|ok.wh_placeholder
+        //20200114之后的heartbeatKey,为了兼容数据线的别名
+        //data_increment_heartbeat.mysql.mysql_db5.ip_settle.fin_credit_repayment_bill.0.0.0.1578894885250|1578894877783|ok|mysql_db24.wh_placeholder
         String[] dataKeys = StringUtils.split(data.key(), ".");
-        String alias = inner.dsNameAlias.get(String.format("%s.%s", dataKeys[2], dataKeys[3]));
-        if (alias == null) {
-            alias = dataKeys[2];
+        String dsName = dataKeys[2];
+        String[] split8 = StringUtils.split(dataKeys[8], "|");
+        if (split8.length > 3) {
+            dsName = split8[3];
         }
-        StatMessage sm = new StatMessage(alias, dataKeys[3], dataKeys[4], SinkerConstants.SINKER_TYPE);
+        StatMessage sm = new StatMessage(dsName, dataKeys[3], dataKeys[4], SinkerConstants.SINKER_TYPE);
         Long curTime = System.currentTimeMillis();
-        String times[] = StringUtils.split(dataKeys[8], "|");
-        Long time = Long.valueOf(times[0]);
+        Long time = Long.valueOf(split8[0]);
         sm.setCheckpointMS(time);
         sm.setTxTimeMS(time);
         sm.setLocalMS(curTime);
         sm.setLatencyMS(curTime - time);
 
-        String statKey = getStatKey(dataKeys);
+        String statKey = String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]);
         final Stat stat = statManger.get(statKey);
         if (stat != null) {
             sm.setCount(stat.getSuccessCnt());
@@ -160,13 +164,13 @@ public class SinkerWriteBolt extends BaseRichBolt {
         }
 
         String statTopic = inner.sinkerConfProps.getProperty(SinkerConstants.STAT_TOPIC);
-        producer.send(new ProducerRecord<>(statTopic, String.format("%s.%s.%s", alias, dataKeys[3], dataKeys[4]), sm.toJSONString().getBytes()), (metadata, exception) -> {
+        producer.send(new ProducerRecord<>(statTopic, String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]), sm.toJSONString().getBytes()), (metadata, exception) -> {
             if (exception != null) {
                 logger.error("[stat] send stat message fail.", exception);
             }
         });
         String heartbeatTopic = inner.sinkerConfProps.getProperty(SinkerConstants.SINKER_HEARTBEAT_TOPIC);
-        String heartbeatKey = String.format("%s|%s|%s|%s", String.format("%s.%s.%s", alias, dataKeys[3], dataKeys[4]), time, curTime, curTime - time);
+        String heartbeatKey = String.format("%s|%s|%s|%s", String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]), time, curTime, curTime - time);
         producer.send(new ProducerRecord<>(heartbeatTopic, heartbeatKey, null), (metadata, exception) -> {
             if (exception != null) {
                 logger.error("[heartbeat] send heartbeat message fail.", exception);
@@ -230,7 +234,7 @@ public class SinkerWriteBolt extends BaseRichBolt {
 
     private void initProducer() throws Exception {
         Properties properties = inner.zkHelper.loadSinkerConf(SinkerConstants.PRODUCER);
-        properties.put("client.id", inner.topologyId + "SinkerWriteClient" + context.getThisTaskId());
+        properties.put("client.id", inner.sinkerName + "SinkerWriteClient" + context.getThisTaskId());
         this.producer = new KafkaProducer<>(properties);
         logger.info("[write bolt] create kafka producer.");
         logger.info("[write bolt] init monitor producer success with task index: {}", context.getThisTaskId());
@@ -255,7 +259,16 @@ public class SinkerWriteBolt extends BaseRichBolt {
     }
 
     private String getStatKey(String[] dataKeys) {
-        return String.format("%s.%s.%s", dataKeys[2], dataKeys[3], dataKeys[4]);
+        //之前的dataKey
+        //data_increment_data.oracle.acc3.ACC.REQUEST_BUS_SHARDING_2018_0000.0.0.0.1577810117698.wh_placeholder
+        //20200114之后的dataKey,为了兼容数据线的别名
+        //data_increment_data.oracle.acc3.ACC.REQUEST_BUS_SHARDING_2018_0000.0.0.0.1577810117698|acc3.wh_placeholder
+        String dsName = dataKeys[2];
+        String[] split8 = StringUtils.split(dataKeys[8], "|");
+        if (split8.length > 1) {
+            dsName = split8[1];
+        }
+        return String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]);
     }
 
 }

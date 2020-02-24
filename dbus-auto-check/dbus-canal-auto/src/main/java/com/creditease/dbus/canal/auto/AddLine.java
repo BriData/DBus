@@ -41,6 +41,7 @@ public class AddLine {
     public static String user = null;
     public static String pass = null;
     public static Integer slaveId = null;
+    public static String bootstrapServers = null;
     public static String userDir = System.getProperty("user.dir");
 
 
@@ -70,6 +71,8 @@ public class AddLine {
             bw.write("canal.pwd=" + pass + "\n");
             bw.write("#canal slave id\n");
             bw.write("canal.slaveId=" + slaveId);
+            bw.write("#bootstrap.servers\n");
+            bw.write("bootstrap.servers=" + bootstrapServers);
             bw.flush();
         } catch (Exception e) {
             System.out.println("Exception when edit file :" + userDir + "/conf/canal-auto.properties");
@@ -92,6 +95,7 @@ public class AddLine {
         options.addOption("u", "user", true, "");
         options.addOption("p", "pass", true, "");
         options.addOption("s", "slaveId", true, "");
+        options.addOption("bs", "bootstrap.servers", true, "");
 
 
         CommandLineParser parser = new DefaultParser();
@@ -115,6 +119,10 @@ public class AddLine {
             if (line.hasOption("slaveId")) {
                 slaveId = Integer.parseInt(line.getOptionValue("slaveId"));
             }
+            if (line.hasOption("bootstrap.servers")) {
+                bootstrapServers = line.getOptionValue("bootstrap.servers");
+            }
+
         } catch (ParseException e) {
             throw e;
         }

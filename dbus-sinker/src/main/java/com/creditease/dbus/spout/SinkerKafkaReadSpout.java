@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.DBusConsumerRecord;
+import com.creditease.dbus.helper.DBHelper;
 import com.creditease.dbus.spout.queue.EmitDataList;
 import com.creditease.dbus.spout.queue.EmitDataListManager;
 import com.creditease.dbus.spout.queue.MessageStatusQueueManager;
@@ -84,6 +85,7 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
             logger.info("[kafka read spout] init completed.");
         } catch (Exception e) {
             logger.error("[kafka read spout] init error.", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -115,6 +117,10 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
                 logger.debug("[received] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
                 DBusConsumerRecord<String, byte[]> consumerRecord = new DBusConsumerRecord(record);
                 String key = bildNSKey(consumerRecord);
+                if (!inner.tableNamespaces.contains(key)) {
+                    logger.debug("[ignore] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
+                    return;
+                }
                 msgQueueMgr.addMessage(consumerRecord);
                 emitDataListManager.emit(key, consumerRecord);
             }
@@ -124,22 +130,32 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
     }
 
     private void emitDataToBolt() {
-        // 如果存在未处理的reload消息,直接commit
-        if (!reloadCtrlMsg.isEmpty() || (System.currentTimeMillis() - lastEmitTime) < MANAGE_INTERVALS) return;
-        List<EmitDataList> emttDataList = emitDataListManager.getEmttDataList();
+        // 如果存在未处理的reload消息
+        if ((System.currentTimeMillis() - lastEmitTime) < MANAGE_INTERVALS) return;
+        List<EmitDataList> emttDataList = null;
+        if (!reloadCtrlMsg.isEmpty()) {
+            // 如果有未处理的ctr消息,emit全部数据,尽快处理完成收到的数据
+            emttDataList = emitDataListManager.getAllEmitDataList();
+        } else {
+            emttDataList = emitDataListManager.getEmitDataList();
+        }
+        emit(emttDataList);
+        lastEmitTime = System.currentTimeMillis();
+    }
+
+    private void emit(List<EmitDataList> emttDataList) {
         if (emttDataList != null && !emttDataList.isEmpty()) {
             emttDataList.forEach(emitDataList -> {
                 DBusConsumerRecord<String, byte[]> consumerRecord = emitDataList.getDataList().get(0);
                 String key = bildNSKey(consumerRecord);
                 collector.emit("dataStream", new Values(emitDataList.getDataList(), key), emitDataList.getDataList());
                 emitDataList.getDataList().forEach(record -> {
-                    logger.info("[emit] topic: {}, offset: {}, key: {}, {}, size:{}", record.topic(), record.offset(), key, emitDataList.getSize());
+                    logger.info("[emit] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), key, emitDataList.getSize());
                 });
                 flowBytes += emitDataList.getSize();
                 emitDataListManager.remove(key);
             });
         }
-        lastEmitTime = System.currentTimeMillis();
     }
 
     @Override
@@ -240,11 +256,10 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         // 初始化数据consumer
         int taskIndex = context.getThisTaskIndex();
         int spoutSize = context.getComponentTasks(context.getThisComponentId()).size();
-        List<String> topicList = getResultTopics(taskIndex, spoutSize);
-        //List<String> list = DBHelper.getresultTopic(taskIndex, spoutSize);
+        List<String> topicList = inner.sourceTopics;
         logger.info("[kafka read spout] will init consumer with task index: {}, spout size: {}, topics: {} ", taskIndex, spoutSize, topicList);
         Properties properties = inner.zkHelper.loadSinkerConf(SinkerConstants.CONSUMER);
-        properties.put("client.id", inner.topologyId + "SinkerKafkaReadClient_" + taskIndex);
+        properties.put("client.id", inner.sinkerName + "SinkerKafkaReadClient_" + taskIndex);
         this.consumer = new KafkaConsumer<>(properties);
         Map<String, List<PartitionInfo>> topicsMap = consumer.listTopics();
         List<TopicPartition> topicPartitions = new ArrayList<>();
@@ -276,8 +291,8 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
 
         // 初始化ctrl consumer
         logger.info("[kafka read spout] will init ctrl consumer with task index: {},topic: {} ", taskIndex, getCtrlTopic());
-        properties.put("group.id", inner.topologyId + "SinkerCtrlGroup_" + taskIndex);
-        properties.put("client.id", inner.topologyId + "SinkerCtrlClient_" + taskIndex);
+        properties.put("group.id", inner.sinkerName + "SinkerCtrlGroup_" + taskIndex);
+        properties.put("client.id", inner.sinkerName + "SinkerCtrlClient_" + taskIndex);
         //ctrl topic不跟踪消息处理
         properties.put("enable.auto.commit", true);
         this.ctrlConsumer = new KafkaConsumer<>(properties);
@@ -402,7 +417,7 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
     }
 
     private String getCtrlTopic() {
-        return inner.topologyId + "_sinker_ctrl";
+        return inner.sinkerName + "_sinker_ctrl";
     }
 
     private <T> T getMessageId(Object msgId) {

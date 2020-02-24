@@ -4,7 +4,7 @@
  */
 
 import React, {Component, PropTypes} from 'react'
-import {message, Table, Tag, Tooltip} from 'antd'
+import {message, Popconfirm, Table, Tag, Tooltip} from 'antd'
 import {FormattedMessage} from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -13,7 +13,7 @@ import {DATA_RERUN_API, DATA_RESUMING_FULLPULL_API} from '@/app/containers/Resou
 import OperatingButton from '@/app/components/common/OperatingButton'
 
 export default class ProjectFullpullGrid extends Component {
-  componentWillMount () {
+  componentWillMount() {
     // 初始化查询
     // this.handleSearch(this.initParams, true)
   }
@@ -82,18 +82,24 @@ export default class ProjectFullpullGrid extends Component {
         <OperatingButton icon="edit" onClick={() => onModify(record)}>
           <FormattedMessage id="app.common.modify" defaultMessage="修改"/>
         </OperatingButton>
-        <OperatingButton icon='link' onClick={() => this.handleResumeFullpull(record)}>
-          <FormattedMessage
-            id='app.components.projectManage.projectFullpullHistory.table.resumeFromBreakPoint'
-            defaultMessage='断点续传'
-          />
-        </OperatingButton>
-        <OperatingButton icon='to-top' onClick={() => this.handleRerunFullpull(record)}>
-          <FormattedMessage
-            id='app.components.projectManage.projectFullpullHistory.table.rerun'
-            defaultMessage='任务重跑'
-          />
-        </OperatingButton>
+        <Popconfirm placement="bottom" title="确定断点续传？" onConfirm={() => this.handleDelete(record)} okText="Yes"
+                    cancelText="No">
+          <OperatingButton icon='link' onClick={() => this.handleResumeFullpull(record)}>
+            <FormattedMessage
+              id='app.components.projectManage.projectFullpullHistory.table.resumeFromBreakPoint'
+              defaultMessage='断点续传'
+            />
+          </OperatingButton>
+        </Popconfirm>
+        <Popconfirm placement="bottom" title="确定任务重跑？" onConfirm={() => this.handleDelete(record)} okText="Yes"
+                    cancelText="No">
+          <OperatingButton icon='to-top' onClick={() => this.handleRerunFullpull(record)}>
+            <FormattedMessage
+              id='app.components.projectManage.projectFullpullHistory.table.rerun'
+              defaultMessage='任务重跑'
+            />
+          </OperatingButton>
+        </Popconfirm>
       </div>
     )
   }
@@ -212,7 +218,7 @@ export default class ProjectFullpullGrid extends Component {
     }
   }
 
-  render () {
+  render() {
     const {
       tableWidth,
       fullpullList,

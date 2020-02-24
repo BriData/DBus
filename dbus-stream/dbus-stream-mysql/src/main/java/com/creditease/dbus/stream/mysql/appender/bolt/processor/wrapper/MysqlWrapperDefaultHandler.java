@@ -175,24 +175,24 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
     private int addPayloadColumns(List<Object> payloads, List<Column> columns,
                                   PairWrapper<String, Object> wrapper, DbusMessageBuilder builder) throws Exception {
         int payloadSize = 0;
-        Map<String, Column> map = new HashMap<>();
-        for (Column column : columns) {
-            map.put(column.getName(), column);
-        }
+        //Map<String, Column> map = new HashMap<>();
+        //for (Column column : columns) {
+        //    map.put(column.getName(), column);
+        //}
         List<DbusMessage.Field> fields = builder.getMessage().getSchema().getFields();
 
         for (int i = builder.getUmsFixedFields(); i < fields.size(); i++) {
             DbusMessage.Field field = fields.get(i);
             // 这里避免，源端表中包含ums_id_/ums_ts_等字段
-            Column column = map.get(field.getName());
-            if (column != null && Support.isSupported(column)) {
-                Pair<String, Object> pair = wrapper.getPair(column.getName());
+            //Column column = map.get(field.getName());
+            //if (column != null && Support.isSupported(column)) {
+                Pair<String, Object> pair = wrapper.getPair(field.getName());
                 Object value = pair.getValue();
                 payloads.add(value);
                 if (value != null) {
                     payloadSize += value.toString().getBytes("utf-8").length;
                 }
-            }
+            //}
         }
         return payloadSize;
     }
@@ -252,6 +252,7 @@ public class MysqlWrapperDefaultHandler implements BoltCommandHandler {
     }
 
     public static void main(String[] args) {
+        //offsetOperator = new JsonNodeOperator(zk, Utils.join("/", Utils.buildZKTopologyPath(topologyId), Constants.ZKPath.SPOUT_KAFKA_CONSUMER_NEXTOFFSET));
         // String type = "int(10)";
         String type = "int";
         System.out.println(StringUtils.substringBefore(type, "("));

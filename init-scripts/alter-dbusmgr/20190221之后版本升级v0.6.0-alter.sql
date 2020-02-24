@@ -13,7 +13,8 @@ ALTER TABLE `t_fullpull_history`
 ADD COLUMN  `current_shard_offset` bigint(20) DEFAULT NULL;
 
 ALTER TABLE `t_meta_version`
-ADD COLUMN  `schema_hash` int(11) DEFAULT NULL COMMENT '该版本数据对应的schema哈希值';
+ADD COLUMN  `schema_hash` int(11) DEFAULT NULL COMMENT '该版本数据对应的schema哈希值',
+ADD COLUMN  `abandon` TINYINT(4) DEFAULT NULL COMMENT '假删除标记,0或null表示未删除,1表示删除';
 
 ALTER TABLE `t_sink`
 ADD  UNIQUE INDEX `idx_sinker_name_unique` (`sink_name`);

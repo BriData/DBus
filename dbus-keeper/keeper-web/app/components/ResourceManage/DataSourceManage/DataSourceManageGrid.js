@@ -19,10 +19,10 @@ export default class DataSourceManageGrid extends Component {
       '5%',
       '10%',
       '7%',
+      '7%',
       '10%',
-      '15%',
       '12%',
-      '20%',
+      '12%',
       '200px'
     ]
   }
@@ -282,6 +282,13 @@ export default class DataSourceManageGrid extends Component {
         width: this.tableWidth[1],
         dataIndex: 'name',
         key: 'name',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: '数据源别名',
+        width: this.tableWidth[1],
+        dataIndex: 'alias',
+        key: 'alias',
         render: this.renderComponent(this.renderNomal)
       },
       {

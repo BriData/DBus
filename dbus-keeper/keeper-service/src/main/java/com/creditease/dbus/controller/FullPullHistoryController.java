@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class FullPullHistoryController extends BaseController {
 
     @GetMapping("search")
     public ResultEntity search(Integer pageNum, Integer pageSize, String projectName, String dsName, String schemaName,
-                               String tableName, String targetSinkTopic, Long id, String orderBy) {
+                               String tableName, String targetSinkTopic, Long id, String orderBy, String state) {
         HashMap<String, Object> param = new HashMap<>();
         param.put("projectName", StringUtils.trim(projectName));
         param.put("dsName", StringUtils.trim(dsName));
@@ -54,6 +54,7 @@ public class FullPullHistoryController extends BaseController {
         param.put("tableName", StringUtils.trim(tableName));
         param.put("targetSinkTopic", StringUtils.trim(targetSinkTopic));
         param.put("id", id);
+        param.put("state", state);
         if (StringUtils.isNotBlank(orderBy)) {
             StringBuilder sb = new StringBuilder();
             for (char c : orderBy.trim().toCharArray()) {

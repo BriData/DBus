@@ -48,7 +48,9 @@
     { "name": "ogg-status", "id": "app.components.menu.oggCheck","text":"Ogg进程状态", "icon": "laptop" }
   ],
   "sink-manage": [
-    {"name": "sink-list", "id": "app.components.menu.sinkList","text":"Sink列表", "icon": "link" },
-    {"name": "sinker-manage", "id": "app.components.menu.sinkerTopologyManage","text":"Sinker拓扑", "icon": "share-alt" }
+    {"name": "sink-manage", "id": "app.components.menu.sinkList","text":"Sink管理", "icon": "link" },
+    {"name": "sinker-manage", "id": "app.components.menu.sinkerTopologyManage","text":"Sinker管理", "icon": "share-alt" },
+    {"name": "schema-manage", "id": "app.components.menu.sinkerTopologySchema","text":"Schema管理", "icon": "database" },
+    {"name": "table-manage", "id": "app.components.menu.sinkerTopologyTable","text":"表管理", "icon": "layout" }
   ]
 }

@@ -53,11 +53,24 @@ export ProjectFullpullModifyModal from './ProjectManage/ProjectFullpull/ProjectF
 export SinkManageGrid from './SinkManage/SinkList/SinkManageGrid'
 export SinkManageSearch from './SinkManage/SinkList/SinkManageSearch'
 export SinkForm from './SinkManage/SinkList/SinkForm'
+
+// Sinker管理
 export SinkerTopologyForm from './SinkManage/SinkerTopology/SinkerTopologyForm'
 export SinkerTopologyManageGrid from './SinkManage/SinkerTopology/SinkerTopologyManageGrid'
 export SinkerTopologyManageSearch from './SinkManage/SinkerTopology/SinkerTopologyManageSearch'
 export SinkerTopologyRerunModal from './SinkManage/SinkerTopology/SinkerTopologyRerunModal'
 export SinkerTopologyAddSchemaModal from './SinkManage/SinkerTopology/SinkerTopologyAddSchemaModal'
+
+// SinkerSchema管理
+export SinkerSchemaGrid from './SinkManage/SinkerSchema/SinkerSchemaGrid'
+export SinkerSchemaSearch from './SinkManage/SinkerSchema/SinkerSchemaSearch'
+export SinkerSchemaForm from './SinkManage/SinkerSchema/SinkerSchemaForm'
+export SinkerSchemaAddTableModal from './SinkManage/SinkerSchema/SinkerSchemaAddTableModal'
+
+// SinkerTable管理
+export SinkerTableGrid from './SinkManage/SinkerTable/SinkerTableGrid'
+export SinkerTableSearch from './SinkManage/SinkerTable/SinkerTableSearch'
+export SinkerTableForm from './SinkManage/SinkerTable/SinkerTableForm'
 
 // 用户管理
 export UserManageGrid from './UserManage/UserManageGrid'

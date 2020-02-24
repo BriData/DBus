@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,11 +52,8 @@ public class SinkService {
     @Autowired
     private SinkMapper mapper;
     @Autowired
-    private SinkerTopologyMapper sinkerTopologyMapper;
-    @Autowired
     private ProjectSinkMapper projectSinkMapper;
-    @Autowired
-    private SinkerTopologySchemaMapper sinkerTopologySchemaMapper;
+
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -106,52 +103,6 @@ public class SinkService {
         } else {
             mapper.insert(sink);
         }
-    }
-
-    public PageInfo<SinkerTopology> searchSinkerTopology(int pageNum, int pageSize, String sinkerName, String sortby, String order) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("sortby", sortby);
-        map.put("order", order);
-        if (StringUtils.isNotBlank(sinkerName)) {
-            map.put("sinkerName", sinkerName);
-        }
-        PageHelper.startPage(pageNum, pageSize);
-        return new PageInfo(sinkerTopologyMapper.search(map));
-    }
-
-    public int createSinkerTopology(SinkerTopology sinkerTopology) {
-        sinkerTopology.setStatus("new");
-        sinkerTopology.setUpdateTime(new Date());
-        return sinkerTopologyMapper.insert(sinkerTopology);
-    }
-
-    public int updateSinkerTopology(SinkerTopology sinkerTopology) {
-        sinkerTopology.setUpdateTime(new Date());
-        return sinkerTopologyMapper.updateByPrimaryKey(sinkerTopology);
-    }
-
-    public int deleteSinkerTopology(Integer id) {
-        return sinkerTopologyMapper.deleteByPrimaryKey(id);
-    }
-
-    public SinkerTopology searchBySinkerName(String sinkerName) {
-        return sinkerTopologyMapper.searchBySinkerName(sinkerName);
-    }
-
-    public SinkerTopology searchSinkerTopologyById(Integer id) {
-        return sinkerTopologyMapper.selectByPrimaryKey(id);
-    }
-
-    public List<SinkerTopologySchema> searchSinkerTopologySchema(String dsName, String schemaName, Integer sinkerTopoId) {
-        List<SinkerTopologySchema> sinkerTopologySchemas = sinkerTopologySchemaMapper.searchAll(dsName, schemaName);
-        return sinkerTopologySchemas.stream().filter(schema -> schema.getSinkerTopoId() == null || schema.getSinkerTopoId() == sinkerTopoId).collect(Collectors.toList());
-    }
-
-    public void updateSinkerTopologySchema(List<SinkerTopologySchema> sinkerSchemaList) {
-        sinkerSchemaList.forEach(sinkerTopologySchema -> {
-            sinkerTopologySchemaMapper.insertOrUpdate(sinkerTopologySchema);
-            logger.info("insert or update sinker topology schema. sinker name {},schema name {} ", sinkerTopologySchema.getSinkerName(), sinkerTopologySchema.getSchemaId());
-        });
     }
 
 }

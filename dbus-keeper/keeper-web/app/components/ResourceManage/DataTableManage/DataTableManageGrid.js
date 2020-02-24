@@ -16,11 +16,13 @@ export default class DataTableManageGrid extends Component {
     this.state = {
     }
     this.tableWidth = [
-      '5%',
+      '4%',
       '16%',
-      '10%',
-      '10%',
       '8%',
+      '8%',
+      '13%',
+      '8%',
+      '6%',
       '10%',
       '10%',
       '200px'
@@ -552,7 +554,7 @@ export default class DataTableManageGrid extends Component {
             defaultMessage="表名正则"
           />
         ),
-        width: this.tableWidth[6],
+        width: this.tableWidth[2],
         dataIndex: 'physicalTableRegex',
         key: 'physicalTableRegex',
         render: this.renderComponent(this.renderNomal)
@@ -564,21 +566,16 @@ export default class DataTableManageGrid extends Component {
       //       defaultMessage="模板表"
       //     />
       //   ),
-      //   width: this.tableWidth[2],
+      //   width: this.tableWidth[3],
       //   dataIndex: 'tableNameAlias',
       //   key: 'tableNameAlias',
       //   render: this.renderComponent(this.renderNomal)
       // },
       {
-        title: (
-          <FormattedMessage
-            id="app.common.description"
-            defaultMessage="描述"
-          />
-        ),
-        width: this.tableWidth[2],
-        dataIndex: 'description',
-        key: 'description',
+        title: '目标Topic',
+        width: this.tableWidth[4],
+        dataIndex: 'outputTopic',
+        key: 'outputTopic',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -588,7 +585,7 @@ export default class DataTableManageGrid extends Component {
             defaultMessage="状态"
           />
         ),
-        width: this.tableWidth[3],
+        width: this.tableWidth[5],
         dataIndex: 'status',
         key: 'status',
         render: this.renderComponent(this.renderStatus)
@@ -600,7 +597,7 @@ export default class DataTableManageGrid extends Component {
             defaultMessage="版本"
           />
         ),
-        width: this.tableWidth[4],
+        width: this.tableWidth[6],
         dataIndex: 'version',
         key: 'version',
         render: this.renderComponent(this.renderVersion)
@@ -612,9 +609,21 @@ export default class DataTableManageGrid extends Component {
             defaultMessage="更新时间"
           />
         ),
-        width: this.tableWidth[5],
+        width: this.tableWidth[7],
         dataIndex: 'createTime',
         key: 'createTime',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: (
+          <FormattedMessage
+            id="app.common.description"
+            defaultMessage="描述"
+          />
+        ),
+        width: this.tableWidth[8],
+        dataIndex: 'description',
+        key: 'description',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -624,7 +633,7 @@ export default class DataTableManageGrid extends Component {
             defaultMessage="操作"
           />
         ),
-        width: this.tableWidth[7],
+        width: this.tableWidth[9],
         key: 'operate',
         render: this.renderComponent(this.renderOperating)
       }

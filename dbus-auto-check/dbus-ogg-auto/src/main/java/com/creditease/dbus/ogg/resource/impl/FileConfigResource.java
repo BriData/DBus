@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,8 +58,7 @@ public class FileConfigResource extends AbstractConfigResource<ConfigBean> {
                 config.setKafkaProducerName(kafkaProducerName);
                 //首次添加，需要将默认的table添加
                 String tables = props.getProperty("tables").trim();
-                tables += ",DBUS.DB_FULL_PULL_REQUESTS" +
-                        ",DBUS.DB_HEARTBEAT_MONITOR" +
+                tables += ",DBUS.DB_HEARTBEAT_MONITOR" +
                         ",DBUS.META_SYNC_EVENT";
                 config.setTables(tables.toString().split(","));
                 config.setNlsLang(props.getProperty("nls.lang").trim());

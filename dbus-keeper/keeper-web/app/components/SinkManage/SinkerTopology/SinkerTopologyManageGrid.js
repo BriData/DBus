@@ -1,6 +1,6 @@
 import OperatingButton from '@/app/components/common/OperatingButton'
 import React, {Component} from 'react'
-import {message, Popconfirm, Table, Tooltip} from 'antd'
+import {message, Popconfirm, Table, Tag, Tooltip} from 'antd'
 import {FormattedMessage} from 'react-intl'
 import {DELETE_SINKER_TOPOLOGY_API, RELOAD_SINKER_TOPOLOGY_API} from '@/app/containers/SinkManage/api'
 // 导入样式
@@ -8,11 +8,6 @@ import styles from './res/styles/index.less'
 import Request from '@/app/utils/request'
 
 export default class SinkerTopologyManageGrid extends Component {
-  componentWillMount () {
-    // 初始化查询
-    // this.handleSearch(this.initParams, true)
-  }
-
   /**
    * @param key 传入一个key type:[Object String]  默认:空
    * @returns 返回一个随机字符串
@@ -71,9 +66,9 @@ export default class SinkerTopologyManageGrid extends Component {
 
   handleModify = record => {
     const {
-      onModify
+      onOpenModifyModal
     } = this.props
-    onModify(Object.assign({}, record))
+    onOpenModifyModal(Object.assign({}, record))
   }
 
   /**
@@ -95,6 +90,31 @@ export default class SinkerTopologyManageGrid extends Component {
     </Tooltip>
   )
 
+  renderStatus =(text, record, index) => {
+    let color
+    switch (text) {
+      case 'new':
+        color = 'blue'
+        break
+      case 'changed':
+        color = 'orange'
+        break
+      case 'running':
+        color = 'green'
+        break
+      case 'stopped':
+        color = 'red'
+        break
+      default:
+        color = '#929292'
+    }
+    return (<div title={text} className={styles.ellipsis}>
+      <Tag color={color} style={{cursor: 'auto'}}>
+        {text}
+      </Tag>
+    </div>)
+  }
+
   handleValidateError = (value, record) => {
     const {onStartOrStopTopo} = this.props
     onStartOrStopTopo(value, record)
@@ -104,7 +124,7 @@ export default class SinkerTopologyManageGrid extends Component {
    * @description selectTable的 option render
    */
   renderOperating = (text, record, index) => {
-    const {onOpenRerunModal, onOpenAddSchemaModal, onOpenMoveSinkerTopicModal} = this.props
+    const {onOpenRerunModal, onOpenAddSchemaModal, onOpenMoveSinkerTopicModal,onOpenModifyModal} = this.props
     let menus = [
       {
         text: <FormattedMessage
@@ -189,7 +209,7 @@ export default class SinkerTopologyManageGrid extends Component {
             </OperatingButton>
           </Popconfirm>
         )}
-        <OperatingButton onClick={() => this.handleModify(record)} icon="edit">
+        <OperatingButton onClick={() => onOpenModifyModal(record)} icon="edit">
           <FormattedMessage id="app.common.modify" defaultMessage="修改"/>
         </OperatingButton>
         <OperatingButton icon="ellipsis" menus={menus}/>
@@ -197,7 +217,7 @@ export default class SinkerTopologyManageGrid extends Component {
     )
   }
 
-  render () {
+  render() {
     const {sinkerList, tableWidth} = this.props
     const list = sinkerList && sinkerList.list
     const pagination = {
@@ -236,7 +256,7 @@ export default class SinkerTopologyManageGrid extends Component {
         width: tableWidth[2],
         dataIndex: 'status',
         key: 'status',
-        render: this.renderComponent(this.renderNomal)
+        render: this.renderComponent(this.renderStatus)
       },
       {
         title: <FormattedMessage

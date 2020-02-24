@@ -37,5 +37,9 @@
         <javaClientGenerator type="XMLMAPPER" targetPackage="com.creditease.dbus.domain.mapper"
                              targetProject="src/main/java"/>
 
+
+        <table tableName="t_sinker_topo_table" domainObjectName="SinkerTopologyTable">
+            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
+        </table>
     </context>
 </generatorConfiguration>

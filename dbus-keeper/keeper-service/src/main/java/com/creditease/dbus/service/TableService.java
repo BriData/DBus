@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,12 +79,9 @@ public class TableService {
     private static final String NONE = "无";
 
     //默认的table 名称
-    public static final String TABLE_FULL_PULL_LOWER = "db_full_pull_requests";
     public static final String TABLE_HB_MONITOR_LOWER = "db_heartbeat_monitor";
     public static final String TABLE_HB_MONITOR_UPPER = "DB_HEARTBEAT_MONITOR";
     public static final String TABLE_META_SYNC_EVENT = "META_SYNC_EVENT";
-    public static final String TABLE_FULL_PULL_UPPER = "DB_FULL_PULL_REQUESTS";
-
 
     private static final String OUTPUT_TOPIC_SUFFIX_LOWER = ".dbus.result";//构造output的后缀
     private static final String OUTPUT_TOPIC_SUFFIX_UPPER = ".DBUS.result";
@@ -1042,11 +1039,6 @@ public class TableService {
                 TABLE_HB_MONITOR_LOWER, TABLE_HB_MONITOR_LOWER, outputTopic, "ok");
         resultList.add(hbMonitorTable);
 
-        DataTable fullPullTable = new DataTable(dsId, dsName, schemaId, DataSchemaService.DBUS,
-                TABLE_FULL_PULL_LOWER, TABLE_FULL_PULL_LOWER, outputTopic, "ok");
-
-        resultList.add(fullPullTable);
-
         return resultList;
     }
 
@@ -1063,14 +1055,10 @@ public class TableService {
         DataTable hbMonitorTable = new DataTable(dsId, dsName, schemaId, DataSchemaService.DBUS.toUpperCase(),
                 TABLE_HB_MONITOR_UPPER, TABLE_HB_MONITOR_UPPER, outputTopic, "ok");
 
-        DataTable fullPullTable = new DataTable(dsId, dsName, schemaId, DataSchemaService.DBUS.toUpperCase(),
-                TABLE_FULL_PULL_UPPER, TABLE_FULL_PULL_UPPER, outputTopic, "ok");
-
         DataTable metaSyncEventTable = new DataTable(dsId, dsName, schemaId, DataSchemaService.DBUS.toUpperCase(),
                 TABLE_META_SYNC_EVENT, TABLE_META_SYNC_EVENT, outputTopic, "ok");
 
         resultList.add(hbMonitorTable);
-        resultList.add(fullPullTable);
         resultList.add(metaSyncEventTable);
 
         return resultList;
@@ -1083,9 +1071,7 @@ public class TableService {
      */
     public boolean ifDefaultTable(String tableName) {
         boolean flag = false;
-        if (StringUtils.equals(tableName, TABLE_FULL_PULL_LOWER)
-                || StringUtils.equals(tableName, TABLE_FULL_PULL_UPPER)
-                || StringUtils.equals(tableName, TABLE_HB_MONITOR_LOWER)
+        if (StringUtils.equals(tableName, TABLE_HB_MONITOR_LOWER)
                 || StringUtils.equals(tableName, TABLE_HB_MONITOR_UPPER)
                 || StringUtils.equals(tableName, TABLE_META_SYNC_EVENT)) {
             flag = true;
@@ -1223,33 +1209,33 @@ public class TableService {
     public int moveSourceTables(Map<String, Object> param) {
         //目标数据线
         Integer targetDsId = Integer.parseInt(param.get("dsId").toString());
-        List<Integer> tableIds = (List<Integer>) param.get("tableIds");
+        List<Integer> srcTableIds = (List<Integer>) param.get("tableIds");
 
-        DataSource dataSource = dataSourceService.getById(targetDsId);
+        DataSource targetDataSource = dataSourceService.getById(targetDsId);
         NameAliasMapping nameAliasMapping = nameAliasMappingMapper.selectByNameId(NameAliasMapping.datasourceType, targetDsId);
-        String targetDsName = nameAliasMapping == null ? dataSource.getDsName() : nameAliasMapping.getAlias();
+        String targetDsNameAlias = nameAliasMapping == null ? targetDataSource.getDsName() : nameAliasMapping.getAlias();
 
-        DataTable dataTable = tableMapper.findById(tableIds.get(0));
-        NameAliasMapping srcNameAliasMapping = nameAliasMappingMapper.selectByNameId(NameAliasMapping.datasourceType, dataTable.getDsId());
-        String srcDsName = srcNameAliasMapping == null ? dataTable.getDsName() : srcNameAliasMapping.getAlias();
+        DataTable srcDataTable = tableMapper.findById(srcTableIds.get(0));
+        NameAliasMapping srcNameAliasMapping = nameAliasMappingMapper.selectByNameId(NameAliasMapping.datasourceType, srcDataTable.getDsId());
+        String srcDsNameAlias = srcNameAliasMapping == null ? srcDataTable.getDsName() : srcNameAliasMapping.getAlias();
         //这里必须保证目标数据源已经配置了别名,并且别名必须和源数据线保持一致
-        if (!srcDsName.equals(targetDsName)) {
+        if (!srcDsNameAlias.equals(targetDsNameAlias)) {
             return MessageCode.TARGET_DATASOURCE_HAVE_NO_ALIAS;
         }
 
-        String dsName = dataSource.getDsName();
-        String schemaName = dataTable.getSchemaName();
+        String targetDsName = targetDataSource.getDsName();
+        String srcSchemaName = srcDataTable.getSchemaName();
 
-        List<DataSchema> dataSchemas = dataSchemaMapper.searchSchema(null, targetDsId, schemaName);
-        DataSchema targetDataSchema = dataSchemas == null || dataSchemas.size() == 0 ? null : dataSchemas.get(0);
-        String outputTopic = String.format("%s.%s.result", dsName, schemaName);
+        List<DataSchema> targetDataSchemas = dataSchemaMapper.searchSchema(null, targetDsId, srcSchemaName);
+        DataSchema targetDataSchema = targetDataSchemas == null || targetDataSchemas.size() == 0 ? null : targetDataSchemas.get(0);
+        String outputTopic = String.format("%s.%s.result", targetDsName, srcSchemaName);
         //不存在自动创建
         if (targetDataSchema == null) {
             targetDataSchema = new DataSchema();
             targetDataSchema.setDsId(targetDsId);
-            targetDataSchema.setSchemaName(dataTable.getSchemaName());
+            targetDataSchema.setSchemaName(srcDataTable.getSchemaName());
             targetDataSchema.setStatus(DataSchema.ACTIVE);
-            targetDataSchema.setSrcTopic(String.format("%s.%s", dsName, schemaName));
+            targetDataSchema.setSrcTopic(String.format("%s.%s", targetDsName, srcSchemaName));
             targetDataSchema.setTargetTopic(outputTopic);
             targetDataSchema.setCreateTime(new Date());
             targetDataSchema.setDescription("表迁移自动创建");
@@ -1257,9 +1243,9 @@ public class TableService {
         }
 
         //更新t_data_tables表
-        tableMapper.updateByTableIds(targetDsId, targetDataSchema.getId(), schemaName, outputTopic, tableIds);
+        tableMapper.updateByTableIds(targetDsId, targetDataSchema.getId(), srcSchemaName, outputTopic, srcTableIds);
         //更新t_meta_version
-        tableVersionMapper.updateByTableIds(targetDsId, dsName, schemaName, tableIds);
+        tableVersionMapper.updateByTableIds(targetDsId, targetDsName, srcSchemaName, srcTableIds);
         return 0;
     }
 

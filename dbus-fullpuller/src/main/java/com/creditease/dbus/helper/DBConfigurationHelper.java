@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,11 +77,14 @@ public class DBConfigurationHelper {
                 hdfsRootPath = hdfsRootPath.substring(0, hdfsRootPath.length() - 1);
             }
             String dsType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
+            String dbName = dbConf.getString(DBConfiguration.DataSourceInfo.DB_NAME);
             String alias = dbConf.getString(DBConfiguration.DataSourceInfo.DS_ALIAS_NAME);
+            dbName = StringUtils.isNotBlank(alias) ? alias : dbName;
+
             String schemaName = payloadJson.getString(FullPullConstants.REQ_PAYLOAD_SCHEMA_NAME);
             String tableName = payloadJson.getString(FullPullConstants.REQ_PAYLOAD_TABLE_NAME);
             String version = payloadJson.getString(FullPullConstants.REQ_PAYLOAD_VERSION);
-            String hdfsTablePath = String.format("%s/%s.%s.%s/%s/%s/0/0/data_initial_data/right/", hdfsRootPath, dsType, alias, schemaName, tableName, version);
+            String hdfsTablePath = String.format("%s/%s.%s.%s/%s/%s/0/0/data_initial_data/right/", hdfsRootPath, dsType, dbName, schemaName, tableName, version);
             dbConf.putProperties(DBConfiguration.HDFS_TABLE_PATH, hdfsTablePath);
         }
     }

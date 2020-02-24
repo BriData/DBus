@@ -81,16 +81,6 @@ public interface SqlManager {
      */
     String getSplitColumn();
 
-    /**
-     * update data to original database ,here is
-     *
-     * @param startTime
-     * @param completedTime
-     * @param pullStatus
-     * @param errorMsg
-     */
-    void writeFullStateToOriginalDB(String startTime, String completedTime, String pullStatus, String errorMsg) throws Exception;
-
     long queryTotalRows(String table, String splitCol, String tablePartition) throws Exception;
 
     List<InputSplit> querySplits(String table, String splitCol, String tablePartition, String splitterStyle,

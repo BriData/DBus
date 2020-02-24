@@ -24,7 +24,8 @@ DROP COLUMN  `cost_time`,
 DROP COLUMN  `complete_rate`;
 
 ALTER TABLE `t_meta_version`
-ADD COLUMN  `schema_hash` int(11) DEFAULT NULL COMMENT '该版本数据对应的schema哈希值';
+ADD COLUMN  `schema_hash` int(11) DEFAULT NULL COMMENT '该版本数据对应的schema哈希值',
+ADD COLUMN  `abandon` TINYINT(4) DEFAULT NULL COMMENT '假删除标记,0或null表示未删除,1表示删除';
 
 ALTER TABLE `t_project_resource`
 ADD  INDEX `idx_projectid_tableid` (`project_id`,`table_id`);

@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Button, Form, Input, message, Modal, Select} from 'antd'
+import {Button, Form, Input, message, Modal, Radio, Select} from 'antd'
 import {FormattedMessage} from 'react-intl'
 import {GLOBAL_FULL_PULL_API} from '@/app/containers/toolSet/api'
 import {DATA_TABLE_SAVE_INITIAL_LOAD_CONF_API} from '@/app/containers/ResourceManage/api'
@@ -12,13 +12,16 @@ import {TABLE_GET_TABLE_ROWS_API} from "@/app/containers/ProjectManage/api";
 const FormItem = Form.Item
 const Option = Select.Option
 const TextArea = Input.TextArea
+const RadioGroup = Radio.Group
 
 @Form.create()
 export default class DataTableManageIndependentModal extends Component {
   constructor(props) {
     super(props)
     this.date = new Date()
-    this.state = {}
+    this.state = {
+      sinkType: 'KAFKA'
+    }
   }
 
   componentWillMount = () => {
@@ -45,6 +48,7 @@ export default class DataTableManageIndependentModal extends Component {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         onLoading()
+        const {sinkType} = this.state
         onRequest({
           api: GLOBAL_FULL_PULL_API,
           data: {
@@ -76,7 +80,9 @@ export default class DataTableManageIndependentModal extends Component {
                 "SPLIT_SHARD_SIZE": "",
                 "SPLIT_SHARD_STYLE": "",
                 "TABLE_NAME": record.tableName,
-                "resultTopic": values.topic
+                "resultTopic": values.topic,
+                "SINK_TYPE": sinkType,
+                "HDFS_ROOT_PATH": values.hdfsRootPath
               },
               "timestamp": dateFormat(this.date, 'yyyy-mm-dd HH:MM:ss.l'),
               "type": "FULL_DATA_INDEPENDENT_PULL_REQ"
@@ -120,9 +126,16 @@ export default class DataTableManageIndependentModal extends Component {
     })
   }
 
+  onChange = (e) => {
+    this.setState({
+      sinkType: e.target.value
+    })
+  }
+
   render() {
     const {getFieldDecorator} = this.props.form
     const {key, loading, visible, record, onClose} = this.props
+    const {sinkType} = this.state
     const formItemLayout = {
       labelCol: {
         xs: {span: 5},
@@ -157,7 +170,13 @@ export default class DataTableManageIndependentModal extends Component {
                 initialValue: null,
               })(<Input disabled={true} size="large" type="text"/>)}
             </FormItem>
-            <FormItem label="Topic" {...formItemLayout}>
+            <FormItem label='全量类型' {...formItemLayout}>
+              <RadioGroup {...formItemLayout} onChange={this.onChange} value={sinkType}>
+                <Radio value='KAFKA'>KAFKA</Radio>
+                <Radio value='HDFS'>HDFS</Radio>
+              </RadioGroup>
+            </FormItem>
+            {sinkType === 'KAFKA' && (<FormItem label="Topic" {...formItemLayout}>
               {getFieldDecorator('topic', {
                 initialValue: record && `independent.${record.outputTopic}.${this.date.getTime()}`,
                 rules: [
@@ -167,7 +186,18 @@ export default class DataTableManageIndependentModal extends Component {
                   }
                 ]
               })(<Input size="large" type="text"/>)}
-            </FormItem>
+            </FormItem>)}
+            {sinkType === 'HDFS' && (<FormItem label="HDFS数据根目录" {...formItemLayout}>
+              {getFieldDecorator('hdfsRootPath', {
+                initialValue: '/datahub/hdfslog/',
+                rules: [
+                  {
+                    required: true,
+                    message: 'hdfs root path不能为空'
+                  }
+                ]
+              })(<Input size="large" type="text"/>)}
+            </FormItem>)}
             <FormItem label={'分片列'} {...formItemLayout}>
               {getFieldDecorator('fullpullCol', {
                 initialValue: record && record.fullpullCol,

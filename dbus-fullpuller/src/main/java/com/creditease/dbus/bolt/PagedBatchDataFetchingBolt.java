@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,6 +36,7 @@ import com.creditease.dbus.msgencoder.PluginManagerProvider;
 import com.creditease.dbus.utils.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.clients.producer.Producer;
@@ -50,6 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -59,6 +62,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     private OutputCollector collector;
+    private TopologyContext context;
     private String topologyId;
     private String zkconnect;
     private String dsName;
@@ -86,7 +90,7 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
         this.dsName = (String) conf.get(FullPullConstants.DS_NAME);
         this.zkconnect = (String) conf.get(FullPullConstants.ZKCONNECT);
         this.zkTopoRoot = FullPullConstants.TOPOLOGY_ROOT + "/" + FullPullConstants.FULL_PULLING_PROPS_ROOT;
-
+        this.context = context;
         try {
             //设置topo类型，用于获取配置信息路径
             FullPullHelper.setTopologyType(FullPullConstants.FULL_PULLER_TYPE);
@@ -121,6 +125,9 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 logger.info("[pull bolt] config for pull bolt is reloaded successfully!");
                 return;
             } else if (dataType.equals(FullPullConstants.COMMAND_FULL_PULL_FINISH_REQ)) {
+                // 写完成ok文件
+                writeOkFile(reqString, reqJson);
+                // 关闭hdfs资源
                 HdfsConnectInfo hdfsConnectInfo = FullPullHelper.getHdfsConnectInfo(reqString);
                 if (hdfsConnectInfo != null) {
                     if (hdfsConnectInfo.getFsDataOutputStream() != null) {
@@ -169,6 +176,39 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
             }
         } catch (Exception e) {
             logger.error("Exception happended on batch data fetch bolt execute()", e);
+        }
+    }
+
+    private void writeOkFile(String reqString, JSONObject reqJson) throws Exception {
+        FSDataOutputStream outputStream = null;
+        try {
+            // 防止多个线程并发写hdfs同一个文件
+            if (context.getThisTaskIndex() != 0) {
+                logger.info("[pull bolt] 任务index:{},忽略写ok文件请求,仅index为0的任务负责写ok文件.", context.getThisTaskId());
+                return;
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            DBConfiguration dbConf = FullPullHelper.getDbConfiguration(reqString);
+            String opTs = dbConf.getString(DBConfiguration.DATA_IMPORT_OP_TS);
+            long time = sdf.parse(opTs).getTime();
+            String path = dbConf.getString(DBConfiguration.HDFS_TABLE_PATH) + "/ok_" + time;
+            if (fileSystem != null && !fileSystem.exists(new Path(path))) {
+                outputStream = fileSystem.create(new Path(path));
+                JSONObject data = new JSONObject();
+                data.put("ums_ts_", opTs);
+                data.put("id", FullPullHelper.getSeqNo(reqJson));
+                data.put("end_time", new Date());
+                outputStream.write(data.toJSONString().getBytes());
+                outputStream.close();
+                logger.info("[pull bolt] write ok file success.{}", data);
+            }
+        } catch (Exception e) {
+            logger.error("Exception when write ok file to hdfs");
+            throw e;
+        } finally {
+            if (outputStream != null) {
+                outputStream.close();
+            }
         }
     }
 

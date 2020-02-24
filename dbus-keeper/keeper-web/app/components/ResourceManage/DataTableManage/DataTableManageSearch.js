@@ -118,18 +118,18 @@ export default class DataTableManageSearch extends Component {
               onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
             <Col span={10} className={styles.formLeft}>
-              <FormItem>
-                <Button
-                  type="primary"
-                  icon="car"
-                  onClick={onMoveTables}
-                >
-                  <FormattedMessage
-                    id="app.components.resourceManage.dataTable.batchMoveTopoTables"
-                    defaultMessage="批量迁移"
-                  />
-                </Button>
-              </FormItem>
+              {/*<FormItem>*/}
+                {/*<Button*/}
+                  {/*type="primary"*/}
+                  {/*icon="car"*/}
+                  {/*onClick={onMoveTables}*/}
+                {/*>*/}
+                  {/*<FormattedMessage*/}
+                    {/*id="app.components.resourceManage.dataTable.batchMoveTopoTables"*/}
+                    {/*defaultMessage="批量迁移"*/}
+                  {/*/>*/}
+                {/*</Button>*/}
+              {/*</FormItem>*/}
               <FormItem>
                 <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}
                             okText="Yes" cancelText="No">

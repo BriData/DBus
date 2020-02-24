@@ -49,8 +49,6 @@ public class DataSourceController extends BaseController {
 
     @Autowired
     private DataSourceService service;
-    @Autowired
-    private IZkService zkService;
 
     @ApiOperation(value = "search", notes = "搜索DataSource")
     @ApiImplicitParams({

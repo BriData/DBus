@@ -66,7 +66,11 @@
   </select>
   <update id="updateByTableIds">
     update t_meta_version
-    set ds_id = #{dsId},db_name = #{dsName},schema_name = #{schemaName}
+    <set>
+      <if test="dsId!=null">ds_id = #{dsId},</if>
+      <if test="dsName!=null and dsName!=''">db_name = #{dsName},</if>
+      <if test="schemaName!=null and schemaName!=''">schema_name = #{schemaName},</if>
+    </set>
     where table_id in
     <foreach collection="tableIds" index="index" item="item" open="(" separator="," close=")">
       #{item}

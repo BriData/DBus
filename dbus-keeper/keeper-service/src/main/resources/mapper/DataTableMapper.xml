@@ -280,7 +280,12 @@
   </select>
   <update id="updateByTableIds">
     update t_data_tables
-    set ds_id = #{dsId}, schema_id = #{schemaId}, schema_name = #{schemaName} ,output_topic = #{outputTopic}
+    <set>
+      <if test="dsId!=null">ds_id = #{dsId},</if>
+      <if test="schemaId!=null">schema_id = #{schemaId},</if>
+      <if test="schemaName!=null and schemaName!=''">schema_name = #{schemaName},</if>
+      <if test="outputTopic!=null and outputTopic!=''">output_topic = #{outputTopic},</if>
+    </set>
     where id in
     <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
       #{item}

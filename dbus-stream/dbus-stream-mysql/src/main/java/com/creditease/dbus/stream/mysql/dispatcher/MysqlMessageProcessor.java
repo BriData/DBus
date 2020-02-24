@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,10 @@
 
 package com.creditease.dbus.stream.mysql.dispatcher;
 
+import com.alibaba.otter.canal.client.CanalMessageDeserializer;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.CanalPacket;
+import com.alibaba.otter.canal.protocol.Message;
 import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.stream.common.HeartBeatPacket;
 import com.creditease.dbus.stream.common.tools.IGenericMessage;
@@ -48,15 +50,23 @@ public class MysqlMessageProcessor extends MessageProcessor {
 
     @Override
     public List<IGenericMessage> unwrapMessages(byte[] data) throws IOException {
+        // canal-1.0.24
+        //List<IGenericMessage> list = new ArrayList<>();
+        //
+        //CanalPacket.Messages cMessage = CanalPacket.Messages.parseFrom(data);
+        //List<ByteString> strings = cMessage.getMessagesList();
+        //for (ByteString str : strings) {
+        //    CanalEntry.Entry ent = CanalEntry.Entry.parseFrom(str);
+        //    MysqlGenericMessage message = new MysqlGenericMessage(ent);
+        //
+        //    list.add(message);
+        //}
+        // canal-1.1.4
+        Message message = CanalMessageDeserializer.deserializer(data);
         List<IGenericMessage> list = new ArrayList<>();
-
-        CanalPacket.Messages cMessage = CanalPacket.Messages.parseFrom(data);
-        List<ByteString> strings = cMessage.getMessagesList();
-        for (ByteString str : strings) {
-            CanalEntry.Entry ent = CanalEntry.Entry.parseFrom(str);
-            MysqlGenericMessage message = new MysqlGenericMessage(ent);
-
-            list.add(message);
+        for (CanalEntry.Entry entry : message.getEntries()) {
+            MysqlGenericMessage mysqlGenericMessage = new MysqlGenericMessage(entry);
+            list.add(mysqlGenericMessage);
         }
         return list;
     }

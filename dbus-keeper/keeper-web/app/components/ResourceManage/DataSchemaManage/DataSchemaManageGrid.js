@@ -16,11 +16,12 @@ export default class DataSchemaManageGrid extends Component {
     this.tableWidth = [
       '4%',
       '8%',
-      '10%',
+      '8%',
+      '6%',
       '10%',
       '10%',
       '15%',
-      '13%',
+      '10%',
       '200px'
     ]
   }
@@ -190,21 +191,9 @@ export default class DataSchemaManageGrid extends Component {
             defaultMessage="更新时间"
           />
         ),
-        width: this.tableWidth[5],
+        width: this.tableWidth[4],
         dataIndex: 'create_time',
         key: 'create_time',
-        render: this.renderComponent(this.renderNomal)
-      },
-      {
-        title: (
-          <FormattedMessage
-            id="app.common.description"
-            defaultMessage="描述"
-          />
-        ),
-        width: this.tableWidth[6],
-        dataIndex: 'description',
-        key: 'description',
         render: this.renderComponent(this.renderNomal)
       },
       {
@@ -214,7 +203,7 @@ export default class DataSchemaManageGrid extends Component {
             defaultMessage="源Topic"
           />
         ),
-        width: this.tableWidth[6],
+        width: this.tableWidth[5],
         dataIndex: 'src_topic',
         key: 'src_topic',
         render: this.renderComponent(this.renderNomal)
@@ -234,11 +223,23 @@ export default class DataSchemaManageGrid extends Component {
       {
         title: (
           <FormattedMessage
+            id="app.common.description"
+            defaultMessage="描述"
+          />
+        ),
+        width: this.tableWidth[7],
+        dataIndex: 'description',
+        key: 'description',
+        render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: (
+          <FormattedMessage
             id="app.common.operate"
             defaultMessage="操作"
           />
         ),
-        width: this.tableWidth[7],
+        width: this.tableWidth[8],
         key: 'operate',
         render: this.renderComponent(this.renderOperating)
       }

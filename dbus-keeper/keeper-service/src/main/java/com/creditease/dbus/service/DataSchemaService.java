@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -312,47 +312,38 @@ public class DataSchemaService {
         //目标数据线
         Integer targetDsId = Integer.parseInt(param.get("dsId").toString());
         //源schema
-        Integer schemaId = Integer.parseInt(param.get("schemaId").toString());
+        Integer srcSchemaId = Integer.parseInt(param.get("schemaId").toString());
 
-        DataSource dataSource = dataSourceService.getById(targetDsId);
+        DataSource targetDataSource = dataSourceService.getById(targetDsId);
         NameAliasMapping nameAliasMapping = nameAliasMappingMapper.selectByNameId(NameAliasMapping.datasourceType, targetDsId);
-        String targetDsName = nameAliasMapping == null ? dataSource.getDsName() : nameAliasMapping.getAlias();
-        logger.info("目标数据线名称{},别名{},是否配置别名{}", dataSource.getDsName(), targetDsName, nameAliasMapping == null);
+        String targetDsNameAlias = nameAliasMapping == null ? targetDataSource.getDsName() : nameAliasMapping.getAlias();
+        logger.info("目标数据线名称{},别名{},是否配置别名{}", targetDataSource.getDsName(), targetDsNameAlias, nameAliasMapping == null);
 
-        DataSchema dataSchema = mapper.selectById(schemaId);
-        NameAliasMapping srcNameAliasMapping = nameAliasMappingMapper.selectByNameId(NameAliasMapping.datasourceType, dataSchema.getDsId());
-        String srcDsName = srcNameAliasMapping == null ? dataSchema.getDsName() : srcNameAliasMapping.getAlias();
-        logger.info("源数据线名称{},别名{},是否配置别名{}", dataSchema.getDsName(), dataSchema, srcNameAliasMapping == null);
+        DataSchema srcDataSchema = mapper.selectById(srcSchemaId);
+        NameAliasMapping srcNameAliasMapping = nameAliasMappingMapper.selectByNameId(NameAliasMapping.datasourceType, srcDataSchema.getDsId());
+        String srcDsNameAlias = srcNameAliasMapping == null ? srcDataSchema.getDsName() : srcNameAliasMapping.getAlias();
+        logger.info("源数据线名称{},别名{},是否配置别名{}", srcDataSchema.getDsName(), srcDsNameAlias, srcNameAliasMapping == null);
 
         //这里必须保证目标数据源已经配置了别名,并且别名必须和源数据线保持一致
-        if (!srcDsName.equals(targetDsName)) {
+        if (!srcDsNameAlias.equals(targetDsNameAlias)) {
             return MessageCode.TARGET_DATASOURCE_HAVE_NO_ALIAS;
         }
-        String dsName = dataSource.getDsName();
-        String schemaName = dataSchema.getSchemaName();
+        String targetDsName = targetDataSource.getDsName();
+        String srcSchemaName = srcDataSchema.getSchemaName();
+        String outputTopic = srcDataSchema.getTargetTopic();
 
-        List<DataSchema> dataSchemas = mapper.searchSchema(null, targetDsId, schemaName);
-        DataSchema targetDataSchema = dataSchemas == null || dataSchemas.size() == 0 ? null : dataSchemas.get(0);
-        String outputTopic = String.format("%s.%s.result", dsName, schemaName);
-        //不存在自动创建
-        if (targetDataSchema == null) {
-            targetDataSchema = new DataSchema();
-            targetDataSchema.setDsId(targetDsId);
-            targetDataSchema.setSchemaName(schemaName);
-            targetDataSchema.setStatus(DataSchema.ACTIVE);
-            targetDataSchema.setSrcTopic(String.format("%s.%s", dsName, schemaName));
-            targetDataSchema.setTargetTopic(outputTopic);
-            targetDataSchema.setCreateTime(new Date());
-            targetDataSchema.setDescription("schema迁移自动创建");
-            mapper.insert(targetDataSchema);
-        }
+        //1 挂载源schema到新的数据线,更新dsId为目标dsId,更新srcTopic
+        srcDataSchema.setDsId(targetDsId);
+        srcDataSchema.setSrcTopic(String.format("%s.%s", targetDsName, srcSchemaName));
+        mapper.update(srcDataSchema);
 
-        List<DataTable> dataTables = tableMapper.findBySchemaID(schemaId.intValue());
-        List<Integer> tableIds = dataTables.stream().map(DataTable::getId).collect(Collectors.toList());
+        //2 挂载源table和tableVersion到新的数据线
+        List<DataTable> dataTables = tableMapper.findBySchemaID(srcSchemaId);
+        List<Integer> srcTableIds = dataTables.stream().map(DataTable::getId).collect(Collectors.toList());
         //更新t_data_tables表
-        tableMapper.updateByTableIds(targetDsId, targetDataSchema.getId(), schemaName, outputTopic, tableIds);
+        tableMapper.updateByTableIds(targetDsId, null, null, outputTopic, srcTableIds);
         //更新t_meta_version
-        tableVersionMapper.updateByTableIds(targetDsId, dsName, schemaName, tableIds);
+        tableVersionMapper.updateByTableIds(targetDsId, targetDsName, null, srcTableIds);
         return 0;
     }
 }

@@ -1,0 +1,152 @@
+import React, {Component, PropTypes} from 'react'
+import {connect} from 'react-redux'
+import {createStructuredSelector} from 'reselect'
+import Helmet from 'react-helmet'
+// 导入自定义组件
+import {Bread, SinkerTableGrid, SinkerTableSearch} from '@/app/components/index'
+// selectors
+import {sinkerTableModel} from './selectors'
+import {makeSelectLocale} from '../LanguageProvider/selectors'
+import {searchSinkerTableList, setSearchSinkerTableParam} from './redux'
+import SinkerTableForm from "@/app/components/SinkManage/SinkerTable/SinkerTableForm";
+// action
+
+// 链接reducer和action
+@connect(
+  createStructuredSelector({
+    sinkerTableData: sinkerTableModel(),
+    locale: makeSelectLocale()
+  }),
+  dispatch => ({
+    searchSinkerTableList: param => dispatch(searchSinkerTableList.request(param)),
+    setSearchSinkerTableParam: param => dispatch(setSearchSinkerTableParam(param))
+  })
+)
+export default class SinkerTableWrapper extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      modifyTableKey: 'modifyTableKey',
+      modifyTableVisible: false,
+      modifyTableRecord: null
+    }
+    this.tableWidth = [
+      '6%',
+      '10%',
+      '10%',
+      '10%',
+      '15%',
+      '10%',
+      '200px'
+    ]
+    this.initParams = {
+      pageNum: 1,
+      pageSize: 10
+    }
+  }
+
+  /**
+   * @param key 传入一个key type:[Object String]  默认:空
+   * @returns String 返回一个随机字符串
+   */
+  handleRandom = key =>
+    `${Math.random()
+      .toString(32)
+      .substr(3, 8)}${key || ''}`
+
+  componentWillMount() {
+    // 初始化查询
+    this.handleSearch(this.initParams)
+  }
+
+  handleSearch = (params) => {
+    const {searchSinkerTableList, setSearchSinkerTableParam} = this.props
+    searchSinkerTableList(params)
+    setSearchSinkerTableParam(params)
+  }
+
+  /**
+   * @param page  传入的跳转页码  type:[Object Number]
+   * @description sinkerTopology分页
+   */
+  handlePagination = page => {
+    this.initParams = {...this.initParams, pageNum: page}
+    this.handleSearch({...this.initParams})
+  }
+
+  handleOpenModifyTableModal = (record) => {
+    this.setState({
+      modifyTableKey: this.handleRandom('modifyTableKey'),
+      modifyTableVisible: true,
+      modifyTableRecord: record
+    })
+  }
+
+  handleCloseModifyTableModal = () => {
+    this.setState({
+      modifyTableVisible: false,
+      modifyTableRecord: null
+    })
+  }
+
+  render() {
+    const {locale, sinkerTableData} = this.props
+    const {modifyTableKey, modifyTableVisible, modifyTableRecord} = this.state
+    const {
+      sinkerTableList,
+      sinkerTableParams
+    } = sinkerTableData
+
+    const breadSource = [
+      {
+        path: '/sink-manage',
+        name: 'home'
+      },
+      {
+        path: '/sink-manage',
+        name: 'sink管理'
+      },
+      {
+        path: '/sink-manage/schema-manage',
+        name: '表管理'
+      }
+    ]
+    return (
+      <div>
+        <Helmet
+          title="Sink"
+          meta={[{name: 'description', content: 'Sink Manage'}]}
+        />
+        <Bread source={breadSource}/>
+        <SinkerTableSearch
+          locale={locale}
+          searchParams={sinkerTableParams}
+          onSearch={this.handleSearch}
+        />
+        <SinkerTableGrid
+          locale={locale}
+          tableWidth={this.tableWidth}
+          searchParams={sinkerTableParams}
+          sinkerTableList={sinkerTableList.result.payload}
+          onModify={this.handleOpenModifyTableModal}
+          onSearch={this.handleSearch}
+          onPagination={this.handlePagination}
+          onMount={this.handleMount}
+        />
+        <SinkerTableForm
+          visible={modifyTableVisible}
+          key={modifyTableKey}
+          record={modifyTableRecord}
+          onClose={this.handleCloseModifyTableModal}
+          onSearch={this.handleSearch}
+          searchParams={sinkerTableParams}
+        />
+      </div>
+    )
+  }
+}
+SinkerTableWrapper.propTypes = {
+  locale: PropTypes.any,
+  searchSinkerTableList: PropTypes.func,
+  setSearchSinkerTableParam: PropTypes.func
+}

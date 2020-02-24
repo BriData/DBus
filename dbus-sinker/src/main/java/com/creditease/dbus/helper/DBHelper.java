@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@
 
 package com.creditease.dbus.helper;
 
+import com.creditease.dbus.bean.SinkerTopologyTable;
 import com.creditease.dbus.dbaccess.DruidDataSourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +31,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -40,7 +41,6 @@ import java.util.Properties;
 public class DBHelper {
     private static Logger logger = LoggerFactory.getLogger(DBHelper.class);
     private static DataSource dataSource = null;
-    private static Map<Integer, String> resultTopicMap = null;
 
     /**
      * Create a connection to the database; usually used only from within
@@ -99,30 +99,60 @@ public class DBHelper {
         }
     }
 
-
-    public static Map<String, String> queryAliasMapping(Properties mysqlProps) {
+    public static List<SinkerTopologyTable> querySinkerTables(Properties properties, String sinkerName) {
+        List<SinkerTopologyTable> sinkerTopologySchemas = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        Map<String, String> aliasMapping = new HashMap<>();
         try {
-            conn = getDBusMgrConnection(mysqlProps);
-            String sql = "SELECT CONCAT(map.alias,'.',s.schema_name) alias,ds.ds_name " +
-                    "FROM t_dbus_datasource ds JOIN t_name_alias_mapping map ON ds.id = map.name_id " +
-                    "JOIN t_data_schema s ON map.name_id = s.ds_id " +
-                    "WHERE map.type = 2";
-            logger.info("[load dsName alias] sql :{}", sql);
+            conn = getDBusMgrConnection(properties);
+            String sql = " SELECT" +
+                    " 	t.id," +
+                    " 	t.sinker_topo_id," +
+                    " 	t.sinker_name," +
+                    " 	t.ds_id," +
+                    " 	t.ds_name," +
+                    " 	m.alias," +
+                    " 	t.schema_id," +
+                    " 	t.schema_name," +
+                    " 	s.target_topic," +
+                    " 	t.table_id," +
+                    " 	t.table_name," +
+                    " 	t.description," +
+                    " 	t.update_time" +
+                    " FROM" +
+                    " 	t_sinker_topo_table t" +
+                    " JOIN t_sinker_topo_schema s ON s.schema_id = t.schema_id" +
+                    " LEFT JOIN t_name_alias_mapping m ON t.ds_id = m.name_id" +
+                    " AND m.type = 2" +
+                    " WHERE" +
+                    " 	t.sinker_name = ?";
             ps = conn.prepareStatement(sql);
+            ps.setString(1, sinkerName);
             rs = ps.executeQuery();
             while (rs.next()) {
-                aliasMapping.put(rs.getString("alias"), rs.getString("ds_name"));
+                SinkerTopologyTable sinkerTopologySchema = new SinkerTopologyTable();
+                sinkerTopologySchema.setId(rs.getInt("id"));
+                sinkerTopologySchema.setSinkerTopoId(rs.getInt("sinker_topo_id"));
+                sinkerTopologySchema.setSinkerName(rs.getString("sinker_name"));
+                sinkerTopologySchema.setDsId(rs.getInt("ds_id"));
+                sinkerTopologySchema.setDsName(rs.getString("ds_name"));
+                sinkerTopologySchema.setAlias(rs.getString("alias"));
+                sinkerTopologySchema.setSchemaId(rs.getInt("schema_id"));
+                sinkerTopologySchema.setSchemaName(rs.getString("schema_name"));
+                sinkerTopologySchema.setTargetTopic(rs.getString("target_topic"));
+                sinkerTopologySchema.setTableId(rs.getInt("table_id"));
+                sinkerTopologySchema.setTableName(rs.getString("table_name"));
+                sinkerTopologySchema.setDescription(rs.getString("description"));
+                sinkerTopologySchema.setUpdateTime(rs.getDate("update_time"));
+                sinkerTopologySchemas.add(sinkerTopologySchema);
             }
         } catch (Exception e) {
-            logger.error("[load dsName alias]", e);
+            logger.error(e.getMessage(), e);
         } finally {
-            close(conn, ps, rs);
+            DBHelper.close(conn, ps, rs);
         }
-        logger.info("[load dsName alias] {}", aliasMapping);
-        return aliasMapping;
+        return sinkerTopologySchemas;
     }
+
 }

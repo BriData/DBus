@@ -21,8 +21,9 @@ import Request from '@/app/utils/request'
 import {
   DRAG_BACK_RUN_AGAIN_API,
   GET_SINKER_TOPIC_INFOS_API,
+  SEARCH_ALL_SINKER_SCHEMA_API,
   SEARCH_SINKER_TOPOLOGY_API,
-  SEARCH_SINKER_TOPOLOGY_SCHEMA_API,
+  SEARCH_SINKER_TOPOLOGY_BY_ID_API,
   START_OR_STOP_TOPOLOGY_API
 } from '@/app/containers/SinkManage/api'
 import {SEARCH_JAR_INFOS_API} from '@/app/containers/ResourceManage/api'
@@ -38,7 +39,7 @@ export default class SinkerTopologyWrapper extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      modalKey: '',
+      modalKey: 'modalKey',
       visible: false,
       modalStatus: 'create',
       sinkerTopologyInfo: null,
@@ -47,6 +48,7 @@ export default class SinkerTopologyWrapper extends Component {
       sinkerTopologyList: [],
 
       startTopoModalVisible: false,
+      startTopoModalKey: 'startTopoModalKey',
       startTopoModalLog: null,
       startTopoModalLoading: true,
 
@@ -63,7 +65,7 @@ export default class SinkerTopologyWrapper extends Component {
       selectedRows: []
     }
     this.tableWidth = [
-      '10%',
+      '5%',
       '10%',
       '10%',
       '50%',
@@ -74,33 +76,6 @@ export default class SinkerTopologyWrapper extends Component {
       pageNum: 1,
       pageSize: 10
     }
-  }
-
-  handleModalVisible = (visible, modalStatus = 'create', sinkerTopologyInfo = null) => {
-    this.setState({visible, modalStatus, sinkerTopologyInfo})
-    if (visible === false) this.setState({modalKey: this.handleRandom('sinker')})
-    this.handleLoadJarList()
-  }
-
-  handleLoadJarList = () => {
-    Request(SEARCH_JAR_INFOS_API, {
-      params: {category: 'sinker', type: 'sinker'},
-      method: 'get'
-    })
-      .then(res => {
-        if (res && res.status === 0) {
-          this.setState({
-            jarList: res.payload
-          })
-        } else {
-          message.warn(res.message)
-        }
-      })
-      .catch(error => {
-        error.response && error.response.data && error.response.data.message
-          ? message.error(error.response.data.message)
-          : message.error(error.message)
-      })
   }
 
   /**
@@ -151,16 +126,66 @@ export default class SinkerTopologyWrapper extends Component {
     this.handleSearch({...this.initParams})
   }
 
-  /**
-   * @description 获取到sink信息并弹窗
-   */
-  handleGetSinkInfo = (sinkInfo) => {
-    this.handleModalVisible(true, 'modify', sinkInfo)
+  handleOpenCreateModal = () => {
+    this.handleLoadJarList()
+    this.setState({visible: true, modalStatus: 'create', modalKey: this.handleRandom('sinker')})
+  }
+
+  handleCloseModal = () => {
+    this.setState({visible: false, modalKey: this.handleRandom('sinker')})
+  }
+
+  handleOpenModifyModal = (record) => {
+    this.handleGetSinkerTopologyInfo(record.id)
+    this.handleLoadJarList()
+    this.setState({visible: true, modalStatus: 'modify', modalKey: this.handleRandom('sinker')})
+  }
+
+  handleLoadJarList = () => {
+    Request(SEARCH_JAR_INFOS_API, {
+      params: {category: 'sinker', type: 'sinker'},
+      method: 'get'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          this.setState({
+            jarList: res.payload
+          })
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+  }
+
+  handleGetSinkerTopologyInfo = (id) => {
+    Request(`${SEARCH_SINKER_TOPOLOGY_BY_ID_API}/${id}`, {
+      method: 'get'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          this.setState({
+            sinkerTopologyInfo: res.payload
+          })
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
   }
 
   handleStartOrStopTopo = (operate, record) => {
     this.setState({
       startTopoModalVisible: true,
+      startTopoModalKey: this.handleRandom('startTopoModalKey'),
       startTopoModalLog: `发送${operate}命令中...`,
       startTopoModalLoading: true
     })
@@ -222,7 +247,7 @@ export default class SinkerTopologyWrapper extends Component {
   }
 
   handleSearchSchemaList = (record) => {
-    Request(SEARCH_SINKER_TOPOLOGY_SCHEMA_API, {
+    Request(SEARCH_ALL_SINKER_SCHEMA_API, {
       params: {
         dsName: record.dsName,
         schemaName: record.schemaName,
@@ -277,7 +302,7 @@ export default class SinkerTopologyWrapper extends Component {
 
   render() {
     const {modalKey, visible, modalStatus, sinkerTopologyInfo, sinkerTopologyList, jarList} = this.state
-    const {startTopoModalVisible, startTopoModalLog, startTopoModalLoading} = this.state
+    const {startTopoModalVisible, startTopoModalLog, startTopoModalLoading, startTopoModalKey} = this.state
     const {rerunModalVisible, rerunModalKey, rerunModalRecord, rerunInitResult} = this.state
     const {addSchemaModalVisible, addSchemaModalRecord, addSchemaModalKey, sinkerSchemaList} = this.state
     const {selectedRows} = this.state
@@ -286,11 +311,16 @@ export default class SinkerTopologyWrapper extends Component {
     const localeMessage = intlMessage(locale)
     const breadSource = [
       {
-        path: '/sink-manager',
+        path: '/sink-manage',
         name: 'home'
       },
       {
-        name: localeMessage({id: 'app.components.navigator.sinkManage'})
+        path: '/sink-manage',
+        name: 'Sink管理'
+      },
+      {
+        path: '/sink-manage/sinker-manage',
+        name: 'Sinker管理'
       }
     ]
     return (
@@ -303,7 +333,7 @@ export default class SinkerTopologyWrapper extends Component {
         <SinkerTopologyManageSearch
           locale={locale}
           sinkerParams={this.initParams}
-          onShowModal={this.handleModalVisible}
+          onOpen={this.handleOpenCreateModal}
           onSearch={this.handleSearch}
         />
         <SinkerTopologyManageGrid
@@ -311,7 +341,7 @@ export default class SinkerTopologyWrapper extends Component {
           tableWidth={this.tableWidth}
           sinkerParams={this.initParams}
           sinkerList={sinkerTopologyList}
-          onModify={this.handleGetSinkInfo}
+          onOpenModifyModal={this.handleOpenModifyModal}
           onSearch={this.handleSearch}
           onPagination={this.handlePagination}
           onMount={this.handleMount}
@@ -328,10 +358,11 @@ export default class SinkerTopologyWrapper extends Component {
           jarList={jarList}
           sinkerParams={this.initParams}
           onSearch={this.handleSearch}
-          onCloseModal={this.handleModalVisible}
+          onClose={this.handleCloseModal}
         />
         <ProjectTopologyStartModal
           visible={startTopoModalVisible}
+          key={startTopoModalKey}
           onClose={this.handleCloseTopoModal}
           startTopoModalLog={startTopoModalLog}
           loading={startTopoModalLoading}

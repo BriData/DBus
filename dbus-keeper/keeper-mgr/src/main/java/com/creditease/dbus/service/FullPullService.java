@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,10 @@ import com.creditease.dbus.constant.KeeperConstants;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.constant.ServiceNames;
 import com.creditease.dbus.domain.model.*;
-import com.creditease.dbus.utils.*;
+import com.creditease.dbus.utils.ControlMessageSender;
+import com.creditease.dbus.utils.ControlMessageSenderProvider;
+import com.creditease.dbus.utils.JsonFormatUtils;
+import com.creditease.dbus.utils.SecurityConfProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -79,7 +82,7 @@ public class FullPullService {
     @Autowired
     private RequestSender sender;
     @Autowired
-    private StormToplogyOpHelper stormTopoHelper;
+    private InitialLoadService initialLoadService;
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -100,7 +103,7 @@ public class FullPullService {
                 return MessageCode.ILLEGAL_CONTROL_MESSAGE;
             }
             Map<String, Object> payload = controlMessage.getPayload();
-            String resultTopic = payload.get("resultTopic").toString();
+            String resultTopic = payload.get("resultTopic") == null ? null : payload.get("resultTopic").toString();
 
              /*
              对于mysql
@@ -109,15 +112,13 @@ public class FullPullService {
             if (StringUtils.equalsIgnoreCase(table.getDsType(), "mysql")) {
                 Class.forName("com.mysql.jdbc.Driver");
                 Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
-                InitialLoadService ilService = InitialLoadService.getService();
-                String physicalTables = ilService.getMysqlTables(conn, table);
+                String physicalTables = initialLoadService.getMysqlTables(conn, table);
                 conn.close();
                 payload.put("PHYSICAL_TABLES", physicalTables);
             } else if (StringUtils.equalsIgnoreCase(table.getDsType(), "oracle")) {
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 Connection conn = DriverManager.getConnection(table.getMasterUrl(), table.getDbusUser(), table.getDbusPassword());
-                InitialLoadService ilService = InitialLoadService.getService();
-                String physicalTables = ilService.getOracleTables(conn, table);
+                String physicalTables = initialLoadService.getOracleTables(conn, table);
                 conn.close();
                 payload.put("PHYSICAL_TABLES", physicalTables);
             }
@@ -641,12 +642,12 @@ public class FullPullService {
             //处理监控节点
             String monitorNodePath = getMonitorNodePath(dsName, reqJson);
             LinkedHashMap<String, Object> monitorData = getFullPullMonitorData(monitorNodePath);
-            monitorData.put("FinishedCount", "");
-            monitorData.put("FinishedRows", "");
-            monitorData.put("EndTime", "");
-            monitorData.put("ErrorMsg", "");
+            monitorData.put("FinishedCount", null);
+            monitorData.put("FinishedRows", null);
+            monitorData.put("EndTime", null);
+            monitorData.put("ErrorMsg", null);
             monitorData.put("Status", "init");
-            monitorData.put("SplitStatus", "");
+            monitorData.put("SplitStatus", null);
             updateMonitor(monitorNodePath, monitorData);
             //回灌分片任务
             Future<RecordMetadata> result = producer.send(new ProducerRecord<>(ctrlTopic, key, value.getBytes()), null);

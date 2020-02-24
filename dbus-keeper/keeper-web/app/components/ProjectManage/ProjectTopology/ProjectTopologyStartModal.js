@@ -2,12 +2,12 @@
  * @author 戎晓伟
  * @description  Sink信息设置
  */
-import { FormattedMessage } from 'react-intl'
-import React, { PropTypes, Component } from 'react'
-import { Modal,Button, Input} from 'antd'
-const TextArea = Input.TextArea
+import {FormattedMessage} from 'react-intl'
+import React, {Component, PropTypes} from 'react'
+import {Button, Input, Modal} from 'antd'
 // 导入样式
-import styles from './res/styles/index.less'
+
+const TextArea = Input.TextArea
 
 export default class ProjectTopologyStartModal extends Component {
 
@@ -26,11 +26,12 @@ export default class ProjectTopologyStartModal extends Component {
     setTimeout(this.textareaAutoScroll, 0)
   }
 
-  render () {
-    const { visible,startTopoModalLog, loading } = this.props
-    const { onClose } = this.props
+  render() {
+    const {visible, startTopoModalLog, loading, key} = this.props
+    const {onClose} = this.props
     return (
       <Modal
+        key={key}
         closable={false}
         width={1000}
         title={<FormattedMessage

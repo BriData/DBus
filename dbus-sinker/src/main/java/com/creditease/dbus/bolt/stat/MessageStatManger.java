@@ -59,7 +59,4 @@ public class MessageStatManger {
         }
     }
 
-    private String getStatKey(String[] dataKeys) {
-        return String.format("%s.%s.%s", dataKeys[2], dataKeys[3], dataKeys[4]);
-    }
 }

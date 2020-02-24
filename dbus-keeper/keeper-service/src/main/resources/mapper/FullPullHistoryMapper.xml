@@ -131,6 +131,7 @@
     <if test="tableName != null"> and fh.tableName like  "%"#{tableName}"%" </if>
     <if test="targetSinkTopic != null"> and fh.target_sink_topic like  "%"#{targetSinkTopic}"%" </if>
     <if test="id != null"> and fh.id = #{id}</if>
+    <if test="state != null"> and fh.state = #{state}</if>
     order by ${orderBy} desc
   </select>
   <select id="searchIdsByUid" resultType="java.lang.Long">

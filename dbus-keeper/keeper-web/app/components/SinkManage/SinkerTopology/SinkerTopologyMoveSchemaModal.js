@@ -4,7 +4,7 @@ import {FormattedMessage} from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from '@/app/utils/request'
-import {UPDATE_SINKER_TOPOLOGY_SCHEMA_API} from '@/app/containers/SinkManage/api'
+import {UPSERT_MANY_SINKER_SCHEMA_API} from '@/app/containers/SinkManage/api'
 
 const FormItem = Form.Item
 const Option = Select.Option
@@ -43,7 +43,7 @@ export default class SinkerTopologyMoveSchemaModal extends Component {
       message.warn('未选中任何表')
       return
     }
-    Request(UPDATE_SINKER_TOPOLOGY_SCHEMA_API, {
+    Request(UPSERT_MANY_SINKER_SCHEMA_API, {
       data: {
         sinkerTopology: record,
         sinkerSchemaList: selectedRows

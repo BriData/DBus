@@ -59,6 +59,7 @@ public class Constants {
         public static final String DBUS_STATISTIC_TOPIC = "dbus.statistic.topic"; // 统计信息topic
         public static final String GLOBAL_EVENT_TOPIC = "global.event.topic"; // 全局事件topic
         public static final String LOGFILE_NUM_COMPENSATION = "logfile.num.compensation"; // 文件号补偿值
+        public static final String LOGFILE_NUM = "logfile.num"; // 文件号
         public static final String DB2_OFFSET_COMPENSATION = "offset.num.compensation"; // db2 offset 补偿值
         public static final String META_FETCHER_BOLT_PARALLELISM = "metafetcher.bolt.parallelism";
         public static final String KAFKA_WRITTER_BOLT_PARALLELISM = "kafkawritter.bolt.parallelism";

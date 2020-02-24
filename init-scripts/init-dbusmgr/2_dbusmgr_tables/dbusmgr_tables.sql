@@ -196,6 +196,7 @@ CREATE TABLE `t_meta_version` (
   `event_pos` bigint(20) DEFAULT NULL COMMENT '触发version变更的消息在trail文件中的pos值',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日期',
   `comments` varchar(128) DEFAULT NULL COMMENT '表注释',
+  `abandon` TINYINT(4) DEFAULT NULL COMMENT '假删除标记,0或null表示未删除,1表示删除',
   PRIMARY KEY (`id`),
   KEY `idx_event_offset` (`event_offset`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='t_table_meta的版本信息';
@@ -533,6 +534,25 @@ CREATE TABLE `t_sinker_topo_schema` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_schema_id_unique` (`schema_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for t_sinker_topo_table
+-- ----------------------------
+DROP TABLE IF EXISTS `t_sinker_topo_table`;
+CREATE TABLE `t_sinker_topo_table` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sinker_topo_id` int(11) DEFAULT NULL,
+  `sinker_name` varchar(64) DEFAULT NULL,
+  `ds_id` int(11) DEFAULT NULL,
+  `ds_name` varchar(32) DEFAULT NULL,
+  `schema_id` int(11) DEFAULT NULL,
+  `schema_name` varchar(32) DEFAULT NULL,
+  `table_id` int(11) DEFAULT NULL,
+  `table_name` varchar(32) DEFAULT NULL,
+  `description` varchar(128) DEFAULT NULL,
+  `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_storm_topology

@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.DataSource">
     <id column="id" jdbcType="INTEGER" property="id" />
     <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
+    <result column="alias" jdbcType="VARCHAR" property="dsNameAlias" />
     <result column="ds_type" jdbcType="VARCHAR" property="dsType" />
     <result column="instance_name" jdbcType="VARCHAR" property="instanceName" />
     <result column="status" jdbcType="VARCHAR" property="status" />
@@ -19,6 +20,10 @@
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="ds_partition" jdbcType="VARCHAR" property="dsPartition" />
   </resultMap>
+  <sql id="columns">
+    id, ds_name, instance_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic,
+    master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
+  </sql>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete td,ts,tt,tc,tv,tm from t_dbus_datasource td
         left join t_data_schema ts on td.id = ts.ds_id
@@ -65,28 +70,27 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select id, ds_name, instance_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic,
-    master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
+    select <include refid="columns"/>
     from t_dbus_datasource
     where id = #{id,jdbcType=INTEGER}
   </select>
   <select id="selectAll" resultMap="BaseResultMap">
-    select id, ds_name, instance_name, ds_type, status, ds_desc, topic, ctrl_topic, schema_topic, split_topic,
-    master_url, slave_url, dbus_user, dbus_pwd, update_time, ds_partition
+    select <include refid="columns"/>
     from t_dbus_datasource
   </select>
   <select id="search" parameterType="java.util.Map" resultType="java.util.Map">
-    SELECT id, ds_name name, ds_type type, status,topic, ds_desc description,
-      DATE_FORMAT(update_time,'%Y-%m-%d %H:%i:%s') updateTime
-    FROM t_dbus_datasource
+    SELECT d.id, d.ds_name name, d.ds_type type, d.status, d.topic, d.ds_desc description,
+      d.update_time updateTime, a.alias
+    FROM t_dbus_datasource d
+    left join t_name_alias_mapping a on d.ds_name = a.name and d.id = a.name_id and a.type = 2
     <where>
-      <if test="dsName != null">ds_name LIKE "%"#{dsName,jdbcType=VARCHAR}"%"</if>
-      <if test="dsType != null"> AND ds_type LIKE "%"#{dsType,jdbcType=VARCHAR}"%"</if>
+      <if test="dsName != null">d.ds_name LIKE "%"#{dsName,jdbcType=VARCHAR}"%"</if>
+      <if test="dsType != null">AND d.ds_type LIKE "%"#{dsType,jdbcType=VARCHAR}"%"</if>
     </where>
     ORDER BY
     <choose>
       <when test="sortBy != null">${sortBy}</when>
-      <otherwise>id</otherwise>
+      <otherwise>d.id</otherwise>
     </choose>
     <choose>
       <when test="order != null">${order}</when>

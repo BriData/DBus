@@ -13,7 +13,7 @@
     <result column="description" jdbcType="VARCHAR" property="description"/>
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
   </resultMap>
-  <resultMap id="resultMap" type="com.creditease.dbus.domain.model.SinkerTopologySchema">
+  <resultMap id="searchAllResultMap" type="com.creditease.dbus.domain.model.SinkerTopologySchema">
     <id column="schema_id" jdbcType="INTEGER" property="schemaId"/>
     <result column="id" jdbcType="INTEGER" property="id"/>
     <result column="sinker_topo_id" jdbcType="INTEGER" property="sinkerTopoId"/>
@@ -90,7 +90,18 @@
     description, update_time
     from t_sinker_topo_schema
   </select>
-  <select id="searchAll" resultMap="resultMap">
+  <select id="search" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, target_topic,
+    description, update_time
+    from t_sinker_topo_schema
+    <where>
+      <if test="dsName != null and dsName != ''">and ds_name = #{dsName}</if>
+      <if test="schemaName != null and schemaName != ''">and schema_name = #{schemaName}</if>
+      <if test="sinkerName != null and sinkerName != ''">and sinker_name = #{sinkerName}</if>
+      <if test="targetTopic != null and targetTopic != ''">and target_topic = #{targetTopic}</if>
+    </where>
+  </select>
+  <select id="searchAll" resultMap="searchAllResultMap">
     select t.id, t.sinker_topo_id, t.sinker_name, s.ds_id, d.ds_name, s.id schema_id, s.schema_name, s.target_topic,
     t.description, t.update_time
     from t_data_schema s
@@ -102,10 +113,12 @@
       <if test="schemaName != null and schemaName != ''">and s.schema_name = #{schemaName}</if>
     </where>
   </select>
-  <select id="searchBySinkerTopoId" resultMap="resultMap">
-    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, target_topic, description,
-    update_time
-    from t_sinker_topo_schema
-    where sinker_topo_id = #{sinkerTopoId}
-  </select>
+  <insert id="insertMany" parameterType="java.util.List">
+    insert into t_sinker_topo_schema(sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, target_topic,
+    description, update_time) values
+    <foreach collection="list" item="item" separator="," close=";">
+      (#{item.sinkerTopoId},#{item.sinkerName},#{item.dsId},#{item.dsName},#{item.schemaId},#{item.schemaName},
+      #{item.targetTopic},#{item.description},current_timestamp())
+    </foreach>
+  </insert>
 </mapper>

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class DBusKeeperInitAll {
             StringBuilder sb = new StringBuilder();
             String line = null;
             while ((line = br.readLine()) != null) {
-                sb.append(line);
+                sb.append(line).append("\n");
             }
             zk.setData("/DBusInit", sb.toString().getBytes());
             zk.close();
@@ -584,8 +584,9 @@ public class DBusKeeperInitAll {
             jsch.addIdentity(pubKeyPath);
 
             session = jsch.getSession(user, host, port);
+            session.setTimeout(30000);
             session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
+            session.connect(30000);
             channel = (ChannelExec) session.openChannel("exec");
             channel.setCommand("echo hello world");
             channel.setInputStream(null);

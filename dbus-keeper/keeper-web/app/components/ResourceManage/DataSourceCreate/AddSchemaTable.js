@@ -198,7 +198,6 @@ export default class AddSchemaTable extends Component {
     string += "\n"
     string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
       return "".concat(...[
-        `MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
         `MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
         `MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = '${schemaName}');\n`
       ])
@@ -236,7 +235,6 @@ export default class AddSchemaTable extends Component {
     string += "\n"
     string += "".concat(...Object.keys(schemaInfos).map(schemaName => {
       return "".concat(...[
-        `MAP DBUS.DB_FULL_PULL_REQUESTS, TARGET DBUS.DB_FULL_PULL_REQUESTS, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
         `MAP DBUS.DB_HEARTBEAT_MONITOR, TARGET DBUS.DB_HEARTBEAT_MONITOR, WHERE (SCHEMA_NAME = '${schemaName}');\n`,
         `MAP DBUS.META_SYNC_EVENT, TARGET DBUS.META_SYNC_EVENT, WHERE (TABLE_OWNER = '${schemaName}');\n`
       ])

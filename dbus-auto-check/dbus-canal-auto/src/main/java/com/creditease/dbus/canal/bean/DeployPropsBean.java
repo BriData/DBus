@@ -51,6 +51,10 @@ public class DeployPropsBean {
      * canal slave id
      */
     private String canalSlaveId;
+    /**
+     *
+     */
+    private String bootstrapServers;
 
     public String getDsName() {
         return dsName;
@@ -98,5 +102,13 @@ public class DeployPropsBean {
 
     public void setCanalSlaveId(String canalSlaveId) {
         this.canalSlaveId = canalSlaveId;
+    }
+
+    public String getBootstrapServers() {
+        return bootstrapServers;
+    }
+
+    public void setBootstrapServers(String bootstrapServers) {
+        this.bootstrapServers = bootstrapServers;
     }
 }

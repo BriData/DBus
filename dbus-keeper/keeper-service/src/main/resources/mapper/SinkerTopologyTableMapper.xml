@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.creditease.dbus.domain.mapper.SinkerTopologyTableMapper">
+  <resultMap id="BaseResultMap" type="com.creditease.dbus.domain.model.SinkerTopologyTable">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="sinker_topo_id" jdbcType="INTEGER" property="sinkerTopoId" />
+    <result column="sinker_name" jdbcType="VARCHAR" property="sinkerName" />
+    <result column="ds_id" jdbcType="INTEGER" property="dsId" />
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
+    <result column="schema_id" jdbcType="INTEGER" property="schemaId" />
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName" />
+    <result column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="table_name" jdbcType="VARCHAR" property="tableName" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <resultMap id="searchAllResultMap" type="com.creditease.dbus.domain.model.SinkerTopologyTable">
+    <id column="table_id" jdbcType="INTEGER" property="tableId" />
+    <result column="id" jdbcType="INTEGER" property="id" />
+    <result column="sinker_topo_id" jdbcType="INTEGER" property="sinkerTopoId" />
+    <result column="sinker_name" jdbcType="VARCHAR" property="sinkerName" />
+    <result column="ds_id" jdbcType="INTEGER" property="dsId" />
+    <result column="ds_name" jdbcType="VARCHAR" property="dsName" />
+    <result column="schema_id" jdbcType="INTEGER" property="schemaId" />
+    <result column="schema_name" jdbcType="VARCHAR" property="schemaName" />
+    <result column="table_name" jdbcType="VARCHAR" property="tableName" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_sinker_topo_table
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.creditease.dbus.domain.model.SinkerTopologyTable">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into t_sinker_topo_table (sinker_topo_id, sinker_name, ds_id,
+      ds_name, schema_id, schema_name,
+      table_id, table_name, description,
+      update_time)
+    values (#{sinkerTopoId,jdbcType=INTEGER}, #{sinkerName,jdbcType=VARCHAR}, #{dsId,jdbcType=INTEGER},
+      #{dsName,jdbcType=VARCHAR}, #{schemaId,jdbcType=INTEGER}, #{schemaName,jdbcType=VARCHAR},
+      #{tableId,jdbcType=INTEGER}, #{tableName,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR},
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.SinkerTopologyTable">
+    update t_sinker_topo_table
+    set sinker_topo_id = #{sinkerTopoId,jdbcType=INTEGER},
+      sinker_name = #{sinkerName,jdbcType=VARCHAR},
+      ds_id = #{dsId,jdbcType=INTEGER},
+      ds_name = #{dsName,jdbcType=VARCHAR},
+      schema_id = #{schemaId,jdbcType=INTEGER},
+      schema_name = #{schemaName,jdbcType=VARCHAR},
+      table_id = #{tableId,jdbcType=INTEGER},
+      table_name = #{tableName,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, table_id, 
+    table_name, description, update_time
+    from t_sinker_topo_table
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="search" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select id, sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, table_id,
+    table_name, description, update_time
+    from t_sinker_topo_table
+    <where>
+      <if test="dsName != null and dsName != ''">and ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null and schemaName != ''">and schema_name like "%"#{schemaName}"%"</if>
+      <if test="tableName != null and tableName != ''">and table_name like "%"#{tableName}"%"</if>
+      <if test="sinkerName != null and sinkerName != ''">and sinker_name like "%"#{sinkerName}"%"</if>
+    </where>
+  </select>
+  <select id="searchAll" parameterType="java.util.Map" resultMap="searchAllResultMap">
+    select tt.id, tt.sinker_topo_id, tt.sinker_name, t.ds_id, d.ds_name, t.schema_id, t.schema_name, t.id table_id,
+    t.table_name, tt.description, tt.update_time
+    from t_data_tables t
+    join t_dbus_datasource d on t.ds_id = d.id
+    left join t_sinker_topo_table tt on t.id = tt.table_id
+    <where>
+      t.schema_id = #{schemaId}
+    </where>
+  </select>
+  <insert id="insertMany" parameterType="java.util.List">
+    insert into t_sinker_topo_table(sinker_topo_id, sinker_name, ds_id, ds_name, schema_id, schema_name, table_id,
+      table_name, description, update_time) values
+    <foreach collection="list" item="item" separator="," close=";">
+        (#{item.sinkerTopoId},#{item.sinkerName},#{item.dsId},#{item.dsName},#{item.schemaId},#{item.schemaName},
+        #{item.tableId},#{item.tableName},#{item.description},current_timestamp())
+    </foreach>
+  </insert>
+</mapper>

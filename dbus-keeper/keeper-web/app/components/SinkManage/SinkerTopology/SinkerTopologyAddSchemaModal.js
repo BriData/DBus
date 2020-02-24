@@ -1,14 +1,12 @@
 import React, {Component} from 'react'
-import {Button, Col, Form, Input, message, Modal, Row, Select, Table} from 'antd'
+import {Button, Col, Form, Input, message, Modal, Row, Table} from 'antd'
 import {FormattedMessage} from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from '@/app/utils/request'
-import {UPDATE_SINKER_TOPOLOGY_SCHEMA_API} from '@/app/containers/SinkManage/api'
+import {ADD_SINKER_SCHEMAS_API} from '@/app/containers/SinkManage/api'
 
 const FormItem = Form.Item
-const Option = Select.Option
-const TextArea = Input.TextArea
 
 @Form.create()
 export default class SinkerTopologyAddSchemaModal extends Component {
@@ -36,7 +34,7 @@ export default class SinkerTopologyAddSchemaModal extends Component {
   handleSubmit = () => {
     const {onClose, record} = this.props
     const {selectedRows, onSetSelectRows, sinkerSchemaList} = this.props
-    Request(UPDATE_SINKER_TOPOLOGY_SCHEMA_API, {
+    Request(ADD_SINKER_SCHEMAS_API, {
       data: {
         sinkerTopology: record,
         sinkerSchemaList: selectedRows,
@@ -80,30 +78,30 @@ export default class SinkerTopologyAddSchemaModal extends Component {
     const {getFieldDecorator} = this.props.form
     const {visible, key, record, onClose, sinkerSchemaList, onSetSelectRows} = this.props
     const columns = [
-      {
-        title: (
-          <FormattedMessage
-            id="app.components.sinkManage.sinkerTopo.id"
-            defaultMessage="id"
-          />
-        ),
-        width: '5%',
-        dataIndex: 'id',
-        key: 'id',
-        render: this.renderComponent(this.renderNomal)
-      },
-      {
-        title: (
-          <FormattedMessage
-            id="app.components.sinkManage.sinkerTopo.sinkerName"
-            defaultMessage="Sinker Name"
-          />
-        ),
-        width: '10%',
-        dataIndex: 'sinkerName',
-        key: 'sinkerName',
-        render: this.renderComponent(this.renderNomal)
-      },
+      // {
+      //   title: (
+      //     <FormattedMessage
+      //       id="app.components.sinkManage.sinkerTopo.id"
+      //       defaultMessage="id"
+      //     />
+      //   ),
+      //   width: '5%',
+      //   dataIndex: 'id',
+      //   key: 'id',
+      //   render: this.renderComponent(this.renderNomal)
+      // },
+      // {
+      //   title: (
+      //     <FormattedMessage
+      //       id="app.components.sinkManage.sinkerTopo.sinkerName"
+      //       defaultMessage="Sinker Name"
+      //     />
+      //   ),
+      //   width: '10%',
+      //   dataIndex: 'sinkerName',
+      //   key: 'sinkerName',
+      //   render: this.renderComponent(this.renderNomal)
+      // },
       {
         title: (
           <FormattedMessage
@@ -160,6 +158,7 @@ export default class SinkerTopologyAddSchemaModal extends Component {
       },
       getCheckboxProps: item => ({
         defaultChecked: item.sinkerTopoId != null,
+        disabled: item.sinkerTopoId != null
       })
     }
 
@@ -173,10 +172,7 @@ export default class SinkerTopologyAddSchemaModal extends Component {
         onOk={this.handleSubmit}
         width={1000}
         title={<div>
-          <FormattedMessage
-            id="app.common.addSchema"
-            defaultMessage="添加schema"
-          />
+          添加schema / sinker名称: {record && record.sinkerName}
         </div>
         }
       >
@@ -192,7 +188,7 @@ export default class SinkerTopologyAddSchemaModal extends Component {
                 <FormItem>
                   {getFieldDecorator('schemaName', {
                     initialValue: null
-                  })(<Input className={styles.input} placeholder="schema名称"/>)}
+                  })(<Input className={styles.input} placeholder="Schema名称"/>)}
                 </FormItem>
               </Col>
               <Col span={12} className={styles.formRight}>

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@
 package com.creditease.dbus.tools;
 
 import com.creditease.dbus.bean.HdfsOutputStreamInfo;
+import com.creditease.dbus.bean.SinkerTopologyTable;
 import com.creditease.dbus.cache.LocalCache;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.helper.DBHelper;
@@ -34,9 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SinkerBaseMap {
     private Logger logger = LoggerFactory.getLogger(SinkerBaseMap.class);
@@ -49,7 +49,7 @@ public class SinkerBaseMap {
     /**
      * topology id
      */
-    public String topologyId = null;
+    public String sinkerName = null;
 
     /**
      * sink type 目前仅支持hdfs-ums
@@ -73,10 +73,10 @@ public class SinkerBaseMap {
 
     public int hsyncIntervals;
 
-    /**
-     * datasource别名
-     */
-    public Map<String, String> dsNameAlias;
+    public List<String> sourceTopics;
+
+    public List<String> tableNamespaces;
+
     /**
      * 操作zk句柄
      */
@@ -87,20 +87,25 @@ public class SinkerBaseMap {
     public SinkerBaseMap(Map conf) {
         this.conf = conf;
         this.zkStr = (String) conf.get(Constants.ZOOKEEPER_SERVERS);
-        this.topologyId = (String) conf.get(Constants.TOPOLOGY_ID);
+        this.sinkerName = (String) conf.get(Constants.TOPOLOGY_ID);
         this.sinkType = (String) conf.get(Constants.SINK_TYPE);
-        logger.info("zk servers:{}, topology id:{}, sink type:{}", zkStr, topologyId, sinkType);
+        logger.info("zk servers:{}, topology id:{}, sink type:{}", zkStr, sinkerName, sinkType);
     }
 
     public void init() throws Exception {
-        this.zkHelper = new ZKHepler(zkStr, topologyId);
+        this.zkHelper = new ZKHepler(zkStr, sinkerName);
         this.sinkerConfProps = zkHelper.loadSinkerConf(SinkerConstants.CONFIG);
-        initDsNameAlias();
+        initSinkerTables();
     }
 
-    public void initDsNameAlias() throws Exception {
+    private void initSinkerTables() throws Exception {
         Properties properties = zkHelper.getProperties(Constants.MYSQL_PROPERTIES_ROOT);
-        this.dsNameAlias = DBHelper.queryAliasMapping(properties);
+        List<SinkerTopologyTable> sinkerTopologyTables = DBHelper.querySinkerTables(properties, sinkerName);
+        this.sourceTopics = new ArrayList<>(sinkerTopologyTables.stream().map(table -> table.getTargetTopic()).collect(Collectors.toSet()));
+        this.tableNamespaces = sinkerTopologyTables.stream().map(table -> {
+            String dsName = StringUtils.isNotBlank(table.getAlias()) ? table.getAlias() : table.getDsName();
+            return String.format("%s.%s.%s", dsName, table.getSchemaName(), table.getTableName());
+        }).collect(Collectors.toList());
     }
 
     public void initSinker() throws Exception {

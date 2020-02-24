@@ -58,6 +58,8 @@ public class FileUtils {
             String slaveId = deployProps.getProperty("canal.slaveId");
             slaveId = StringUtils.isBlank(slaveId) ? "1234" : slaveId;
             props.setCanalSlaveId(slaveId.trim());
+            String bootstrapServers = deployProps.getProperty("bootstrap.servers");
+            props.setBootstrapServers(bootstrapServers);
 
             ins.close();
             return props;

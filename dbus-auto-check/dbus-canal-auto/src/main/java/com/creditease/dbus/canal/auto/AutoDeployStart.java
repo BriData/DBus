@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,6 @@ import java.net.Socket;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import static com.creditease.dbus.canal.utils.FileUtils.writeAndPrint;
 import static com.creditease.dbus.canal.utils.FileUtils.writeProperties;
@@ -105,7 +104,7 @@ public class AutoDeployStart {
             cpCanalFiles(destPath, canalPath, dsName);
 
             //4.根据用户配置修改配置文件
-            editCanalConfigFiles(deployProps, dsName, canalPath);
+            editCanalConfigFiles(deployProps, dsName, canalPath, deployProps.getBootstrapServers());
 
             //5.启动canal
             CanalUtils.start(canalPath);
@@ -159,18 +158,13 @@ public class AutoDeployStart {
         }
     }
 
-    private static void editCanalConfigFiles(DeployPropsBean deployProps, String dsName, String canalPath) throws Exception {
+    private static void editCanalConfigFiles(DeployPropsBean deployProps, String dsName, String canalPath, String bootstrapServers) throws Exception {
         //canal.properties文件编辑
         writeAndPrint("************************************ EDIT CANAL.PROPERTIES BEGIN ****************************");
 
         String canalProperties = "canal.properties";
         int canalPort = getAvailablePort();
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.port", "canal.port = " + canalPort);
-        //canal-1.1.1需要这个参数
-        //ArrayList<Integer> ports = new ArrayList<>();
-        //ports.add(canalPort);
-        //int pullPort = getAvailablePort(ports);
-        //writeProperties(canalPath + "/conf/" + canalProperties, "canal.metrics.pull.port", "canal.metrics.pull.port = " + pullPort);
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.zkServers",
                 "canal.zkServers = " + deployProps.getZkPath() + "/DBus/Canal/canal-" + deployProps.getDsName());
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.destinations", "canal.destinations = " + dsName);
@@ -183,6 +177,12 @@ public class AutoDeployStart {
                 "#canal.instance.global.spring.xml = classpath:spring/file-instance.xml");
         writeProperties(canalPath + "/conf/" + canalProperties, "classpath:spring/default-instance.xml",
                 "canal.instance.global.spring.xml = classpath:spring/default-instance.xml");
+        // 1.1.4新增
+        writeProperties(canalPath + "/conf/" + canalProperties, "canal.metrics.pull.port", "# canal.metrics.pull.port");
+        writeProperties(canalPath + "/conf/" + canalProperties, "canal.admin.port", "# canal.admin.port");
+        writeProperties(canalPath + "/conf/" + canalProperties, "canal.serverMode", "canal.serverMode = kafka");
+        writeProperties(canalPath + "/conf/" + canalProperties, "canal.mq.servers", "canal.mq.servers = " + bootstrapServers);
+        writeProperties(canalPath + "/conf/" + canalProperties, "canal.mq.flatMessage", "canal.mq.flatMessage = false");
         writeAndPrint("********************************** EDIT CANAL.PROPERTIES SUCCESS ****************************");
 
 
@@ -199,6 +199,9 @@ public class AutoDeployStart {
         writeProperties(instancePropsPath, "canal.instance.dbUsername", "canal.instance.dbUsername = " + deployProps.getCanalUser());
         writeProperties(instancePropsPath, "canal.instance.dbPassword", "canal.instance.dbPassword = " + deployProps.getCanalPwd());
         writeProperties(instancePropsPath, "canal.instance.connectionCharset", " canal.instance.connectionCharset = UTF-8");
+        // 1.1.4新增
+        writeProperties(instancePropsPath, "canal.instance.gtidon", " canal.instance.gtidon = true");
+        writeProperties(instancePropsPath, "canal.mq.topic", " canal.mq.topic = " + dsName);
         writeAndPrint("***************************** UPDATE INSTANCE.PROPERTIES SUCCESS ****************************");
 
     }
@@ -263,18 +266,6 @@ public class AutoDeployStart {
         int endPort = 40000;
         for (int port = startPort; port <= endPort; port++) {
             if (isPortAvailable(port)) {
-                return port;
-            }
-        }
-        System.out.println("canal端口自动分配失败");
-        return -1;
-    }
-
-    private static int getAvailablePort(List<Integer> ports) {
-        int startPort = 10000;
-        int endPort = 40000;
-        for (int port = startPort; port <= endPort; port++) {
-            if (isPortAvailable(port) && !ports.contains(port)) {
                 return port;
             }
         }

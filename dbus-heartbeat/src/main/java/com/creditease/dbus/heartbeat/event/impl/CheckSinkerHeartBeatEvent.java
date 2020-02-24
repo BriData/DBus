@@ -68,17 +68,21 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
             source = new SinkerKafkaSource();
             List<String> list;
             while (isRun.get()) {
-                checkAlarmTime();
-                list = source.poll();
-                if (list == null) {
-                    continue;
+                try {
+                    checkAlarmTime();
+                    list = source.poll();
+                    if (list == null) {
+                        continue;
+                    }
+                    //yxorcl.YX_USER.T_CONNECTION_CHECK|1572508713387|1573456732417|948019030
+                    list.forEach(s -> {
+                        String key = s.substring(0, s.indexOf("|"));
+                        int latencyMS = Integer.parseInt(s.substring(s.lastIndexOf("|") + 1));
+                        monitorNodeManager.update(key, latencyMS);
+                    });
+                } catch (Exception e) {
+                    LOG.error("[sinker] {}", e.getMessage(), e);
                 }
-                //yxorcl.YX_USER.T_CONNECTION_CHECK|1572508713387|1573456732417|948019030
-                list.forEach(s -> {
-                    String key = s.substring(0, s.indexOf("|"));
-                    int latencyMS = Integer.parseInt(s.substring(s.lastIndexOf("|") + 1));
-                    monitorNodeManager.update(key, latencyMS);
-                });
             }
         } catch (Exception e) {
             LOG.error("[sinker]", e);

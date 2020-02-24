@@ -13,14 +13,28 @@ export const UPDATE_SINK_API = '/keeper/sinks/update'
 // params id {}
 export const DELETE_SINK_API = '/keeper/sinks/delete'
 
-export const SEARCH_SINKER_TOPOLOGY_API = '/keeper/sinks/searchSinkerTopology'
-export const START_OR_STOP_TOPOLOGY_API = '/keeper/sinks/startOrStopSinkerTopology'
-export const CREATE_SINKER_TOPOLOGY_API = '/keeper/sinks/createSinkerTopology'
-export const UPDATE_SINKER_TOPOLOGY_API = '/keeper/sinks/updateSinkerTopology'
-export const DELETE_SINKER_TOPOLOGY_API = '/keeper/sinks/deleteSinkerTopology'
-export const RELOAD_SINKER_TOPOLOGY_API = '/keeper/sinks/reloadSinkerTopology'
-export const GET_SINKER_TOPIC_INFOS_API = '/keeper/sinks/getSinkerTopicInfos'
-export const DRAG_BACK_RUN_AGAIN_API = '/keeper/sinks/dragBackRunAgain'
-export const SEARCH_SINKER_TOPOLOGY_SCHEMA_API = '/keeper/sinks/searchSinkerTopologySchema'
-export const UPDATE_SINKER_TOPOLOGY_SCHEMA_API = '/keeper/sinks/updateSinkerTopologySchema'
+// sinker
+export const SEARCH_SINKER_TOPOLOGY_API = '/keeper/sinker/search'
+export const START_OR_STOP_TOPOLOGY_API = '/keeper/sinker/startOrStop'
+export const CREATE_SINKER_TOPOLOGY_API = '/keeper/sinker/create'
+export const UPDATE_SINKER_TOPOLOGY_API = '/keeper/sinker/update'
+export const DELETE_SINKER_TOPOLOGY_API = '/keeper/sinker/delete'
+export const RELOAD_SINKER_TOPOLOGY_API = '/keeper/sinker/reload'
+export const SEARCH_SINKER_TOPOLOGY_BY_ID_API = '/keeper/sinker/searchById'
+export const GET_SINKER_TOPIC_INFOS_API = '/keeper/sinker/getSinkerTopicInfos'
+export const DRAG_BACK_RUN_AGAIN_API = '/keeper/sinker/dragBackRunAgain'
+export const ADD_SINKER_SCHEMAS_API = '/keeper/sinker/addSinkerSchemas'
+
+// sinkerSchema
+export const SEARCH_SINKER_SCHEMA_API = '/keeper/sinkerSchema/search'
+export const UPDATE_SINKER_SCHEMA_API = '/keeper/sinkerSchema/update'
+export const DELETE_SINKER_SCHEMA_API = '/keeper/sinkerSchema/delete'
+export const SEARCH_ALL_SINKER_SCHEMA_API = '/keeper/sinkerSchema/searchAll'
+export const ADD_SINKER_TABLES_API = '/keeper/sinkerSchema/addSinkerTables'
+
+// sinkerTable
+export const SEARCH_SINKER_TABLE_API = '/keeper/sinkerTable/search'
+export const SEARCH_ALL_SINKER_TABLE_API = '/keeper/sinkerTable/searchAll'
+export const DELETE_SINKER_TABLE_API = '/keeper/sinkerTable/delete'
+export const UPDATE_SINKER_TABLE_API = '/keeper/sinkerTable/update'
 

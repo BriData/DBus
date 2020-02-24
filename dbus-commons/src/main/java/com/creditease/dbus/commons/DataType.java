@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import com.creditease.dbus.commons.exception.EncodeException;
 import com.creditease.dbus.enums.DbusDatasourceType;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.Base64;
 
 /**
@@ -56,6 +57,10 @@ public enum DataType {
                 // 这种情况在全量中为：precision=0,scale=-127
                 // 增量中：precison=0,scale=-127
                 if (precision == 0 && scale == -127) {
+                    return DECIMAL;
+                }
+                // 当整数部分超过18位就有可能超过Long.MAX_VALUE,这里需要转换成decimal
+                if (precision > 18) {
                     return DECIMAL;
                 }
                 return scale > 0 ? DECIMAL : LONG;

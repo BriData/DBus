@@ -15,7 +15,7 @@ const FormItem = Form.Item
 const Option = Select.Option
 @Form.create({warppedComponentRef: true})
 export default class SinkerTopologyForm extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.formItemLayout = {
       labelCol: {span: 4},
@@ -31,12 +31,11 @@ export default class SinkerTopologyForm extends Component {
       sinkerInfo,
       modalStatus,
       onSearch,
-      onCloseModal,
+      onClose,
       sinkerParams,
       jarList
     } = this.props
-    const requestAPI =
-      modalStatus === 'create' ? CREATE_SINKER_TOPOLOGY_API : UPDATE_SINKER_TOPOLOGY_API
+    const requestAPI = modalStatus === 'create' ? CREATE_SINKER_TOPOLOGY_API : UPDATE_SINKER_TOPOLOGY_API
     this.props.form.validateFieldsAndScroll((err, values) => {
       jarList.map(item => {
         if (item.id === values.jarPath) {
@@ -44,12 +43,13 @@ export default class SinkerTopologyForm extends Component {
         }
       })
       if (!err) {
-        const param =
-          modalStatus === 'create'
-            ? {
-              ...values
-            }
-            : {...sinkerInfo, ...values, updateTime: undefined}
+        const param = modalStatus === 'create'
+          ? {
+            ...values
+          }
+          : {
+            ...sinkerInfo, ...values, id: values.id, updateTime: undefined
+          }
         this.setState({loading: true})
         Request(requestAPI, {
           data: {
@@ -59,7 +59,7 @@ export default class SinkerTopologyForm extends Component {
         })
           .then(res => {
             if (res && res.status === 0) {
-              onCloseModal(false)
+              onClose()
               onSearch(sinkerParams)
             } else {
               message.warn(res.message)
@@ -86,11 +86,12 @@ export default class SinkerTopologyForm extends Component {
       }
     })
 
-  render () {
+  render() {
     const {getFieldDecorator} = this.props.form
-    const {modalKey, visible, onCloseModal, sinkerInfo, modalStatus, jarList} = this.props
+    const {modalKey, visible, onClose, sinkerInfo, modalStatus, jarList} = this.props
     const localeMessage = intlMessage(this.props.locale, this.formMessage)
     const placeholder = this.handlePlaceholder(localeMessage)
+    let disabled = modalStatus === 'modify' ? true : false
     return (
       <Modal
         key={modalKey}
@@ -98,7 +99,7 @@ export default class SinkerTopologyForm extends Component {
         maskClosable={false}
         width={'800px'}
         style={{top: 60}}
-        onCancel={() => onCloseModal(false)}
+        onCancel={() => onClose()}
         onOk={this.handleSubmit}
         confirmLoading={false}
         title={modalStatus === 'modify' ? <FormattedMessage
@@ -149,6 +150,7 @@ export default class SinkerTopologyForm extends Component {
               ]
             })(
               <Input
+                disabled={disabled}
                 type="text"
                 placeholder={'名称'}
                 onBlur={this.handleBlur}
@@ -178,6 +180,13 @@ export default class SinkerTopologyForm extends Component {
               </Select>
             )}
           </FormItem>
+          {modalStatus === 'modify' && (
+            <FormItem label={<FormattedMessage id="app.components.projectManage.projectTopology.table.config"
+                                               defaultMessage="配置项"/>} {...this.formItemLayout}>
+              {getFieldDecorator('sinkerConf', {
+                initialValue: (sinkerInfo && sinkerInfo.sinkerConf) || ''
+              })(<Input type="textarea" wrap='off' autosize={{minRows: 8, maxRows: 20}} placeholder={'请输入配置项'}/>)}
+            </FormItem>)}
           <FormItem
             label={
               <FormattedMessage

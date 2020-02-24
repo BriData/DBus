@@ -1,20 +1,15 @@
-import React, { PropTypes, Component } from 'react'
-import { connect } from 'react-redux'
+import React, {Component, PropTypes} from 'react'
+import {connect} from 'react-redux'
 import {message} from 'antd'
-import { createStructuredSelector } from 'reselect'
+import {createStructuredSelector} from 'reselect'
 import Helmet from 'react-helmet'
-
 // 导入自定义组件
-import { SinkManageGrid, SinkManageSearch, SinkForm, DataSourceManageMountModal, Bread } from '@/app/components'
-
+import {Bread, DataSourceManageMountModal, SinkForm, SinkManageGrid, SinkManageSearch} from '@/app/components'
 // selectors
-import { sinkHomeModel } from './selectors'
-import { makeSelectLocale } from '../LanguageProvider/selectors'
+import {sinkHomeModel} from './selectors'
+import {makeSelectLocale} from '../LanguageProvider/selectors'
 // action
-import {
-  searchSinkList,
-  setSearchSinkParam
-} from './redux'
+import {searchSinkList, setSearchSinkParam} from './redux'
 import {intlMessage} from "@/app/i18n";
 import Request from "@/app/utils/request";
 import {GET_MOUNT_PROJECT_API} from "@/app/containers/ProjectManage/api";
@@ -31,7 +26,7 @@ import {GET_MOUNT_PROJECT_API} from "@/app/containers/ProjectManage/api";
   })
 )
 export default class SinkHomeWrapper extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
       modalKey: '',
@@ -41,7 +36,7 @@ export default class SinkHomeWrapper extends Component {
 
       mountModalKey: 'mountModalKey',
       mountModalVisible: false,
-      mountModalContent: [],
+      mountModalContent: []
     }
     this.tableWidth = [
       '10%',
@@ -56,7 +51,7 @@ export default class SinkHomeWrapper extends Component {
     }
   }
 
-  handleModalVisible = ( visible, modalStatus = 'create', sinkInfo = null ) => {
+  handleModalVisible = (visible, modalStatus = 'create', sinkInfo = null) => {
     this.setState({visible, modalStatus, sinkInfo})
     if (visible === false) this.setState({modalKey: this.handleRandom('sink')})
   };
@@ -70,7 +65,7 @@ export default class SinkHomeWrapper extends Component {
       .toString(32)
       .substr(3, 8)}${key || ''}`;
 
-  componentWillMount () {
+  componentWillMount() {
     // 初始化查询
     this.handleSearch(this.initParams)
   }
@@ -80,7 +75,7 @@ export default class SinkHomeWrapper extends Component {
    * @description 查询Sink列表
    */
   handleSearch = (params) => {
-    const { searchSinkList, setSearchSinkParam } = this.props
+    const {searchSinkList, setSearchSinkParam} = this.props
     searchSinkList(params)
     setSearchSinkParam(params)
   };
@@ -89,16 +84,16 @@ export default class SinkHomeWrapper extends Component {
    * @description sink分页
    */
   handlePagination = page => {
-    const { sinkHomeData } = this.props
-    const { sinkParams } = sinkHomeData
-    this.handleSearch({ ...sinkParams, pageNum: page })
+    const {sinkHomeData} = this.props
+    const {sinkParams} = sinkHomeData
+    this.handleSearch({...sinkParams, pageNum: page})
   };
 
   /**
    * @description 获取到sink信息并弹窗
    */
-  handleGetSinkInfo=(sinkInfo) => {
-    this.handleModalVisible(true,'modify',sinkInfo)
+  handleGetSinkInfo = (sinkInfo) => {
+    this.handleModalVisible(true, 'modify', sinkInfo)
   }
 
   handleMount = record => {
@@ -106,7 +101,8 @@ export default class SinkHomeWrapper extends Component {
       params: {
         sinkId: record.id
       },
-      method: 'get' })
+      method: 'get'
+    })
       .then(res => {
         if (res && res.status === 0) {
           this.handleOpenMountModal(res.payload)
@@ -136,8 +132,8 @@ export default class SinkHomeWrapper extends Component {
     })
   }
 
-  render () {
-    const {modalKey, visible, modalStatus, sinkInfo } = this.state
+  render() {
+    const {modalKey, visible, modalStatus, sinkInfo} = this.state
     const {
       locale,
       sinkHomeData
@@ -149,11 +145,12 @@ export default class SinkHomeWrapper extends Component {
     const localeMessage = intlMessage(locale)
     const breadSource = [
       {
-        path: '/sink-manager',
+        path: '/sink-manage',
         name: 'home'
       },
       {
-        name: localeMessage({id: 'app.components.navigator.sinkManage'})
+        path: '/sink-manage',
+        name: 'Sink管理'
       }
     ]
     const {mountModalContent, mountModalVisible, mountModalKey} = this.state
@@ -161,9 +158,9 @@ export default class SinkHomeWrapper extends Component {
       <div>
         <Helmet
           title="Sink"
-          meta={[{ name: 'description', content: 'Sink Manage' }]}
+          meta={[{name: 'description', content: 'Sink Manage'}]}
         />
-        <Bread source={breadSource} />
+        <Bread source={breadSource}/>
         <SinkManageSearch
           locale={locale}
           sinkParams={sinkParams}

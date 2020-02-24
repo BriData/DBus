@@ -8,7 +8,8 @@ basepath=$(cd `dirname $0`; pwd)
 #GC_OPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -Xloggc:/data/dbus-heartbeat-logs/logs/gc/gc.log"
 LOG_CONF="-Dlogs.base.path=$basepath -Duser.dir=$basepath"
 OOM_OPTS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$basepath/logs/oom"
-JVM_OPTS="-server -Xmx4096m -Xms4096m -XX:NewRatio=1"
+#JVM_OPTS="-server -Xmx4096m -Xms4096m -XX:NewRatio=1"
+JVM_OPTS="-server -Xmx512m -Xms512m -XX:NewRatio=1"
 CLASS_PATH=""
 MAIN=" com.creditease.dbus.heartbeat.start.Start"
 if [ "x$1" = "xstop" ] 

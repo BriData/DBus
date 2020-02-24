@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,6 @@ import com.creditease.dbus.common.format.DataDBInputFormat;
 import com.creditease.dbus.common.format.InputSplit;
 import com.creditease.dbus.common.splitters.DBSplitter;
 import com.creditease.dbus.enums.DbusDatasourceType;
-import com.creditease.dbus.utils.LoggingUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,36 +128,6 @@ public class GenericSqlManager extends GenericConnManager implements SqlManager 
         dbConfig.set(DBConfiguration.INPUT_SPLIT_COL, splitCol);
         logger.info("[split bolt] getSplitColumn() set split col is : {}", splitCol);
         return splitCol;
-    }
-
-    @Override
-    public void writeFullStateToOriginalDB(String startTime, String completedTime, String pullStatus, String errorMsg)
-            throws Exception {
-
-        String sqlStr = getWriteBackSql(startTime, completedTime, pullStatus, errorMsg);
-        if (null == sqlStr) {
-            return;
-        }
-
-        Connection conn = null;
-        PreparedStatement ps = null;
-        long seqno = dbConfig.getLong(DBConfiguration.DATA_IMPORT_CONSISTENT_READ_SEQNO, 0L);
-        try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sqlStr, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            setFullPullReqTblSqlParam(ps, startTime, completedTime, pullStatus, errorMsg, seqno);
-            ps.execute();
-            conn.commit();
-        } catch (SQLException e) {
-            if (conn != null) {
-                conn.rollback();
-            }
-            LoggingUtils.logAll(logger, "[db_full_pull_requests] Failed to write back original DB", e);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        } finally {
-            close(ps, null);
-        }
     }
 
     @Override
@@ -361,73 +330,6 @@ public class GenericSqlManager extends GenericConnManager implements SqlManager 
         this.lastStatement = statement;
 
         return statement;
-    }
-
-
-    private String getWriteBackSql(String startTime, String completedTime, String pullStatus, String errorMsg) {
-        if (StringUtils.isEmpty(startTime) && StringUtils.isEmpty(completedTime) && StringUtils.isEmpty(pullStatus)
-                && StringUtils.isEmpty(errorMsg)) {
-            return null;
-        }
-
-        StringBuilder sqlStr = new StringBuilder("UPDATE db_full_pull_requests SET ");
-        if (StringUtils.isNotEmpty(startTime)) {
-            sqlStr.append(" PULL_START_TIME = str_to_date(?,'%Y-%m-%d %H:%i:%s.%f'), ");
-        }
-        String driverClass = getDriverClass();
-        if (DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.ORACLE).equalsIgnoreCase(driverClass)
-                || DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.DB2).equalsIgnoreCase(driverClass)
-        ) {
-            if (StringUtils.isNotEmpty(startTime)) {
-                sqlStr.append(" PULL_START_TIME = to_timestamp(?,'yyyy-MM-dd hh24:mi:ss.ff3'),");
-            }
-            if (StringUtils.isNotEmpty(completedTime)) {
-                sqlStr.append(" PULL_END_TIME = to_timestamp(?,'yyyy-MM-dd hh24:mi:ss.ff3'),");
-            }
-        } else if (DbusDatasourceType.getDataBaseDriverClass(DbusDatasourceType.MYSQL).equalsIgnoreCase(driverClass)) {
-            if (StringUtils.isNotEmpty(startTime)) {
-                sqlStr.append(" PULL_START_TIME = str_to_date(?,'%Y-%m-%d %H:%i:%s.%f'),");
-            }
-            if (StringUtils.isNotEmpty(completedTime)) {
-                sqlStr.append(" PULL_END_TIME = str_to_date(?,'%Y-%m-%d %H:%i:%s.%f'),");
-            }
-        }
-        //去除最后一个逗号
-        sqlStr = new StringBuilder(sqlStr.substring(0, sqlStr.length() - 1));
-        if (StringUtils.isNotEmpty(pullStatus)) {
-            sqlStr.append(" PULL_STATUS = ? ,");
-        }
-        if (StringUtils.isNotEmpty(errorMsg)) {
-            sqlStr.append(" PULL_REMARK = ?,");
-        }
-        sqlStr.append(" WHERE SEQNO = ?");
-        return sqlStr.toString();
-    }
-
-
-    private void setFullPullReqTblSqlParam(PreparedStatement ps, String startTime, String completedTime,
-                                           String pullStatus, String errorMsg, long seqno) throws SQLException {
-        int paraIndex = 1;
-        if (ps != null) {
-            if (StringUtils.isNotEmpty(startTime)) {
-                ps.setString(paraIndex, startTime);
-                paraIndex++;
-            }
-            if (StringUtils.isNotEmpty(completedTime)) {
-                ps.setString(paraIndex, completedTime);
-                paraIndex++;
-            }
-            if (StringUtils.isNotEmpty(pullStatus)) {
-                ps.setString(paraIndex, pullStatus);
-                paraIndex++;
-            }
-            if (StringUtils.isNotEmpty(errorMsg)) {
-                errorMsg = errorMsg.length() > 1000 ? errorMsg.substring(0, 1000) : errorMsg;
-                ps.setString(paraIndex, errorMsg);
-                paraIndex++;
-            }
-            ps.setLong(paraIndex, seqno);
-        }
     }
 
     private String getTotalRowsCountQuery(String table, String splitCol, String tablePartition) {

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,10 +51,14 @@ public class EmitDataListManager {
         }
     }
 
-    public List<EmitDataList> getEmttDataList() {
+    public List<EmitDataList> getEmitDataList() {
         return dataMap.values().stream().filter(list -> list.getSize() >= emitSize
                 || (System.currentTimeMillis() - list.getTime()) >= emitIntervals
                 || list.getDataList().size() > 0).collect(Collectors.toList());
+    }
+
+    public List<EmitDataList> getAllEmitDataList() {
+        return dataMap.values().stream().filter(list -> list.getSize() > 0).collect(Collectors.toList());
     }
 
     public void remove(String key) {
