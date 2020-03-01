@@ -32,4 +32,5 @@ export const BATCH_RESTART_TOPO_API = '/keeper/toolSet/batchRestartTopo'
 // 获取ogg canal部署详情
 export const GET_OGG_CANAL_DEPLOY_INFO = '/keeper/autoDeploy/getOggCanalDeployInfo'
 export const UPDATE_OGG_CANAL_DEPLOY_INFO = '/keeper/autoDeploy/updateOggCanalDeployInfo'
+export const SYNC_OGG_CANAL_DEPLOY_INFO = '/keeper/autoDeploy/syncOggCanalDeployInfo'
 

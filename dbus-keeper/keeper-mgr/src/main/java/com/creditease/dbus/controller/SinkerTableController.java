@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URLDecoder;
+import java.util.List;
 
 @RestController
 @RequestMapping("/sinkerTable")
@@ -55,6 +56,17 @@ public class SinkerTableController extends BaseController {
             return service.update(table);
         } catch (Exception e) {
             logger.error("Exception encountered while update sinker topology table", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping(path = "/batchDeleteSinkerTable")
+    public ResultEntity batchDeleteSinkerTable(@RequestBody List<Integer> ids) {
+        try {
+            service.batchDeleteSinkerTable(ids);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while batch delete sinker topology table", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

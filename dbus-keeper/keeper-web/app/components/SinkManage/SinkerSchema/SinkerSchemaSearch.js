@@ -4,7 +4,7 @@
  */
 
 import React, {Component, PropTypes} from 'react'
-import {Button, Col, Form, Input, Row, Select} from 'antd'
+import {Button, Col, Form, Input, Popconfirm, Row, Select} from 'antd'
 import {FormattedMessage} from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -35,13 +35,37 @@ export default class SinkerSchemaSearch extends Component {
 
   render() {
     const {getFieldDecorator} = this.props.form
-    // const { onShowModal } = this.props
+    const {onBatchAddTable, onBatchDeleteSchema} = this.props
     return (
       <div className="form-search">
         <Form autoComplete="off" layout="inline" className={styles.searchForm}
               onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
-            <Col span={24} className={styles.formRight}>
+            <Col span={8} className={styles.formLeft}>
+              <FormItem>
+                <Popconfirm title='批量加表' onConfirm={() => onBatchAddTable()} okText="Yes"
+                            cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="plus"
+                  >
+                    批量加表
+                  </Button>
+                </Popconfirm>
+              </FormItem>
+              <FormItem>
+                <Popconfirm title='批量删除Schema' onConfirm={() => onBatchDeleteSchema()} okText="Yes"
+                            cancelText="No">
+                  <Button
+                    type="primary"
+                    icon="delete"
+                  >
+                    批量删除Schema
+                  </Button>
+                </Popconfirm>
+              </FormItem>
+            </Col>
+            <Col span={16} className={styles.formRight}>
               <FormItem>
                 {getFieldDecorator('sinkerName', {
                   initialValue: ''

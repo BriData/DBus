@@ -71,8 +71,6 @@ export default class SinkerTopologyRerunModal extends Component {
       sinkerName: record.sinkerName,
       topicInfo: arr
     }
-    console.log(arr)
-    console.log(result)
     return result
   }
 

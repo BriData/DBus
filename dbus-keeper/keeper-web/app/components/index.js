@@ -176,6 +176,7 @@ export KafkaReaderForm from './toolSet/KafkaReader/KafkaReaderForm'
 export BathchRestatrTopoForm from './toolSet/BatchRestartTopo/BathchRestatrTopoForm'
 export BathchRestatrTopoSearch from './toolSet/BatchRestartTopo/BathchRestatrTopoSearch'
 export BathchRestatrTopoRestart from './toolSet/BatchRestartTopo/BathchRestatrTopoRestart'
+export OggCanalDeploySearch from './toolSet/OggCanalDeployInfo/OggCanalDeploySearch'
 export OggCanalDeployForm from './toolSet/OggCanalDeployInfo/OggCanalDeployForm'
 export OggCanalDeployModifyModal from './toolSet/OggCanalDeployInfo/OggCanalDeployModifyModal'
 

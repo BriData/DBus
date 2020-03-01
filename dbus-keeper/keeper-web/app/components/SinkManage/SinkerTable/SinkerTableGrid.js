@@ -91,11 +91,15 @@ export default class SinkerTableGrid extends Component {
   render() {
     const {
       sinkerTableList,
-      tableWidth
+      tableWidth,
+      onSelectionChange,
+      selectedRowKeys
     } = this.props
     const list = sinkerTableList && sinkerTableList.list
     const pagination = {
       showQuickJumper: true,
+      showSizeChanger: true,
+      pageSizeOptions: ['10', '20', '50', '100'],
       current: (sinkerTableList && sinkerTableList.pageNum) || 1,
       pageSize: (sinkerTableList && sinkerTableList.pageSize) || 10,
       total: sinkerTableList && sinkerTableList.total,
@@ -159,6 +163,10 @@ export default class SinkerTableGrid extends Component {
           dataSource={list}
           columns={columns}
           pagination={pagination}
+          rowSelection={{
+            onChange: onSelectionChange,
+            selectedRowKeys: selectedRowKeys
+          }}
         />
       </div>
     )

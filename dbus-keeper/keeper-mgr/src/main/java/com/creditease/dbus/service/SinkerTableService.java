@@ -39,4 +39,7 @@ public class SinkerTableService {
         return sender.post(ServiceNames.KEEPER_SERVICE, "/sinkerTable/update", table).getBody();
     }
 
+    public void batchDeleteSinkerTable(List<Integer> ids) {
+        ids.forEach(id -> delete(id));
+    }
 }

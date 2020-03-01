@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Button, Col, Form, Input, message, Modal, Row, Table} from 'antd'
+import {Button, Col, Form, Icon, Input, message, Modal, Row, Switch, Table} from 'antd'
 import {FormattedMessage} from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
@@ -31,14 +31,31 @@ export default class SinkerTopologyAddSchemaModal extends Component {
     </div>
   )
 
+  renderPermission = () => (text, record, index) => {
+    return (
+      <div title={text}>
+        <Switch
+          checkedChildren={<Icon type="check"/>}
+          unCheckedChildren={<Icon type="cross"/>}
+          size="small"
+          defaultChecked={true}
+          onChange={value => this.handleSwitchChange(value, record.schemaId)}
+        />
+      </div>)
+  }
+
+  handleSwitchChange = (value, schemaId) => {
+    const {onAddAllTableChange} = this.props
+    onAddAllTableChange(value, schemaId)
+  }
+
   handleSubmit = () => {
     const {onClose, record} = this.props
-    const {selectedRows, onSetSelectRows, sinkerSchemaList} = this.props
+    const {selectedRows, onSetSelectRows} = this.props
     Request(ADD_SINKER_SCHEMAS_API, {
       data: {
         sinkerTopology: record,
-        sinkerSchemaList: selectedRows,
-        originalSinkerSchemaList: sinkerSchemaList.filter(item => item.id != null && item.sinkerTopoId === record.id)
+        sinkerSchemaList: selectedRows
       },
       method: 'post'
     })
@@ -78,30 +95,6 @@ export default class SinkerTopologyAddSchemaModal extends Component {
     const {getFieldDecorator} = this.props.form
     const {visible, key, record, onClose, sinkerSchemaList, onSetSelectRows} = this.props
     const columns = [
-      // {
-      //   title: (
-      //     <FormattedMessage
-      //       id="app.components.sinkManage.sinkerTopo.id"
-      //       defaultMessage="id"
-      //     />
-      //   ),
-      //   width: '5%',
-      //   dataIndex: 'id',
-      //   key: 'id',
-      //   render: this.renderComponent(this.renderNomal)
-      // },
-      // {
-      //   title: (
-      //     <FormattedMessage
-      //       id="app.components.sinkManage.sinkerTopo.sinkerName"
-      //       defaultMessage="Sinker Name"
-      //     />
-      //   ),
-      //   width: '10%',
-      //   dataIndex: 'sinkerName',
-      //   key: 'sinkerName',
-      //   render: this.renderComponent(this.renderNomal)
-      // },
       {
         title: (
           <FormattedMessage
@@ -109,7 +102,7 @@ export default class SinkerTopologyAddSchemaModal extends Component {
             defaultMessage="dsName"
           />
         ),
-        width: '10%',
+        width: '12%',
         dataIndex: 'dsName',
         key: 'dsName',
         render: this.renderComponent(this.renderNomal)
@@ -133,7 +126,7 @@ export default class SinkerTopologyAddSchemaModal extends Component {
             defaultMessage="schema"
           />
         ),
-        width: '10%',
+        width: '12%',
         dataIndex: 'schemaName',
         key: 'schemaName',
         render: this.renderComponent(this.renderNomal)
@@ -145,10 +138,17 @@ export default class SinkerTopologyAddSchemaModal extends Component {
             defaultMessage="目标Topic"
           />
         ),
-        width: '15%',
+        width: '18%',
         dataIndex: 'targetTopic',
         key: 'targetTopic',
         render: this.renderComponent(this.renderNomal)
+      },
+      {
+        title: '添加全部表',
+        width: '%8',
+        render: this.renderComponent(
+          this.renderPermission('%5')
+        )
       }
     ]
 
@@ -221,4 +221,5 @@ export default class SinkerTopologyAddSchemaModal extends Component {
   }
 }
 
-SinkerTopologyAddSchemaModal.propTypes = {}
+SinkerTopologyAddSchemaModal
+  .propTypes = {}

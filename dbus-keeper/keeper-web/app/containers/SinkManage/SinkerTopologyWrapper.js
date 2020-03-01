@@ -246,6 +246,15 @@ export default class SinkerTopologyWrapper extends Component {
     })
   }
 
+  handleAddAllTableFlagChangeModal = (value, schemaId) => {
+    const {sinkerSchemaList} = this.state
+    sinkerSchemaList.map(item => {
+      if (item.schemaId === schemaId) {
+        item.addAllTable = value
+      }
+    })
+  }
+
   handleSearchSchemaList = (record) => {
     Request(SEARCH_ALL_SINKER_SCHEMA_API, {
       params: {
@@ -384,6 +393,7 @@ export default class SinkerTopologyWrapper extends Component {
           onSearchSchemaList={this.handleSearchSchemaList}
           selectedRows={selectedRows}
           onSetSelectRows={this.handleSetSelectRows}
+          onAddAllTableChange={this.handleAddAllTableFlagChangeModal}
         />
       </div>
     )

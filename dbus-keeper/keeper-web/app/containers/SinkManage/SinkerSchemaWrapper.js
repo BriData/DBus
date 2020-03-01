@@ -14,7 +14,11 @@ import {sinkerSchemaModel} from './selectors'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
 import {searchSinkerSchemaList, setSearchSinkerSchemaParam} from './redux'
 import Request from "@/app/utils/request";
-import {SEARCH_ALL_SINKER_TABLE_API} from "@/app/containers/SinkManage/api";
+import {
+  BATCH_ADD_SINKER_TABLES_API,
+  BATCH_DELETE_SINKER_SCHEMA_API,
+  SEARCH_ALL_SINKER_TABLE_API
+} from "@/app/containers/SinkManage/api";
 import {message} from "antd";
 
 // 链接reducer和action
@@ -40,7 +44,9 @@ export default class SinkerSchemaWrapper extends Component {
 
       modifySchemaKey: 'modifySchemaKey',
       modifySchemaVisible: false,
-      modifySchemaRecord: null
+      modifySchemaRecord: null,
+
+      selectedRowKeys: []
     }
     this.tableWidth = [
       '6%',
@@ -75,6 +81,12 @@ export default class SinkerSchemaWrapper extends Component {
     const {searchSinkerSchemaList, setSearchSinkerSchemaParam} = this.props
     searchSinkerSchemaList(params)
     setSearchSinkerSchemaParam(params)
+  }
+
+  handleRefresh = () => {
+    const {sinkerSchemaData} = this.props
+    const {sinkerSchemaParams} = sinkerSchemaData
+    this.handleSearch(sinkerSchemaParams)
   }
 
   /**
@@ -145,10 +157,67 @@ export default class SinkerSchemaWrapper extends Component {
     })
   }
 
+  handleSelectionChange = (selectedRowKeys, selectedRows) => {
+    this.setState({selectedRowKeys, selectedRows})
+  }
+
+  handleBatchAddTable = () => {
+    const {selectedRowKeys, selectedRows} = this.state
+    if (!selectedRowKeys.length) {
+      message.error('没有选中任何schema')
+      return
+    }
+    Request(`${BATCH_ADD_SINKER_TABLES_API}`, {
+      data: selectedRows,
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
+          this.setState({
+            selectedRows: [],
+            selectedRowKeys: []
+          })
+          this.handleRefresh()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
+  handleBatchDeleteSchema = () => {
+    const {selectedRowKeys, selectedRows} = this.state
+    if (!selectedRowKeys.length) {
+      message.error('没有选中任何schema')
+      return
+    }
+    var ids = []
+    selectedRows.map(item => ids.push(item.id))
+    Request(`${BATCH_DELETE_SINKER_SCHEMA_API}`, {
+      data: ids,
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
+          this.setState({
+            selectedRows: [],
+            selectedRowKeys: []
+          })
+          this.handleRefresh()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
   render() {
     const {locale, sinkerSchemaData} = this.props
     const {addTableKey, addTableVisible, addTableRecord, selectedRows, sinkerTableList} = this.state
     const {modifySchemaKey, modifySchemaVisible, modifySchemaRecord} = this.state
+    const {selectedRowKeys} = this.state
 
     const {
       sinkerSchemaList,
@@ -180,6 +249,8 @@ export default class SinkerSchemaWrapper extends Component {
           locale={locale}
           searchParams={sinkerSchemaParams}
           onSearch={this.handleSearch}
+          onBatchAddTable={this.handleBatchAddTable}
+          onBatchDeleteSchema={this.handleBatchDeleteSchema}
         />
         <SinkerSchemaGrid
           locale={locale}
@@ -191,6 +262,8 @@ export default class SinkerSchemaWrapper extends Component {
           onPagination={this.handlePagination}
           onMount={this.handleMount}
           onAddTable={this.handleOpenAddTableModal}
+          onSelectionChange={this.handleSelectionChange}
+          selectedRowKeys={selectedRowKeys}
         />
         <SinkerSchemaAddTableModal
           visible={addTableVisible}

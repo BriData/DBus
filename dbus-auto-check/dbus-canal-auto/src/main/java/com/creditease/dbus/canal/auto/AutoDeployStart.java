@@ -163,7 +163,7 @@ public class AutoDeployStart {
         writeAndPrint("************************************ EDIT CANAL.PROPERTIES BEGIN ****************************");
 
         String canalProperties = "canal.properties";
-        int canalPort = getAvailablePort();
+        int canalPort = getAvailablePort(null);
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.port", "canal.port = " + canalPort);
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.zkServers",
                 "canal.zkServers = " + deployProps.getZkPath() + "/DBus/Canal/canal-" + deployProps.getDsName());
@@ -178,7 +178,8 @@ public class AutoDeployStart {
         writeProperties(canalPath + "/conf/" + canalProperties, "classpath:spring/default-instance.xml",
                 "canal.instance.global.spring.xml = classpath:spring/default-instance.xml");
         // 1.1.4新增
-        writeProperties(canalPath + "/conf/" + canalProperties, "canal.metrics.pull.port", "# canal.metrics.pull.port");
+        int metricsPort = getAvailablePort(canalPort);
+        writeProperties(canalPath + "/conf/" + canalProperties, "canal.metrics.pull.port", "canal.metrics.pull.port = " + metricsPort);
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.admin.port", "# canal.admin.port");
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.serverMode", "canal.serverMode = kafka");
         writeProperties(canalPath + "/conf/" + canalProperties, "canal.mq.servers", "canal.mq.servers = " + bootstrapServers);
@@ -261,8 +262,11 @@ public class AutoDeployStart {
         return false;
     }
 
-    private static int getAvailablePort() {
+    private static int getAvailablePort(Integer p) {
         int startPort = 10000;
+        if (p != null) {
+            startPort = p + 1;
+        }
         int endPort = 40000;
         for (int port = startPort; port <= endPort; port++) {
             if (isPortAvailable(port)) {

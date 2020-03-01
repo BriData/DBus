@@ -90,7 +90,7 @@ export default class SinkerTopologyManageGrid extends Component {
     </Tooltip>
   )
 
-  renderStatus =(text, record, index) => {
+  renderStatus = (text, record, index) => {
     let color
     switch (text) {
       case 'new':
@@ -124,7 +124,7 @@ export default class SinkerTopologyManageGrid extends Component {
    * @description selectTable的 option render
    */
   renderOperating = (text, record, index) => {
-    const {onOpenRerunModal, onOpenAddSchemaModal, onOpenMoveSinkerTopicModal,onOpenModifyModal} = this.props
+    const {onOpenRerunModal, onOpenAddSchemaModal, onOpenModifyModal} = this.props
     let menus = [
       {
         text: <FormattedMessage
@@ -133,6 +133,7 @@ export default class SinkerTopologyManageGrid extends Component {
         />,
         icon: 'delete',
         onClick: () => this.handleDelete(record.id),
+        disabled: record.status === 'running' || record.status === 'changed',
         confirmText: <div>
           <FormattedMessage
             id="app.common.delete"
@@ -146,6 +147,7 @@ export default class SinkerTopologyManageGrid extends Component {
           defaultMessage="发送reload消息"
         />,
         icon: 'reload',
+        disabled: record.status !== 'running' && record.status !== 'changed',
         onClick: () => this.handleReload(record),
         confirmText: <div>
           <FormattedMessage
@@ -160,16 +162,8 @@ export default class SinkerTopologyManageGrid extends Component {
           defaultMessage="拖回重跑"
         />,
         icon: 'export',
-        // disabled: record.status !== 'running' && record.status !== 'changed',
+        disabled: record.status !== 'running' && record.status !== 'changed',
         onClick: () => onOpenRerunModal(record),
-      },
-      {
-        text: <FormattedMessage
-          id="app.components.sinkManage.sinkerTopo.moveSinkerTopic"
-          defaultMessage="Sinker Topic迁移"
-        />,
-        icon: 'select',
-        onClick: () => onOpenMoveSinkerTopicModal(record)
       }
     ]
     return (

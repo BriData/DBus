@@ -40,7 +40,7 @@ export default class SinkerTopologyManageSearch extends Component {
                 >
                   <FormattedMessage
                     id="app.components.sinkManage.sinkerTopo.addSinkerTopology"
-                    defaultMessage="添加Sinker拓扑"
+                    defaultMessage="添加Sinker"
                   />
                 </Button>
               </FormItem>

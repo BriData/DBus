@@ -102,13 +102,7 @@ export default class SinkerTopologyForm extends Component {
         onCancel={() => onClose()}
         onOk={this.handleSubmit}
         confirmLoading={false}
-        title={modalStatus === 'modify' ? <FormattedMessage
-          id="app.components.sinkManage.modifySink"
-          defaultMessage="修改Sinker"
-        /> : <FormattedMessage
-          id="app.components.sinkManage.addSink"
-          defaultMessage="添加Sinker"
-        />}
+        title={modalStatus === 'modify' ? '修改Sinker' : '添加Sinker'}
       >
         <Form autoComplete="off" layout="horizontal">
           {modalStatus === 'modify' && (<FormItem

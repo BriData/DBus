@@ -81,4 +81,26 @@ public class SinkerSchemaService {
                 .getPayload(SinkerTopologySchema[].class);
         return payload == null ? null : Arrays.asList(payload);
     }
+
+    public void batchAddSinkerTables(List<SinkerTopologySchema> schemas) {
+        schemas.forEach(schema -> {
+            SinkerTopologyTable[] sinkerTopologyTables = sinkerTableService.searchAll("?schemaId=" + schema.getSchemaId()).getPayload(SinkerTopologyTable[].class);
+            List<SinkerTopologyTable> addTables = Arrays.stream(sinkerTopologyTables).filter(table -> table.getSinkerTopoId() == null)
+                    .map(table -> {
+                        table.setSinkerTopoId(schema.getSinkerTopoId());
+                        table.setSinkerName(schema.getSinkerName());
+                        return table;
+                    }).collect(Collectors.toList());
+            if (addTables != null && !addTables.isEmpty()) {
+                Integer count = sinkerTableService.addSinkerTables(addTables);
+                if (addTables.size() != count) {
+                    throw new RuntimeException("添加sinker表失败.");
+                }
+            }
+        });
+    }
+
+    public void batchDeleteSinkerSchema(List<Integer> ids) {
+        ids.forEach(id -> delete(id));
+    }
 }

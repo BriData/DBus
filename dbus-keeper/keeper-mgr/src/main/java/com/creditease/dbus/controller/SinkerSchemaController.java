@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -67,6 +68,28 @@ public class SinkerSchemaController extends BaseController {
             return resultEntityBuilder().build();
         } catch (Exception e) {
             logger.error("Exception encountered while add sinker topology tables", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping(path = "/batchAddSinkerTables")
+    public ResultEntity batchAddSinkerTables(@RequestBody List<SinkerTopologySchema> schemas) {
+        try {
+            service.batchAddSinkerTables(schemas);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while batch add sinker topology tables", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @PostMapping(path = "/batchDeleteSinkerSchema")
+    public ResultEntity batchDeleteSinkerSchema(@RequestBody List<Integer> ids) {
+        try {
+            service.batchDeleteSinkerSchema(ids);
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while batch delete sinker topology schema", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

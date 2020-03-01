@@ -390,7 +390,7 @@
   "app.components.sinkManage.modifySink": "修改Sink",
   "app.components.sinkManage.sinkerTopo.id": "ID",
   "app.components.sinkManage.sinkerTopo.sinkerName": "Sinker Name",
-  "app.components.sinkManage.sinkerTopo.addSinkerTopology": "添加Sinker拓扑",
+  "app.components.sinkManage.sinkerTopo.addSinkerTopology": "添加Sinker",
   "app.components.sinkManage.sinkerTopo.moveSinkerTopic": "Sinker Topic迁移",
   "app.components.sinkManage.sinkerTopo.sinkerManage": "Sinker管理",
   "app.components.userManage.userType": "用户类型",

@@ -9,6 +9,9 @@ import {sinkerTableModel} from './selectors'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
 import {searchSinkerTableList, setSearchSinkerTableParam} from './redux'
 import SinkerTableForm from "@/app/components/SinkManage/SinkerTable/SinkerTableForm";
+import {message} from "antd";
+import Request from "@/app/utils/request";
+import {BATCH_DELETE_SINKER_TABLE_API} from "@/app/containers/SinkManage/api";
 // action
 
 // 链接reducer和action
@@ -28,7 +31,10 @@ export default class SinkerTableWrapper extends Component {
     this.state = {
       modifyTableKey: 'modifyTableKey',
       modifyTableVisible: false,
-      modifyTableRecord: null
+      modifyTableRecord: null,
+
+      selectedRows: [],
+      selectedRowKeys: []
     }
     this.tableWidth = [
       '6%',
@@ -65,6 +71,12 @@ export default class SinkerTableWrapper extends Component {
     setSearchSinkerTableParam(params)
   }
 
+  handleRefresh = () => {
+    const {sinkerTableData} = this.props
+    const {sinkerTableParams} = sinkerTableData
+    this.handleSearch(sinkerTableParams)
+  }
+
   /**
    * @param page  传入的跳转页码  type:[Object Number]
    * @description sinkerTopology分页
@@ -89,6 +101,37 @@ export default class SinkerTableWrapper extends Component {
     })
   }
 
+  handleSelectionChange = (selectedRowKeys, selectedRows) => {
+    this.setState({selectedRowKeys, selectedRows})
+  }
+
+  handleBatchDeleteTable = () => {
+    const {selectedRowKeys, selectedRows} = this.state
+    if (!selectedRowKeys.length) {
+      message.error('没有选中任何表')
+      return
+    }
+    var ids = []
+    selectedRows.map(item => ids.push(item.id))
+    Request(`${BATCH_DELETE_SINKER_TABLE_API}`, {
+      data: ids,
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
+          this.setState({
+            selectedRows: [],
+            selectedRowKeys: []
+          })
+          this.handleRefresh()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
   render() {
     const {locale, sinkerTableData} = this.props
     const {modifyTableKey, modifyTableVisible, modifyTableRecord} = this.state
@@ -96,6 +139,8 @@ export default class SinkerTableWrapper extends Component {
       sinkerTableList,
       sinkerTableParams
     } = sinkerTableData
+
+    const {selectedRowKeys} = this.state
 
     const breadSource = [
       {
@@ -122,6 +167,7 @@ export default class SinkerTableWrapper extends Component {
           locale={locale}
           searchParams={sinkerTableParams}
           onSearch={this.handleSearch}
+          onBatchDeleteTable={this.handleBatchDeleteTable}
         />
         <SinkerTableGrid
           locale={locale}
@@ -132,6 +178,8 @@ export default class SinkerTableWrapper extends Component {
           onSearch={this.handleSearch}
           onPagination={this.handlePagination}
           onMount={this.handleMount}
+          onSelectionChange={this.handleSelectionChange}
+          selectedRowKeys={selectedRowKeys}
         />
         <SinkerTableForm
           visible={modifyTableVisible}

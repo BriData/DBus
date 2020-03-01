@@ -4,9 +4,9 @@ import {createStructuredSelector} from 'reselect'
 import {message} from 'antd'
 // import Helmet from 'react-helmet'
 // 导入自定义组件
-import {OggCanalDeployForm, OggCanalDeployModifyModal} from '@/app/components'
+import {OggCanalDeployForm, OggCanalDeployModifyModal, OggCanalDeploySearch} from '@/app/components'
 import {makeSelectLocale} from '../LanguageProvider/selectors'
-import {GET_OGG_CANAL_DEPLOY_INFO} from './api'
+import {GET_OGG_CANAL_DEPLOY_INFO, SYNC_OGG_CANAL_DEPLOY_INFO} from './api'
 import Request from "@/app/utils/request";
 // 链接reducer和action
 @connect(
@@ -22,7 +22,9 @@ export default class OggCanalDeployWrapper extends Component {
       deployInfos: null,
       modalVisible: false,
       modalRecord: {},
-      modalKey: 'modalKey'
+      modalKey: 'modalKey',
+
+      loading: false
     }
   }
 
@@ -36,7 +38,6 @@ export default class OggCanalDeployWrapper extends Component {
     })
       .then(res => {
         if (res && res.status === 0) {
-          console.log(res.payload)
           this.setState({
             deployInfos: res.payload
           })
@@ -75,11 +76,36 @@ export default class OggCanalDeployWrapper extends Component {
     })
   }
 
+  handleSync = () => {
+    this.setState({loading: true})
+    Request(SYNC_OGG_CANAL_DEPLOY_INFO, {
+      method: 'get'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          this.handleGetDeployInfo()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+    this.setState({loading: false})
+  }
+
   render() {
-    const {deployInfos} = this.state
+    const {deployInfos, loading} = this.state
     const {modalKey, modalVisible, modalRecord} = this.state
     return (
       <div>
+        <OggCanalDeploySearch
+          onSearch={this.handleGetDeployInfo}
+          onSync={this.handleSync}
+          loading={loading}
+        />
         <OggCanalDeployForm
           info={deployInfos}
           onModify={this.handleOpenModifyModal}

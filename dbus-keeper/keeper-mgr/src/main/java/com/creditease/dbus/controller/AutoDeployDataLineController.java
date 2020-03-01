@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -151,6 +151,21 @@ public class AutoDeployDataLineController extends BaseController {
             return resultEntityBuilder().build();
         } catch (Exception e) {
             logger.error("Exception encountered while updateOggCanalDeployInfo ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    /**
+     * 更新canal,ogg的部署详情到zk节点
+     *
+     * @return
+     */
+    @GetMapping(path = "syncOggCanalDeployInfo")
+    public ResultEntity syncOggCanalDeployInfo() {
+        try {
+            return resultEntityBuilder().payload(service.syncOggCanalDeployInfo()).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while syncOggCanalDeployInfo ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

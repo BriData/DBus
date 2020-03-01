@@ -40,7 +40,6 @@ export default class OggCanalDeployModifyModal extends Component {
   render () {
     const {getFieldDecorator} = this.props.form
     const {key, visible, deployInfo, onClose} = this.props
-    console.info(deployInfo)
     const formItemLayout = {
       labelCol: {
         xs: {span: 5},

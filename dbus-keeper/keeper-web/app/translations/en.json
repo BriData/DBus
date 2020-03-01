@@ -390,7 +390,7 @@
   "app.components.sinkManage.modifySink": "Modify Sink",
   "app.components.sinkManage.sinkerTopo.id": "ID",
   "app.components.sinkManage.sinkerTopo.sinkerName": "Sinker Name",
-  "app.components.sinkManage.sinkerTopo.addSinkerTopology": "Add Sinker Topology",
+  "app.components.sinkManage.sinkerTopo.addSinkerTopology": "Add Sinker",
   "app.components.sinkManage.sinkerTopo.moveSinkerTopic": "Move Sinker Topic",
   "app.components.sinkManage.sinkerTopo.sinkerManage": "Sinker Manage",
   "app.components.userManage.userType": "User Role",

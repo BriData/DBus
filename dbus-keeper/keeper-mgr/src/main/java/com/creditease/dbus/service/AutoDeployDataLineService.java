@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -654,6 +654,9 @@ public class AutoDeployDataLineService {
         String zkString = env.getProperty("zk.str");
         String canalPath = canalConf.getString(KeeperConstants.CANAL_PATH);
 
+        Properties properties = zkService.getProperties(Constants.GLOBAL_PROPERTIES_ROOT);
+        String bs = properties.getProperty(KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS);
+
         checkCanalTool(host, port, user, canalPath);
         Integer slaveId = getCanalSlaveId(1).get(0);
 
@@ -666,6 +669,7 @@ public class AutoDeployDataLineService {
         sb.append(" -u ").append(canalUser);
         sb.append(" -p ").append(canalPass);
         sb.append(" -s ").append(slaveId);
+        sb.append(" -bs ").append(bs);
         sb.append("'");
         String result = SSHUtils.executeCommand(user, host, Integer.parseInt(port), env.getProperty("pubKeyPath"), sb.toString(), true);
         if (result == null) {
@@ -807,37 +811,20 @@ public class AutoDeployDataLineService {
         }
         //2.获取所有ogg replicat进程状态信息
         JSONObject oggDeployConf = oggConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF);
+        Map<String, Map<String, String>> replicatState = getAllOggInfos(hosts, oggDeployConf);
 
-        String pubKeyPath = env.getProperty("pubKeyPath");
-        HashMap<String, String> oggStatus = new HashMap<>();
-        for (String host : hosts) {
-            JSONObject hostInfo = oggDeployConf.getJSONObject(host);
-            if (hostInfo != null) {
-                Integer port = hostInfo.getInteger(KeeperConstants.PORT);
-                String user = hostInfo.getString(KeeperConstants.USER);
-                String oggPath = hostInfo.getString(KeeperConstants.OGG_PATH);
-                String command = "(echo info all;echo exit)|" + oggPath + "/ggsci";
-                String result = SSHUtils.executeCommand(user, host, port, pubKeyPath, command, false);
-                String[] split = result.split("\\n");
-                String line = "";
-                for (int i = 0; i < split.length; i++) {
-                    line = split[i];
-                    if (StringUtils.isNoneBlank(line) && line.contains("REPLICAT")) {
-                        while (line.contains("  ")) {
-                            line = line.replace("  ", " ");
-                        }
-                        String[] s = line.split(" ");
-                        oggStatus.put(s[2], s[1]);
-                    }
-                }
-            }
-        }
         //3.状态整理
         HashMap<String, HashMap<String, String>> statusMap = new HashMap<>();
         for (Map.Entry<String, HashMap<String, String>> entry : replicats.entrySet()) {
-            String key = entry.getKey();
+            String replicatName = entry.getKey();
             HashMap<String, String> value = entry.getValue();
-            value.put("state", oggStatus.get(key.toUpperCase()));
+
+            Map<String, String> replicat = replicatState.get(replicatName.toUpperCase());
+            if (replicat == null) {
+                logger.info("replicat {} not exist.", replicatName);
+                continue;
+            }
+            String state = value.put("state", replicat.get("state"));
             statusMap.put(value.get("dsName"), value);
         }
         //4.状态信息处理
@@ -894,21 +881,7 @@ public class AutoDeployDataLineService {
             }
         }
         //2.获取所有canal进程状态信息
-        JSONObject canalDeployConf = canalConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF);
-        String command = "ps -ef | grep 'canal' | grep -v grep";
-        String pubKeyPath = env.getProperty("pubKeyPath");
-        ArrayList<String> canalResults = new ArrayList<>();
-        for (String host : hosts) {
-            JSONObject hostInfo = canalDeployConf.getJSONObject(host);
-            if (hostInfo != null) {
-                String user = hostInfo.getString(KeeperConstants.USER);
-                Integer port = hostInfo.getInteger(KeeperConstants.PORT);
-                String result = SSHUtils.executeCommand(user, host, port, pubKeyPath, command, false);
-                for (String line : result.split("\\n")) {
-                    canalResults.add(line);
-                }
-            }
-        }
+        Set<String> canalResults = getAllCanalInfos(canalConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF), hosts).keySet();
         //3.状态信息处理
         ArrayList<HashMap<String, String>> canalStatus = new ArrayList<>();
         for (DataSource ds : dataSourceList) {
@@ -1040,4 +1013,108 @@ public class AutoDeployDataLineService {
         zkService.setData(Constants.CANAL_PROPERTIES_ROOT, JsonFormatUtils.toPrettyFormat(canalConfJson.toJSONString()).getBytes(KeeperConstants.UTF8));
     }
 
+    public int syncOggCanalDeployInfo() throws Exception {
+        //获取并更新所有canal部署信息
+        JSONObject canalConfJson = this.getCanalConf();
+        HashMap<String, HashMap<String, String>> canals = new HashMap<>();
+        Set<String> hosts = new HashSet<>();
+        JSONObject deployConf = canalConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF);
+        if (deployConf != null) {
+            hosts = deployConf.keySet();
+        }
+        JSONObject dsCanalConf = canalConfJson.getJSONObject(KeeperConstants.DS_CANAL_CONF);
+        if (dsCanalConf != null) {
+            Map<String, String> canalResults = getAllCanalInfos(canalConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF), hosts);
+            for (Map.Entry<String, String> entry : canalResults.entrySet()) {
+                String info = entry.getKey();
+                String host = entry.getValue();
+                for (Map.Entry<String, Object> conf : dsCanalConf.entrySet()) {
+                    String dsName = conf.getKey();
+                    JSONObject value = (JSONObject) conf.getValue();
+                    // 找到对应的数据线的canal进程
+                    if (info.contains("canal-" + dsName + "/")) {
+                        value.put(KeeperConstants.HOST, host);
+                    }
+                }
+            }
+        }
+        zkService.setData(Constants.CANAL_PROPERTIES_ROOT,
+                JsonFormatUtils.toPrettyFormat(canalConfJson.toJSONString()).getBytes(KeeperConstants.UTF8));
+
+        //获取并更新所有ogg replicat部署信息
+        JSONObject oggConfJson = this.getOggConf();
+        hosts.clear();
+        deployConf = oggConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF);
+        if (deployConf != null) {
+            hosts = deployConf.keySet();
+        }
+        JSONObject dsOggConf = oggConfJson.getJSONObject(KeeperConstants.DS_OGG_CONF);
+        if (dsOggConf != null) {
+            JSONObject oggDeployConf = oggConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF);
+            Map<String, Map<String, String>> replicats = getAllOggInfos(hosts, oggDeployConf);
+            for (Map.Entry<String, Object> conf : dsOggConf.entrySet()) {
+                JSONObject value = (JSONObject) conf.getValue();
+                Map<String, String> replicat = replicats.get(value.getString(KeeperConstants.REPLICAT_NAME).toUpperCase());
+                if (replicat == null) {
+                    logger.info("replicat {} not exist.", value.getString(KeeperConstants.REPLICAT_NAME));
+                    continue;
+                }
+                value.put(KeeperConstants.HOST, replicat.get("host"));
+            }
+        }
+        zkService.setData(Constants.OGG_PROPERTIES_ROOT,
+                JsonFormatUtils.toPrettyFormat(oggConfJson.toJSONString()).getBytes(KeeperConstants.UTF8));
+        return 0;
+    }
+
+    private Map<String, Map<String, String>> getAllOggInfos(Set<String> hosts, JSONObject oggDeployConf) {
+        String pubKeyPath = env.getProperty("pubKeyPath");
+        Map<String, Map<String, String>> replicats = new HashMap<>();
+        for (String host : hosts) {
+            JSONObject hostInfo = oggDeployConf.getJSONObject(host);
+            if (hostInfo != null) {
+                Integer port = hostInfo.getInteger(KeeperConstants.PORT);
+                String user = hostInfo.getString(KeeperConstants.USER);
+                String oggPath = hostInfo.getString(KeeperConstants.OGG_PATH);
+                String command = "(echo info all;echo exit)|" + oggPath + "/ggsci";
+                String result = SSHUtils.executeCommand(user, host, port, pubKeyPath, command, false);
+                String[] split = result.split("\\n");
+                String line = "";
+                for (int i = 0; i < split.length; i++) {
+                    HashMap<String, String> replicat = new HashMap<>();
+                    line = split[i];
+                    if (StringUtils.isNoneBlank(line) && line.contains("REPLICAT")) {
+                        while (line.contains("  ")) {
+                            line = line.replace("  ", " ");
+                        }
+                        String[] s = line.split(" ");
+                        replicat.put("host", host);
+                        replicat.put("replicat", s[2]);
+                        replicat.put("state", s[1]);
+                        replicats.put(s[2], replicat);
+                    }
+                }
+            }
+        }
+        return replicats;
+    }
+
+    private Map<String, String> getAllCanalInfos(JSONObject canalDeployConf, Set<String> hosts) {
+        //获取所有canal进程状态信息
+        String command = "ps -ef | grep 'canal' | grep -v grep";
+        String pubKeyPath = env.getProperty("pubKeyPath");
+        Map<String, String> canalResults = new HashMap<>();
+        for (String host : hosts) {
+            JSONObject hostInfo = canalDeployConf.getJSONObject(host);
+            if (hostInfo != null) {
+                String user = hostInfo.getString(KeeperConstants.USER);
+                Integer port = hostInfo.getInteger(KeeperConstants.PORT);
+                String result = SSHUtils.executeCommand(user, host, port, pubKeyPath, command, false);
+                for (String line : result.split("\\n")) {
+                    canalResults.put(line, host);
+                }
+            }
+        }
+        return canalResults;
+    }
 }

@@ -31,10 +31,13 @@ export const UPDATE_SINKER_SCHEMA_API = '/keeper/sinkerSchema/update'
 export const DELETE_SINKER_SCHEMA_API = '/keeper/sinkerSchema/delete'
 export const SEARCH_ALL_SINKER_SCHEMA_API = '/keeper/sinkerSchema/searchAll'
 export const ADD_SINKER_TABLES_API = '/keeper/sinkerSchema/addSinkerTables'
+export const BATCH_ADD_SINKER_TABLES_API = '/keeper/sinkerSchema/batchAddSinkerTables'
+export const BATCH_DELETE_SINKER_SCHEMA_API = '/keeper/sinkerSchema/batchDeleteSinkerSchema'
 
 // sinkerTable
 export const SEARCH_SINKER_TABLE_API = '/keeper/sinkerTable/search'
 export const SEARCH_ALL_SINKER_TABLE_API = '/keeper/sinkerTable/searchAll'
 export const DELETE_SINKER_TABLE_API = '/keeper/sinkerTable/delete'
 export const UPDATE_SINKER_TABLE_API = '/keeper/sinkerTable/update'
+export const BATCH_DELETE_SINKER_TABLE_API = '/keeper/sinkerTable/batchDeleteSinkerTable'
 

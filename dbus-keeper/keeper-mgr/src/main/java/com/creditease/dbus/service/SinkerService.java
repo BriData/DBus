@@ -292,9 +292,15 @@ public class SinkerService {
                     throw new RuntimeException(String.format("Topic %s 只能在一个sinker消费.", schema.getTargetTopic()));
                 }
             }
+            // 添加schama
             int count = sinkerSchemaService.addSinkerSchemas(addSchemas);
             if (addSchemas.size() != count) {
                 throw new RuntimeException("添加sinker Schema失败.");
+            }
+            // 添加table
+            List<SinkerTopologySchema> addSchemaTables = addSchemas.stream().filter(schema -> schema.getAddAllTable() == null || schema.getAddAllTable()).collect(Collectors.toList());
+            if (addSchemaTables != null && !addSchemaTables.isEmpty()) {
+                sinkerSchemaService.batchAddSinkerTables(addSchemaTables);
             }
         }
     }

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -405,24 +405,26 @@ public class DataSourceService {
         dataSource.setCanalPass(canalPass);
         int i = autoAddOggCanalLine(dataSource);
         if (i != 0) return i;
-        List<DataTable> tables = tableService.getTablesByDsId(dataSource.getId());
-        ConcurrentMap<String, List<DataTable>> tableMap = tables.stream().collect(Collectors.groupingByConcurrent(DataTable::getSchemaName));
+        if (dataSource.getDsType().equalsIgnoreCase("oracle")) {
+            List<DataTable> tables = tableService.getTablesByDsId(dataSource.getId());
+            ConcurrentMap<String, List<DataTable>> tableMap = tables.stream().collect(Collectors.groupingByConcurrent(DataTable::getSchemaName));
 
-        HashMap<String, String> param = new HashMap<>();
-        for (Map.Entry<String, List<DataTable>> entry : tableMap.entrySet()) {
-            String schema = entry.getKey();
-            List<DataTable> tableList = entry.getValue();
-            if (schema.equalsIgnoreCase("dbus")) {
-                continue;
+            HashMap<String, String> param = new HashMap<>();
+            for (Map.Entry<String, List<DataTable>> entry : tableMap.entrySet()) {
+                String schema = entry.getKey();
+                List<DataTable> tableList = entry.getValue();
+                if (schema.equalsIgnoreCase("dbus")) {
+                    continue;
+                }
+                StringBuilder tableNames = new StringBuilder();
+                tableList.forEach(dataTable -> {
+                    tableNames.append(dataTable.getTableName()).append(",");
+                });
+                param.put("dsName", dsName);
+                param.put("schemaName", schema);
+                param.put("tableNames", tableNames.substring(0, tableNames.length() - 1).toString());
+                autoDeployDataLineService.addOracleSchema(param);
             }
-            StringBuilder tableNames = new StringBuilder();
-            tableList.forEach(dataTable -> {
-                tableNames.append(dataTable.getTableName()).append(",");
-            });
-            param.put("dsName", dsName);
-            param.put("schemaName", schema);
-            param.put("tableNames", tableNames.substring(0, tableNames.length() - 1).toString());
-            autoDeployDataLineService.addOracleSchema(param);
         }
         return 0;
     }

@@ -13,8 +13,12 @@
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from t_sinker_topo
-    where id = #{id,jdbcType=INTEGER}
+    DELETE st.*, ts.*, tt.*
+    FROM
+        t_sinker_topo st
+    LEFT JOIN t_sinker_topo_schema ts ON st.id = ts.sinker_topo_id
+    LEFT JOIN t_sinker_topo_table tt ON st.id = tt.sinker_topo_id
+    where st.id = #{id,jdbcType=INTEGER}
   </delete>
   <insert id="insert" parameterType="com.creditease.dbus.domain.model.SinkerTopology">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
