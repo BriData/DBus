@@ -228,7 +228,7 @@
     "js-md5": "^0.7.3",
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "4.17.2",
-    "minimist": "1.2.0",
+    "minimist": "1.2.2",
     "net": "^1.0.2",
     "particles": "^0.3.1",
     "prop-types": "^15.5.10",
