@@ -314,6 +314,7 @@ unzip deployer-0.6.1.zip
 cp tmp/deployer-0.6.1/lib/*  deployer-0.6.0/lib -r
 cp tmp/deployer-0.6.1/extlib/* deployer-0.6.0/extlib -r
 cp tmp/deployer-0.6.1/zip/* deployer-0.6.0/zip -r
+cp tmp/deployer-0.6.1/bin/* deployer-0.6.0/bin -r
 ```
 
 复制deployer-0.6.1/zip/build.zip包到nginx/html目录,替换原有的html包并重新解压
@@ -486,7 +487,15 @@ zk.str=必须修改 zk_server_ip1:2181,zk_server_ip2:2181,zk_server_ip3:2181
 influxdb.dbus.url=必须修改 http://influxdb_server_ip:8086
 ```
 
-#### 4.2.4 启动DBus-Keeper
+#### 4.2.4 数据库表结构变更升级
+
+dbusmgr数据库升级,根据你当前使用的版本执行下边对应的alter语句,二选一
+
+https://github.com/BriData/DBus/tree/master/init-scripts/alter-dbusmgr
+
+#### 4.2.5 启动DBus-Keeper
+
+先停止0.5.0的web服务,在启动新的web服务
 
 ```
 # 初始化web jar包
@@ -495,13 +504,13 @@ influxdb.dbus.url=必须修改 http://influxdb_server_ip:8086
 ./start.sh
 ```
 
-#### 4.2.5 初始化
+#### 4.2.6 初始化
 
 登录新的web,配置中心->zk管理->删除zk节点/DBus/ConfTemplates;
 
 配置中心->全局配置->点击 [保存全局配置并初始化ZK节点] 和 [保存全局配置并初始化Storm] 
 
-#### 4.2.6 数据源升级
+#### 4.2.7 数据源升级
 
 新版dbus mysql数据源使用最新版的canal-1.1.4,同时废弃了mysql-extractor模块,采用canal直接落kafka
 
