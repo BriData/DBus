@@ -6,7 +6,7 @@
     <parent>
         <artifactId>dbus-main</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.6.0</version>
+        <version>0.6.1</version>
     </parent>
 
     <artifactId>deployer</artifactId>

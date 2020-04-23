@@ -46,16 +46,18 @@
   </insert>
   <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.SinkerTopologyTable">
     update t_sinker_topo_table
-    set sinker_topo_id = #{sinkerTopoId,jdbcType=INTEGER},
-      sinker_name = #{sinkerName,jdbcType=VARCHAR},
-      ds_id = #{dsId,jdbcType=INTEGER},
-      ds_name = #{dsName,jdbcType=VARCHAR},
-      schema_id = #{schemaId,jdbcType=INTEGER},
-      schema_name = #{schemaName,jdbcType=VARCHAR},
-      table_id = #{tableId,jdbcType=INTEGER},
-      table_name = #{tableName,jdbcType=VARCHAR},
-      description = #{description,jdbcType=VARCHAR},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    <set>
+      <if test="sinkerTopoId != null">sinker_topo_id = #{sinkerTopoId,jdbcType=INTEGER},</if>
+      <if test="sinkerName != null and sinkerName != ''">sinker_name = #{sinkerName,jdbcType=VARCHAR},</if>
+      <if test="dsId != null">ds_id = #{dsId,jdbcType=INTEGER},</if>
+      <if test="dsName != null and dsName != ''">ds_name = #{dsName,jdbcType=VARCHAR},</if>
+      <if test="schemaId != null">schema_id = #{schemaId,jdbcType=INTEGER},</if>
+      <if test="schemaName != null and schemaName != ''">schema_name = #{schemaName,jdbcType=VARCHAR},</if>
+      <if test="tableId != null">table_id = #{tableId,jdbcType=INTEGER},</if>
+      <if test="tableName != null and tableName != ''">table_name = #{tableName,jdbcType=VARCHAR},</if>
+      <if test="description != null and description != ''">description = #{description,jdbcType=VARCHAR},</if>
+      update_time = current_timestamp()
+    </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">

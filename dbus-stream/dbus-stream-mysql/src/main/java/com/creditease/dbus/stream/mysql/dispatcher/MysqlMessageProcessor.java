@@ -25,18 +25,19 @@ import com.alibaba.otter.canal.client.CanalMessageDeserializer;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.CanalPacket;
 import com.alibaba.otter.canal.protocol.Message;
+import com.creditease.dbus.stream.common.Constants;
 import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.stream.common.HeartBeatPacket;
+import com.creditease.dbus.stream.common.appender.bean.DataTable;
+import com.creditease.dbus.stream.common.dispatcher.DbusCache;
+import com.creditease.dbus.stream.common.dispatcher.GlobalCache;
 import com.creditease.dbus.stream.common.tools.IGenericMessage;
 import com.creditease.dbus.stream.common.tools.MessageProcessor;
 import com.creditease.dbus.stream.common.tools.TableStatMap;
-import com.google.protobuf.ByteString;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Created by dongwang47 on 2016/8/18.
@@ -65,10 +66,54 @@ public class MysqlMessageProcessor extends MessageProcessor {
         Message message = CanalMessageDeserializer.deserializer(data);
         List<IGenericMessage> list = new ArrayList<>();
         for (CanalEntry.Entry entry : message.getEntries()) {
+            if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONBEGIN || entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND) {
+                logger.debug("the entry type is transaction begin or transaction end.");
+                continue;
+            }
+            //处理带正则的表名
+            String schemaName = entry.getHeader().getSchemaName();
+            String tableName = entry.getHeader().getTableName();
+            String localTable = getLocalTable(schemaName, tableName);
+            logger.debug("收到表数据{}.{}(基准表名{})数据", schemaName, tableName, localTable);
+            if (!StringUtils.equals(tableName, localTable)) {
+                String finalTable = StringUtils.join(new String[]{localTable, tableName}, ".");
+                CanalEntry.Header header = CanalEntry.Header.newBuilder(entry.getHeader()).setTableName(finalTable).build();
+                entry = CanalEntry.Entry.newBuilder(entry).setHeader(header).build();
+                logger.debug("重新生成entry");
+            }
             MysqlGenericMessage mysqlGenericMessage = new MysqlGenericMessage(entry);
             list.add(mysqlGenericMessage);
         }
         return list;
+    }
+
+    private String getLocalTable(String schemaName, String tableName) {
+        String result = tableName;
+        Map<String, String> physicalTableRegexMap;
+        Object cache = GlobalCache.getCache(GlobalCache.Const.PHYSICAL_TABLE_REGEX);
+        if (cache == null) {
+            List<DataTable> tables = (List<DataTable>) DbusCache.getCache(Constants.CacheNames.DATA_TABLES);
+            physicalTableRegexMap = new HashMap<>();
+            for (DataTable table : tables) {
+                // 只要配置了正则的表
+                if (table.getPhysicalTableRegex() != null && !StringUtils.equals(table.getTableName(), table.getPhysicalTableRegex())) {
+                    physicalTableRegexMap.put(String.format("%s.%s", table.getSchema(), table.getTableName()),
+                            table.getPhysicalTableRegex());
+                }
+            }
+            GlobalCache.setCache(GlobalCache.Const.PHYSICAL_TABLE_REGEX, physicalTableRegexMap);
+        } else {
+            physicalTableRegexMap = (Map<String, String>) cache;
+        }
+        for (Map.Entry<String, String> entry : physicalTableRegexMap.entrySet()) {
+            if (tableName.matches(entry.getValue())) {
+                String[] schemaTable = StringUtils.split(entry.getKey(), ".");
+                if (StringUtils.equals(schemaName, schemaTable[0])) {
+                    result = schemaTable[1];
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -87,12 +132,14 @@ public class MysqlMessageProcessor extends MessageProcessor {
     }
 
     @Override
-    public int processMetaSyncMessage(Map<String, List<IGenericMessage>> map, IGenericMessage obj) throws IOException {
+    public int processMetaSyncMessage(Map<String, List<IGenericMessage>> map, IGenericMessage obj) throws
+            IOException {
         throw new RuntimeException("Impossible to here");
     }
 
     @Override
-    public int processFullPullerMessage(Map<String, List<IGenericMessage>> map, IGenericMessage obj) throws IOException {
+    public int processFullPullerMessage(Map<String, List<IGenericMessage>> map, IGenericMessage obj) throws
+            IOException {
         MysqlGenericMessage message = (MysqlGenericMessage) obj;
         CanalEntry.Entry entry = message.getEntry();
 
@@ -143,7 +190,8 @@ public class MysqlMessageProcessor extends MessageProcessor {
     }
 
     @Override
-    public int processHeartBeatMessage(Map<String, List<IGenericMessage>> map, IGenericMessage obj) throws IOException {
+    public int processHeartBeatMessage(Map<String, List<IGenericMessage>> map, IGenericMessage obj) throws
+            IOException {
         MysqlGenericMessage message = (MysqlGenericMessage) obj;
         CanalEntry.Entry entry = message.getEntry();
 

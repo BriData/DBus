@@ -82,18 +82,18 @@ export default class ProjectFullpullGrid extends Component {
         <OperatingButton icon="edit" onClick={() => onModify(record)}>
           <FormattedMessage id="app.common.modify" defaultMessage="修改"/>
         </OperatingButton>
-        <Popconfirm placement="bottom" title="确定断点续传？" onConfirm={() => this.handleDelete(record)} okText="Yes"
+        <Popconfirm placement="bottom" title="确定断点续传？" onConfirm={() => this.handleResumeFullpull(record)} okText="Yes"
                     cancelText="No">
-          <OperatingButton icon='link' onClick={() => this.handleResumeFullpull(record)}>
+          <OperatingButton icon='link'>
             <FormattedMessage
               id='app.components.projectManage.projectFullpullHistory.table.resumeFromBreakPoint'
               defaultMessage='断点续传'
             />
           </OperatingButton>
         </Popconfirm>
-        <Popconfirm placement="bottom" title="确定任务重跑？" onConfirm={() => this.handleDelete(record)} okText="Yes"
+        <Popconfirm placement="bottom" title="确定任务重跑？" onConfirm={() => this.handleRerunFullpull(record)} okText="Yes"
                     cancelText="No">
-          <OperatingButton icon='to-top' onClick={() => this.handleRerunFullpull(record)}>
+          <OperatingButton icon='to-top'>
             <FormattedMessage
               id='app.components.projectManage.projectFullpullHistory.table.rerun'
               defaultMessage='任务重跑'

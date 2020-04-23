@@ -26,6 +26,8 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 
 **相关依赖部件说明：**
 
+dbus0.6.0
+
 - Canal  ：版本 v1.0.24   DBus用于实时抽取binlog日志。具体配置可参考canal相关支持说明，支持mysql5.6，5.7 
 
 - DBus修改以下个文件，修改计数逻辑，修改json类型报错bug。
@@ -35,7 +37,11 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
   parse\src\main\java\com\alibaba\otter\canal\parse\inbound\mysql\dbsync\LogEventConvert.java
   parse\src\main\java\com\alibaba\otter\canal\parse\inbound\AbstractEventParser.java
 
--  Mysql ：版本 v5.6，v5.7  存储DBus管理相关信息                             
+- Mysql ：版本 v5.6，v5.7  存储DBus管理相关信息
+
+dbus0.6.1
+
+- Canal  ：版本 v1.1.4   DBus用于实时抽取binlog日志。具体配置可参考canal相关支持说明，支持mysql5.6，5.7 
 
 **限制：**
 
@@ -66,13 +72,13 @@ description: Dbus 安装Mysql源 DBUS_VERSION_SHORT
 > 数据库源端配置只在第一次配置环境时需要，在以后的加表流程中不需要再配置。
 >
 
-此步骤中需要在mysql数据源的mysql_instance实例上创建一个名字为dbus的库，并在此库下创建表db_heartbeat_monitor和db_full_pull_requests两张表，用于心跳检测和全量拉取。
+此步骤中需要在mysql数据源的mysql_instance实例上创建一个名字为dbus的库，并在此库下创建表db_heartbeat_monitor，用于心跳检测。
 
 在数据源端新建的dbus库，可以实现无侵入方式接入多种数据源，业务系统无需任何修改，以无侵入性读取数据库系统的日志获得增量数据实时变化。
 
 **源端库和账户配置**
 
-在mysql_instance实例上，创建dbus 库以及数据表db_full_pull_requests和db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。
+在mysql_instance实例上，创建dbus 库以及数据表db_heartbeat_monitor；创建dbus用户，并为其赋予相应权限。
 
 **a) 创建dbus库和dbus用户及相应权限**
 
@@ -144,9 +150,9 @@ FLUSH PRIVILEGES;
 ## 2 DBus一键加线
 
 Dbus对每个DataSource数据源配置一条数据线，当要添加新的datasource时，需要新添加一条数据线。下面对通过dbus keeper页面添加新数据线的步骤进行介绍
-### 2.1 Keeper加线
+### 2.1 数据源添加
 
-**（1） 管理员身份进入dbus keeper页面，数据源管理-新建数据线**
+**（1） 管理员身份进入dbus 页面，数据源管理->新建数据线**
 
 ![install-mysql-1-new-dataline](img/install-mysql/new-data-line.png)
 
@@ -156,8 +162,8 @@ Dbus对每个DataSource数据源配置一条数据线，当要添加新的dataso
 
 jdbc链接示例 jdbc:MySQL://localhost:3306/dbus?zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false
 
-- 这里数据库必须填写dbus数据库，不可填写业务数据库
-- 后缀建议加上我们提供的连个参数，否则可能会报错
+- 这里的数据库是上面创建的dbus数据库，和要抽取的数据库在同一个mysql实例
+- 后缀建议加上我们提供的连个参数，否则可能会报错，其他参数根据数据库配置自行添加
 
 ![数据基本信息填写标注](img/install-mysql/mysql-add-ds.png)
 
@@ -166,6 +172,8 @@ jdbc链接示例 jdbc:MySQL://localhost:3306/dbus?zeroDateTimeBehavior=convertTo
 - 这里如果不勾选是否部署canal，则需要手动部署添加canal进程，不推荐
 
   如需手动部署，请参考[手动部署canal](#canal)
+  
+  **!!!如有问题,请到logs目录下查看mgr.log和service.log获取具体问题原因.**
 
 **（3） <span id="3.1.3"> </span>下拉选择要添加的schema，勾选要添加的表。Keeper支持一次添加多个schema下的多个table；**
 
@@ -177,12 +185,18 @@ jdbc链接示例 jdbc:MySQL://localhost:3306/dbus?zeroDateTimeBehavior=convertTo
 
 ```
 增量数据流转：
+dbus0.6.0
 canal  -> extractor -> 一级topic(数据线同名,例如:testdb) 
+-> dispatcher -> 二级topic(数据线.schema 例如:testdb.schema1)
+-> appender -> 三级topic(数据线.schema.result  例如:testdb.schema1.result)
+
+dbus0.6.1去掉了extractor模块,canal直接输出数据到kafka
+canal  -> 一级topic(数据线同名,例如:testdb) 
 -> dispatcher -> 二级topic(数据线.schema 例如:testdb.schema1)
 -> appender -> 三级topic(数据线.schema.result  例如:testdb.schema1.result)
 ```
 
-- extractor  负责从canal消费数据写到第一级topic
+- extractor  负责从canal消费数据写到第一级topic   **(!!!!0.6.1该模块废弃)**
 
 - dispatcher-appender 
 
@@ -199,14 +213,6 @@ canal  -> extractor -> 一级topic(数据线同名,例如:testdb)
 
 
 ### 2.2 拉起增量和全量
-- 拉取增量和全量数据
-
-新添加的数据线，其schema中的table处于stopped状态。需要到dbus keeper中对相应的表，先拉取增量数据，才能让其变成OK状态。处于OK状态的表才会正常的从mysql数据源同步数据到相应的kafka中。拉取完成增量之后，可以根据业务需要确定是否需要拉取全量数据。
-
-![install-mysql-11-appender-fullpuller-data](img/install-mysql/myl-start-full-pull-appender.png)
-
-
-
 - 如果新加线过程中出现问题
 
 
@@ -219,45 +225,49 @@ canal  -> extractor -> 一级topic(数据线同名,例如:testdb)
 ​	![删除database标注](img/install-mysql/mysql-add-data-line-delete.png)
 ​	
 ​
-**3.2.3 验证增量添加过程和配置配置是否正确**
 
-加完线后，可以通过检查工具，检查加线后的状态，(需要先拉起增量)。
-​	![检查加线结果入口](img/install-mysql/mysql-add-check-line-in.png)
-​如果正确，会出现如下图所示内容。中间环节出错，会有相应提示。
-​	![检查加线结果](img/install-mysql/mysql-add-check-line.png)
+### 2.2验证增量数据
 
-<span id="3.3"> </span>
-
-### 3.3 验证增量数据
-
-**a) 插入数据**
+#### 2.2.1 插入数据
 
 ​	向数据源的数据表中添加数据，检验效果。此处以testdb数据源的test数据库的表actor中添加数据为例，向此表插入几条数据之后，会看到kafka UI中相应的topic:  testdb, testdb.test, testdb.test.result的offset均有所增加。也可以在grafana中查看数据流的情况。
 
 ​	如果数据源中添加的schema和数据表已经存在数据，点击dbus web中的拉增量和拉全量，将现有数据同步到kafka中。
 
-**b) grafana查看增量流量**
+#### 2.2.2 grafana查看增量流量
 
 ​	上述向数据表中添加完数据后，过大约几分钟，会在grafana中显示数据的处理情况。如下图中，两组则线图分别表示：计数和延时，正常情况下计数图中"分发计数器"和"增量计数器"两条线是重合的。在图左上角，选择要查看的数据表，此处为testdb.test.actor。上部的分发器计数图展示了此表的分发和增量程序接收到7条数据；下部的分发器延时展示分发延时、增量延时和末端延时情况。
 
 ![install-mysql-9-grafana-actor](img/install-mysql/install-mysql-9-grafana-actor.PNG)
 
+#### 2.2.3 数据验证失败问题排查
 
-### 3.4 验证全量拉取
+推荐方式二
+
+[Topic无数据问题排查](https://bridata.github.io/DBus/more-faq.html#q11mysql表无数据)
+
+<span id="3.3"> </span>
+
+
+### 2.4 验证全量数据
 
 验证全量拉取是否成功，可在Table管理右侧操作栏，点击"查看拉全量状态"。![install-mysql-10-fullpuller_status](img/install-mysql/full-pull-history-global.png)
 全量拉取的信息存储在ZK上，Dbus keeper会读取的zk下相应节点的信息，来查看全量拉取状态。看结点信息中Status字段，其中splitting表示正在分片，pulling表示正在拉取，ending表示拉取成功。
 ![install-mysql-11-fullpuller_status](img/install-mysql/fullpull-history-check.png)
 
 
-## 4 加表流程
+## 3 单独加表流程
 <span id="add-table"> </span>
 本部分流程是建立在数据线部署完毕的基础上的，即在部署完数据线后，后续添加需要抽取的表。
 
-### 4.1 加表入口
-单独加表有两个入口：一，在数据源管理--操作（添加schema），可以选择schema，然后选择要添加的table。此步骤与3.1中[第三步](#3.1.3)操作一致（实际上是在加线的步骤中集成了加表的操作），可以选择多个schema下的多个table添加；二，数据源管理--Schema管理--操作（添加table）。如果要添加的表都在一个schema下，或者您已确定需要添加哪个schema下的表，可以选择这个方式加表。
+### 3.1 加表入口
+单独加表有两个入口：
 
-**4.1.1 数据源管理处入口**
+一，在数据源管理--操作（添加schema），可以选择schema，然后选择要添加的table。此步骤与3.1中[第三步](#3.1.3)操作一致（实际上是在加线的步骤中集成了加表的操作），可以选择多个schema下的多个table添加；
+
+二，数据源管理--Schema管理--操作（添加table）。如果要添加的表都在一个schema下，或者您已确定需要添加哪个schema下的表，可以选择这个方式加表。
+
+#### 3.1.1 数据源管理入口
 
 ![install-mysql-add-table-entrance1](img/install-mysql/install-mysql-add-table-entrance1.png)
 
@@ -265,7 +275,7 @@ canal  -> extractor -> 一级topic(数据线同名,例如:testdb)
 
 ![install-mysql-add-table-entrance1-schema](img/install-mysql/install-mysql-add-table-entrance1-schema.png)
 
-**4.1.2 Schema管理处入口**
+#### 3.1.2 Schema管理入口
 
 ![install-mysql-add-table-entrance2](img/install-mysql/install-mysql-add-table-entrance2.png)
 
@@ -273,29 +283,24 @@ canal  -> extractor -> 一级topic(数据线同名,例如:testdb)
 
 ![install-mysql-add-table-entrance2-table](img/install-mysql/install-mysql-add-table-entrance2-table.png)
 
-### 4.2 验证增量数据
-加表完毕，可以在“数据源管理--表管理”中将表增量启动起来(需要保证版本不是“null”，即：需要保证xx-dispatcher-appender拓扑正常启动，如果没有启动，在“数据源管理--数据源管理--拓扑管理”中启动)。
+## 4 附录
 
-![install-mysql-add-table-start](img/install-mysql/install-mysql-add-table-start.png)
+### 4.1 手动部署canal<span id="canal"> </span>
 
-表启动起来（状态变为“running”）后，可以进行增量数据的验证。参考步骤[3.3](#3.3)
+#### 4.1.1 上传并部署canal小工具
 
-## 5 附录
+这里以 0.6.1版本为例
 
-### 5.1 手动部署canal<span id="canal"> </span>
-
-#### 5.1.1 上传并部署canal小工具
-
-scp命令或者其他命令上传 zip目录下dbus-canal-auto-0.6.0.zip 和canal.zip 到目标机器的目标目录
+scp命令或者其他命令上传 zip目录下dbus-canal-auto-0.6.1.zip 和canal.zip 到目标机器的目标目录
 
 这里举例 dbus-n1机器的 /app/dbus/canal目录
 
 ```
 cd /app/dbus/canal
 # 解压canal小工具
-unzip dbus-canal-auto-0.6.0.zip
+unzip dbus-canal-auto-0.6.1.zip
 # 进入小工具
-cd dbus-canal-auto-0.6.0
+cd dbus-canal-auto-0.1.0
 cp ../canal.zip .
 unzip canal.zip
 ```
@@ -309,7 +314,7 @@ unzip canal.zip
 - lib 目录不用关心
 - deploy.sh 自动化脚本
 
-#### 5.1.2 修改配置文件
+#### 4.1.2 修改配置文件
 
 - 修改conf目录下的canal-auto.properties文件中内。
 
@@ -322,13 +327,18 @@ dsname=testdb
 zk.path=dbus-n1:2181
 #canal 用户连接地址。即：要canal去同步的源端库的备库的地址
 canal.address=dbus-n1:3306
-#canal用户名
+#数据库canal用户名
 canal.user=canal
-#canal密码，替换成自己配置的
+#数据库canal密码，替换成自己配置的
 canal.pwd=Canal&*(789
+#canal slave id
+canal.slaveId=1235
+#0.6.1新加kafka配置
+#bootstrap.servers,kafka地址
+bootstrap.servers=vdbus-7:9092
   ```
 
-#### 5.1.3 校验配置文件
+#### 4.1.3 校验配置文件
 
 ```
 sh deploy.sh check
@@ -388,7 +398,7 @@ report文件： canal_deploy_report20180816152937.txt
   
   ```
 
-#### 5.1.4 执行部署脚本
+#### 4.1.4 执行部署脚本
 
 ```
 sh deploy.sh
@@ -402,18 +412,16 @@ sh deploy.sh
 
 
 
-### 5.2 常见问题
+### 4.2 常见问题
 
-#### 5.2.1为什么检测通过还是失败
+#### 4.2.1为什么检测通过还是失败
 
 脚本提供的是常规性检测。检测仅帮助你进行初步的检测。除了检测报告，您还可以根据自动部署时创建的日志link，查看canal的日志，有时，虽然canal进程启动成功，但是其实是执行失败的，在日志里有错误详情。
 
-#### 5.2.2为什么自动部署失败
+#### 4.2.2为什么自动部署失败
 
 脚本提供的是在特定情况下，帮助简化安装部署步骤的。如果不能成功请根据异常信息查阅相关资料。
 
-#### 5.2.3为什么有些类型不支持呢
+#### 4.2.3为什么有些类型不支持呢
 
-DBus系统会丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，而此文件打包在canal.parse-1.0.24.jar包中，因此在canal server包解压之后，需要按照替换解压后的canal目录中lib下的canal.parse-1.0.24.jar文件。
-
-可用https://github.com/BriData/DBus/blob/master/third-party-packages/canal/canal.parse-1.0.24.jar替换上述原始jar包。
+DBus系统会丢弃掉对大数据类型MEDIUMBLOB、LONGBLOB、LONGTEXT、MEDIUMTEXT等的支持，因为dbus系统假设最大的message大小为10MB，而这些类型的最大大小都超过了10MB大小。对canal源码的LogEventConvert.java进行了修改，丢掉了这些类型的数据。

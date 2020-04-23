@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,10 @@ package com.creditease.dbus.stream.dispatcher.bout;
 import com.creditease.dbus.commons.Constants;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.DBusConsumerRecord;
+import com.creditease.dbus.stream.common.Constants.StormConfigKey;
 import com.creditease.dbus.stream.common.DataSourceInfo;
 import com.creditease.dbus.stream.common.bean.DispatcherPackage;
+import com.creditease.dbus.stream.common.dispatcher.GlobalCache;
 import com.creditease.dbus.stream.common.tools.MessageProcessor;
 import com.creditease.dbus.stream.common.tools.TableStatMap;
 import com.creditease.dbus.stream.dispatcher.helper.DBHelper;
@@ -53,6 +55,7 @@ public class DispatcherBout extends BaseRichBolt {
     private String zkServers = null;
     private String topologyID = null;
     private String topologyRoot = null;
+    private String datasource = null;
 
     private DataSourceInfo dsInfo = null;
     private String statTopic = null;
@@ -131,6 +134,10 @@ public class DispatcherBout extends BaseRichBolt {
 
             statTopic = zkHelper.getStatisticTopic();
             processor = getMessageProcessor(dsInfo, statTopic, statProps, statMap, schemaTopicProps);
+
+            // 全局缓存处理
+            GlobalCache.initialize(datasource, zkServers);
+            GlobalCache.setCache(GlobalCache.Const.DBUS_MANAGER_CONF, zkHelper.getDbusManagerConf());
         } catch (Exception ex) {
             logger.error("DispatcherBout reloadConfig():", ex);
             collector.reportError(ex);
@@ -178,6 +185,7 @@ public class DispatcherBout extends BaseRichBolt {
         zkServers = (String) stormConf.get(Constants.ZOOKEEPER_SERVERS);
         topologyID = (String) stormConf.get(Constants.TOPOLOGY_ID);
         topologyRoot = Constants.TOPOLOGY_ROOT + "/" + topologyID;
+        this.datasource = (String) conf.get(StormConfigKey.DATASOURCE);
 
         reloadConfig(null);
         logger.info("DispatcherBolt reload config success !");
@@ -287,6 +295,7 @@ public class DispatcherBout extends BaseRichBolt {
                 processor.cleanup();
                 processor = null;
             }
+            GlobalCache.refreshCache();
         } catch (Exception ex) {
             // NOTE: Handle the failure
             logger.error("DispatcherBout cleanup():", ex);

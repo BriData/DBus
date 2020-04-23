@@ -101,7 +101,8 @@ export default class SinkerSchemaGrid extends Component {
       sinkerSchemaList,
       tableWidth,
       selectedRowKeys,
-      onSelectionChange
+      onSelectionChange,
+      onShowSizeChange
     } = this.props
     const list = sinkerSchemaList && sinkerSchemaList.list
     const pagination = {
@@ -111,7 +112,8 @@ export default class SinkerSchemaGrid extends Component {
       current: (sinkerSchemaList && sinkerSchemaList.pageNum) || 1,
       pageSize: (sinkerSchemaList && sinkerSchemaList.pageSize) || 10,
       total: sinkerSchemaList && sinkerSchemaList.total,
-      onChange: this.handlePagation
+      onChange: this.handlePagation,
+      onShowSizeChange: onShowSizeChange
     }
     const columns = [
       {

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,15 @@
 
 package com.creditease.dbus.router.dao.impl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.creditease.dbus.encoders.EncodePlugin;
 import com.creditease.dbus.router.bean.FixColumnOutPutMeta;
 import com.creditease.dbus.router.bean.Resources;
@@ -30,17 +39,9 @@ import com.creditease.dbus.router.dao.IDBusRouterDao;
 import com.creditease.dbus.router.encode.DBusRouterEncodeColumn;
 import com.creditease.dbus.router.util.DBUtil;
 import com.creditease.dbus.router.util.DBusRouterConstants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by mal on 2018/5/22.
@@ -129,8 +130,8 @@ public class DBusRouterDao implements IDBusRouterDao {
         sql.append("SELECT                                      ");
         sql.append("    DISTINCT                                ");
         sql.append("    tp.`project_name`,                      ");
-        // sql.append("    tdd.`ds_name`,                          ");
-        sql.append("    IFNULL(map.`alias`, tdd.`ds_name`) ds_name, ");
+        sql.append("    tdd.`ds_name`,                          ");
+        // sql.append("    IFNULL(map.`alias`, tdd.`ds_name`) ds_name, ");
         sql.append("    tdt.`schema_name`,                      ");
         sql.append("    tdt.`table_name`,                       ");
         sql.append("    tptt.`output_topic`,                    ");

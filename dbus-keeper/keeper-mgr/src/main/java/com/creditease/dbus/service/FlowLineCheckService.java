@@ -218,13 +218,13 @@ public class FlowLineCheckService {
         Map<String, StormTopology> runningTopologies = stormTopoHelper.getRunningTopologies();
 
         JSONObject topoInfo = new JSONObject();
-        if ("mysql".equalsIgnoreCase(dsType)) {
-            if (runningTopologies.containsKey(dsName + "-mysql-extractor")) {
-                topoInfo.put(dsName + "-mysql-extractor", "ok");
-            } else {
-                topoInfo.put(dsName + "-mysql-extractor", "not exist");
-            }
-        }
+        //if ("mysql".equalsIgnoreCase(dsType)) {
+        //    if (runningTopologies.containsKey(dsName + "-mysql-extractor")) {
+        //        topoInfo.put(dsName + "-mysql-extractor", "ok");
+        //    } else {
+        //        topoInfo.put(dsName + "-mysql-extractor", "not exist");
+        //    }
+        //}
 
         if ("oracle".equalsIgnoreCase(dsType) || "db2".equalsIgnoreCase(dsType) || "mysql".equalsIgnoreCase(dsType)) {
             if (runningTopologies.containsKey(dsName + "-dispatcher-appender")) {

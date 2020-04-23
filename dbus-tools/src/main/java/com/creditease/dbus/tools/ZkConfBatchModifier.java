@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,11 +44,11 @@ public class ZkConfBatchModifier {
 
     public static void main(String[] args) throws Exception {
 
-        if (!(args.length == 3 || args.length == 4)) {
-            logger.info("Please provide legal parameters(the last arg is optional): baseNode oldString newString [checker]. Eg: /DBus zk1:2181 zk1:2181,zk2:2181 :2181");
-            return;
-        }
-        logger.info(String.format("Try to replace %s by %s", args[1], args[2]));
+        //if (!(args.length == 3 || args.length == 4)) {
+        //    logger.info("Please provide legal parameters(the last arg is optional): baseNode oldString newString [checker]. Eg: /DBus zk1:2181 zk1:2181,zk2:2181 :2181");
+        //    return;
+        //}
+        //logger.info(String.format("Try to replace %s by %s", args[1], args[2]));
 
         Properties props = ConfUtils.loadZKProperties();
         String zkServer = props.getProperty(Constants.ZOOKEEPER_SERVERS);
@@ -56,44 +56,59 @@ public class ZkConfBatchModifier {
             logger.error("Zookeeper server cannot be null!");
             return;
         }
-
-        String basePath = args[0];
-        String oldString = args[1];
-        String newString = args[2];
-        if (!basePath.startsWith(Constants.DBUS_ROOT)) {
-            logger.error("The base path is not start with " + Constants.DBUS_ROOT + ". Please check!");
-            return;
-        }
-
-        String checker = null;
-        if (args.length == 4) {
-            checker = args[3];
-        }
-
         ZkService zkService = new ZkService(zkServer);
-
-        ZkNode baseNode = new ZkNode(basePath); // Name name name Todo not start with  refuse; 直接搞指定path底下的。
-        baseNode.setPath(basePath);
-
-
-        byte[] data = zkService.getData(baseNode.getPath());
-        if (data != null && data.length > 0) {
-            String orignialContent = new String(data, UTF8);
-
-            if (StringUtils.isNotBlank(checker) && orignialContent.indexOf(oldString) == -1 && orignialContent.indexOf(checker) != -1) {
-                logger.warn(String.format("Found checker --- %s, But not found %s at %s", checker, oldString, baseNode.getPath()));
+        List<String> canal = zkService.getChildren("/DBus/Canal");
+        for (String c : canal) {
+            List<String> cluster = zkService.getChildren(String.format("/DBus/Canal/%s/otter/canal/cluster", c));
+            if (cluster == null || cluster.size() == 0) {
+                continue;
             }
-
-            if (orignialContent.indexOf(oldString) != -1) {
-                logger.info(String.format("Found  %s at %s in \n%s", oldString, baseNode.getPath(), orignialContent));
-                String newContent = orignialContent.replace(oldString, newString);
-                zkService.setData(baseNode.getPath(), newContent.getBytes(UTF8));
+            String destinations = zkService.getChildren(String.format("/DBus/Canal/%s/otter/canal/destinations", c)).get(0);
+            String filter = String.format("/DBus/Canal/%s/otter/canal/destinations/%s/1001/filter", c, destinations);
+            if (zkService.isExists(filter)) {
+                zkService.deleteNode(filter);
+                System.out.println(String.format("delete %s success", filter));
             }
-
         }
-
-        replaceContentRecursively(zkService, baseNode, oldString, newString, checker);
         zkService.close();
+
+        //String basePath = args[0];
+        //String oldString = args[1];
+        //String newString = args[2];
+        //if (!basePath.startsWith(Constants.DBUS_ROOT)) {
+        //    logger.error("The base path is not start with " + Constants.DBUS_ROOT + ". Please check!");
+        //    return;
+        //}
+        //
+        //String checker = null;
+        //if (args.length == 4) {
+        //    checker = args[3];
+        //}
+        //
+        //ZkService zkService = new ZkService(zkServer);
+        //
+        //ZkNode baseNode = new ZkNode(basePath); // Name name name Todo not start with  refuse; 直接搞指定path底下的。
+        //baseNode.setPath(basePath);
+        //
+        //
+        //byte[] data = zkService.getData(baseNode.getPath());
+        //if (data != null && data.length > 0) {
+        //    String orignialContent = new String(data, UTF8);
+        //
+        //    if (StringUtils.isNotBlank(checker) && orignialContent.indexOf(oldString) == -1 && orignialContent.indexOf(checker) != -1) {
+        //        logger.warn(String.format("Found checker --- %s, But not found %s at %s", checker, oldString, baseNode.getPath()));
+        //    }
+        //
+        //    if (orignialContent.indexOf(oldString) != -1) {
+        //        logger.info(String.format("Found  %s at %s in \n%s", oldString, baseNode.getPath(), orignialContent));
+        //        String newContent = orignialContent.replace(oldString, newString);
+        //        zkService.setData(baseNode.getPath(), newContent.getBytes(UTF8));
+        //    }
+        //
+        //}
+        //
+        //replaceContentRecursively(zkService, baseNode, oldString, newString, checker);
+        //zkService.close();
     }
 
 

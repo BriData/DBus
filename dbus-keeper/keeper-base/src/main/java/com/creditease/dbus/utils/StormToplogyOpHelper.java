@@ -134,39 +134,38 @@ public class StormToplogyOpHelper {
 
             String allTopoForDsAvailable = TOPO_AVAILABLE_PART_RUNNING;
 
-            if (DbusDatasourceType.MYSQL.name().equalsIgnoreCase(type)) {
-                String mysqlExtractorTopoAvailable = TOPO_AVAILABLE_ALL_RUNNING;
-
-                String extractorTopoName = dsName + "-mysql-extractor";
-                if (runningTopologies.containsKey(extractorTopoName)) {
-                    toposOfDsMap.put(extractorTopoName, runningTopologies.get(extractorTopoName));
-                    mysqlExtractorTopoAvailable = TOPO_AVAILABLE_ALL_RUNNING;
-                } else {
-                    mysqlExtractorTopoAvailable = TOPO_AVAILABLE_ALL_STOPPED;
-                    toposOfDsMap.put(extractorTopoName, new StormTopology(extractorTopoName));
-                }
-                String dispatcherAppenderTopoName = dsName + "-dispatcher-appender";
-                String[] streamSeperatedToposName = {dsName + "-dispatcher", dsName + "-appender"};
-                String streamTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, dispatcherAppenderTopoName, streamSeperatedToposName);
-
-                String splitterPullerTopoName = dsName + "-splitter-puller";
-                String[] fullSeperatedToposName = {dsName + "-splitter", dsName + "-puller"};
-                String fullTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, splitterPullerTopoName, fullSeperatedToposName);
-
-                if (mysqlExtractorTopoAvailable.equals(TOPO_AVAILABLE_ALL_RUNNING)
-                        && streamTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_RUNNING)
-                        && fullTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_RUNNING)) {
-                    allTopoForDsAvailable = TOPO_AVAILABLE_ALL_RUNNING;
-                } else if (mysqlExtractorTopoAvailable.equals(TOPO_AVAILABLE_ALL_STOPPED)
-                        && streamTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_STOPPED)
-                        && fullTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_STOPPED)) {
-                    allTopoForDsAvailable = TOPO_AVAILABLE_ALL_STOPPED;
-                }
-            }
+            //if (DbusDatasourceType.MYSQL.name().equalsIgnoreCase(type)) {
+            //    String mysqlExtractorTopoAvailable = TOPO_AVAILABLE_ALL_RUNNING;
+            //
+            //    String extractorTopoName = dsName + "-mysql-extractor";
+            //    if (runningTopologies.containsKey(extractorTopoName)) {
+            //        toposOfDsMap.put(extractorTopoName, runningTopologies.get(extractorTopoName));
+            //        mysqlExtractorTopoAvailable = TOPO_AVAILABLE_ALL_RUNNING;
+            //    } else {
+            //        mysqlExtractorTopoAvailable = TOPO_AVAILABLE_ALL_STOPPED;
+            //        toposOfDsMap.put(extractorTopoName, new StormTopology(extractorTopoName));
+            //    }
+            //    String dispatcherAppenderTopoName = dsName + "-dispatcher-appender";
+            //    String[] streamSeperatedToposName = {dsName + "-dispatcher", dsName + "-appender"};
+            //    String streamTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, dispatcherAppenderTopoName, streamSeperatedToposName);
+            //
+            //    String splitterPullerTopoName = dsName + "-splitter-puller";
+            //    String[] fullSeperatedToposName = {dsName + "-splitter", dsName + "-puller"};
+            //    String fullTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, splitterPullerTopoName, fullSeperatedToposName);
+            //
+            //    if (mysqlExtractorTopoAvailable.equals(TOPO_AVAILABLE_ALL_RUNNING)
+            //            && streamTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_RUNNING)
+            //            && fullTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_RUNNING)) {
+            //        allTopoForDsAvailable = TOPO_AVAILABLE_ALL_RUNNING;
+            //    } else if (mysqlExtractorTopoAvailable.equals(TOPO_AVAILABLE_ALL_STOPPED)
+            //            && streamTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_STOPPED)
+            //            && fullTopoForDsAvailable.equals(TOPO_AVAILABLE_ALL_STOPPED)) {
+            //        allTopoForDsAvailable = TOPO_AVAILABLE_ALL_STOPPED;
+            //    }
+            //}
 
             if (DbusDatasourceType.ORACLE.name().equalsIgnoreCase(type) || DbusDatasourceType.MONGO.name().equalsIgnoreCase(type)
-                    || DbusDatasourceType.DB2.name().equalsIgnoreCase(type)
-            ) {
+                    || DbusDatasourceType.DB2.name().equalsIgnoreCase(type) || DbusDatasourceType.MYSQL.name().equalsIgnoreCase(type)) {
                 String dispatcherAppenderTopoName = dsName + "-dispatcher-appender";
                 String[] streamSeperatedToposName = {dsName + "-dispatcher", dsName + "-appender"};
                 String streamTopoForDsAvailable = combinedTopoProcessing(runningTopologies, toposOfDsMap, dispatcherAppenderTopoName, streamSeperatedToposName);

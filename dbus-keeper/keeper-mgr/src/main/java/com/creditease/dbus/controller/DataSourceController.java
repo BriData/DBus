@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@
 
 package com.creditease.dbus.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.creditease.dbus.annotation.AdminPrivilege;
 import com.creditease.dbus.base.BaseController;
 import com.creditease.dbus.base.ResultEntity;
-import com.creditease.dbus.commons.IZkService;
 import com.creditease.dbus.constant.MessageCode;
 import com.creditease.dbus.domain.model.DataSource;
 import com.creditease.dbus.service.DataSourceService;
@@ -71,6 +71,7 @@ public class DataSourceController extends BaseController {
     @PostMapping("")
     public ResultEntity addOne(@RequestBody DataSource newOne) {
         try {
+            logger.info("add datasource {}", JSON.toJSONString(newOne));
             //插入数据库
             ResultEntity resultEntity = service.insertOne(newOne);
             if (resultEntity.getStatus() != 0) {
@@ -220,6 +221,16 @@ public class DataSourceController extends BaseController {
             return resultEntityBuilder().status(result).build();
         } catch (Exception e) {
             logger.error("Exception encountered while rerun datasource ({})", dsName, e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping("/initCanalFilter")
+    public ResultEntity initCanalFilter(Integer dsId, String dsName) {
+        try {
+            return resultEntityBuilder().status(service.initCanalFilter(dsId, dsName)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while initCanalFilter ({})", dsId, e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
         }
     }

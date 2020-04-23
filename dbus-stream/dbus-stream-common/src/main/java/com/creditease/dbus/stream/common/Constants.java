@@ -67,8 +67,6 @@ public class Constants {
         public static final String MAX_SPOUT_PENDING = "max.spout.pending";
         public static final String BASE64_DECODE = "base64.decode"; // 是否需要使用base64解码
         public static final String SCHEMA_REGISTRY_REST_URL = "schema.registry.rest.url";
-        public static final String DATASOURCE_TYPE = "dbus.dispatcher.datasource.type";
-
         /**
          * oracle for bigdata 12.3.1.1.1版本解决了函数索引的问题，在生成avro schema时需要过滤掉虚拟列和隐藏列
          * 在12.2版本中需要配置为: 0 ，在12.3版本中配置为: 1
@@ -83,6 +81,8 @@ public class Constants {
          * 配置mysql版本生成ums namespace是否包含分表，1为输出 0为不输出
          */
         public static final String MYSQL_UMS_WITH_TABLE_PARTITION = "mysql.ums.with.table.partition";
+
+        public static final String CANAL_ZK_PATH = "canal.zk.path";
     }
 
     /**

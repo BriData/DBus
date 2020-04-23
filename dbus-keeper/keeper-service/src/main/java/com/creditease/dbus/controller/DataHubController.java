@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,6 +133,17 @@ public class DataHubController extends BaseController {
         try {
             logger.info("收到获取数据源详情接口.dsName:{}", dsName);
             return resultEntityBuilder().payload(dataHubService.getAllDataSourceInfo(dsName)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while getAllDataSourceInfo ", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
+    @GetMapping("/getTableRows")
+    public ResultEntity getTableRows(@RequestParam Long schemaId, @RequestParam String tableName) {
+        try {
+            logger.info("收到获取表数据量请求.schemaId:{},tableName:{}", schemaId, tableName);
+            return resultEntityBuilder().payload(dataHubService.getTableRows(schemaId, tableName)).build();
         } catch (Exception e) {
             logger.error("Exception encountered while getAllDataSourceInfo ", e);
             return resultEntityBuilder().status(MessageCode.EXCEPTION).build();

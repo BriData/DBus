@@ -80,7 +80,6 @@ public class FlowLineCheckService {
             long offsetSecond = (Long) listSecond.get(1);
 
             List<Object> listThird = initConsumer((String) infoMap.get("src_topic"), "third");
-//            List<Object> listThird = initConsumer((String) infoMap.get("topic") + ".dbus", "third");
             consumerThird = (KafkaConsumer<String, byte[]>) listThird.get(0);
             long offsetThird = (Long) listThird.get(1);
 
@@ -231,7 +230,7 @@ public class FlowLineCheckService {
 
         try {
             long start = System.currentTimeMillis();
-            while ((System.currentTimeMillis() - start < 1000 * 15) && !isOk) {
+            while ((System.currentTimeMillis() - start < 1000 * 20) && !isOk) {
                 ConsumerRecords<String, byte[]> records = consumerSecond.poll(1000);
                 for (ConsumerRecord<String, byte[]> record : records) {
                     if (record.offset() >= offset) {
@@ -251,7 +250,7 @@ public class FlowLineCheckService {
         boolean isOk = false;
         try {
             long start = System.currentTimeMillis();
-            while ((System.currentTimeMillis() - start < 1000 * 15) && !isOk) {
+            while ((System.currentTimeMillis() - start < 1000 * 20) && !isOk) {
                 ConsumerRecords<String, byte[]> records = consumerThird.poll(1000);
                 for (ConsumerRecord<String, byte[]> record : records) {
                     //if (StringUtils.contains(record.key(), String.valueOf(time))) {
@@ -272,7 +271,7 @@ public class FlowLineCheckService {
         boolean isOk = false;
         try {
             long start = System.currentTimeMillis();
-            while ((System.currentTimeMillis() - start < 1000 * 15) && !isOk) {
+            while ((System.currentTimeMillis() - start < 1000 * 20) && !isOk) {
                 ConsumerRecords<String, byte[]> records = consumerFourth.poll(1000);
                 for (ConsumerRecord<String, byte[]> record : records) {
                     if (StringUtils.contains(record.key(), String.valueOf(time))) {

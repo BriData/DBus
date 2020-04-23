@@ -85,6 +85,7 @@ public class DBConfigurationHelper {
             String tableName = payloadJson.getString(FullPullConstants.REQ_PAYLOAD_TABLE_NAME);
             String version = payloadJson.getString(FullPullConstants.REQ_PAYLOAD_VERSION);
             String hdfsTablePath = String.format("%s/%s.%s.%s/%s/%s/0/0/data_initial_data/right/", hdfsRootPath, dsType, dbName, schemaName, tableName, version);
+            hdfsTablePath = StringUtils.replace(hdfsTablePath, "//", "/").toLowerCase();
             dbConf.putProperties(DBConfiguration.HDFS_TABLE_PATH, hdfsTablePath);
         }
     }

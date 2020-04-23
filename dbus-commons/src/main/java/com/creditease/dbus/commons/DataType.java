@@ -277,7 +277,8 @@ public enum DataType {
         switch (type) {
             case DECIMAL:
                 // 避免OGG生成的数值类型数据出现".001"直接输出到ums的情况
-                return Double.valueOf(value.toString()).toString();
+                //return Double.valueOf(value.toString()).toString();
+                return new BigDecimal(value.toString()).toString();
             case LONG:
                 try {
                     return Long.valueOf(value.toString()).toString();

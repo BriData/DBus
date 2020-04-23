@@ -22,6 +22,7 @@
 package com.creditease.dbus.domain.mapper;
 
 import com.creditease.dbus.bean.DataTableBean;
+import com.creditease.dbus.domain.model.DataTable;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -48,4 +49,6 @@ public interface DatahubTableMapper {
 
     List<DataTableBean> getDdlDBusTables(@Param("startTime") String startTime, @Param("endTime") String endTime,
                                          @Param("schemaId") Integer schemaId, @Param("tableName") String tableName);
+
+    DataTableBean getTableByParams(@Param("schemaId") Integer schemaId, @Param("tableName") String tableName);
 }

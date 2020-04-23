@@ -127,6 +127,7 @@ public class DBHelper {
                     " AND m.type = 2" +
                     " WHERE" +
                     " 	t.sinker_name = ?";
+            logger.info("sql:{},param:{}", sql, sinkerName);
             ps = conn.prepareStatement(sql);
             ps.setString(1, sinkerName);
             rs = ps.executeQuery();

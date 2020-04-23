@@ -33,8 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -512,7 +512,9 @@ public class DBFacade {
         if (ps != null && ps.length > 0) {
             for (AutoCloseable p : ps) {
                 try {
-                    p.close();
+                    if (p != null) {
+                        p.close();
+                    }
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
                 }

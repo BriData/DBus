@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.creditease.dbus</groupId>
         <artifactId>dbus-main</artifactId>
-        <version>0.6.0</version>
+        <version>0.6.1</version>
     </parent>
     <artifactId>dbus-commons</artifactId>
 
@@ -78,16 +78,10 @@
         <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
 
         <!-- 你需要添加 oracle 依赖在这里 ojdbc7 -->
-        <!--
-            dbcp从1.4升级到2.6.0对应的oracle需要升级,否在报以下错误
-            Exception in thread "emit-heartbeat-event-xinghuo" java.lang.AbstractMethodError
-              at org.apache.commons.dbcp2.DelegatingConnection.isValid(DelegatingConnection.java:874)
-         -->
         <!-- mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc7 -Dversion=12.1.0.2 -Dpackaging=jar -Dfile=ojdbc7-12.1.0.2.jar -DgeneratePom=true -->
 
 
         <!-- 你需要添加 db2 依赖在这里 db2jcc4 -->
-        <!--  Install driver jar to your local repository with the flowing command.-->
         <!--  mvn install:install-file -DgroupId=com.ibm.db2.jcc -DartifactId=db2jcc4 -Dversion=4.23.42 -Dpackaging=jar   -Dfile=db2jcc4-4.23.42.jar -DgeneratePom=true-->
 
     </dependencies>

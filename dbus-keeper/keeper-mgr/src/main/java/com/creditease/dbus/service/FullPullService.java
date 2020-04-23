@@ -437,9 +437,10 @@ public class FullPullService {
                     int iOpTs = findDbusMessageFieldIndex(jsonDbusMessage, DbusMessage.Field._UMS_TS_);
                     if (iPos == -1 || iOpTs == -1) continue;
                     if (key.indexOf("data_increment_heartbeat") != -1 || key.indexOf("data_increment_data") != -1) {
-                        String pos = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple").getString(iPos);
-                        String op_ts = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple").getString(iOpTs);
-                        logger.info("找到了op_ts, pos : {} ,op_ts : {}", pos, op_ts);
+                        JSONArray tuple = jsonDbusMessage.getJSONArray("payload").getJSONObject(0).getJSONArray("tuple");
+                        String pos = tuple.getString(iPos);
+                        String op_ts = tuple.getString(iOpTs);
+                        logger.info("找到了topic:{}, offset:{}, op_ts, pos : {} ,op_ts : {},{}", outputTopic, record.offset(), pos, op_ts, tuple);
                         payload.put("POS", pos);
                         payload.put(OP_TS, op_ts);
                         runing = false;

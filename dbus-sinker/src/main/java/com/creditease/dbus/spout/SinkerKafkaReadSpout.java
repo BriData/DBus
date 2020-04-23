@@ -25,7 +25,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.DBusConsumerRecord;
-import com.creditease.dbus.helper.DBHelper;
 import com.creditease.dbus.spout.queue.EmitDataList;
 import com.creditease.dbus.spout.queue.EmitDataListManager;
 import com.creditease.dbus.spout.queue.MessageStatusQueueManager;
@@ -55,7 +54,6 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
 
     private SpoutOutputCollector collector = null;
     private TopologyContext context = null;
-    private Map<Integer, List<String>> taskTopics = null;
     private KafkaConsumer<String, byte[]> consumer = null;
     private KafkaConsumer<String, byte[]> ctrlConsumer = null;
     private SinkerBaseMap inner = null;
@@ -118,8 +116,8 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
                 DBusConsumerRecord<String, byte[]> consumerRecord = new DBusConsumerRecord(record);
                 String key = bildNSKey(consumerRecord);
                 if (!inner.tableNamespaces.contains(key)) {
-                    logger.debug("[ignore] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
-                    return;
+                    logger.info("[ignore] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
+                    continue;
                 }
                 msgQueueMgr.addMessage(consumerRecord);
                 emitDataListManager.emit(key, consumerRecord);
@@ -256,7 +254,8 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         // 初始化数据consumer
         int taskIndex = context.getThisTaskIndex();
         int spoutSize = context.getComponentTasks(context.getThisComponentId()).size();
-        List<String> topicList = inner.sourceTopics;
+        List<String> allTopics = inner.sourceTopics;
+        List<String> topicList = getResultTopics(allTopics, taskIndex, spoutSize);
         logger.info("[kafka read spout] will init consumer with task index: {}, spout size: {}, topics: {} ", taskIndex, spoutSize, topicList);
         Properties properties = inner.zkHelper.loadSinkerConf(SinkerConstants.CONSUMER);
         properties.put("client.id", inner.sinkerName + "SinkerKafkaReadClient_" + taskIndex);
@@ -302,30 +301,22 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         logger.info("[kafka read spout] init ctrl consumer success with task index: {}, topicPartitions: {} ", taskIndex, ctrlTopicPartitions);
     }
 
-    private List<String> getResultTopics(int taskIndex, int spoutSize) {
-        if (taskTopics != null) {
-            logger.info("[kafka read spout] before reload topics info .{} ", taskTopics);
-            taskTopics.clear();
-        } else {
-            taskTopics = new HashMap<>();
+    private List<String> getResultTopics(List<String> allTopics, int taskIndex, int spoutSize) {
+        if (allTopics.size() < spoutSize) {
+            throw new RuntimeException("topic number must more than spout size.");
         }
-        String topicStr = inner.sinkerConfProps.getProperty(SinkerConstants.SINKER_TOPIC_LIST);
-        //新的topic集
-        List<String> topics = Arrays.asList(StringUtils.split(topicStr, ","));
-        Collections.sort(topics);
-        int size = topics.size() / spoutSize;
-        if (topics.size() % spoutSize > 0) {
-            size++;
-        }
-
-        for (int i = 0; i < spoutSize; i++) {
-            List<String> list = new ArrayList<>();
-            for (int j = 0; j < size && i * size + j < topics.size(); j++) {
-                list.add(topics.get(i * size + j));
+        //这里必须排序,不然每多个spout会分到重复的topic
+        Collections.sort(allTopics);
+        int size = allTopics.size() / spoutSize;
+        List<String> topicList = new ArrayList<>();
+        for (int j = 0; j < size && taskIndex * size + j < allTopics.size(); j++) {
+            topicList.add(allTopics.get(taskIndex * size + j));
+            int k = allTopics.size() % spoutSize;
+            if (taskIndex < k) {
+                topicList.add(allTopics.get(spoutSize * size + taskIndex));
             }
-            taskTopics.put(i, list);
         }
-        return taskTopics.get(taskIndex);
+        return topicList;
     }
 
     private boolean reloadComplete() {

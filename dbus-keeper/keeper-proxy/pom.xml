@@ -5,7 +5,7 @@
 
     <groupId>com.creditease.dbus</groupId>
     <artifactId>keeper-proxy</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
     <packaging>jar</packaging>
 
     <name>keeper-proxy</name>

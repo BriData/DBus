@@ -38,6 +38,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This is Description
@@ -54,6 +55,8 @@ public class AutoDeployDataLineService {
     private IZkService zkService;
     @Autowired
     private Environment env;
+    @Autowired
+    private ToolSetService toolSetService;
 
     private JSONObject getZKNodeData(String path) throws Exception {
         JSONObject json = new JSONObject();
@@ -421,14 +424,8 @@ public class AutoDeployDataLineService {
         }
     }
 
-    /**
-     * @param map
-     * @return
-     */
-    public int addOracleSchema(HashMap<String, String> map) throws Exception {
-        String dsName = map.get("dsName");
-        String schemaName = map.get("schemaName");
-        String tableNames = map.get("tableNames");
+
+    public int addOracleSchema(String dsName, String schemaName, String tableNames) throws Exception {
         JSONObject oggConf = getOggConf(dsName);
         String host = oggConf.getString(KeeperConstants.HOST);
         String port = oggConf.getString(KeeperConstants.PORT);
@@ -509,9 +506,7 @@ public class AutoDeployDataLineService {
      * @param map
      * @return
      */
-    public int deleteOracleSchema(HashMap<String, String> map) throws Exception {
-        String dsName = map.get("dsName");
-        String schemaName = map.get("schemaName");
+    public int deleteOracleSchema(String dsName, String schemaName) throws Exception {
         JSONObject oggConf = getOggConf(dsName);
         String host = oggConf.getString(KeeperConstants.HOST);
         String port = oggConf.getString(KeeperConstants.PORT);
@@ -548,14 +543,7 @@ public class AutoDeployDataLineService {
         return 0;
     }
 
-    /**
-     * @param map
-     * @return
-     */
-    public int deleteOracleTable(HashMap<String, String> map) throws Exception {
-        String dsName = map.get("dsName");
-        String schemaName = map.get("schemaName");
-        String tableNames = map.get("tableNames");
+    public int deleteOracleTable(String dsName, String schemaName, String tableNames) throws Exception {
         JSONObject oggConf = getOggConf(dsName);
         String host = oggConf.getString(KeeperConstants.HOST);
         String port = oggConf.getString(KeeperConstants.PORT);
@@ -1014,6 +1002,9 @@ public class AutoDeployDataLineService {
     }
 
     public int syncOggCanalDeployInfo() throws Exception {
+        List<DataSource> list = toolSetService.getDataSourceByDsTypes(Arrays.asList(new String[]{"oracle", "mysql"}));
+        List<String> mysql = list.stream().filter(dataSource -> dataSource.getDsType().equals("mysql"))
+                .map(DataSource::getDsName).collect(Collectors.toList());
         //获取并更新所有canal部署信息
         JSONObject canalConfJson = this.getCanalConf();
         HashMap<String, HashMap<String, String>> canals = new HashMap<>();
@@ -1024,6 +1015,14 @@ public class AutoDeployDataLineService {
         }
         JSONObject dsCanalConf = canalConfJson.getJSONObject(KeeperConstants.DS_CANAL_CONF);
         if (dsCanalConf != null) {
+            //去除不存在的配置
+            Iterator<Map.Entry<String, Object>> iterator = dsCanalConf.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Object> next = iterator.next();
+                if (!mysql.contains(next.getKey())) {
+                    iterator.remove();
+                }
+            }
             Map<String, String> canalResults = getAllCanalInfos(canalConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF), hosts);
             for (Map.Entry<String, String> entry : canalResults.entrySet()) {
                 String info = entry.getKey();
@@ -1041,6 +1040,8 @@ public class AutoDeployDataLineService {
         zkService.setData(Constants.CANAL_PROPERTIES_ROOT,
                 JsonFormatUtils.toPrettyFormat(canalConfJson.toJSONString()).getBytes(KeeperConstants.UTF8));
 
+        List<String> oracle = list.stream().filter(dataSource -> dataSource.getDsType().equals("oracle"))
+                .map(DataSource::getDsName).collect(Collectors.toList());
         //获取并更新所有ogg replicat部署信息
         JSONObject oggConfJson = this.getOggConf();
         hosts.clear();
@@ -1050,6 +1051,14 @@ public class AutoDeployDataLineService {
         }
         JSONObject dsOggConf = oggConfJson.getJSONObject(KeeperConstants.DS_OGG_CONF);
         if (dsOggConf != null) {
+            //去除不存在的配置
+            Iterator<Map.Entry<String, Object>> iterator = dsOggConf.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Object> next = iterator.next();
+                if (!oracle.contains(next.getKey())) {
+                    iterator.remove();
+                }
+            }
             JSONObject oggDeployConf = oggConfJson.getJSONObject(KeeperConstants.DEPLOY_CONF);
             Map<String, Map<String, String>> replicats = getAllOggInfos(hosts, oggDeployConf);
             for (Map.Entry<String, Object> conf : dsOggConf.entrySet()) {
@@ -1117,4 +1126,37 @@ public class AutoDeployDataLineService {
         }
         return canalResults;
     }
+
+    /**
+     * @param type(editFilter,initFilter)
+     * @param dsName
+     * @param tableNames
+     * @return
+     * @throws Exception
+     */
+    public int editCanalFilter(String type, String dsName, String tableNames) throws Exception {
+        JSONObject canalConf = getCanalConf(dsName);
+        String host = canalConf.getString(KeeperConstants.HOST);
+        String port = canalConf.getString(KeeperConstants.PORT);
+        String user = canalConf.getString(KeeperConstants.USER);
+        String canalPath = canalConf.getString(KeeperConstants.CANAL_PATH);
+
+        checkCanalTool(host, port, user, canalPath);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("cd ").append(canalPath);
+        sb.append(";sh addLine.sh '-t ").append(type);
+        sb.append(" -dn ").append(dsName);
+        sb.append(" -tn ").append(tableNames);
+        sb.append("'");
+        String result = SSHUtils.executeCommand(user, host, Integer.parseInt(port), env.getProperty("pubKeyPath"), sb.toString(), true);
+        if (result == null) {
+            return MessageCode.SSH_CONF_ERROR;
+        }
+        if (StringUtils.isNotBlank(result)) {
+            return MessageCode.DEPLOY_CANAL_ERROR;
+        }
+        return 0;
+    }
+
 }

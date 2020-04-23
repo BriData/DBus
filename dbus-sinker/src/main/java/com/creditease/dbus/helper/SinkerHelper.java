@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@
 
 package com.creditease.dbus.helper;
 
+import com.creditease.dbus.bean.HdfsOutputStreamInfo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +39,10 @@ public class SinkerHelper {
     /**
      * 获取hdfs的下一个文件名
      */
-    public static String getHdfsFileName() {
+    public static String getHdfsFileName(long opts) {
         Random r = new Random();
         int number = r.nextInt(9000) + 1000;
-        return sdf.format(new Date()) + number;
+        return sdf.format(opts) + number;
     }
 
     public static String getHdfsFilePath(String[] dataKeys, String hdfsRootPath, String fileName) {
@@ -50,20 +51,22 @@ public class SinkerHelper {
     }
 
 
-    public static boolean needCreateNewFile(String version, String path) {
-        String[] split = StringUtils.split(path, "/");
-        if (StringUtils.equals(version, split[split.length - 6])) {
-            String fileName = split[split.length - 1];
-            //跨天需要切换文件
-            if (fileName.compareTo(getStartTime() + "0000") <= 0) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            //版本变更需要切换文件
+    public static boolean needCreateNewFile(Long opts, String version, HdfsOutputStreamInfo hdfsOutputStreamInfo) {
+        String v = hdfsOutputStreamInfo.getVersion();
+        //跨版本需要切换文件
+        if (!StringUtils.equals(version, v)) {
+            logger.info("版本变更,需要切换hdfs文件,上一个版本:{},当前版本:{}", v, version);
             return true;
         }
+        //跨天需要切换文件
+        String fileName = hdfsOutputStreamInfo.getFileName();
+        String day = StringUtils.substring(fileName, 0, 8);
+        String curDay = StringUtils.substring(SinkerHelper.getHdfsFileName(opts), 0, 8);
+        if (!StringUtils.equals(day, curDay)) {
+            logger.info("日期变更,需要切换hdfs文件,上一个日期:{},当前日期:{}", day, curDay);
+            return true;
+        }
+        return false;
     }
 
     /**

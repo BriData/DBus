@@ -43,7 +43,8 @@ import {
   DATA_SOURCE_SEARCH_DATASOURCE_EXIST_API,
   DATA_SOURCE_UPDATE_API,
   DOWNLOAD_PRE_PROCESS_MODEL_API,
-  TOPO_JAR_START_API
+  TOPO_JAR_START_API,
+  INIT_CANAL_FILTER_API
 } from './api'
 import {GET_MOUNT_PROJECT_API} from '../ProjectManage/api'
 import Request from "@/app/utils/request";
@@ -244,6 +245,28 @@ export default class DataSourceWrapper extends Component {
       addModalVisible: true,
       addModalRecord: record
     })
+  }
+
+  handleInitCanalFilter = record => {
+    Request(INIT_CANAL_FILTER_API, {
+      params: {
+        dsId: record.id,
+        dsName: record.name
+      },
+      method: 'get'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
   }
 
   handleCloseAddModal = () => {
@@ -461,6 +484,7 @@ export default class DataSourceWrapper extends Component {
           deleteApi={DATA_SOURCE_DELETE_API}
           onRefresh={this.handleRefresh}
           onRerun={this.handleOpenRerunModal}
+          onInitCanalFilter={this.handleInitCanalFilter}
         />
         <DataSourceManageModifyModal
           key={modifyModalKey}
@@ -534,5 +558,5 @@ export default class DataSourceWrapper extends Component {
   }
 }
 DataSourceWrapper.propTypes = {
-  locale: PropTypes.any,
+  locale: PropTypes.any
 }

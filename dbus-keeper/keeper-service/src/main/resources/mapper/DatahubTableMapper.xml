@@ -72,4 +72,7 @@
       <if test ="tableName != null and tableName != ''"> AND t1.table_name = #{tableName}</if>
     </where>
   </select>
+  <select id="getTableByParams" resultMap="BaseResultMap">
+    select * from t_data_tables where schema_id = #{schemaId} and table_name = #{tableName}
+  </select>
 </mapper>

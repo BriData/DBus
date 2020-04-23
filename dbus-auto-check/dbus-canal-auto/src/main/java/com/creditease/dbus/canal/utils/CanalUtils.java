@@ -40,19 +40,17 @@ public class CanalUtils {
         try {
             String startPath = canalPath + "/bin/" + "startup.sh";
             String stopPath = canalPath + "/bin/" + "stop.sh";
+
             String cmd = "sh " + stopPath;
             writeAndPrint("exec: " + cmd);
-
             //停止已存在
             exec(cmd);
+
             cmd = "sh " + startPath;
             writeAndPrint("exec: " + cmd);
-
             exec(cmd);
-
         } catch (Exception e) {
             writeAndPrint("************************************* START CANAL FAIL ************************************** ");
-
             throw e;
         }
     }
@@ -100,7 +98,7 @@ public class CanalUtils {
 
         try {
             if (cmd instanceof String) {
-                process = Runtime.getRuntime().exec(cmd.toString());
+                process = Runtime.getRuntime().exec(((String) cmd));
             } else {
                 String[] cmd2 = (String[]) cmd;
                 process = Runtime.getRuntime().exec(cmd2);

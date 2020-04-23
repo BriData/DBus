@@ -180,6 +180,13 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
     }
 
     private void writeOkFile(String reqString, JSONObject reqJson) throws Exception {
+        DBConfiguration dbConf = FullPullHelper.getDbConfiguration(reqString);
+        String sinkType = dbConf.getString(DBConfiguration.SINK_TYPE);
+        if (FullPullConstants.SINK_TYPE_KAFKA.equals(sinkType)) {
+            //kafka 无需写ok文件
+            return;
+        }
+
         FSDataOutputStream outputStream = null;
         try {
             // 防止多个线程并发写hdfs同一个文件
@@ -188,20 +195,25 @@ public class PagedBatchDataFetchingBolt extends BaseRichBolt {
                 return;
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-            DBConfiguration dbConf = FullPullHelper.getDbConfiguration(reqString);
+
             String opTs = dbConf.getString(DBConfiguration.DATA_IMPORT_OP_TS);
-            long time = sdf.parse(opTs).getTime();
-            String path = dbConf.getString(DBConfiguration.HDFS_TABLE_PATH) + "/ok_" + time;
-            if (fileSystem != null && !fileSystem.exists(new Path(path))) {
-                outputStream = fileSystem.create(new Path(path));
-                JSONObject data = new JSONObject();
-                data.put("ums_ts_", opTs);
-                data.put("id", FullPullHelper.getSeqNo(reqJson));
-                data.put("end_time", new Date());
-                outputStream.write(data.toJSONString().getBytes());
-                outputStream.close();
-                logger.info("[pull bolt] write ok file success.{}", data);
+            String dbType = dbConf.getString(DBConfiguration.DataSourceInfo.DS_TYPE);
+            // 这里oracle的ums_ts到微秒2020-04-21 12:46:45.461281,需要去掉后三位
+            if (dbType.equals("oracle")) {
+                opTs = opTs.substring(0, opTs.length() - 3);
             }
+            long time = sdf.parse(opTs).getTime();
+            String path = dbConf.getString(DBConfiguration.HDFS_TABLE_PATH) + "ok_" + time;
+            logger.info("[pull bolt] will write ok file {}", path);
+
+            outputStream = getFileSystem().create(new Path(path));
+            JSONObject data = new JSONObject();
+            data.put("ums_ts_", opTs);
+            data.put("id", FullPullHelper.getSeqNo(reqJson));
+            data.put("end_time", new Date());
+            outputStream.write(data.toJSONString().getBytes());
+            outputStream.hsync();
+            logger.info("[pull bolt] write ok file success.{},{}", path, data);
         } catch (Exception e) {
             logger.error("Exception when write ok file to hdfs");
             throw e;

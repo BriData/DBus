@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static com.creditease.dbus.constant.KeeperConstants.GLOBAL_CONF_KEY_BOOTSTRAP_SERVERS;
@@ -184,17 +185,22 @@ public class TableService {
         return result.getBody();
     }
 
-    public ResultEntity updateTable(DataTable dataTable) {
+    public ResultEntity updateTable(DataTable dataTable) throws Exception {
+        DataTable table = getTableById(dataTable.getId());
         ResponseEntity<ResultEntity> result = sender.post(ServiceNames.KEEPER_SERVICE, "/tables/update", dataTable);
 
         if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
             return result.getBody();
 
         //TODO mongo的表更新完后,自动reload
-        DataTable table = getTableById(dataTable.getId());//Integer dsId, String dsName, String dsType) {
         if (DbusDatasourceType.MONGO == DbusDatasourceType.parse(table.getDsType())
                 && KeeperConstants.OK.equals(table.getStatus())) {
             toolSetService.reloadMongoCatch(table.getDsId(), table.getDsName(), table.getDsType());
+        } else if (DbusDatasourceType.MYSQL == DbusDatasourceType.parse(table.getDsType())
+                && !StringUtils.equals(table.getPhysicalTableRegex(), dataTable.getPhysicalTableRegex())) {
+            //正则表达式发生变更需要重新加载canal filter
+            autoDeployDataLineService.editCanalFilter("deleteFilter", table.getDsName(), String.format("%s.%s", table.getSchemaName(), table.getPhysicalTableRegex()));
+            autoDeployDataLineService.editCanalFilter("editFilter", table.getDsName(), String.format("%s.%s", table.getSchemaName(), dataTable.getPhysicalTableRegex()));
         }
         return result.getBody();
 
@@ -211,12 +217,13 @@ public class TableService {
         if (table.getDsType().equalsIgnoreCase("oracle")) {
             String dsName = table.getDsName();
             if (autoDeployDataLineService.isAutoDeployOgg(dsName)) {
-                String schemaName = table.getSchemaName();
-                HashMap<String, String> map = new HashMap<>();
-                map.put("dsName", dsName);
-                map.put("schemaName", schemaName);
-                map.put("tableNames", table.getTableName());
-                resultEntity.setStatus(autoDeployDataLineService.deleteOracleTable(map));
+                resultEntity.setStatus(autoDeployDataLineService.deleteOracleTable(dsName, table.getSchemaName(), table.getTableName()));
+            }
+        } else if (table.getDsType().equalsIgnoreCase("mysql")) {
+            String dsName = table.getDsName();
+            if (autoDeployDataLineService.isAutoDeployCanal(dsName)) {
+                String tableName = String.format("%s.%s", table.getSchemaName(), table.getPhysicalTableRegex());
+                resultEntity.setStatus(autoDeployDataLineService.editCanalFilter("deleteFilter", dsName, tableName));
             }
         }
         return resultEntity;
@@ -264,7 +271,7 @@ public class TableService {
      * @param schemaId 数据源ID,不存在则查询所有table
      * @return 返回满足条件的table列表
      */
-    private List<DataTable> getTablesBySchemaID(Integer schemaId) {
+    public List<DataTable> getTablesBySchemaID(Integer schemaId) {
         //TODO
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/tables/get-by-schema-id/{0}", schemaId);
         return result.getBody().getPayload(new TypeReference<List<DataTable>>() {
@@ -862,7 +869,7 @@ public class TableService {
                 return resultEntity;
             }
         }
-        logger.info("batch start tables by table id list success .tableids:{}", tableIds);
+        logger.info("batch operate tables by table id list success .tableids:{}", tableIds);
         return result.getBody();
     }
 
@@ -909,6 +916,39 @@ public class TableService {
 
     public ResultEntity moveSourceTables(Map<String, Object> param) {
         return sender.post(ServiceNames.KEEPER_SERVICE, "/tables/moveSourceTables", param).getBody();
+    }
+
+    public ResultEntity batchDeleteTableByTableIds(List<Integer> tableIds) throws Exception {
+        List<DataTable> dataTables = searchTableByIds(tableIds);
+        ResultEntity body = sender.post(ServiceNames.KEEPER_SERVICE, "/tables/batchDeleteTableByTableIds", tableIds).getBody();
+        if (body.getStatus() != 0) {
+            return body;
+        }
+        ConcurrentMap<String, List<DataTable>> collect = dataTables.stream().collect(Collectors.groupingByConcurrent(DataTable::getDsName));
+        ResultEntity resultEntity = new ResultEntity();
+        for (Map.Entry<String, List<DataTable>> entry : collect.entrySet()) {
+            List<DataTable> tables = entry.getValue();
+            DataTable table = tables.get(0);
+            if (table.getDsType().equalsIgnoreCase("oracle")) {
+                if (autoDeployDataLineService.isAutoDeployOgg(table.getDsName())) {
+                    String tableNames = tables.stream().map(DataTable::getTableName).collect(Collectors.joining(","));
+                    resultEntity.setStatus(autoDeployDataLineService.deleteOracleTable(table.getDsName(), table.getSchemaName(), tableNames));
+                    return resultEntity;
+                }
+            } else if (table.getDsType().equalsIgnoreCase("mysql")) {
+                if (autoDeployDataLineService.isAutoDeployCanal(table.getDsName())) {
+                    String tableNames = tables.stream().map(dataTable -> dataTable.getSchemaName() + "." + dataTable.getPhysicalTableRegex()).collect(Collectors.joining(","));
+                    resultEntity.setStatus(autoDeployDataLineService.editCanalFilter("deleteFilter", table.getDsName(), tableNames));
+                    return resultEntity;
+                }
+            }
+        }
+        return body;
+    }
+
+    public List<DataTable> searchTableByIds(List<Integer> tableIds) {
+        return sender.post(ServiceNames.KEEPER_SERVICE, "/tables/searchTableByIds", tableIds).getBody().getPayload(new TypeReference<List<DataTable>>() {
+        });
     }
 
     public static class InitialLoadStatus {

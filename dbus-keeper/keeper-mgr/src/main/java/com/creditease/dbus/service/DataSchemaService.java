@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * User: 尹宏春
@@ -108,21 +109,30 @@ public class DataSchemaService {
 
     public ResultEntity delete(Integer id) throws Exception {
         DataSchema dataSchema = tableService.getDataSchemaById(id);
-        ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/dataschema/delete/{id}", id);
-        if (result.getBody().getStatus() != 0) {
-            return result.getBody();
+        ResultEntity resultEntity = sender.get(KEEPER_SERVICE, "/dataschema/delete/{id}", id).getBody();
+        if (resultEntity.getStatus() != 0) {
+            return resultEntity;
         }
         if (dataSchema.getDsType().equalsIgnoreCase("oracle")) {
-            ResultEntity resultEntity = new ResultEntity();
-            HashMap<String, String> map = new HashMap<>();
             if (autoDeployDataLineService.isAutoDeployOgg(dataSchema.getDsName())) {
-                map.put("dsName", dataSchema.getDsName());
-                map.put("schemaName", dataSchema.getSchemaName());
-                resultEntity.setStatus(autoDeployDataLineService.deleteOracleSchema(map));
+                resultEntity.setStatus(autoDeployDataLineService.deleteOracleSchema(dataSchema.getDsName(), dataSchema.getSchemaName()));
                 return resultEntity;
             }
+        } else if (dataSchema.getDsType().equalsIgnoreCase("mysql")) {
+            resultEntity.setStatus(deleteCanalFilter(dataSchema));
+            return resultEntity;
         }
-        return result.getBody();
+        return resultEntity;
+    }
+
+    private int deleteCanalFilter(DataSchema dataSchema) throws Exception {
+        if (autoDeployDataLineService.isAutoDeployCanal(dataSchema.getDsName())) {
+            List<DataTable> tables = tableService.getTablesBySchemaID(dataSchema.getId());
+            String schemaName = dataSchema.getSchemaName();
+            String tableNames = tables.stream().map(dataTable -> schemaName + "." + dataTable.getPhysicalTableRegex()).collect(Collectors.joining(","));
+            return autoDeployDataLineService.editCanalFilter("deleteFilter", dataSchema.getDsName(), tableNames);
+        }
+        return 0;
     }
 
     public ResultEntity modifyDataSchemaStatus(Long id, String status) {
@@ -213,12 +223,32 @@ public class DataSchemaService {
         //3. 添加成功,发送control message
         toolSetService.sendCtrlMessageEasy(dataSource.getId(), dataSource.getDsName(), dataSource.getDsType());
         if (dataSource.getDsType().equalsIgnoreCase("oracle")) {
-            resultEntity.setStatus(autoAddOggSchema(addDataSourceTablesBean));
+            int i = autoAddOggSchema(addDataSourceTablesBean);
+            resultEntity.setStatus(i);
+        } else if (dataSource.getDsType().equalsIgnoreCase("mysql")) {
+            int i = autoAddCanalSchema(addDataSourceTablesBean);
+            resultEntity.setStatus(i);
         }
         if (failCount > 0) {
             resultEntity.setMessage("部分表添加失败,请确认后重新添加");
         }
         return resultEntity;
+    }
+
+    private int autoAddCanalSchema(AddDataSourceTablesBean addDataSourceTablesBean) throws Exception {
+        String dsName = addDataSourceTablesBean.getDataSource().getDsName();
+        if (autoDeployDataLineService.isAutoDeployCanal(dsName)) {
+            StringBuilder sb = new StringBuilder();
+            for (AddSchemaTablesBean info : addDataSourceTablesBean.getSchemaAndTables()) {
+                String schemaName = info.getSchema().getSchemaName();
+                for (DataTable table : info.getTables()) {
+                    sb.append(schemaName).append(".").append(table.getPhysicalTableRegex()).append(",");
+                }
+            }
+            String tableNames = sb.substring(0, sb.length() - 1);
+            return autoDeployDataLineService.editCanalFilter("editFilter", dsName, tableNames);
+        }
+        return 0;
     }
 
     /**
@@ -236,10 +266,8 @@ public class DataSchemaService {
                 for (DataTable table : info.getTables()) {
                     sb.append(table.getTableName()).append(",");
                 }
-                map.put("dsName", dsName);
-                map.put("schemaName", schemaName);
-                map.put("tableNames", sb.substring(0, sb.length() - 1).toString());
-                int result = autoDeployDataLineService.addOracleSchema(map);
+                String tableNames = sb.substring(0, sb.length() - 1);
+                int result = autoDeployDataLineService.addOracleSchema(dsName, schemaName, tableNames);
                 if (result != 0) {
                     return result;
                 }

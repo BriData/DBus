@@ -62,24 +62,16 @@ export default class ProjectFullpullSearch extends Component {
         <Form autoComplete="off" layout="inline" className={styles.searchForm}
               onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
-            <Col span={6} className={styles.formLeft}>
-              <FormItem
-                label={
-                  <FormattedMessage
-                    id="app.common.table.project"
-                    defaultMessage="项目"
-                  />
-                }
-              >
+            <Col span={24} className={styles.formRight}>
+              <FormItem>
                 {getFieldDecorator('projectName', {
                   initialValue: query.projectName
-                  // initialValue: query.projectName ? query.projectName : project[1] ? `${project[1].projectName}` : `${project[0].projectName}`
                 })(
                   <Select
                     showSearch
                     optionFilterProp='children'
                     className={styles.select}
-                    placeholder="Select Project"
+                    placeholder="选择项目"
                   >
                     {project.map(item => (
                       <Option value={`${item.projectName}`}
@@ -90,16 +82,7 @@ export default class ProjectFullpullSearch extends Component {
                   </Select>
                 )}
               </FormItem>
-            </Col>
-            <Col span={18} className={styles.formRight}>
-              <FormItem
-                label={
-                  <FormattedMessage
-                    id="app.common.orderColumn"
-                    defaultMessage="排序列"
-                  />
-                }
-              >
+              <FormItem>
                 {getFieldDecorator('orderBy', {
                   rules: [
                     {
@@ -111,7 +94,7 @@ export default class ProjectFullpullSearch extends Component {
                     showSearch
                     optionFilterProp='children'
                     className={styles.select}
-                    placeholder="Select orderColumn"
+                    placeholder="选择排序列"
                   >
                     {this.orderColumns.map(item => (
                       <Option value={item.value} key={item.value}>
@@ -133,26 +116,16 @@ export default class ProjectFullpullSearch extends Component {
                     showSearch
                     optionFilterProp='children'
                     className={styles.select}
-                    placeholder="Select state"
+                    placeholder="选择状态"
                   >
                     <Option value='请选择状态'>请选择状态</Option>
                     <Option value='init'>init</Option>
                     <Option value='splitting'>splitting</Option>
                     <Option value='pulling'>pulling</Option>
-                    <Option value='ending'>pulling</Option>
+                    <Option value='ending'>ending</Option>
                     <Option value='abort'>abort</Option>
                   </Select>
                 )}
-              </FormItem>
-              <FormItem>
-                {getFieldDecorator('id', {
-                  initialValue: query.id
-                })(<Input className={styles.input} placeholder="ID"/>)}
-              </FormItem>
-              <FormItem>
-                {getFieldDecorator('targetSinkTopic', {
-                  initialValue: query.targetSinkTopic
-                })(<Input className={styles.input} placeholder="targetSinkTopic"/>)}
               </FormItem>
               <FormItem>
                 {getFieldDecorator('dsName', {
@@ -162,7 +135,7 @@ export default class ProjectFullpullSearch extends Component {
                     showSearch
                     optionFilterProp='children'
                     className={styles.select}
-                    placeholder="select a data source"
+                    placeholder="选择数据源"
                   >
                     {dataSource.map(item => (
                       <Option value={`${item.dsName}`} key={`${item.dsName ? item.dsName : 'dsName'}`}>
@@ -175,12 +148,22 @@ export default class ProjectFullpullSearch extends Component {
               <FormItem>
                 {getFieldDecorator('schemaName', {
                   initialValue: query.schemaName
-                })(<Input className={styles.input} placeholder="schemaName"/>)}
+                })(<Input className={styles.input} placeholder="输入Schema"/>)}
               </FormItem>
               <FormItem>
                 {getFieldDecorator('tableName', {
                   initialValue: query.tableName
-                })(<Input className={styles.input} placeholder="tableName"/>)}
+                })(<Input className={styles.input} placeholder="输入表名"/>)}
+              </FormItem>
+              <FormItem>
+                {getFieldDecorator('id', {
+                  initialValue: query.id
+                })(<Input className={styles.input} placeholder="输入ID"/>)}
+              </FormItem>
+              <FormItem>
+                {getFieldDecorator('targetSinkTopic', {
+                  initialValue: query.targetSinkTopic
+                })(<Input className={styles.input} placeholder="输入目标Topic"/>)}
               </FormItem>
               <FormItem>
                 <Button

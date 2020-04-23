@@ -22,11 +22,20 @@
 package com.creditease.dbus.canal.auto;
 
 
+import com.creditease.dbus.canal.utils.CanalUtils;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.creditease.dbus.canal.utils.FileUtils.getValueFromFile;
+import static com.creditease.dbus.canal.utils.FileUtils.writeProperties;
 
 /**
  * This is Description
@@ -35,6 +44,7 @@ import java.io.OutputStreamWriter;
  * @date 2018/12/12
  */
 public class AddLine {
+    public static String type = "newLine";
     public static String dsName = null;
     public static String zkString = null;
     public static String address = null;
@@ -42,20 +52,125 @@ public class AddLine {
     public static String pass = null;
     public static Integer slaveId = null;
     public static String bootstrapServers = null;
+    public static String tableNames = null;
     public static String userDir = System.getProperty("user.dir");
-
+    public static String DEFAULT_FILTER = ".*\\\\..*";
 
     public static void main(String[] args) {
         try {
             parseCommandArgs(args);
             autoDeploy();
-            AutoDeployStart.main(null);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private static void autoDeploy() throws Exception {
+        switch (type) {
+            case "newLine":
+                newLine();
+                AutoDeployStart.main(null);
+                break;
+            case "editFilter":
+                editFilter();
+                break;
+            case "initFilter":
+                initFilter();
+                break;
+            case "deleteFilter":
+                deleteFilter();
+                break;
+        }
+    }
+
+    private static void deleteFilter() throws Exception {
+        if (StringUtils.isNotBlank(tableNames)) {
+            System.out.println("delete filter." + tableNames);
+            deleteTableFromParamFile();
+        }
+        restart();
+    }
+
+    private static void initFilter() throws Exception {
+        if (StringUtils.isNotBlank(tableNames)) {
+            System.out.println("init filter." + tableNames);
+            addAllTableToParamFile();
+        }
+        restart();
+    }
+
+    private static void editFilter() throws Exception {
+        if (StringUtils.isNotBlank(tableNames)) {
+            System.out.println("edit filter." + tableNames);
+            addTableToParamFile();
+        }
+        restart();
+    }
+
+    private static void addAllTableToParamFile() throws Exception {
+        String userdir = System.getProperty("user.dir");
+        String paramFilePath = String.format("%s/canal-%s/conf/%s/instance.properties", userdir, dsName, dsName);
+        if (StringUtils.isBlank(tableNames)) {
+            tableNames = DEFAULT_FILTER;
+        }
+        writeProperties(paramFilePath, "canal.instance.filter.regex", "canal.instance.filter.regex=" + tableNames);
+    }
+
+    private static void deleteTableFromParamFile() throws Exception {
+        String userdir = System.getProperty("user.dir");
+        String paramFilePath = String.format("%s/canal-%s/conf/%s/instance.properties", userdir, dsName, dsName);
+        String filterRegex = getValueFromFile(paramFilePath, "canal.instance.filter.regex");
+        if (StringUtils.equals(DEFAULT_FILTER, filterRegex)) {
+            return;
+        }
+        List<String> oldFilterList = Arrays.asList(StringUtils.split(filterRegex, ","));
+        // 删除的表
+        List<String> tableNameList = Arrays.asList(StringUtils.split(tableNames, ","));
+        // 新的filter表
+        List<String> newFilterList = new ArrayList<>();
+        for (String tableName : oldFilterList) {
+            if (!tableNameList.contains(tableName)) {
+                newFilterList.add(tableName);
+            }
+        }
+        String newfilterRegex = newFilterList.stream().collect(Collectors.joining(","));
+        if (StringUtils.isBlank(newfilterRegex)) {
+            newfilterRegex = DEFAULT_FILTER;
+        }
+        writeProperties(paramFilePath, "canal.instance.filter.regex", "canal.instance.filter.regex=" + newfilterRegex);
+    }
+
+    private static void restart() throws Exception {
+        String canalPath = String.format("%s/canal-%s", System.getProperty("user.dir"), dsName);
+        CanalUtils.start(canalPath);
+    }
+
+    private static void addTableToParamFile() throws Exception {
+        String userdir = System.getProperty("user.dir");
+        String paramFilePath = String.format("%s/canal-%s/conf/%s/instance.properties", userdir, dsName, dsName);
+        String filterRegex = getValueFromFile(paramFilePath, "canal.instance.filter.regex");
+        if (StringUtils.equals(DEFAULT_FILTER, filterRegex)) {
+            filterRegex = "";
+        }
+        List<String> oldFilterList = Arrays.asList(StringUtils.split(filterRegex, ","));
+        // 新添加的表
+        List<String> tableNameList = Arrays.asList(StringUtils.split(tableNames, ","));
+        // 新的filter表
+        List<String> newFilterList = new ArrayList<>();
+        for (String tableName : tableNameList) {
+            if (!oldFilterList.contains(tableName)) {
+                newFilterList.add(tableName);
+            }
+        }
+        newFilterList.addAll(oldFilterList);
+        String newfilterRegex = newFilterList.stream().collect(Collectors.joining(","));
+        if (StringUtils.isBlank(newfilterRegex)) {
+            newfilterRegex = ".*\\\\..*";
+        }
+        writeProperties(paramFilePath, "canal.instance.filter.regex", "canal.instance.filter.regex=" + newfilterRegex);
+    }
+
+    private static void newLine() throws Exception {
         BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(userDir + "/conf/canal-auto.properties")));
@@ -89,6 +204,7 @@ public class AddLine {
     private static void parseCommandArgs(String[] args) throws Exception {
         Options options = new Options();
 
+        options.addOption("t", "type", true, "newSchema");
         options.addOption("dn", "dsName", true, "");
         options.addOption("zk", "zkString", true, "");
         options.addOption("a", "address", true, "");
@@ -96,11 +212,15 @@ public class AddLine {
         options.addOption("p", "pass", true, "");
         options.addOption("s", "slaveId", true, "");
         options.addOption("bs", "bootstrap.servers", true, "");
+        options.addOption("tn", "tableNames", true, "");
 
 
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine line = parser.parse(options, args);
+            if (line.hasOption("type")) {
+                type = line.getOptionValue("type");
+            }
             if (line.hasOption("dsName")) {
                 dsName = line.getOptionValue("dsName");
             }
@@ -121,6 +241,9 @@ public class AddLine {
             }
             if (line.hasOption("bootstrap.servers")) {
                 bootstrapServers = line.getOptionValue("bootstrap.servers");
+            }
+            if (line.hasOption("tableNames")) {
+                tableNames = line.getOptionValue("tableNames");
             }
 
         } catch (ParseException e) {

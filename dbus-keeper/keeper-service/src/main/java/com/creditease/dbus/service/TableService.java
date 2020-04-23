@@ -73,6 +73,8 @@ public class TableService {
     private NameAliasMappingMapper nameAliasMappingMapper;
     @Autowired
     private DdlEventMapper ddlEventMapper;
+    @Autowired
+    private ProjectTableService projectTableService;
 
     private static Logger logger = LoggerFactory.getLogger(TableService.class);
 
@@ -516,7 +518,7 @@ public class TableService {
             if (DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.MYSQL)
                     || DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.ORACLE)
                     || DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.DB2)
-            ) {
+                    ) {
                 TableFetcher fetcher = TableFetcher.getFetcher(dataSource);
                 Map<String, Object> map = new HashMap<>();
                 map.put("dsName", dsName);
@@ -559,7 +561,7 @@ public class TableService {
                 if (DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.MYSQL)
                         || DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.ORACLE)
                         || DbusDatasourceType.stringEqual(dataSource.getDsType(), DbusDatasourceType.DB2)
-                ) {
+                        ) {
                     TableFetcher fetcher = TableFetcher.getFetcher(dataSource);
                     ret = fetcher.fetchTableField(params, paramsList);
 
@@ -869,7 +871,7 @@ public class TableService {
         boolean isRelational = false;
         if (dsType.equalsIgnoreCase("mysql") || dsType.equalsIgnoreCase("oracle")
                 || dsType.equalsIgnoreCase("db2")
-        ) {
+                ) {
             fetcher = MetaFetcher.getFetcher(dataSource);
             isRelational = true;
         }
@@ -925,7 +927,7 @@ public class TableService {
         boolean isRelational = false;
         if (dsType.equalsIgnoreCase("mysql") || dsType.equalsIgnoreCase("oracle")
                 || dsType.equalsIgnoreCase("db2")
-        ) {
+                ) {
             fetcher = MetaFetcher.getFetcher(dataSource);
             isRelational = true;
         }
@@ -1153,6 +1155,19 @@ public class TableService {
         return tableMapper.searchTableByIds(ids);
     }
 
+    public Long getTableRowsNum(Integer id) throws Exception {
+        DataTable table = getTableById(id);
+        DataSource dataSource = new DataSource();
+        dataSource.setId(table.getDsId());
+        dataSource.setDsType(table.getDsType());
+        dataSource.setMasterUrl(table.getMasterUrl());
+        dataSource.setSlaveUrl(table.getSlaveUrl());
+        dataSource.setDbusUser(table.getDbusUser());
+        dataSource.setDbusPwd(table.getDbusPassword());
+        TableFetcher fetcher = TableFetcher.getFetcher(dataSource);
+        return fetcher.fetchTableDataRows(table.getSchemaName(), table.getTableName());
+    }
+
     public String getTableRows(Integer id) throws Exception {
         DataTable table = getTableById(id);
         DataSource dataSource = new DataSource();
@@ -1251,5 +1266,21 @@ public class TableService {
 
     public List<DataTable> getTablesByDsId(Integer dsId) {
         return tableMapper.findTables(dsId, null, null, null);
+    }
+
+    public ResultEntity batchDeleteTableByTableIds(List<Integer> tableIds) throws Exception {
+        ResultEntity resultEntity = new ResultEntity();
+        for (Integer tableId : tableIds) {
+            int i = projectTableService.countByTableId(tableId);
+            if (i > 0) {
+                resultEntity.setStatus(MessageCode.EXCEPTION);
+                resultEntity.setMessage(String.format("表%s仍有项目在使用不能删除!", tableId));
+                return resultEntity;
+            }
+        }
+        for (Integer tableId : tableIds) {
+            deleteTable(tableId);
+        }
+        return resultEntity;
     }
 }

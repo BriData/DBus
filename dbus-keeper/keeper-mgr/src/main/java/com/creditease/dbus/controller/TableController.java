@@ -432,6 +432,25 @@ public class TableController extends BaseController {
         }
     }
 
+    /**
+     * 批量删除table
+     *
+     * @param
+     */
+    @PostMapping(path = "/batchDeleteTableByTableIds")
+    public ResultEntity batchDeleteTableByTableIds(@RequestBody ArrayList<Integer> tableIds) {
+        try {
+            ResultEntity resultEntity = tableService.batchDeleteTableByTableIds(tableIds);
+            if (StringUtils.isBlank(resultEntity.getMessage())) {
+                return resultEntityBuilder().status(resultEntity.getStatus()).build();
+            }
+            return resultEntityBuilder().build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while request batchDeleteTableByTableIds.", e);
+            return resultEntityBuilder().status(MessageCode.EXCEPTION).build();
+        }
+    }
+
     @PostMapping("/importRulesByTableId/{tableId}")
     public ResultEntity importRulesByTableId(@PathVariable Integer tableId,
                                              @RequestParam MultipartFile uploadFile) {

@@ -77,7 +77,8 @@ export const DATA_SOURCE_GET_CANAL_CONF_API = '/keeper/autoDeploy/getCanalConf'
 export const DATA_SOURCE_SET_CANAL_CONF_API = '/keeper/autoDeploy/setCanalConf'
 // 自动部署canal ogg
 export const DATA_SOURCE_AUTO_ADD_OGG_CANAL_LINE_API = '/keeper/data-source/autoAddOggCanalLine'
-
+// 初始化canalFilter
+export const INIT_CANAL_FILTER_API = '/keeper/data-source/initCanalFilter'
 
 // DataSchema首页的搜索
 export const DATA_SCHEMA_SEARCH_API = '/keeper/data-schema/search'
@@ -112,6 +113,8 @@ export const DATA_TABLE_START_API = '/keeper/tables/activate'
 export const DATA_TABLE_BATCH_START_API = '/keeper/tables/batchStartTableByTableIds'
 // DataTable批量停止
 export const DATA_TABLE_BATCH_STOP_API = '/keeper/tables/batchStopTableByTableIds'
+// DataTable批量删除
+export const DATA_TABLE_BATCH_DELETE_API = '/keeper/tables/batchDeleteTableByTableIds'
 // DataTable Stop
 export const DATA_TABLE_STOP_API = '/keeper/tables/deactivate'
 // DataTable 拖回重跑

@@ -456,7 +456,7 @@ Shell> ll
 
 - 参考文档：https://docs.oracle.com/goldengate/bd123110/gg-bd/GADBD/using-kafka-handler.htm#GADBD449
 
-# 4 接表配置说明
+# 4 web加线加表
 
 **以获取utest用户下的t_customer表为例进行配置说明**
 
@@ -589,11 +589,11 @@ SQL> alter system set enable_goldengate_replication=true;
 
 
 
-## 4.3 DBus keeper 一键加线配置
+## 4.3 DBus 一键加线配置
 
 ​    完成以上工作就到了真正加线加表的操作了
 
-### 4.3.1数据源设置
+### 4.3.1数据源添加
 
 登录dbus-keeper，进入数据源管理-添加数据源 页面如下图
 
@@ -634,9 +634,9 @@ SQL> alter system set enable_goldengate_replication=true;
 
   1.部署中报错/DBus/Commons/auto-deploy-ogg.conf不存在,请手动在zookeeper创建该节点
 
-  
+  **!!!如有问题,请到logs目录下查看mgr.log和service.log获取具体问题原因.**
 
-### 4.3.2选择Schema和Table页面
+### 4.3.2 Schema和Table添加
 
 ![](img/oracle-add-schema-table.png)
 

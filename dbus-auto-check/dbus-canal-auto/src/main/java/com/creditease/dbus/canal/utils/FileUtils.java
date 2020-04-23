@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,9 +45,8 @@ public class FileUtils {
     }
 
     public static DeployPropsBean readProps(String path) throws Exception {
-        try {
+        try (InputStream ins = new BufferedInputStream(new FileInputStream(path))) {
             Properties deployProps = new Properties();
-            InputStream ins = new BufferedInputStream(new FileInputStream(path));
             deployProps.load(ins);
             DeployPropsBean props = new DeployPropsBean();
             props.setDsName(deployProps.getProperty("dsname").trim());
@@ -63,6 +62,20 @@ public class FileUtils {
 
             ins.close();
             return props;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    public static String getValueFromFile(String path, String key) throws Exception {
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.matches(key + "\\s*=.*")) {
+                    return StringUtils.trim(StringUtils.split(line, "=")[1]);
+                }
+            }
+            return null;
         } catch (Exception e) {
             throw e;
         }

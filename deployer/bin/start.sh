@@ -1,23 +1,23 @@
 #!/bin/bash
 echo 启动config-server...
-java -jar ../lib/config-server-0.6.0.jar >> ../logs/config.log 2>&1 &
+java -jar ../lib/config-server-0.6.1.jar >> ../logs/config.log 2>&1 &
 # 防止找不到配置
 sleep 15s
 echo 启动config-server...
 sleep 15s
 
 echo 启动register-server...
-java -jar ../lib/register-server-0.6.0.jar >> ../logs/register.log 2>&1 &
+java -jar ../lib/register-server-0.6.1.jar >> ../logs/register.log 2>&1 &
 # 防止无法注册服务
 sleep 15s
 echo 启动register-server...
 sleep 15s
 
 echo 启动gateway...
-java -jar ../lib/gateway-0.6.0.jar >> ../logs/gateway.log 2>&1 &
+java -jar ../lib/gateway-0.6.1.jar >> ../logs/gateway.log 2>&1 &
 
 echo 启动keeper-mgr...
-java -jar ../lib/keeper-mgr-0.6.0.jar >> ../logs/mgr.log 2>&1 &
+java -jar ../lib/keeper-mgr-0.6.1.jar >> ../logs/mgr.log 2>&1 &
 
 echo 启动keeper-service...
-java -jar ../lib/keeper-service-0.6.0.jar >> ../logs/service.log 2>&1 &
+java -jar ../lib/keeper-service-0.6.1.jar >> ../logs/service.log 2>&1 &

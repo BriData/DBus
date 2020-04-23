@@ -253,7 +253,6 @@ export default class DataSourceManageTopologyModal extends Component {
     let toposOfDs = record && record.toposOfDs
     toposOfDs = toposOfDs && Object.values(toposOfDs)
 
-
     const {topoJarStartApi} = this.props
     const {startModalKey, startModalVisible, startModalDataSource, startModalRecord} = this.state
 

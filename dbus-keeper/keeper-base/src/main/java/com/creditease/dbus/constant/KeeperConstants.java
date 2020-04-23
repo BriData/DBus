@@ -51,7 +51,7 @@ public class KeeperConstants {
     public static final String RELEASE_VERSION = "0.6.x";
 
     public static final String JAR_NAME_LOG_PROCESSOR = "dbus-log-processor-" + Constants.RELEASE_VERSION + "-jar-with-dependencies.jar";
-    public static final String JAR_NAME_MYSQL_EXTRACTOR = "dbus-mysql-extractor-" + Constants.RELEASE_VERSION + "-jar-with-dependencies.jar";
+    //public static final String JAR_NAME_MYSQL_EXTRACTOR = "dbus-mysql-extractor-" + Constants.RELEASE_VERSION + "-jar-with-dependencies.jar";
     public static final String JAR_NAME_DISPATCHER_APPENDER = "dbus-stream-main-" + Constants.RELEASE_VERSION + "-jar-with-dependencies.jar";
     public static final String JAR_NAME_SPLITTER_PULLER = "dbus-fullpuller-" + Constants.RELEASE_VERSION + "-jar-with-dependencies.jar";
     public static final String JAR_NAME_ROUTER = "dbus-router-" + Constants.RELEASE_VERSION + "-jar-with-dependencies.jar";

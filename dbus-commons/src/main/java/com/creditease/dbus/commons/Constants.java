@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Constants {
-    public static final String RELEASE_VERSION = "0.6.0";
+    public static final String RELEASE_VERSION = "0.6.1";
 
     public static final String VERSION_12 = "1.2";
     public static final String VERSION_13 = "1.3";

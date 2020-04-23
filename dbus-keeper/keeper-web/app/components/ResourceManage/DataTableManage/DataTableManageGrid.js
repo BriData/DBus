@@ -1,20 +1,20 @@
-import React, { PropTypes, Component } from 'react'
-import { Tooltip, Form, Popconfirm, Select, Input, message,Table ,Tag } from 'antd'
-import { FormattedMessage } from 'react-intl'
+import React, {PropTypes, Component} from 'react'
+import {Tooltip, Form, Popconfirm, Select, Input, message, Table, Tag} from 'antd'
+import {FormattedMessage} from 'react-intl'
 import OperatingButton from '@/app/components/common/OperatingButton'
 
 // 导入样式
 import styles from './res/styles/index.less'
 import dateFormat from 'dateformat'
+
 const FormItem = Form.Item
 const Option = Select.Option
 
 
 export default class DataTableManageGrid extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
-    this.state = {
-    }
+    this.state = {}
     this.tableWidth = [
       '4%',
       '16%',
@@ -74,7 +74,7 @@ export default class DataTableManageGrid extends Component {
     )
   }
 
-  renderStatus =(text, record, index) => {
+  renderStatus = (text, record, index) => {
     const {verChangeNoticeFlg} = record
     let color = '#fff'
     switch (text) {
@@ -127,8 +127,10 @@ export default class DataTableManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onRerun, onCheckDataLine,onOpenSourceInsightModal,onMount, onModify,onOpenZKModal,onOpenRuleImportModal,onOpenNormalFullPullModal,
-      onHandleDownload} = this.props
+    const {
+      onRerun, onCheckDataLine, onOpenSourceInsightModal, onMount, onModify, onOpenZKModal, onOpenRuleImportModal, onOpenNormalFullPullModal,
+      onHandleDownload
+    } = this.props
     const dsType = record.dsType
     const notLog = dsType === 'mysql' || dsType === 'oracle' || dsType === 'mongo'
       || dsType === 'db2'
@@ -268,7 +270,8 @@ export default class DataTableManageGrid extends Component {
       ]
       return (
         <div>
-          <OperatingButton disabled={record.status === 'inactive'} icon="export" onClick={() => this.handleIndependentFullPull(record)}>
+          <OperatingButton disabled={record.status === 'inactive'} icon="export"
+                           onClick={() => this.handleIndependentFullPull(record)}>
             <FormattedMessage
               id="app.components.resourceManage.dataTable.independentFullPull"
               defaultMessage="独立拉全量"
@@ -286,7 +289,7 @@ export default class DataTableManageGrid extends Component {
               defaultMessage="查看已挂载项目"
             />
           </OperatingButton>
-          <OperatingButton icon="ellipsis" menus={menus} />
+          <OperatingButton icon="ellipsis" menus={menus}/>
         </div>
       )
     } else {
@@ -409,7 +412,7 @@ export default class DataTableManageGrid extends Component {
               defaultMessage="导出规则"
             />
           </OperatingButton>
-          <OperatingButton icon="ellipsis" menus={menus} />
+          <OperatingButton icon="ellipsis" menus={menus}/>
         </div>
       )
     }
@@ -516,7 +519,7 @@ export default class DataTableManageGrid extends Component {
     })
   }
 
-  render () {
+  render() {
     const {
       dataTableList,
       onPagination,
@@ -524,8 +527,8 @@ export default class DataTableManageGrid extends Component {
       onSelectionChange,
       selectedRowKeys
     } = this.props
-    const { loading, loaded } = dataTableList
-    const { total, pageSize, pageNum, list } = dataTableList.result
+    const {loading, loaded} = dataTableList
+    const {total, pageSize, pageNum, list} = dataTableList.result
     const dataTable = dataTableList.result && dataTableList.result.list
     const columns = [
       {
@@ -641,7 +644,7 @@ export default class DataTableManageGrid extends Component {
     const pagination = {
       showSizeChanger: true,
       showQuickJumper: true,
-      pageSizeOptions: ['10', '20', '50', '100'],
+      pageSizeOptions: ['10', '20', '50', '100', '500', '1000'],
       current: pageNum || 1,
       pageSize: pageSize || 10,
       total: total,
@@ -665,5 +668,4 @@ export default class DataTableManageGrid extends Component {
   }
 }
 
-DataTableManageGrid.propTypes = {
-}
+DataTableManageGrid.propTypes = {}

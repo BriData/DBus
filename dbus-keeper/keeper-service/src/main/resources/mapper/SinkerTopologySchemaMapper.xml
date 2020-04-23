@@ -111,7 +111,6 @@
     join t_dbus_datasource d on s.ds_id = d.id
     left join t_sinker_topo_schema t on s.id = t.schema_id
     <where>
-      (d.ds_type = 'mysql' or d.ds_type = 'oracle')
       <if test="dsName != null and dsName != ''">and d.ds_name = #{dsName}</if>
       <if test="schemaName != null and schemaName != ''">and s.schema_name = #{schemaName}</if>
     </where>

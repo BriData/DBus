@@ -50,10 +50,11 @@ public class HdfsOutputStreamInfo {
     }
 
     public void hsync() throws Exception {
+        outputStream.hsync();
         // 间隔一定时间同步一次
-        if ((System.currentTimeMillis() - lastHsyncTime) > hsyncIntervals) {
-            outputStream.hsync();
-        }
+        //if ((System.currentTimeMillis() - lastHsyncTime) > hsyncIntervals) {
+        //    outputStream.hsync();
+        //}
     }
 
     public String getFileName() {

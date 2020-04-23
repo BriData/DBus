@@ -6,11 +6,11 @@
 
     <groupId>com.creditease.dbus</groupId>
     <artifactId>dbus-main</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
     <packaging>pom</packaging>
 
     <properties>
-        <project.version>0.6.0</project.version>
+        <project.version>0.6.1</project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scope.provided>provided</scope.provided>
         <!--<scope.provided>compile</scope.provided>-->
@@ -19,18 +19,19 @@
     <modules>
         <module>encoder-base</module>
         <module>dbus-commons</module>
-        <module>dbus-stream</module>
-        <module>dbus-fullpuller</module>
         <module>dbus-tools</module>
         <module>dbus-components</module>
         <module>dbus-heartbeat</module>
-        <module>dbus-mysql-extractor</module>
         <module>dbus-log-processor</module>
         <module>dbus-keeper</module>
-        <module>encoder-plugins</module>
+        <module>dbus-stream</module>
+        <module>dbus-fullpuller</module>
         <module>dbus-router</module>
         <module>dbus-sinker</module>
         <module>dbus-auto-check</module>
+        <module>encoder-plugins</module>
+        <!--0.6.1版本废弃dbus-mysql-extractor模块-->
+        <!--<module>dbus-mysql-extractor</module>-->
         <module>deployer</module>
     </modules>
 
@@ -41,13 +42,13 @@
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>encoder-base</artifactId>
-                <version>0.6.0</version>
+                <version>0.6.1</version>
             </dependency>
 
             <dependency>
                 <groupId>com.creditease.dbus</groupId>
                 <artifactId>dbus-commons</artifactId>
-                <version>0.6.0</version>
+                <version>0.6.1</version>
             </dependency>
 
             <dependency>

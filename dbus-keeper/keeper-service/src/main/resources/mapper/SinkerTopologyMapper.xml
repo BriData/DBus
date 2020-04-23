@@ -33,12 +33,14 @@
   </insert>
   <update id="updateByPrimaryKey" parameterType="com.creditease.dbus.domain.model.SinkerTopology">
     update t_sinker_topo
-    set sinker_name = #{sinkerName,jdbcType=VARCHAR},
-      sinker_conf = #{sinkerConf,jdbcType=VARCHAR},
-      jar_id = #{jarId,jdbcType=INTEGER},
-      status = #{status,jdbcType=VARCHAR},
-      description = #{description,jdbcType=VARCHAR},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    <set>
+      <if test="sinkerName != null and sinkerName != ''">sinker_name = #{sinkerName,jdbcType=VARCHAR},</if>
+      <if test="sinkerConf != null and sinkerConf != ''">sinker_conf = #{sinkerConf,jdbcType=VARCHAR},</if>
+      <if test="jarId != null">jar_id = #{jarId,jdbcType=INTEGER},</if>
+      <if test="status != null and status != ''">status = #{status,jdbcType=VARCHAR},</if>
+      <if test="description != null and description != ''">description = #{description,jdbcType=VARCHAR},</if>
+      update_time = current_timestamp()
+    </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">

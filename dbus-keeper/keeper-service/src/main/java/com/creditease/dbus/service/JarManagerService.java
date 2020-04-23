@@ -447,8 +447,8 @@ public class JarManagerService {
             uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_LOG_PROCESSOR, KeeperConstants.JAR_NAME_LOG_PROCESSOR);
             logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_LOG_PROCESSOR);
 
-            uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_MYSQL_EXTRACTOR, KeeperConstants.JAR_NAME_MYSQL_EXTRACTOR);
-            logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_MYSQL_EXTRACTOR);
+            //uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_MYSQL_EXTRACTOR, KeeperConstants.JAR_NAME_MYSQL_EXTRACTOR);
+            //logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_MYSQL_EXTRACTOR);
 
             uploadStormJars(user, host, port, homePath, KeeperConstants.CATEGORY_NORMAL, KeeperConstants.TYPE_DISPATCHER_APPENDER, KeeperConstants.JAR_NAME_DISPATCHER_APPENDER);
             logger.info("上传jar:{}包成功.", KeeperConstants.JAR_NAME_DISPATCHER_APPENDER);

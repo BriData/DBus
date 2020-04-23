@@ -122,7 +122,7 @@ public class EntryHeader implements Serializable {
         }
     }
 
-    private void addLogfile(long currNum, long oldNum) throws Exception{
+    private void addLogfile(long currNum, long oldNum) throws Exception {
         // +1的目的是防止最新的pos比历史的pos大
         long oldCompensation = getLogFileNumCompensation();
         long currCompensation = oldCompensation + oldNum - currNum + 1;

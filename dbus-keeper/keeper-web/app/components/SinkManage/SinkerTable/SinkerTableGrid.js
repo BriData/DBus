@@ -93,7 +93,8 @@ export default class SinkerTableGrid extends Component {
       sinkerTableList,
       tableWidth,
       onSelectionChange,
-      selectedRowKeys
+      selectedRowKeys,
+      onShowSizeChange
     } = this.props
     const list = sinkerTableList && sinkerTableList.list
     const pagination = {
@@ -103,7 +104,8 @@ export default class SinkerTableGrid extends Component {
       current: (sinkerTableList && sinkerTableList.pageNum) || 1,
       pageSize: (sinkerTableList && sinkerTableList.pageSize) || 10,
       total: sinkerTableList && sinkerTableList.total,
-      onChange: this.handlePagation
+      onChange: this.handlePagation,
+      onShowSizeChange: onShowSizeChange
     }
     const columns = [
       {

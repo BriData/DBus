@@ -32,17 +32,13 @@ DBus的主要潜在客户包括：
 
 专注于数据的收集及实时数据流计算，通过简单灵活的配置，以无侵入的方式对源端数据进行采集，采用高可用的流式计算框架，对公司各个IT系统在业务流程中产生的数据进行汇聚，经过转换处理后成为统一JSON的数据格式（UMS），提供给不同数据使用方订阅和消费，充当数仓平台、大数据分析平台、实时报表和实时营销等业务的数据源。
 
-### 快速开始
-
-全套DBus包含诸多组件(Canal，zk，kafka，storm，mysql，influxdb，grafana)，为了简单化，我们准备了All in One 包，包含了预先安装数据和一键启动脚本， 用于快速尝试。 请参考 [Quick Start](docs/quick-start.md)
-
 ### 相关文档
 
-详细介绍 DBus请参考 [wiki](docs/index.md)
+详细介绍 DBus请参考 [wiki](https://bridata.github.io/DBus/index.html)
 
-常见问题可参考 [FAQ](docs/more-faq.md)
+常见问题可参考 [FAQ](https://bridata.github.io/DBus/more-faq.html)
 
-系统介绍参考 [system architecture](docs/more-system-architecture.md)
+系统介绍参考 [system architecture](https://bridata.github.io/DBus/more-system-architecture.html)
 
 ### 系统架构和工作原理
 
@@ -110,11 +106,11 @@ DBUS源端数据采集大体来说分为2部分：
 
 ##### 编译打包代码
 
-关于编译代码，参考 [compile](docs/more-compile-code.md)
+关于编译代码，参考 [compile](https://bridata.github.io/DBus/more-compile-code.html)
 
 ##### 版本相关:
 
-建议版本：0.6.0
+建议版本：0.6.x
 
 下载发布包：请参考：[downloads](https://github.com/BriData/DBus/releases)
 
@@ -122,7 +118,7 @@ DBUS源端数据采集大体来说分为2部分：
 
 DBus 自身使用 Apache v2.0 协议
 
-关于DBus 自身协议，修改第三方包代码，以及三方包协议参考： [License](docs/more-license.md)
+关于DBus 自身协议，修改第三方包代码，以及三方包协议参考： [License](https://bridata.github.io/DBus/more-license.html)
 
 ##### 其他相关资料:
 

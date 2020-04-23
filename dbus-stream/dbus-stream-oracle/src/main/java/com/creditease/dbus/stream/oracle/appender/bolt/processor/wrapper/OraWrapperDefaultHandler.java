@@ -178,7 +178,7 @@ public class OraWrapperDefaultHandler implements BoltCommandHandler {
                 return pos;
             }
             String umsId = Utils.oracleUMSID(pos, compensation);
-            logger.debug("logfile.number.compensation:{}", compensation);
+            logger.debug("data logfile.number.compensation:{}", compensation);
             return umsId;
         } catch (Exception e) {
             throw new RuntimeException(e);

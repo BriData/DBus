@@ -103,6 +103,12 @@ export default class DataTableManageModifyModal extends Component {
             />} {...formItemLayout}>
               {getFieldDecorator('physicalTableRegex', {
                 initialValue:tableInfo.physicalTableRegex,
+                rules: [
+                  {
+                    required: true,
+                    message: '不能为空'
+                  }
+                ]
               })(<Input size="large" type="text" />)}
             </FormItem>
             {/*<FormItem label={<FormattedMessage*/}

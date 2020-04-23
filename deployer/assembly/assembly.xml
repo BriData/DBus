@@ -65,11 +65,11 @@
             </source>
             <outputDirectory>extlib</outputDirectory>
         </file>
-        <file>
-            <source>../dbus-mysql-extractor/target/dbus-mysql-extractor-${project.version}-jar-with-dependencies.jar
-            </source>
-            <outputDirectory>extlib</outputDirectory>
-        </file>
+        <!--<file>-->
+            <!--<source>../dbus-mysql-extractor/target/dbus-mysql-extractor-${project.version}-jar-with-dependencies.jar-->
+            <!--</source>-->
+            <!--<outputDirectory>extlib</outputDirectory>-->
+        <!--</file>-->
         <file>
             <source>
                 ../dbus-stream/dbus-stream-main/target/dbus-stream-main-${project.version}-jar-with-dependencies.jar
@@ -104,13 +104,13 @@
             <source>../dbus-auto-check/log-auto-check/target/log-auto-check-${project.version}.zip</source>
             <outputDirectory>zip</outputDirectory>
         </file>
-        <!--<file>
+        <file>
             <source>../canal.zip</source>
             <outputDirectory>zip</outputDirectory>
         </file>
         <file>
             <source>../dbus-keeper/keeper-web/build.zip</source>
             <outputDirectory>zip</outputDirectory>
-        </file>-->
+        </file>
     </files>
 </assembly>

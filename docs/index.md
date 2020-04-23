@@ -42,6 +42,8 @@ DBus的主要潜在客户包括：
 
 ### 4 系统架构和工作原理
 
+系统介绍参考 [system architecture](more-system-architecture.html)
+
 DBUS主要分为两个部分：貼源数据采集和多租户数据分发。两个部分之间以Kafka为媒介进行衔接。无多租户资源、数据隔离需求的用户，可以直接消费源端数据采集这一级输出到kafka的数据，无需再配置多租户数据分发。
 
 ![GlobalOverview](img/index/ds_and_projdispatch.png)
@@ -111,7 +113,7 @@ DBUS源端数据采集大体来说分为两部分：
 
 #### 版本相关
 
-建议版本：0.5.0
+建议版本：0.6.x
 
 下载发布包：请参考：[downloads](https://github.com/BriData/DBus/releases)
 

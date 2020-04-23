@@ -102,7 +102,7 @@ export default class DataTableManageSearch extends Component {
   render () {
     const {getFieldDecorator} = this.props.form
     const {dataSourceIdTypeName, schemaList, onMoveTables} = this.props
-    const {onAllStart, onAllStop, onBatchFullPull} = this.props
+    const {onAllStart, onAllStop, onBatchFullPull,onAllDelete} = this.props
     const {selectDatasource} = this.state
 
     const dataSource = [{
@@ -166,6 +166,18 @@ export default class DataTableManageSearch extends Component {
                   <FormattedMessage
                     id="app.components.resourceManage.dataTable.batchStop"
                     defaultMessage="批量停止"
+                  />
+                </Button>
+              </FormItem>
+              <FormItem>
+                <Button
+                  type="primary"
+                  icon="delete"
+                  onClick={onAllDelete}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchDelete"
+                    defaultMessage="批量删除"
                   />
                 </Button>
               </FormItem>

@@ -1,8 +1,7 @@
-import React, {PropTypes, Component} from 'react'
-import {Tooltip, Tag, Form, Select, Input, message, Table} from 'antd'
+import React, {Component, PropTypes} from 'react'
+import {Form, message, Select, Table, Tag, Tooltip} from 'antd'
 import {FormattedMessage} from 'react-intl'
 import OperatingButton from '@/app/components/common/OperatingButton'
-
 // 导入样式
 import styles from './res/styles/index.less'
 import Request from "@/app/utils/request";
@@ -117,7 +116,7 @@ export default class DataSourceManageGrid extends Component {
    * @description option render
    */
   renderOperating = (text, record, index) => {
-    const {onRerun, onClearFullPullAlarm, onModify, onMount, onTopo, onAdd, onDBusData, onOggModify, onCanalModify} = this.props
+    const {onRerun, onClearFullPullAlarm, onModify, onMount, onTopo, onAdd, onDBusData, onOggModify, onCanalModify, onInitCanalFilter} = this.props
     let menus = []
     menus.push({
       text: <FormattedMessage
@@ -155,14 +154,29 @@ export default class DataSourceManageGrid extends Component {
       })
     }
     if (record.type === 'mysql') {
-      menus.push({
-        text: <FormattedMessage
-          id="app.components.resourceManage.dataSource.modifyCanalConf"
-          defaultMessage="canal配置修改"
-        />,
-        icon: 'edit',
-        onClick: () => onCanalModify(record)
-      })
+      menus.push(
+        {
+          text: <FormattedMessage
+            id="app.components.resourceManage.dataSource.modifyCanalConf"
+            defaultMessage="canal配置修改"
+          />,
+          icon: 'edit',
+          onClick: () => onCanalModify(record)
+        },
+        {
+          text: <FormattedMessage
+            id="app.components.resourceManage.dataSource.initCanalFilter"
+            defaultMessage="初始化CanalFilter"
+          />,
+          confirmText: <span>
+          <FormattedMessage
+            id="aapp.components.resourceManage.dataSource.initCanalFilter"
+            defaultMessage="初始化CanalFilter"
+          />?
+        </span>,
+          icon: 'sync',
+          onClick: () => onInitCanalFilter(record)
+        })
     }
     menus = [
       ...menus,

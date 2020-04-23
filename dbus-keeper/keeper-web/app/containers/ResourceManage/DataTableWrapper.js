@@ -43,6 +43,7 @@ import {loadLevelOfPath, readZkData} from "@/app/components/ConfigManage/ZKManag
 
 import {
   DATA_SOURCE_FIND_SCHEMA_LIST_BY_DS_ID_API,
+  DATA_TABLE_BATCH_DELETE_API,
   DATA_TABLE_BATCH_START_API,
   DATA_TABLE_BATCH_STOP_API,
   DATA_TABLE_CHECK_DATA_LINE_API,
@@ -498,6 +499,39 @@ export default class DataTableWrapper extends Component {
       })
       .catch(error => message.error(error))
   }
+
+  handleAllDelete = () => {
+    // debugger
+    const {selectedRowKeys, selectedRows} = this.state
+    if (!selectedRowKeys.length) {
+      message.error('没有选择表')
+      return
+    }
+    for (let v of selectedRows) {
+      if (v.status === 'ok') {
+        message.error('runing状态的表不允许删除')
+        return
+      }
+    }
+    Request(`${DATA_TABLE_BATCH_DELETE_API}`, {
+      data: selectedRowKeys,
+      method: 'post'
+    })
+      .then(res => {
+        if (res && res.status === 0) {
+          message.success(res.message)
+          this.setState({
+            selectedRows: [],
+            selectedRowKeys: []
+          })
+          this.handleRefresh()
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => message.error(error))
+  }
+
   handleCloseRuleImportModal = () => {
     this.setState({
       ruleImportModalVisible: false
@@ -706,6 +740,7 @@ export default class DataTableWrapper extends Component {
           onSendControlMessage={this.handleSendControlMessage}
           onBatchFullPull={this.handleOpenBatchFullPullModal}
           onMoveTables={this.handleOpenMoveTablesModal}
+          onAllDelete={this.handleAllDelete}
         />
         <DataTableManageGrid
           selectedRowKeys={selectedRowKeys}

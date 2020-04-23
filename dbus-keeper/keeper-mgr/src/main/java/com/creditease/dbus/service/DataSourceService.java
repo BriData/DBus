@@ -132,8 +132,7 @@ public class DataSourceService {
 
     public ResultEntity update(DataSource dataSource) throws Exception {
         if (dataSource.getStatus().equals("inactive")) {
-            List<DataTable> tables = sender.get(KEEPER_SERVICE, "/tables/findActiveTablesByDsId/{0}", dataSource.getId()).getBody().getPayload(new TypeReference<List<DataTable>>() {
-            });
+            List<DataTable> tables = getDataTablesByDsId(dataSource.getId());
             if (tables != null && tables.size() > 0) {
                 return new ResultEntity(15013, "请先停止该数据源下所有表,再inactive该数据源");
             }
@@ -146,10 +145,13 @@ public class DataSourceService {
         //是否还有项目在使用
         Integer count = sender.get(KEEPER_SERVICE, "/projectTable/count-by-ds-id/{id}", id).getBody().getPayload(Integer.class);
         //是否还有running的表
-        List<DataTable> tables = sender.get(KEEPER_SERVICE, "/tables/findActiveTablesByDsId/{0}", id)
-                .getBody().getPayload(new TypeReference<List<DataTable>>() {
-                });
+        List<DataTable> tables = getDataTablesByDsId(id);
         return count + tables.size();
+    }
+
+    public List<DataTable> getDataTablesByDsId(Integer id) {
+        return sender.get(KEEPER_SERVICE, "/tables/findActiveTablesByDsId/{0}", id).getBody().getPayload(new TypeReference<List<DataTable>>() {
+        });
     }
 
     public ResultEntity delete(Integer id) throws Exception {
@@ -408,8 +410,6 @@ public class DataSourceService {
         if (dataSource.getDsType().equalsIgnoreCase("oracle")) {
             List<DataTable> tables = tableService.getTablesByDsId(dataSource.getId());
             ConcurrentMap<String, List<DataTable>> tableMap = tables.stream().collect(Collectors.groupingByConcurrent(DataTable::getSchemaName));
-
-            HashMap<String, String> param = new HashMap<>();
             for (Map.Entry<String, List<DataTable>> entry : tableMap.entrySet()) {
                 String schema = entry.getKey();
                 List<DataTable> tableList = entry.getValue();
@@ -420,10 +420,7 @@ public class DataSourceService {
                 tableList.forEach(dataTable -> {
                     tableNames.append(dataTable.getTableName()).append(",");
                 });
-                param.put("dsName", dsName);
-                param.put("schemaName", schema);
-                param.put("tableNames", tableNames.substring(0, tableNames.length() - 1).toString());
-                autoDeployDataLineService.addOracleSchema(param);
+                autoDeployDataLineService.addOracleSchema(dsName, schema, tableNames.substring(0, tableNames.length() - 1));
             }
         }
         return 0;
@@ -489,5 +486,11 @@ public class DataSourceService {
     public DataSource getDataSourceByDsName(String dsName) {
         ResponseEntity<ResultEntity> result = sender.get(KEEPER_SERVICE, "/datasource/getByName", "?dsName=" + dsName);
         return result.getBody().getPayload(DataSource.class);
+    }
+
+    public int initCanalFilter(Integer dsId, String dsName) throws Exception {
+        List<DataTable> tables = getDataTablesByDsId(dsId);
+        String tableNames = tables.stream().map(table -> table.getSchemaName() + "." + table.getPhysicalTableRegex()).collect(Collectors.joining(","));
+        return autoDeployDataLineService.editCanalFilter("initFilter", dsName, tableNames);
     }
 }

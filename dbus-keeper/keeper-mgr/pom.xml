@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dbus-keeper</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.6.0</version>
+        <version>0.6.1</version>
     </parent>
     <artifactId>keeper-mgr</artifactId>
 
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>com.creditease.dbus</groupId>
             <artifactId>dbus-mail-customize</artifactId>
-            <version>0.6.0</version>
+            <version>0.6.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>

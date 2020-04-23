@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dbus-keeper</artifactId>
         <groupId>com.creditease.dbus</groupId>
-        <version>0.6.0</version>
+        <version>0.6.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -106,14 +106,6 @@
                     <overwrite>true</overwrite>
                     <verbose>true</verbose>
                 </configuration>
-                <dependencies>
-                    <!-- 你需要添加 mysql 依赖在这里 mysql-connector-java -->
-                    <dependency>
-                        <groupId>mysql</groupId>
-                        <artifactId>mysql-connector-java</artifactId>
-                        <version>5.1.44</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <plugin>

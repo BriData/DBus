@@ -82,8 +82,17 @@ export default class SinkerTableWrapper extends Component {
    * @description sinkerTopology分页
    */
   handlePagination = page => {
-    this.initParams = {...this.initParams, pageNum: page}
-    this.handleSearch({...this.initParams})
+    const {sinkerTableData} = this.props
+    const {sinkerTableParams} = sinkerTableData
+    // 分页查询并存储参数
+    this.handleSearch({...sinkerTableParams, pageNum: page})
+  }
+
+  handleShowSizeChange = (current, size) => {
+    const {sinkerTableData} = this.props
+    const {sinkerTableParams} = sinkerTableData
+    // 分页查询并存储参数
+    this.handleSearch({...sinkerTableParams, pageNum: current, pageSize: size})
   }
 
   handleOpenModifyTableModal = (record) => {
@@ -180,6 +189,7 @@ export default class SinkerTableWrapper extends Component {
           onMount={this.handleMount}
           onSelectionChange={this.handleSelectionChange}
           selectedRowKeys={selectedRowKeys}
+          onShowSizeChange={this.handleShowSizeChange}
         />
         <SinkerTableForm
           visible={modifyTableVisible}

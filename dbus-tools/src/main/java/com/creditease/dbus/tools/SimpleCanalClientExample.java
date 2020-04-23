@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,8 @@ public class SimpleCanalClientExample {
 
     // 输入参数: dbus-n1  11111 testdb
     public static void main(String args[]) {
-
+        //args = new String[]{"vdbus-4", "10000", "mysql_db2"};
+        args = new String[]{"vdbus-4", "10000", "mysql_db2"};
         if (args.length != 3) {
             System.out.println("args: dbus-n1 11111 testdb");
             return;
@@ -53,8 +54,8 @@ public class SimpleCanalClientExample {
         int batchSize = 1000;
         int emptyCount = 0;
         try {
-            connector = CanalConnectors.newSingleConnector(new InetSocketAddress(ip,
-                    port), dbname, "", "");
+            connector = CanalConnectors.newSingleConnector(new InetSocketAddress(ip, port), dbname, "", "");
+            //connector = CanalConnectors.newClusterConnector("vdbus-7:2181/DBus/Canal/mysql_db1", dbname, "", "");
             connector.connect();
             connector.subscribe("");
             connector.rollback();

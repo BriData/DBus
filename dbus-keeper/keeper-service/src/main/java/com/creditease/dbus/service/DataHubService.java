@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,6 +66,8 @@ public class DataHubService {
     private DdlEventMapper ddlEventMapper;
     @Autowired
     private NameAliasMappingMapper nameAliasMappingMapper;
+    @Autowired
+    private TableService tableService;
 
     private static final Pattern IP_PATTERN = Pattern.compile("(2(5[0-5]{1}|[0-4]\\d{1})|[0-1]?\\d{1,2})(\\.(2(5[0-5]{1}|[0-4]\\d{1})|[0-1]?\\d{1,2})){3}");
     private static final Pattern MYSQL_URL_PATTERN = Pattern.compile("jdbc:mysql://([\\w-\\d\\\\.]+):(\\d+)/.*", Pattern.CASE_INSENSITIVE);
@@ -202,6 +204,7 @@ public class DataHubService {
                 dataTableBean.setUniqueColumn(uniqueColumn);
             }
             dataTableBean.setVersionList(tableVersionMapper.getVersionListByTableId(dataTableBean.getId()));
+            dataTableBean.setDsName(dsName);
         }
         resultEntity.setPayload(JSON.toJSONString(dataTableList));
         return resultEntity;
@@ -328,4 +331,8 @@ public class DataHubService {
         return resultOri + "&" + resultIp;
     }
 
+    public Long getTableRows(Long schemaId, String tableName) throws Exception {
+        DataTableBean dataTableBean = dataTableMapper.getTableByParams(schemaId.intValue(), tableName);
+        return tableService.getTableRowsNum(dataTableBean.getId());
+    }
 }

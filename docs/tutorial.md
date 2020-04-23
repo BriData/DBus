@@ -130,6 +130,62 @@ Sink即数据输出目标端，现阶段一般为Kafka集群。Sink既可借用D
 
 同一份“资源”可被同一个租户引用多次，但必须跑在不同的流（topology）上。同一张表在同一个流（topology）上只能出现一次。
 
+## 2.3 Sinker管理
+
+DBus sinker目前仅支持sinker到hdfs.
+
+### 2.3.1 模板配置hdfs地址
+
+使用sinker前需要先配置hdfs地址，我们提供两种配置方式:
+
+配置中心->zk管理: /DBus/ConfTemplates/Sinker/placeholder-sinker/hdfs-config.properties
+
+方式一：hdfs  url   
+
+方式二：配置core.site和hdfs.site资源uri
+
+这里还需要配置hdfs.root.path,默认是/datahub/hdfslog,可以不修改
+
+
+
+![](img\sinker\sinker-hdfs-conf.png)
+
+
+
+### 2.3.2 添加sinker
+
+![](img\sinker\add-sinker.png)
+
+
+
+### 2.3.3 添加sinker schema和表
+
+sinker目前支持根据schema和表进行订阅,所以需要先添加schema和表才能消费数据
+
+每一个schema对应kafka的一个topic,每一个表对应topic中的一种namespace
+
+![](img\sinker\add-schema.png)
+
+### 2.3.4 启动sinker
+
+sink管理->sinker管理->最右边点击启动即可
+
+### 2.3.5 常见问题
+
+- 如何查看数据
+
+  grafana查看,下图中蓝色的线就是sinker的监控:
+
+![](img\sinker\grafana-sinker.png)
+
+​	hdfs查看:
+
+hdfs目录举例:/datahub/dbus/oracle.xhxdb_sec.tcsvbs/lnstransferlist/0/0/0/data_increment_data/right/
+
+/datahub/dbus是上边配置的hdfs.root.path目录,数据源类型oracle,数据线名称 xhxdb_sec,数据库名称tcsvbs,表名称lnstransferlist,表版本号0,数据类型data_increment_data
+
+![](img\sinker\hdfs-sinker-data.png)
+
 # 3. 租户手册
 
 > 说明：

@@ -87,8 +87,8 @@ export default class DataSourceManageCheckModal extends Component {
               defaultMessage="插入心跳"
             />} />
             <Step title={<FormattedMessage
-              id="app.components.resourceManage.dataTable.extractorProcess"
-              defaultMessage="抽取进程"
+              id="app.components.resourceManage.dataTable.canalOgg"
+              defaultMessage="Canal OGG 进程"
             />} />
             <Step title={<FormattedMessage
               id="app.components.resourceManage.dataTable.dispatcherProcess"

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,7 @@ import com.creditease.dbus.stream.common.appender.bolt.processor.kafkawriter.Rel
 import com.creditease.dbus.stream.common.appender.bolt.processor.listener.KafkaBoltHandlerListener;
 import com.creditease.dbus.stream.common.appender.bolt.processor.stat.TableMessageStatReporter;
 import com.creditease.dbus.stream.common.appender.enums.Command;
+import com.creditease.dbus.stream.oracle.appender.bolt.processor.heartbeat.OracleHeartbeatHandler;
 
 import java.util.Map;
 
@@ -52,7 +53,7 @@ public class KafkaWriterCmdHandlerProvider implements BoltCommandHandlerProvider
     public Map<Command, BoltCommandHandler> provideHandlers(DbusDatasourceType type) {
         Map<Command, BoltCommandHandler> map = Maps.newHashMap();
         map.put(Command.APPENDER_RELOAD_CONFIG, new ReloadCommandHandler(listener));
-        map.put(Command.HEART_BEAT, new HeartbeatHandler(listener, tableStatReporter));
+        map.put(Command.HEART_BEAT, new HeartbeatHandler(listener, tableStatReporter, new OracleHeartbeatHandler(listener)));
         map.put(Command.DATA_INCREMENT_TERMINATION, new IncrementTerminationHandler(listener));
         return map;
     }

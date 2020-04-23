@@ -23,8 +23,10 @@ package com.creditease.dbus.bolt;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.creditease.dbus.bean.HdfsOutputStreamInfo;
 import com.creditease.dbus.bolt.stat.MessageStatManger;
 import com.creditease.dbus.bolt.stat.Stat;
+import com.creditease.dbus.cache.LocalCache;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.DBusConsumerRecord;
 import com.creditease.dbus.commons.StatMessage;
@@ -47,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 public class SinkerWriteBolt extends BaseRichBolt {
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -76,6 +79,14 @@ public class SinkerWriteBolt extends BaseRichBolt {
     public void execute(Tuple input) {
         List<DBusConsumerRecord<String, byte[]>> data = (List<DBusConsumerRecord<String, byte[]>>) input.getValueByField("data");
         try {
+            // 对长时间未hsync的流进行hsync处理
+            //Set<String> allKeys = LocalCache.getAllKeys();
+            //if (!allKeys.isEmpty()) {
+            //    for (String key : allKeys) {
+            //        HdfsOutputStreamInfo hdfsOutputStreamInfo = LocalCache.get(key);
+            //        hdfsOutputStreamInfo.hsync();
+            //    }
+            //}
             if (isCtrl(data)) {
                 JSONObject json = JSON.parseObject(new String(data.get(0).value(), "utf-8"));
                 logger.info("[write bolt] received reload message .{} ", json);
@@ -99,32 +110,56 @@ public class SinkerWriteBolt extends BaseRichBolt {
     private void sendData(List<DBusConsumerRecord<String, byte[]>> data) throws Exception {
         long start = System.currentTimeMillis();
         DBusConsumerRecord<String, byte[]> record = data.get(0);
-        String statKey = getStatKey(StringUtils.split(record.key(), "."));
+        String statKey = getStatKey(record.key());
         int totalCnt = 0;
-        SinkerWriteHandler sinkerWriteHandler = getSinkerWriteHandler();
-        // 为数据添加换行符
         StringBuilder sb = new StringBuilder();
-        for (DBusConsumerRecord<String, byte[]> consumerRecord : data) {
+
+        // 数据demo
+        DBusConsumerRecord<String, byte[]> dataRecord = null;
+        String dataVersion = null;
+        for (int i = 0; i < data.size(); i++) {
+            DBusConsumerRecord<String, byte[]> consumerRecord = data.get(i);
             // heartbeat消息不进hdfs
-            if (isHeartBeat(consumerRecord)) {
-                sendStatAndHeartBeat(consumerRecord);
-            } else if (isUMS(consumerRecord)) {
+            if (isHeartBeat(consumerRecord.key())) {
+                sendStatAndHeartBeat(statKey, consumerRecord.key());
+            } else if (isData(consumerRecord.key())) {
+                if (dataVersion == null) {
+                    dataVersion = getVersion(consumerRecord.key());
+                    dataRecord = consumerRecord;
+                } else if (!dataVersion.equals(getVersion(consumerRecord.key()))) {
+                    // 由于send方法不处理数据,这里需要对表结构变更进行处理,发生表结构变更直接发送数据
+                    send(start, statKey, totalCnt, sb, dataRecord);
+                    // 数据计数清零
+                    sb.delete(0, sb.length());
+                    totalCnt = 0;
+
+                    dataRecord = consumerRecord;
+                }
+                // 为数据添加换行符
                 String str = new String(consumerRecord.value(), "utf-8") + "\n";
                 int cnt = countDataRows(str);
+                statManger.put(statKey, consumerRecord.key(), cnt);
                 totalCnt += cnt;
-                statManger.put(statKey, record.key(), cnt);
-                logger.debug("[count] {},{},{}", statKey, cnt, statManger.get(statKey).getSuccessCnt());
                 sb.append(str);
+                statKey = getStatKey(consumerRecord.key());
+                logger.debug("[count] {},{},{},{},{}", start, i, statKey, cnt, consumerRecord.key());
             } else {
                 logger.warn("[write bolt] not support process type. emit warp key: {}", data);
             }
         }
 
-        if (totalCnt != 0) {
+        // 发送剩余数据
+        send(start, statKey, totalCnt, sb, dataRecord);
+    }
+
+    private void send(long start, String statKey, int totalCnt, StringBuilder sb, DBusConsumerRecord<String, byte[]> dataRecord) throws Exception {
+        logger.debug("[count] {},total {},size {}", start, totalCnt, sb.length());
+        if (totalCnt > 0) {
             try {
-                sinkerWriteHandler.sendData(inner, record, sb.toString());
-                logger.info("[write hdfs] topic: {}, offset: {}, key: {}, size:{}, cost time: {}",
-                        record.topic(), record.offset(), record.key(), sb.length(), System.currentTimeMillis() - start);
+                SinkerWriteHandler sinkerWriteHandler = getSinkerWriteHandler();
+                sinkerWriteHandler.sendData(inner, dataRecord, sb.toString());
+                logger.debug("[write hdfs] topic: {}, offset: {}, key: {}, size:{}, cost time: {}",
+                        dataRecord.topic(), dataRecord.offset(), dataRecord.key(), sb.length(), System.currentTimeMillis() - start);
             } catch (Exception e) {
                 statManger.remove(statKey, totalCnt);
                 throw e;
@@ -132,51 +167,51 @@ public class SinkerWriteBolt extends BaseRichBolt {
         }
     }
 
-    private void sendStatAndHeartBeat(DBusConsumerRecord<String, byte[]> data) {
-        //之前的heartbeatKey
-        //data_increment_heartbeat.mysql.mysql_db5.ip_settle.fin_credit_repayment_bill.0.0.0.1578894885250|1578894877783|ok.wh_placeholder
-        //20200114之后的heartbeatKey,为了兼容数据线的别名
-        //data_increment_heartbeat.mysql.mysql_db5.ip_settle.fin_credit_repayment_bill.0.0.0.1578894885250|1578894877783|ok|mysql_db24.wh_placeholder
-        String[] dataKeys = StringUtils.split(data.key(), ".");
+    private String getVersion(String key) {
+        return StringUtils.split(key, ".")[5];
+    }
+
+    private void sendStatAndHeartBeat(String statKey, String key) {
+        String[] dataKeys = StringUtils.split(key, ".");
         String dsName = dataKeys[2];
         String[] split8 = StringUtils.split(dataKeys[8], "|");
         if (split8.length > 3) {
             dsName = split8[3];
         }
         StatMessage sm = new StatMessage(dsName, dataKeys[3], dataKeys[4], SinkerConstants.SINKER_TYPE);
+
         Long curTime = System.currentTimeMillis();
         Long time = Long.valueOf(split8[0]);
         sm.setCheckpointMS(time);
-        sm.setTxTimeMS(time);
+        sm.setTxTimeMS(Long.valueOf(split8[1]));
         sm.setLocalMS(curTime);
         sm.setLatencyMS(curTime - time);
 
-        String statKey = String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]);
         final Stat stat = statManger.get(statKey);
         if (stat != null) {
             sm.setCount(stat.getSuccessCnt());
             sm.setErrorCount(stat.getErrorCnt());
             logger.debug("[stat] send stat message {}", sm.toJSONString());
+            stat.success();
         } else {
             sm.setCount(0);
             sm.setErrorCount(0);
-            logger.debug("[stat] send stat message {}", sm.toJSONString());
+            logger.debug("[stat] send stat message [0] ,{}", sm.toJSONString());
         }
 
         String statTopic = inner.sinkerConfProps.getProperty(SinkerConstants.STAT_TOPIC);
-        producer.send(new ProducerRecord<>(statTopic, String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]), sm.toJSONString().getBytes()), (metadata, exception) -> {
+        producer.send(new ProducerRecord<>(statTopic, statKey, sm.toJSONString().getBytes()), (metadata, exception) -> {
             if (exception != null) {
                 logger.error("[stat] send stat message fail.", exception);
             }
         });
         String heartbeatTopic = inner.sinkerConfProps.getProperty(SinkerConstants.SINKER_HEARTBEAT_TOPIC);
-        String heartbeatKey = String.format("%s|%s|%s|%s", String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]), time, curTime, curTime - time);
+        String heartbeatKey = String.format("%s|%s|%s|%s", statKey, time, curTime, curTime - time);
         producer.send(new ProducerRecord<>(heartbeatTopic, heartbeatKey, null), (metadata, exception) -> {
             if (exception != null) {
                 logger.error("[heartbeat] send heartbeat message fail.", exception);
             }
         });
-        if (stat != null) stat.success();
     }
 
     private void processCtrlMsg(JSONObject json) throws Exception {
@@ -250,23 +285,48 @@ public class SinkerWriteBolt extends BaseRichBolt {
         return data.size() == 1 && StringUtils.equals(data.get(0).key(), ControlType.SINKER_RELOAD_CONFIG.name());
     }
 
-    public boolean isHeartBeat(DBusConsumerRecord<String, byte[]> data) {
-        return data.key().startsWith("data_increment_heartbeat");
+    public boolean isHeartBeat(String key) {
+        return key.startsWith("data_increment_heartbeat");
     }
 
-    private boolean isUMS(DBusConsumerRecord<String, byte[]> data) {
-        return data.key().startsWith("data_increment_data");
+    private boolean isData(String key) {
+        return key.startsWith("data_increment_data");
     }
 
-    private String getStatKey(String[] dataKeys) {
+    private String getStatKey(String key) {
+        if (isHeartBeat(key)) {
+            return getHeartBeatStatKey(key);
+        }
+        if (isData(key)) {
+            return getDataStatKey(key);
+        }
+        return null;
+    }
+
+    private String getDataStatKey(String key) {
         //之前的dataKey
         //data_increment_data.oracle.acc3.ACC.REQUEST_BUS_SHARDING_2018_0000.0.0.0.1577810117698.wh_placeholder
         //20200114之后的dataKey,为了兼容数据线的别名
         //data_increment_data.oracle.acc3.ACC.REQUEST_BUS_SHARDING_2018_0000.0.0.0.1577810117698|acc3.wh_placeholder
+        String[] dataKeys = StringUtils.split(key, ".");
         String dsName = dataKeys[2];
         String[] split8 = StringUtils.split(dataKeys[8], "|");
         if (split8.length > 1) {
             dsName = split8[1];
+        }
+        return String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]);
+    }
+
+    private String getHeartBeatStatKey(String key) {
+        //之前的heartbeatKey
+        //data_increment_heartbeat.mysql.mysql_db5.ip_settle.fin_credit_repayment_bill.0.0.0.1578894885250|1578894877783|ok.wh_placeholder
+        //20200114之后的heartbeatKey,为了兼容数据线的别名
+        //data_increment_heartbeat.mysql.mysql_db5.ip_settle.fin_credit_repayment_bill.0.0.0.1578894885250|1578894877783|ok|mysql_db24.wh_placeholder
+        String[] dataKeys = StringUtils.split(key, ".");
+        String dsName = dataKeys[2];
+        String[] split8 = StringUtils.split(dataKeys[8], "|");
+        if (split8.length > 3) {
+            dsName = split8[3];
         }
         return String.format("%s.%s.%s", dsName, dataKeys[3], dataKeys[4]);
     }

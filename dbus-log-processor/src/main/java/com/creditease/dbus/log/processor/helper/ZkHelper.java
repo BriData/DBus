@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class ZkHelper {
         }
 
         Properties props = loadSecurityConf();
-        if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+        if (props != null && StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
             consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
             logger.info("consumer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT");
         } else if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
@@ -107,7 +107,7 @@ public class ZkHelper {
         }
 
         Properties props = loadSecurityConf();
-        if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+        if (props != null && StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
             producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
             logger.info("producer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT");
         } else if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
@@ -122,7 +122,10 @@ public class ZkHelper {
     private Properties loadSecurityConf() {
         String path = Constants.COMMON_ROOT + "/" + Constants.GLOBAL_SECURITY_CONF;
         try {
-            return zkService.getProperties(path);
+            if (zkService.isExists(path)) {
+                return zkService.getProperties(path);
+            }
+            return null;
         } catch (Exception e) {
             logger.error("load global_security.conf error: ", e);
             throw new RuntimeException("load global_security.conf error: ", e);

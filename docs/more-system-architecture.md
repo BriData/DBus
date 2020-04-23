@@ -20,11 +20,11 @@ description: Dbus系统架构 DBUS_VERSION_SHORT
 
 以mysql为例子.  分为三个部分：
 
-- 日志抽取模块
+- 日志抽取模块(最新版DBus已经废弃该模块，使用canal直接输出到kafka)
 - 增量转换模块
 - 全量拉取模块
 
-### 1.1 日志抽取模块（Extractor）
+### 1.1 日志抽取模块（Extractor）（0.6.1版本废弃）
 mysql 日志抽取模块由两部分构成：
 
 1. **canal server：**
