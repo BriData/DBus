@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -268,7 +268,7 @@ public class DataSourceService {
             } else if (dsType.equals(DbusDatasourceType.MYSQL)
                     || dsType.equals(DbusDatasourceType.ORACLE)
                     || dsType.equals(DbusDatasourceType.DB2)
-            ) {
+                    ) {
                 SourceFetcher fetcher = SourceFetcher.getFetcher(map);
                 int temp = fetcher.fetchSource(map);
                 return temp;
@@ -335,6 +335,9 @@ public class DataSourceService {
             for (TopologyType topologyType : topologyTypes) {
                 List<TopologyJar> topologyJars = jarManagerService.queryJarInfos(null, null, topologyType.getValue());
                 //根据排序结果,获取最新的jar信息,然后构造返回结果
+                if (topologyJars.isEmpty()) {
+                    continue;
+                }
                 TopologyJar topologyJar = topologyJars.get(0);
                 TopologyStartUpBean topologyStartUpBean = new TopologyStartUpBean();
                 topologyStartUpBean.setDsName(dataSource.getDsName());
@@ -370,7 +373,7 @@ public class DataSourceService {
         if (dbusDatasourceType == DbusDatasourceType.MYSQL) {
             topologyTypes.add(TopologyType.DISPATCHER_APPENDER);
             topologyTypes.add(TopologyType.SPLITTER_PULLER);
-            topologyTypes.add(TopologyType.MYSQL_EXTRACTOR);
+            //topologyTypes.add(TopologyType.MYSQL_EXTRACTOR);
 
         } else if (dbusDatasourceType == DbusDatasourceType.ORACLE || dbusDatasourceType == DbusDatasourceType.MONGO) {
             topologyTypes.add(TopologyType.DISPATCHER_APPENDER);

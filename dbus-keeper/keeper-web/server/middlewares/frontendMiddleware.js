@@ -18,7 +18,7 @@ const addDevMiddlewares = (app, webpackConfig) => {
   // 静态资源
   app.use(express.static(path.join(__dirname, '..', '..', 'static')))
 
-  app.use(['/keeper'], proxy({target: 'http://vdbus-6:5090/v1', changeOrigin: true}))
+  app.use(['/keeper'], proxy({target: 'http://localhost:5090/v1', changeOrigin: true}))
   app.use(proxy('/keeper-webSocket',{
     target: 'http://localhost:8902',
     changeOrigin: true,
