@@ -362,7 +362,7 @@ public class DataSourceService {
         String execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
         if (StringUtils.isNotBlank(execResult)) {
             resultMap.put("execResult", execResult);
-            resultMap.put("runningInfo", String.format("%s%s/workers-artifacts/%s/%s/worker.log.creditease", split[0], logPath, topologyId, split[1]));
+            resultMap.put("runningInfo", String.format("%s %s/workers-artifacts/%s/%s/worker.log.creditease", split[0], logPath, topologyId, split[1]));
             return resultMap;
         }
 
@@ -370,11 +370,11 @@ public class DataSourceService {
         execResult = SSHUtils.executeCommand(user, split[0], Integer.parseInt(port), env.getProperty("pubKeyPath"), command, false);
         if (StringUtils.isNotBlank(execResult)) {
             resultMap.put("execResult", execResult);
-            resultMap.put("runningInfo", String.format("%s%s/workers-artifacts/%s/%s/worker.log", split[0], logPath, topologyId, split[1]));
+            resultMap.put("runningInfo", String.format("%s %s/workers-artifacts/%s/%s/worker.log", split[0], logPath, topologyId, split[1]));
             return resultMap;
         }
 
-        resultMap.put("runningInfo", String.format("%s%s/workers-artifacts/%s/%s/worker.log", split[0], logPath, topologyId, split[1]));
+        resultMap.put("runningInfo", String.format("%s %s/workers-artifacts/%s/%s/worker.log", split[0], logPath, topologyId, split[1]));
         resultMap.put("execResult", "");
         return resultMap;
     }

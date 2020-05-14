@@ -45,7 +45,7 @@ public class SinkerHdfsWritehandler implements SinkerWriteHandler {
             outPutStream = getOutPutStream(data, value);
             FSDataOutputStream outputStream = outPutStream.getOutputStream();
             outputStream.write(value.getBytes("utf-8"));
-            outPutStream.hsync();
+            outPutStream.closeOs();
         } catch (Exception e) {
             logger.error("[write bolt] send data to hdfs error.", e);
             String filePath = outPutStream.getFilePath();
@@ -74,6 +74,12 @@ public class SinkerHdfsWritehandler implements SinkerWriteHandler {
         if (hdfsOutputStreamInfo != null) {
             Long hdfsFileSize = Long.parseLong(sinkerConf.hdfsConfProps.getProperty(SinkerConstants.HDFS_FILE_SIZE));
             FSDataOutputStream outputStream = hdfsOutputStreamInfo.getOutputStream();
+            //重新打开outputstream
+            if (outputStream == null) {
+                outputStream = sinkerConf.fileSystem.append(new Path(hdfsOutputStreamInfo.getFilePath()));
+                hdfsOutputStreamInfo.setOutputStream(outputStream);
+                logger.info("[write bolt] reopen hdfs output stream success.{}", hdfsOutputStreamInfo.getFilePath());
+            }
             //超过hdfs文件块大小,需要切换文件
             if (outputStream.getPos() + value.length() > hdfsFileSize
                     //版本号和日期不一致,需要切换文件

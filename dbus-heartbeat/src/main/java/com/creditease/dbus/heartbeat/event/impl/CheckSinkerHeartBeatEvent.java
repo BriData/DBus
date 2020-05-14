@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,8 @@ import com.creditease.dbus.mail.Message;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 public class CheckSinkerHeartBeatEvent extends AbstractEvent {
 
@@ -168,9 +170,53 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
             this.lastCheckAlarmTime = System.currentTimeMillis();
         }
         if (!alarmNodes.isEmpty()) {
-            sendEmail();
+            // 根据schema进行分组发邮件,防止一封邮件行数太多
+            ConcurrentMap<String, List<String>> schemas = alarmNodes.keySet().stream().collect(
+                    Collectors.groupingByConcurrent(key -> key.substring(0, key.lastIndexOf("."))));
+            schemas.values().forEach(value -> sendEmail(value));
             alarmNodes.clear();
         }
+    }
+
+    private void sendEmail(List<String> value) {
+        String html = toHtml(value);
+        String adminEmail = hbConf.getAdminEmail();
+
+        String subject = "DBus Sinker超时报警 ";
+        String contents = MsgUtil.format(Constants.MAIL_SINKER_HEART_BEAT_NEW,
+                "超时报警",
+                DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
+                IMail.ENV,
+                MsgUtil.format(AlarmResultContainer.getInstance().html(), html));
+        Message msg = new Message();
+        msg.setAddress(adminEmail);
+        msg.setContents(contents);
+        msg.setSubject(subject);
+
+        msg.setHost(hbConf.getAlarmMailSMTPAddress());
+        if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
+            msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
+        msg.setUserName(hbConf.getAlarmMailUser());
+        msg.setPassword(hbConf.getAlarmMailPass());
+        msg.setFromAddress(hbConf.getAlarmSendEmail());
+
+        IMail mail = DBusMailFactory.build();
+        mail.send(msg);
+    }
+
+    public String toHtml(List<String> tables) {
+        Collections.sort(tables);
+        StringBuilder html = new StringBuilder();
+        tables.forEach(key -> {
+            SinkerMonitorNode sinkerMonitorNode = alarmNodes.get(key);
+            html.append("<tr bgcolor=\"#ffffff\">");
+            html.append("    <th align=\"left\">" + key + "</th>");
+            html.append("    <th align=\"right\">" + sinkerMonitorNode.getAlarmCount() + "</th>");
+            html.append("    <th align=\"right\">" + DateUtil.diffDate(sinkerMonitorNode.getRealLatencyMS()) + "</th>");
+            html.append("    <th align=\"right\">" + sinkerMonitorNode.getTimeoutCnt() + "</th>");
+            html.append("</tr>");
+        });
+        return html.toString();
     }
 
     private void sendEmail() {

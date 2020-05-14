@@ -52,6 +52,8 @@ public class SinkerService {
     private ZkConfService zkConfService;
     @Autowired
     private SinkerSchemaService sinkerSchemaService;
+    @Autowired
+    private DataSourceService dataSourceService;
 
     public ResultEntity search(String queryString) throws Exception {
         ResultEntity body = sender.get(ServiceNames.KEEPER_SERVICE, "/sinker/search", queryString).getBody();
@@ -303,5 +305,15 @@ public class SinkerService {
                 sinkerSchemaService.batchAddSinkerTables(addSchemaTables);
             }
         }
+    }
+
+    public Map viewLog(String sinkerName) throws Exception {
+        List<Topology> topologies = stormTopoHelper.getAllTopologiesInfo();
+        List<Topology> list = topologies.stream().filter(topology -> StringUtils.equals(topology.getName(), sinkerName + "-sinker")).collect(Collectors.toList());
+        if (list == null || list.isEmpty()) {
+            return new HashMap<>();
+        }
+        Topology topology = list.get(0);
+        return dataSourceService.viewLog(topology.getId());
     }
 }

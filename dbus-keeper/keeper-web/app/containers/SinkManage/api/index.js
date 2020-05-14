@@ -24,6 +24,7 @@ export const SEARCH_SINKER_TOPOLOGY_BY_ID_API = '/keeper/sinker/searchById'
 export const GET_SINKER_TOPIC_INFOS_API = '/keeper/sinker/getSinkerTopicInfos'
 export const DRAG_BACK_RUN_AGAIN_API = '/keeper/sinker/dragBackRunAgain'
 export const ADD_SINKER_SCHEMAS_API = '/keeper/sinker/addSinkerSchemas'
+export const VIEW_LOG_API = '/keeper/sinker/view-log'
 
 // sinkerSchema
 export const SEARCH_SINKER_SCHEMA_API = '/keeper/sinkerSchema/search'

@@ -24,9 +24,12 @@ import {
   SEARCH_ALL_SINKER_SCHEMA_API,
   SEARCH_SINKER_TOPOLOGY_API,
   SEARCH_SINKER_TOPOLOGY_BY_ID_API,
-  START_OR_STOP_TOPOLOGY_API
+  START_OR_STOP_TOPOLOGY_API,
+  VIEW_LOG_API
 } from '@/app/containers/SinkManage/api'
 import {SEARCH_JAR_INFOS_API} from '@/app/containers/ResourceManage/api'
+import DataSourceManageViewLogModal
+  from "@/app/components/ResourceManage/DataSourceManage/DataSourceManageTopologyModal/DataSourceManageViewLogModal";
 
 // 链接reducer和action
 @connect(
@@ -62,7 +65,13 @@ export default class SinkerTopologyWrapper extends Component {
       addSchemaModalRecord: {},
       sinkerSchemaList: [],
 
-      selectedRows: []
+      selectedRows: [],
+
+      logModalKey: 'logModalKey',
+      logModalVisible: false,
+      logModalRecord: {},
+      logModalContent: {},
+      logModalLoading: null
     }
     this.tableWidth = [
       '5%',
@@ -309,12 +318,50 @@ export default class SinkerTopologyWrapper extends Component {
     this.setState({selectedRows: selectedRows})
   }
 
+  handleOpenLogModal = (record) => {
+    this.setState({
+      logModalVisible: true,
+      logModalRecord: record,
+      logModalKey: this.handleRandom('logModalKey')
+    })
+    this.handleReadLog(record)
+  }
+
+  handleCloseLogModal = () => {
+    this.setState({
+      logModalVisible: false,
+      logModalKey: this.handleRandom('logModalKey')
+    })
+  }
+
+  handleReadLog = record => {
+    this.setState({logModalLoading: true})
+    Request(VIEW_LOG_API, {
+      params: {sinkerName: record.sinkerName}
+    })
+      .then(res => {
+        this.setState({logModalLoading: false})
+        if (res && res.status === 0) {
+          this.setState({logModalContent: res.payload})
+        } else {
+          message.warn(res.message)
+        }
+      })
+      .catch(error => {
+        this.setState({logModalLoading: false})
+        error.response && error.response.data && error.response.data.message
+          ? message.error(error.response.data.message)
+          : message.error(error.message)
+      })
+  }
+
   render() {
     const {modalKey, visible, modalStatus, sinkerTopologyInfo, sinkerTopologyList, jarList} = this.state
     const {startTopoModalVisible, startTopoModalLog, startTopoModalLoading, startTopoModalKey} = this.state
     const {rerunModalVisible, rerunModalKey, rerunModalRecord, rerunInitResult} = this.state
     const {addSchemaModalVisible, addSchemaModalRecord, addSchemaModalKey, sinkerSchemaList} = this.state
     const {selectedRows} = this.state
+    const {logModalKey, logModalRecord, logModalVisible, logModalContent, logModalLoading} = this.state
 
     const {locale} = this.props
     const localeMessage = intlMessage(locale)
@@ -357,6 +404,7 @@ export default class SinkerTopologyWrapper extends Component {
           onStartOrStopTopo={this.handleStartOrStopTopo}
           onOpenRerunModal={this.handleOpenRerunModal}
           onOpenAddSchemaModal={this.handleOpenAddSchemaModal}
+          onOpenLogModal={this.handleOpenLogModal}
         />
         <SinkerTopologyForm
           modalKey={modalKey}
@@ -394,6 +442,15 @@ export default class SinkerTopologyWrapper extends Component {
           selectedRows={selectedRows}
           onSetSelectRows={this.handleSetSelectRows}
           onAddAllTableChange={this.handleAddAllTableFlagChangeModal}
+        />
+        <DataSourceManageViewLogModal
+          key={logModalKey}
+          visible={logModalVisible}
+          record={logModalRecord}
+          content={logModalContent}
+          loading={logModalLoading}
+          onClose={this.handleCloseLogModal}
+          onRefresh={this.handleReadLog}
         />
       </div>
     )

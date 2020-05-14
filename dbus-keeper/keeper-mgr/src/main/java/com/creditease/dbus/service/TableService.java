@@ -197,10 +197,11 @@ public class TableService {
                 && KeeperConstants.OK.equals(table.getStatus())) {
             toolSetService.reloadMongoCatch(table.getDsId(), table.getDsName(), table.getDsType());
         } else if (DbusDatasourceType.MYSQL == DbusDatasourceType.parse(table.getDsType())
+                && dataTable.getPhysicalTableRegex() != null
                 && !StringUtils.equals(table.getPhysicalTableRegex(), dataTable.getPhysicalTableRegex())) {
             //正则表达式发生变更需要重新加载canal filter
             autoDeployDataLineService.editCanalFilter("deleteFilter", table.getDsName(), String.format("%s.%s", table.getSchemaName(), table.getPhysicalTableRegex()));
-            autoDeployDataLineService.editCanalFilter("editFilter", table.getDsName(), String.format("%s.%s", table.getSchemaName(), dataTable.getPhysicalTableRegex()));
+            autoDeployDataLineService.editCanalFilter("editFilter", table.getDsName(), String.format("%s.%s", table.getSchemaName(), table.getPhysicalTableRegex()));
         }
         return result.getBody();
 

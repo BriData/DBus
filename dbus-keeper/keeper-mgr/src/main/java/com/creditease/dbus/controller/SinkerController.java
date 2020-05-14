@@ -128,5 +128,14 @@ public class SinkerController extends BaseController {
         }
     }
 
+    @GetMapping(path = "view-log")
+    public ResultEntity viewLog(@RequestParam String sinkerName) {
+        try {
+            return resultEntityBuilder().payload(service.viewLog(sinkerName)).build();
+        } catch (Exception e) {
+            logger.error("Exception encountered while view log", e);
+            return new ResultEntity(MessageCode.EXCEPTION, e.getMessage());
+        }
+    }
 
 }

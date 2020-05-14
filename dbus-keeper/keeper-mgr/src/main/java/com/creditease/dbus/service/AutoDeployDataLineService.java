@@ -1128,7 +1128,7 @@ public class AutoDeployDataLineService {
     }
 
     /**
-     * @param type(editFilter,initFilter)
+     * @param type(editFilter,initFilter,deleteFilter)
      * @param dsName
      * @param tableNames
      * @return
@@ -1142,6 +1142,11 @@ public class AutoDeployDataLineService {
         String canalPath = canalConf.getString(KeeperConstants.CANAL_PATH);
 
         checkCanalTool(host, port, user, canalPath);
+
+        // 添加心跳表
+        if (!type.equals("deleteFilter") && !tableNames.contains("dbus.db_heartbeat_monitor")) {
+            tableNames = "dbus.db_heartbeat_monitor," + tableNames;
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("cd ").append(canalPath);

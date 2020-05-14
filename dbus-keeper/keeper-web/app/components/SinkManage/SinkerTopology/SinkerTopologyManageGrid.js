@@ -124,8 +124,16 @@ export default class SinkerTopologyManageGrid extends Component {
    * @description selectTable的 option render
    */
   renderOperating = (text, record, index) => {
-    const {onOpenRerunModal, onOpenAddSchemaModal, onOpenModifyModal} = this.props
+    const {onOpenRerunModal, onOpenAddSchemaModal, onOpenModifyModal, onOpenLogModal} = this.props
     let menus = [
+      {
+        text: <FormattedMessage
+          id="app.common.modify"
+          defaultMessage="修改"
+        />,
+        icon: 'edit',
+        onClick: () => onOpenModifyModal(record)
+      },
       {
         text: <FormattedMessage
           id="app.common.delete"
@@ -203,8 +211,11 @@ export default class SinkerTopologyManageGrid extends Component {
             </OperatingButton>
           </Popconfirm>
         )}
-        <OperatingButton onClick={() => onOpenModifyModal(record)} icon="edit">
-          <FormattedMessage id="app.common.modify" defaultMessage="修改"/>
+        <OperatingButton icon="file-text" onClick={() => onOpenLogModal(record)}>
+          <FormattedMessage
+            id="app.components.resourceManage.dataSource.viewLog"
+            defaultMessage="查看日志"
+          />
         </OperatingButton>
         <OperatingButton icon="ellipsis" menus={menus}/>
       </div>

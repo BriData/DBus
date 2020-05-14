@@ -104,13 +104,13 @@
             <source>../dbus-auto-check/log-auto-check/target/log-auto-check-${project.version}.zip</source>
             <outputDirectory>zip</outputDirectory>
         </file>
-        <file>
-            <source>../canal.zip</source>
-            <outputDirectory>zip</outputDirectory>
-        </file>
-        <file>
-            <source>../dbus-keeper/keeper-web/build.zip</source>
-            <outputDirectory>zip</outputDirectory>
-        </file>
+        <!--<file>-->
+            <!--<source>../canal.zip</source>-->
+            <!--<outputDirectory>zip</outputDirectory>-->
+        <!--</file>-->
+        <!--<file>-->
+            <!--<source>../dbus-keeper/keeper-web/build.zip</source>-->
+            <!--<outputDirectory>zip</outputDirectory>-->
+        <!--</file>-->
     </files>
 </assembly>

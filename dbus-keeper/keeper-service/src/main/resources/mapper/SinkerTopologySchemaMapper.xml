@@ -98,10 +98,10 @@
     description, update_time
     from t_sinker_topo_schema
     <where>
-      <if test="dsName != null and dsName != ''">and ds_name = #{dsName}</if>
-      <if test="schemaName != null and schemaName != ''">and schema_name = #{schemaName}</if>
-      <if test="sinkerName != null and sinkerName != ''">and sinker_name = #{sinkerName}</if>
-      <if test="targetTopic != null and targetTopic != ''">and target_topic = #{targetTopic}</if>
+      <if test="dsName != null and dsName != ''">and ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null and schemaName != ''">and schema_name like "%"#{schemaName}"%"</if>
+      <if test="sinkerName != null and sinkerName != ''">and sinker_name like "%"#{sinkerName}"%"</if>
+      <if test="targetTopic != null and targetTopic != ''">and target_topic like "%"#{targetTopic}"%"</if>
     </where>
   </select>
   <select id="searchAll" resultMap="searchAllResultMap">
@@ -111,8 +111,8 @@
     join t_dbus_datasource d on s.ds_id = d.id
     left join t_sinker_topo_schema t on s.id = t.schema_id
     <where>
-      <if test="dsName != null and dsName != ''">and d.ds_name = #{dsName}</if>
-      <if test="schemaName != null and schemaName != ''">and s.schema_name = #{schemaName}</if>
+      <if test="dsName != null and dsName != ''">and d.ds_name like "%"#{dsName}"%"</if>
+      <if test="schemaName != null and schemaName != ''">and s.schema_name like "%"#{schemaName}"%"</if>
     </where>
   </select>
   <insert id="insertMany" parameterType="java.util.List">

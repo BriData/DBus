@@ -336,7 +336,7 @@ public class TableService {
         ddlEvent.setTableName(map.get("tableName").toString());
         ddlEvent.setVerId(verId);
         ddlEvent.setDdlType("ALTER");
-        ddlEvent.setDdl("log upgrade version");
+        ddlEvent.setDdl("dbus upgrade version");
         ddlEvent.setUpdateTime(new Date());
         ddlEventMapper.insert(ddlEvent);
     }
@@ -946,6 +946,7 @@ public class TableService {
                 newMetas = fetcher.fetchMeta(params);
                 if (oldVersion != null) {
                     //20190924,这里表结构不再判断,直接版本号+1
+                    //手动升级表版本号
                     //oldMetas = tableMetaMapper.selectByTableId(table.getId());
                     //Integer compareResult = this.compareMeta(oldMetas, newMetas);
                     Integer compareResult = 1;
@@ -980,6 +981,18 @@ public class TableService {
             tableVersion.setTableId(table.getId());
             tableVersionMapper.insert(tableVersion);
             tableMapper.updateVerId(tableVersion.getId(), table.getId());
+
+            //新增ddlevent数据
+            DdlEvent ddlEvent = new DdlEvent();
+            ddlEvent.setEventId(0);
+            ddlEvent.setDsId(table.getDsId());
+            ddlEvent.setSchemaName(table.getSchemaName());
+            ddlEvent.setTableName(table.getTableName());
+            ddlEvent.setVerId(tableVersion.getId());
+            ddlEvent.setDdlType("ALTER");
+            ddlEvent.setDdl("dbus upgrade version");
+            ddlEvent.setUpdateTime(new Date());
+            ddlEventMapper.insert(ddlEvent);
 
             if (isRelational) {
                 for (TableMeta tableMeta : newMetas) {
