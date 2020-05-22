@@ -84,13 +84,13 @@ public class ZkHelper {
         }
 
         Properties props = loadSecurityConf();
-        if (props != null && StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
-            consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            logger.info("consumer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT");
-        } else if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
-            logger.info("consumer security_protocol is disabled!");
-        } else {
-            logger.error("zk node[/DBus/Commons/global_security.conf] content is error!");
+        if (props != null) {
+            if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                consumerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+                logger.info("consumer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT");
+            } else if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
+                logger.info("consumer security_protocol is disabled!");
+            }
         }
 
         return consumerProps;
@@ -107,13 +107,13 @@ public class ZkHelper {
         }
 
         Properties props = loadSecurityConf();
-        if (props != null && StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
-            producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-            logger.info("producer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT");
-        } else if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
-            logger.info("producer security_protocol is disabled!");
-        } else {
-            logger.error("zk node[/DBus/Commons/global_security.conf] content is error!");
+        if (props != null) {
+            if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
+                producerProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+                logger.info("producer security_protocol is enabled!  security_protocol_config is: SASL_PLAINTEXT");
+            } else if (StringUtils.equals(props.getProperty("AuthenticationAndAuthorization"), "none")) {
+                logger.info("producer security_protocol is disabled!");
+            }
         }
         return producerProps;
     }
