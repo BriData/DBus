@@ -79,16 +79,6 @@ public class SinkerWriteBolt extends BaseRichBolt {
     public void execute(Tuple input) {
         List<DBusConsumerRecord<String, byte[]>> data = (List<DBusConsumerRecord<String, byte[]>>) input.getValueByField("data");
         try {
-            // 为了让hdfs的文件最后的block处于Complete状态,需要间隔一定时间进行close操作
-            //Set<String> allKeys = LocalCache.getAllKeys();
-            //if (!allKeys.isEmpty()) {
-            //    for (String key : allKeys) {
-            //        HdfsOutputStreamInfo hdfsOutputStreamInfo = LocalCache.get(key);
-            //        if (hdfsOutputStreamInfo.close()) {
-            //            logger.info("[write bolt] close hdfs output stream success.{}", hdfsOutputStreamInfo.getFilePath());
-            //        }
-            //    }
-            //}
             if (isCtrl(data)) {
                 JSONObject json = JSON.parseObject(new String(data.get(0).value(), "utf-8"));
                 logger.info("[write bolt] received reload message .{} ", json);

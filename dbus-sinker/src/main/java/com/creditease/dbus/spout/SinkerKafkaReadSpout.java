@@ -95,7 +95,7 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
             // emit data to bolt
             emitDataToBolt();
             // 处理reload消息
-            if (!reloadComplete()) return;
+            reloadComplete();
             // 如果读取的流量过大则要sleep一下
             if (flowLimitation()) return;
 
@@ -132,8 +132,11 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         if ((System.currentTimeMillis() - lastEmitTime) < MANAGE_INTERVALS) return;
         List<EmitDataList> emttDataList = null;
         if (!reloadCtrlMsg.isEmpty()) {
-            // 如果有未处理的ctr消息,emit全部数据,尽快处理完成收到的数据
-            emttDataList = emitDataListManager.getAllEmitDataList();
+            // 如果有未处理的ctr消息,丢弃当前读取到全部数据
+            // 这里发现如果进行了加减topic,会导致之前的拓扑分组发生变化,导致出现数据ack到了另外的spout,会出现无限等待的问题
+            // 处理方法:简单粗暴,直接丢弃当前全部数据
+            emitDataListManager.removeAll();
+            msgQueueMgr.removeAll();
         } else {
             emttDataList = emitDataListManager.getEmitDataList();
         }
@@ -319,17 +322,11 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         return topicList;
     }
 
-    private boolean reloadComplete() {
-        if (reloadCtrlMsg.isEmpty()) return true;
-        // 重新加载配置文件
-        // 这里做一下限制,防止检测太频繁,和emit保持同频
-        if ((System.currentTimeMillis() - lastCheckReloadTime) < MANAGE_INTERVALS) return false;
-        if (msgQueueMgr.isAllMessageProcessed()) {
+    private void reloadComplete() {
+        if (!reloadCtrlMsg.isEmpty()) {
+            // 重新加载配置文件
             reload();
-            return true;
         }
-        lastCheckReloadTime = System.currentTimeMillis();
-        return false;
     }
 
     private boolean flowLimitation() {

@@ -126,18 +126,6 @@ public class SinkerBaseMap {
                     hdfsOutputStreamInfo.clear();
                     LocalCache.remove(key);
                 }
-                //    List<String> topics = Arrays.asList(StringUtils.split(sinkerConfProps.getProperty(SinkerConstants.SINKER_TOPIC_LIST), ","));
-                //    for (String key : allKeys) {
-                //        //key: ds.schema.table
-                //        //topic: ds.schema.result
-                //        String s = StringUtils.substring(key, 0, key.lastIndexOf(".")) + ".result";
-                //        if (!topics.contains(s)) {
-                //            HdfsOutputStreamInfo hdfsOutputStreamInfo = LocalCache.get(key);
-                //            logger.info("[reload cmd] will close outStream use filePath {}", hdfsOutputStreamInfo.getFilePath());
-                //            hdfsOutputStreamInfo.clear();
-                //            LocalCache.remove(key);
-                //        }
-                //    }
             }
             if (fileSystem != null) {
                 fileSystem.close();

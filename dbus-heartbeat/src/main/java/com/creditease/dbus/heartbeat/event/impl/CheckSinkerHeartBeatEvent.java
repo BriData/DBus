@@ -114,7 +114,7 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
                 map.put("startTime", entry.getValue().get("startTime"));
                 map.put("endTime", entry.getValue().get("endTime"));
                 map.put("heartBeatTimeout", entry.getValue().get("heartBeatTimeout"));
-                heartBeatTimeoutConf.put(entry.getKey(), map);
+                heartBeatTimeoutConf.put(StringUtils.replace(entry.getKey(), "/", "."), map);
             }
         } else {
             additionalConf = new HashMap<>();
@@ -138,6 +138,10 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
                     //报警成立条件,1.超时了,报警次数少于最大允许次数;2.超时了,报警次数大于等于最大允许次数,上次报警时间距离现在超过了报警间隔
                     if (latencyMS > heartBeatTimeout && (maxAlarmCnt < sinkerMonitorNode.getAlarmCount()
                             || (maxAlarmCnt >= sinkerMonitorNode.getAlarmCount() && alarmTtl < System.currentTimeMillis() - sinkerMonitorNode.getLastAlarmTime()))) {
+                        if (key.lastIndexOf(".") == -1) {
+                            LOG.error("[sinker] error key {}", key);
+                            return;
+                        }
                         // 修正超时时间
                         Map<String, String> map = additionalConf.get(key.substring(0, key.lastIndexOf(".")));
                         if (map != null && DateUtil.isCurrentTimeInInterval(map.get("startTime"), map.get("endTime"))) {

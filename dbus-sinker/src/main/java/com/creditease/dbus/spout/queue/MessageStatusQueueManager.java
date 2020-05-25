@@ -94,18 +94,6 @@ public class MessageStatusQueueManager {
         return e.getRecord();
     }
 
-    /**
-     * 判断参数record所在的topic和指定的partition在队列中的消息是否都已经处理完成
-     *
-     * @param record
-     * @return
-     */
-    public boolean isAllMessageProcessed(DBusConsumerRecord<String, byte[]> record) {
-        MessageStatusQueue queue = getQueue(buildKey(record));
-        logger.info("queue size:{} while an event arrived.", queue.size());
-        return queue.isEmpty();
-    }
-
     public boolean isAllMessageProcessed() {
         for (Map.Entry<String, MessageStatusQueue> entry : queueMap.entrySet()) {
             if (!entry.getValue().isEmpty()) {
@@ -129,21 +117,6 @@ public class MessageStatusQueueManager {
         return queue;
     }
 
-    public Map<String, MessageStatusQueue> getQueueMap() {
-        return queueMap;
-    }
-
-    public List<QueueElement> getCommitPoints() {
-        List<QueueElement> commitPoints = new ArrayList<>();
-        queueMap.entrySet().forEach(entry -> {
-            QueueElement queueElement = entry.getValue().commitPoint();
-            if (queueElement != null) {
-                commitPoints.add(queueElement);
-            }
-        });
-        return commitPoints;
-    }
-
     public DBusConsumerRecord<String, byte[]> getCommitPoint(String key) {
         if (queueMap.get(key) == null) {
             return null;
@@ -156,8 +129,9 @@ public class MessageStatusQueueManager {
         return e.getRecord();
     }
 
-    public void committed(List<QueueElement> commitPoints) {
-        commitPoints.forEach(queueElement -> committed(queueElement.getRecord()));
+    public void removeAll(){
+        queueMap.clear();
+        logger.warn("received ctrl message, remove all queue message");
     }
 
 }

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,13 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.creditease.dbus.commons.StatMessage;
 import com.creditease.dbus.enums.DbusDatasourceType;
 import com.creditease.dbus.heartbeat.container.EventContainer;
@@ -31,18 +38,21 @@ import com.creditease.dbus.heartbeat.log.LoggerFactory;
 import com.creditease.dbus.heartbeat.util.JsonUtil;
 import com.creditease.dbus.heartbeat.util.KafkaUtil;
 import com.creditease.dbus.heartbeat.vo.PacketVo;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class KafkaConsumerEvent extends AbstractEvent {
 
@@ -204,13 +214,13 @@ public class KafkaConsumerEvent extends AbstractEvent {
                             tableName = vals[4];
                             dsPartition = vals[6];
 
-                            String dsNameWk = HeartBeatConfigContainer.getInstance().getAliasMapping().get(dsName);
+                            /*String dsNameWk = HeartBeatConfigContainer.getInstance().getAliasMapping().get(dsName);
                             if (StringUtils.isNotBlank(dsNameWk)) {
                                 if (map.containsKey(dsNameWk) && map.get(dsNameWk).contains(schemaName)) {
                                     LOG.debug("hit alias mapping {}->{}", dsName, dsNameWk);
                                     dsName = dsNameWk;
                                 }
-                            }
+                            }*/
 
                             if (vals[0].equals("data_increment_data") ||
                                     vals[0].equals("data_initial_data") ||
@@ -230,6 +240,7 @@ public class KafkaConsumerEvent extends AbstractEvent {
                                     isTableOK = false;
                                 } else {
                                     //新版  time|txTime|status
+                                    //新版 time|txTime|status|dsAlias
                                     if (StringUtils.contains(vals[8], "|")) {
                                         String times[] = StringUtils.split(vals[8], "|");
                                         cpTime = Long.valueOf(times[0]);
@@ -239,6 +250,12 @@ public class KafkaConsumerEvent extends AbstractEvent {
                                             //这种情况，只发送stat，不更新zk
                                             isTableOK = false;
                                         }
+
+                                        // 如果存在对应ds名称，说明原来用的是别名，则替换掉
+                                        if (ArrayUtils.getLength(times) == 4) {
+                                            dsName = times[3];
+                                        }
+
                                         sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key, record.offset());
                                     } else {
                                         LOG.error("it should not be here. key:{}", key);

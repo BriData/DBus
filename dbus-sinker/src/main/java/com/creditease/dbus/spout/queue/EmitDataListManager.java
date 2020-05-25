@@ -65,6 +65,10 @@ public class EmitDataListManager {
         dataMap.remove(key);
     }
 
+    public void removeAll() {
+        dataMap.clear();
+    }
+
     private String bildKey(DBusConsumerRecord<String, byte[]> record) {
         String[] vals = StringUtils.split(record.key(), ".");
         return StringUtils.joinWith(".", vals[2], vals[3], vals[4]);
