@@ -74,12 +74,12 @@ public class MysqlMessageProcessor extends MessageProcessor {
             String schemaName = entry.getHeader().getSchemaName();
             String tableName = entry.getHeader().getTableName();
             String localTable = getLocalTable(schemaName, tableName);
-            logger.debug("收到表数据{}.{}(基准表名{})数据", schemaName, tableName, localTable);
+            logger.debug("receive table message {}.{}(local table table{})", schemaName, tableName, localTable);
             if (!StringUtils.equals(tableName, localTable)) {
                 String finalTable = StringUtils.join(new String[]{localTable, tableName}, ".");
                 CanalEntry.Header header = CanalEntry.Header.newBuilder(entry.getHeader()).setTableName(finalTable).build();
                 entry = CanalEntry.Entry.newBuilder(entry).setHeader(header).build();
-                logger.debug("重新生成entry");
+                logger.debug("rebuild entry");
             }
             MysqlGenericMessage mysqlGenericMessage = new MysqlGenericMessage(entry);
             list.add(mysqlGenericMessage);

@@ -230,6 +230,32 @@ public class KafkaConsumerEvent extends AbstractEvent {
                                 //cpTime = Long.valueOf(vals[8]);
                                 isTableOK = false;
                             } else if (vals[0].equals("data_increment_heartbeat")) {
+                                /*if (StringUtils.equals("_unknown_table_", tableName) &&
+                                        (DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_LOGSTASH) ||
+                                                DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_LOGSTASH_JSON) ||
+                                                DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_UMS) ||
+                                                DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_FILEBEAT) ||
+                                                DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_JSON) ||
+                                                DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_FLUME))) {
+                                    isTableOK = false;
+                                } else {
+                                    //新版  time|txTime|status
+                                    //新版 time|txTime|status|dsAlias
+                                    if (StringUtils.contains(vals[8], "|")) {
+                                        String times[] = StringUtils.split(vals[8], "|");
+                                        cpTime = Long.valueOf(times[0]);
+                                        txTime = Long.valueOf(times[1]);
+                                        if (times.length == 3 && times[2].equals("abort")) {
+                                            //表明 其实表已经abort了，但心跳数据仍然
+                                            //这种情况，只发送stat，不更新zk
+                                            isTableOK = false;
+                                        }
+                                        sendStatMsg(dsName, schemaName, tableName, cpTime, txTime, curTime, key, record.offset());
+                                    } else {
+                                        LOG.error("it should not be here. key:{}", key);
+                                    }
+                                }*/
+
                                 if (StringUtils.equals("_unknown_table_", tableName) &&
                                         (DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_LOGSTASH) ||
                                                 DbusDatasourceType.stringEqual(vals[1], DbusDatasourceType.LOG_LOGSTASH_JSON) ||

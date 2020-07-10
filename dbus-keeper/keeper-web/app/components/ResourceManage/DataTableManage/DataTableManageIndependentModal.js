@@ -189,14 +189,13 @@ export default class DataTableManageIndependentModal extends Component {
             </FormItem>)}
             {sinkType === 'HDFS' && (<FormItem label="HDFS数据根目录" {...formItemLayout}>
               {getFieldDecorator('hdfsRootPath', {
-                initialValue: '/datahub/hdfslog/',
                 rules: [
                   {
                     required: true,
                     message: 'hdfs root path不能为空'
                   }
                 ]
-              })(<Input size="large" type="text"/>)}
+              })(<Input size="large" type="text" placeholder="/datahub/dbus"/>)}
             </FormItem>)}
             <FormItem label={'分片列'} {...formItemLayout}>
               {getFieldDecorator('fullpullCol', {

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1013,15 +1013,15 @@ public class ProjectTableService {
 
         ResultEntity resultEntity = new ResultEntity(0, null);
         //根据Id获取projectTableId 信息
-        ProjectTopoTable projectTopoTable = getTableById(projectTableId);
-        if (projectTopoTable == null) {
+        ProjectTopoTable topoTable = getTableById(projectTableId);
+        if (topoTable == null) {
             resultEntity.setStatus(MessageCode.TABLE_NOT_FOUND_BY_ID);
             resultEntity.setMessage(null); //根据message为空,需要读取i18n中的message信息
             logger.error("[send full-pull message error] Table not found, projectTableId:{}", projectTableId);
             return resultEntity;
         }
-        int tableId = projectTopoTable.getTableId();
-        int projectId = projectTopoTable.getProjectId();
+        int tableId = topoTable.getTableId();
+        int projectId = topoTable.getProjectId();
 
         //判断Resource是否可以拉全量,如果不能,应该屏蔽
         ResponseEntity<ResultEntity> result = sender.get(ServiceNames.KEEPER_SERVICE, "/projectResource/{0}/{1}", projectId, tableId);
@@ -1036,57 +1036,13 @@ public class ProjectTableService {
             return resultEntity;
         }
 
-        //根据projectTableId的tableId获取table信息
         DataTable dataTable = tableService.findTableById(tableId);
 
-        //没有topo不允许拉全量
-        if (stormTopoHelper.getTopologyByName(dataTable.getDsName() + "-splitter-puller") == null) {
-            resultEntity.setStatus(MessageCode.FULLPULL_TOPO_IS_NOT_RUNNING);
-            return resultEntity;
-        }
-        //判断表类型是否支持拉全量操作
-        DbusDatasourceType dsType = DbusDatasourceType.parse(dataTable.getDsType());
-        if (DbusDatasourceType.MONGO != dsType &&
-                DbusDatasourceType.DB2 != dsType &&
-                DbusDatasourceType.ORACLE != dsType && DbusDatasourceType.MYSQL != dsType) {
-            logger.error("Illegal datasource type:" + dataTable.getDsType());
-            resultEntity.setStatus(MessageCode.TYPE_OF_TABLE_CAN_NOT_FULLPULL);
-            return resultEntity;
-        }
-
-        result = sender.get(ServiceNames.KEEPER_SERVICE, "/projects/select/{id}", projectId);
-        if (!result.getStatusCode().is2xxSuccessful() || !result.getBody().success())
-            return result.getBody();
-        Project projectMsg = result.getBody().getPayload(Project.class);
-
-        //安全模式,如果需要新建topic,要插入acl
-        try {
-            //安全模式,如果需要新建topic,要插入acl
-            if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
-                addAclTopic(resultTopic, projectMsg.getPrincipal());
-            }
-        } catch (Exception e) {
-            logger.error("[full pull ]add topic acl error.{}", e);
-            resultEntity.setStatus(MessageCode.EXCEPTION);
-            return resultEntity;
-        }
-
-
-        //构造controlMessage
-        Date date = new Date();
-        JSONObject message = fullPullService.buildMessage(date);
-        dataTable.setFullpullCol(projectTopoTable.getFullpullCol());
-        dataTable.setFullpullSplitShardSize(projectTopoTable.getFullpullSplitShardSize());
-        dataTable.setFullpullSplitStyle(projectTopoTable.getFullpullSplitShardSize());
-        dataTable.setFullpullCondition(projectTopoTable.getFullpullCondition());
-        JSONObject payload = fullPullService.buildPayload(resultTopic, date.getTime(), dataTable);
-        JSONObject project = fullPullService.buildProject(projectTopoTable, projectMsg.getProjectName());
-        message.put("payload", payload);
-        message.put("project", project);
+        JSONObject message = fullPullService.buildProjectFullPullMessage(topoTable, dataTable, resultTopic);
 
         //生成fullPullHistory对象
         FullPullHistory fullPullHistory = new FullPullHistory();
-        fullPullHistory.setId(date.getTime());
+        fullPullHistory.setId(message.getLong("id"));
         fullPullHistory.setType("indepent");
         fullPullHistory.setDsName(dataTable.getDsName());
         fullPullHistory.setSchemaName(dataTable.getSchemaName());
@@ -1094,11 +1050,12 @@ public class ProjectTableService {
         fullPullHistory.setState("init");
         fullPullHistory.setInitTime(new Date(fullPullHistory.getId()));
         fullPullHistory.setUpdateTime(fullPullHistory.getInitTime());
-        fullPullHistory.setProjectName(projectMsg.getProjectName());
-        fullPullHistory.setTopologyTableId(projectTableId);
-        fullPullHistory.setTargetSinkId(projectTopoTable.getSinkId());
         fullPullHistory.setTargetSinkTopic(resultTopic);
         fullPullHistory.setFullpullCondition(fullpullCondition);
+        JSONObject projectJson = message.getJSONObject("project");
+        fullPullHistory.setProjectName(projectJson.getString("name"));
+        fullPullHistory.setTopologyTableId(topoTable.getId());
+        fullPullHistory.setTargetSinkId(topoTable.getSinkId());
 
         //发送消息
         int sendResult = fullPullService.sendMessage(dataTable, message.toJSONString(), fullPullHistory);

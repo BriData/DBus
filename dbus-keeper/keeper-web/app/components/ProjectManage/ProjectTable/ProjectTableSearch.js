@@ -3,9 +3,9 @@
  * @description  Sink信息设置
  */
 
-import React, { PropTypes, Component } from 'react'
-import {Popconfirm, Form, Select, Input, Button, Row, Col } from 'antd'
-import { FormattedMessage } from 'react-intl'
+import React, {Component, PropTypes} from 'react'
+import {Button, Col, Form, Input, Popconfirm, Row, Select} from 'antd'
+import {FormattedMessage} from 'react-intl'
 // 导入样式
 import styles from './res/styles/index.less'
 
@@ -18,12 +18,12 @@ export default class ProjectTableSearch extends Component {
    * 校验并查询
    */
   handleSearch = e => {
-    const { validateFields } = this.props.form
-    const { onSearch, tableParams } = this.props
+    const {validateFields} = this.props.form
+    const {onSearch, tableParams} = this.props
     // 校验并查询
     validateFields((err, value) => {
       if (!err) {
-        onSearch({ ...tableParams, ...value }, true)
+        onSearch({...tableParams, ...value}, true)
       }
     })
   };
@@ -32,15 +32,16 @@ export default class ProjectTableSearch extends Component {
    * @description 获取TopoList
    */
   handleChangeTopo = id => {
-    const { onSetProjectId } = this.props
+    const {onSetProjectId} = this.props
     onSetProjectId(id)
-    const { onGetTopologyList } = this.props
-    onGetTopologyList({ projectId: id })
-    this.props.form.setFieldsValue({topoId:null})
+    const {onGetTopologyList} = this.props
+    onGetTopologyList({projectId: id})
+    this.props.form.setFieldsValue({topoId: null})
   };
-  render () {
-    const { projectId } = this.props
-    const { getFieldDecorator } = this.props.form
+
+  render() {
+    const {projectId} = this.props
+    const {getFieldDecorator} = this.props.form
     const {
       dataSourceList,
       projectList,
@@ -54,20 +55,21 @@ export default class ProjectTableSearch extends Component {
       isCreate
     } = this.props
     const project = [
-      { projectId: null, projectDisplayName: '请选择Project' },
+      {projectId: null, projectDisplayName: '请选择Project'},
       ...Object.values(projectList.result)
-    ] || [{ projectId: null, projectDisplayName: '请选择Project' }]
+    ] || [{projectId: null, projectDisplayName: '请选择Project'}]
     const dataSource = [
-      { dsId: null, dsName: '请选择DataSource' },
+      {dsId: null, dsName: '请选择DataSource'},
       ...Object.values(dataSourceList.result)
-    ] || [{ dsId: null, dsName: '请选择DataSource' }]
+    ] || [{dsId: null, dsName: '请选择DataSource'}]
     const topology = [
-      { topoId: null, topoName: '请选择Topology' },
+      {topoId: null, topoName: '请选择Topology'},
       ...Object.values(topologyList.result)
-    ] || [{ topoId: null, topoName: '请选择Topology' }]
+    ] || [{topoId: null, topoName: '请选择Topology'}]
     return (
       <div className="form-search">
-        <Form autoComplete="off" layout="inline" className={styles.searchForm} onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
+        <Form autoComplete="off" layout="inline" className={styles.searchForm}
+              onKeyUp={e => e.keyCode === 13 && this.handleSearch()}>
           <Row>
             {/*<Col span={isCreate ? 2 : 10} className={styles.formLeft}>*/}
 
@@ -139,7 +141,7 @@ export default class ProjectTableSearch extends Component {
                       optionFilterProp='children'
                       className={styles.select}
                       placeholder="Select Topology"
-                      style={{ width: 200 }}
+                      style={{width: 200}}
                     >
                       {topology.map(item => (
                         <Option
@@ -154,30 +156,30 @@ export default class ProjectTableSearch extends Component {
                 </FormItem>
               )}
               {!!isCreate && (
-              <FormItem label="Topology">
-                {getFieldDecorator('topoId', {
-                  initialValue:
-                    topology && topology[0].topoId
-                      ? `${topology[0].topoId}`
-                      : null
-                })(
-                  <Select
-                    showSearch
-                    optionFilterProp='children'
-                    className={styles.select}
-                    placeholder="Select Topology"
+                <FormItem label="Topology">
+                  {getFieldDecorator('topoId', {
+                    initialValue:
+                      topology && topology[0].topoId
+                        ? `${topology[0].topoId}`
+                        : null
+                  })(
+                    <Select
+                      showSearch
+                      optionFilterProp='children'
+                      className={styles.select}
+                      placeholder="Select Topology"
                     >
-                    {topology.map(item => (
-                      <Option
-                        value={item.topoId ? `${item.topoId}` : null}
-                        key={`${item.topoId ? item.topoId : 'topoId'}`}
+                      {topology.map(item => (
+                        <Option
+                          value={item.topoId ? `${item.topoId}` : null}
+                          key={`${item.topoId ? item.topoId : 'topoId'}`}
                         >
-                        {item.topoName}
-                      </Option>
+                          {item.topoName}
+                        </Option>
                       ))}
-                  </Select>
+                    </Select>
                   )}
-              </FormItem>
+                </FormItem>
               )}
               <FormItem>
                 {getFieldDecorator('dsName', {
@@ -210,12 +212,12 @@ export default class ProjectTableSearch extends Component {
               <FormItem>
                 {getFieldDecorator('schemaName', {
                   initialValue: null
-                })(<Input className={styles.input} placeholder="schemaName" />)}
+                })(<Input className={styles.input} placeholder="schemaName"/>)}
               </FormItem>
               <FormItem>
                 {getFieldDecorator('tableName', {
                   initialValue: null
-                })(<Input className={styles.input} placeholder="tableName" />)}
+                })(<Input className={styles.input} placeholder="tableName"/>)}
               </FormItem>
               <FormItem>
                 <Button
@@ -230,32 +232,30 @@ export default class ProjectTableSearch extends Component {
                 </Button>
               </FormItem>
               <FormItem>
-                  <Button
-                    type="primary"
-                    icon="export"
-                    size="large"
-                    onClick={onBatchMoveTopoTables}
-                  >
-                    <FormattedMessage
-                      id="app.components.resourceManage.dataTable.batchMoveTopoTables"
-                      defaultMessage="批量迁移"
-                    />
-                  </Button>
+                <Button
+                  type="primary"
+                  icon="export"
+                  size="large"
+                  onClick={onBatchMoveTopoTables}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchMoveTopoTables"
+                    defaultMessage="批量迁移"
+                  />
+                </Button>
               </FormItem>
               <FormItem>
-                <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}
-                            okText="Yes" cancelText="No">
-                  <Button
-                    type="primary"
-                    icon="export"
-                    size="large"
-                  >
-                    <FormattedMessage
-                      id="app.components.resourceManage.dataTable.batchFullPull"
-                      defaultMessage="批量拉全量"
-                    />
-                  </Button>
-                </Popconfirm>
+                <Button
+                  type="primary"
+                  icon="export"
+                  size="large"
+                  onClick={onBatchFullPull}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchFullPull"
+                    defaultMessage="批量拉全量"
+                  />
+                </Button>
               </FormItem>
               <FormItem>
                 <Popconfirm title={<div><FormattedMessage

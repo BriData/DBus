@@ -123,7 +123,7 @@ public class FullPullService {
                 payload.put("PHYSICAL_TABLES", physicalTables);
             }
 
-            payload = this.getOPTS(table.getOutputTopic(), payload);
+            payload = this.setOPTS(table.getOutputTopic(), payload);
             controlMessage.setPayload(payload);
 
             //解决一毫秒处理多个全量任务,导致数据库任务缺失.原因:FullPullHistory主键是时间戳
@@ -174,21 +174,13 @@ public class FullPullService {
         return project;
     }
 
-    public JSONObject buildPayload(String resultTopic, Long time, DataTable dataTable) {
-
-        if (resultTopic == null) {
-            // 默认的构造规则
-            resultTopic = dataTable.getDsType() + "." + dataTable.getSchemaName() + "." +
-                    dataTable.getTableName() + "." + String.valueOf(time);
-        }
+    public JSONObject buildPayload(DataTable dataTable, Long time, String resultTopic, String hdfsRootPath) {
         JSONObject payload = new JSONObject();
-
         payload.put("DBUS_DATASOURCE_ID", String.valueOf(dataTable.getDsId()));
         payload.put("SCHEMA_NAME", dataTable.getSchemaName());
         payload.put("TABLE_NAME", dataTable.getTableName());
         payload.put("INCREASE_VERSION", "false");
         payload.put("INCREASE_BATCH_NO", "false");
-        payload.put("resultTopic", resultTopic);
         payload.put("SEQNO", String.valueOf(time));
         payload.put("PHYSICAL_TABLES", dataTable.getPhysicalTableRegex());
         payload.put("PULL_REMARK", "");
@@ -199,7 +191,18 @@ public class FullPullService {
         payload.put("SPLIT_SHARD_SIZE", dataTable.getFullpullSplitShardSize());
         payload.put("SPLIT_SHARD_STYLE", dataTable.getFullpullSplitStyle());
         payload.put("INPUT_CONDITIONS", dataTable.getFullpullCondition());
-
+        // 处理sink
+        if (StringUtils.isNotBlank(hdfsRootPath)) {
+            logger.info("全量任务为直接落hdfs:{}", hdfsRootPath);
+            payload.put(KeeperConstants.FULL_PULL_PAYLOAD_SINK_TYPE, "HDFS");
+            payload.put(KeeperConstants.FULL_PULL_PAYLOAD_HDFS_ROOT_PATH, hdfsRootPath);
+        } else {
+            if (StringUtils.isBlank(resultTopic)) {
+                resultTopic = String.format("%s.%s.%s", dataTable.getDsType(), dataTable.getSchemaName(), System.currentTimeMillis());
+            }
+            payload.put("resultTopic", resultTopic);
+            payload.put(KeeperConstants.FULL_PULL_PAYLOAD_SINK_TYPE, "KAFKA");
+        }
         return payload;
     }
 
@@ -266,7 +269,7 @@ public class FullPullService {
             if (result != 0) {
                 return result;
             }
-            message = createProjectFullPullMessage(topoTable, dataTable, outputTopic);
+            message = buildProjectFullPullMessage(topoTable, dataTable, outputTopic);
         } else {
             dataTable = tableService.findTableById(tableId);
             if (dataTable == null) {
@@ -277,14 +280,9 @@ public class FullPullService {
             if (result != 0) {
                 return result;
             }
-            message = buildSourceFullPullMessage(dataTable, outputTopic);
+            message = buildSourceFullPullMessage(dataTable, outputTopic, hdfsRootPath);
         }
         JSONObject payload = message.getJSONObject("payload");
-        if (StringUtils.isNotBlank(hdfsRootPath)) {
-            logger.info("全量任务为直接落hdfs:{}", hdfsRootPath);
-            payload.put(KeeperConstants.FULL_PULL_PAYLOAD_SINK_TYPE, "HDFS");
-            payload.put(KeeperConstants.FULL_PULL_PAYLOAD_HDFS_ROOT_PATH, hdfsRootPath);
-        }
         if (StringUtils.isNotBlank(splitShardSize)) {
             payload.put("SPLIT_SHARD_SIZE", splitShardSize);
         }
@@ -357,31 +355,30 @@ public class FullPullService {
         }
     }
 
-    public JSONObject buildSourceFullPullMessage(DataTable dataTable, String outputTopic) {
+    public JSONObject buildSourceFullPullMessage(DataTable dataTable, String outputTopic, String hdfsRootPath) {
         Date date = new Date();
         JSONObject message = buildMessage(date);
-        JSONObject payloadJson = buildPayload(outputTopic, date.getTime(), dataTable);
+        JSONObject payloadJson = buildPayload(dataTable, date.getTime(), outputTopic, hdfsRootPath);
         message.put("payload", payloadJson);
         return message;
     }
 
-    public JSONObject createProjectFullPullMessage(ProjectTopoTable topoTable, DataTable dataTable, String outputTopic) throws Exception {
+    public JSONObject buildProjectFullPullMessage(ProjectTopoTable topoTable, DataTable dataTable, String outputTopic) throws Exception {
         Project project = projectService.queryProjectId(topoTable.getProjectId()).getPayload(Project.class);
         //安全模式,如果需要新建topic,要插入acl
         if (StringUtils.equals(SecurityConfProvider.getSecurityConf(zkService), Constants.SECURITY_CONFIG_TRUE_VALUE)) {
             projectTableService.addAclTopic(outputTopic, project.getPrincipal());
         }
-
         Date date = new Date();
         JSONObject message = this.buildMessage(date);
-        JSONObject payloadJson = this.buildPayload(outputTopic, date.getTime(), dataTable);
+        JSONObject payloadJson = this.buildPayload(dataTable, date.getTime(), outputTopic, null);
         JSONObject projectJson = this.buildProject(topoTable, project.getProjectName());
         message.put("payload", payloadJson);
         message.put("project", projectJson);
         return message;
     }
 
-    public Map<String, Object> getOPTS(String outputTopic, Map<String, Object> payload) throws Exception {
+    public Map<String, Object> setOPTS(String outputTopic, Map<String, Object> payload) throws Exception {
         String key;
         String value;
         final String OP_TS = "OP_TS";

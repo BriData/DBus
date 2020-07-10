@@ -1,17 +1,22 @@
 package com.creditease.dbus.heartbeat.distributed.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import com.creditease.dbus.heartbeat.distributed.errors.ConfigException;
+import com.creditease.dbus.heartbeat.distributed.utils.Utils;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.common.utils.Utils;
 
 public class ConfigDef {
 
@@ -36,6 +41,282 @@ public class ConfigDef {
         Object parsedDefault = defaultValue == NO_DEFAULT_VALUE ? NO_DEFAULT_VALUE : parseType(name, defaultValue, type);
         configKeys.put(name, new ConfigKey(name, type, parsedDefault, validator, importance, documentation, group, orderInGroup, width, displayName, dependents, recommender));
         return this;
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Validator validator, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName, List<String> dependents) {
+        return define(name, type, defaultValue, validator, importance, documentation, group, orderInGroup, width, displayName, dependents, null);
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Validator validator, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName, Recommender recommender) {
+        return define(name, type, defaultValue, validator, importance, documentation, group, orderInGroup, width, displayName, Collections.<String>emptyList(), recommender);
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Validator validator, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName) {
+        return define(name, type, defaultValue, validator, importance, documentation, group, orderInGroup, width, displayName, Collections.<String>emptyList());
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName, List<String> dependents, Recommender recommender) {
+        return define(name, type, defaultValue, null, importance, documentation, group, orderInGroup, width, displayName, dependents, recommender);
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName, List<String> dependents) {
+        return define(name, type, defaultValue, null, importance, documentation, group, orderInGroup, width, displayName, dependents, null);
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName, Recommender recommender) {
+        return define(name, type, defaultValue, null, importance, documentation, group, orderInGroup, width, displayName, Collections.<String>emptyList(), recommender);
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Importance importance, String documentation,
+                            String group, int orderInGroup, Width width, String displayName) {
+        return define(name, type, defaultValue, null, importance, documentation, group, orderInGroup, width, displayName, Collections.<String>emptyList());
+    }
+
+    public ConfigDef define(String name, Type type, Importance importance, String documentation, String group, int orderInGroup,
+                            Width width, String displayName, List<String> dependents, Recommender recommender) {
+        return define(name, type, NO_DEFAULT_VALUE, null, importance, documentation, group, orderInGroup, width, displayName, dependents, recommender);
+    }
+
+    public ConfigDef define(String name, Type type, Importance importance, String documentation, String group, int orderInGroup,
+                            Width width, String displayName, List<String> dependents) {
+        return define(name, type, NO_DEFAULT_VALUE, null, importance, documentation, group, orderInGroup, width, displayName, dependents, null);
+    }
+
+    public ConfigDef define(String name, Type type, Importance importance, String documentation, String group, int orderInGroup,
+                            Width width, String displayName, Recommender recommender) {
+        return define(name, type, NO_DEFAULT_VALUE, null, importance, documentation, group, orderInGroup, width, displayName, Collections.<String>emptyList(), recommender);
+    }
+
+    public ConfigDef define(String name, Type type, Importance importance, String documentation, String group, int orderInGroup,
+                            Width width, String displayName) {
+        return define(name, type, NO_DEFAULT_VALUE, null, importance, documentation, group, orderInGroup, width, displayName, Collections.<String>emptyList());
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Validator validator, Importance importance, String documentation) {
+        return define(name, type, defaultValue, validator, importance, documentation, null, -1, Width.NONE, name);
+    }
+
+    public ConfigDef define(String name, Type type, Object defaultValue, Importance importance, String documentation) {
+        return define(name, type, defaultValue, null, importance, documentation);
+    }
+
+    public ConfigDef define(String name, Type type, Importance importance, String documentation) {
+        return define(name, type, NO_DEFAULT_VALUE, null, importance, documentation);
+    }
+
+    /**
+     * Get the configuration keys
+     * @return a map containing all configuration keys
+     */
+    public Map<String, ConfigKey> configKeys() {
+        return configKeys;
+    }
+
+    /**
+     * Get the groups for the configuration
+     * @return a list of group names
+     */
+    public List<String> groups() {
+        return groups;
+    }
+
+    public Map<String, Object> parse(Map<?, ?> props) {
+        // Check all configurations are defined
+        List<String> undefinedConfigKeys = undefinedDependentConfigs();
+        if (!undefinedConfigKeys.isEmpty()) {
+            String joined = Utils.join(undefinedConfigKeys, ",");
+            throw new ConfigException("Some configurations in are referred in the dependents, but not defined: " + joined);
+        }
+        // parse all known keys
+        Map<String, Object> values = new HashMap<>();
+        for (ConfigKey key : configKeys.values()) {
+            Object value;
+            // props map contains setting - assign ConfigKey value
+            if (props.containsKey(key.name)) {
+                value = parseType(key.name, props.get(key.name), key.type);
+                // props map doesn't contain setting, the key is required because no default value specified - its an error
+            } else if (key.defaultValue == NO_DEFAULT_VALUE) {
+                throw new ConfigException("Missing required configuration \"" + key.name + "\" which has no default value.");
+            } else {
+                // otherwise assign setting its default value
+                value = key.defaultValue;
+            }
+            if (key.validator != null) {
+                key.validator.ensureValid(key.name, value);
+            }
+            values.put(key.name, value);
+        }
+        return values;
+    }
+
+    Map<String, Object> parseForValidate(Map<String, String> props, Map<String, ConfigValue> configValues) {
+        Map<String, Object> parsed = new HashMap<>();
+        Set<String> configsWithNoParent = getConfigsWithNoParent();
+        for (String name: configsWithNoParent) {
+            parseForValidate(name, props, parsed, configValues);
+        }
+        return parsed;
+    }
+
+
+    private List<ConfigValue> validate(Map<String, Object> parsed, Map<String, ConfigValue> configValues) {
+        Set<String> configsWithNoParent = getConfigsWithNoParent();
+        for (String name: configsWithNoParent) {
+            validate(name, parsed, configValues);
+        }
+        return new LinkedList<>(configValues.values());
+    }
+
+    private List<String> undefinedDependentConfigs() {
+        Set<String> undefinedConfigKeys = new HashSet<>();
+        for (String configName: configKeys.keySet()) {
+            ConfigKey configKey = configKeys.get(configName);
+            List<String> dependents = configKey.dependents;
+            for (String dependent: dependents) {
+                if (!configKeys.containsKey(dependent)) {
+                    undefinedConfigKeys.add(dependent);
+                }
+            }
+        }
+        return new LinkedList<>(undefinedConfigKeys);
+    }
+
+    private Set<String> getConfigsWithNoParent() {
+        if (this.configsWithNoParent != null) {
+            return this.configsWithNoParent;
+        }
+        Set<String> configsWithParent = new HashSet<>();
+
+        for (ConfigKey configKey: configKeys.values()) {
+            List<String> dependents = configKey.dependents;
+            configsWithParent.addAll(dependents);
+        }
+
+        Set<String> configs = new HashSet<>(configKeys.keySet());
+        configs.removeAll(configsWithParent);
+        this.configsWithNoParent = configs;
+        return configs;
+    }
+
+    public List<ConfigValue> validate(Map<String, String> props) {
+        Map<String, ConfigValue> configValues = new HashMap<>();
+        for (String name: configKeys.keySet()) {
+            configValues.put(name, new ConfigValue(name));
+        }
+
+        List<String> undefinedConfigKeys = undefinedDependentConfigs();
+        for (String undefinedConfigKey: undefinedConfigKeys) {
+            ConfigValue undefinedConfigValue = new ConfigValue(undefinedConfigKey);
+            undefinedConfigValue.addErrorMessage(undefinedConfigKey + " is referred in the dependents, but not defined.");
+            undefinedConfigValue.visible(false);
+            configValues.put(undefinedConfigKey, undefinedConfigValue);
+        }
+
+        Map<String, Object> parsed = parseForValidate(props, configValues);
+        return validate(parsed, configValues);
+    }
+
+    private void parseForValidate(String name, Map<String, String> props, Map<String, Object> parsed, Map<String, ConfigValue> configs) {
+        if (!configKeys.containsKey(name)) {
+            return;
+        }
+        ConfigKey key = configKeys.get(name);
+        ConfigValue config = configs.get(name);
+
+        Object value = null;
+        if (props.containsKey(key.name)) {
+            try {
+                value = parseType(key.name, props.get(key.name), key.type);
+            } catch (ConfigException e) {
+                config.addErrorMessage(e.getMessage());
+            }
+        } else if (key.defaultValue == NO_DEFAULT_VALUE) {
+            config.addErrorMessage("Missing required configuration \"" + key.name + "\" which has no default value.");
+        } else {
+            value = key.defaultValue;
+        }
+
+        if (key.validator != null) {
+            try {
+                key.validator.ensureValid(key.name, value);
+            } catch (ConfigException e) {
+                config.addErrorMessage(e.getMessage());
+            }
+        }
+        config.value(value);
+        parsed.put(name, value);
+        for (String dependent: key.dependents) {
+            parseForValidate(dependent, props, parsed, configs);
+        }
+    }
+
+    private void validate(String name, Map<String, Object> parsed, Map<String, ConfigValue> configs) {
+        if (!configKeys.containsKey(name)) {
+            return;
+        }
+        ConfigKey key = configKeys.get(name);
+        ConfigValue config = configs.get(name);
+        List<Object> recommendedValues;
+        if (key.recommender != null) {
+            try {
+                recommendedValues = key.recommender.validValues(name, parsed);
+                List<Object> originalRecommendedValues = config.recommendedValues();
+                if (!originalRecommendedValues.isEmpty()) {
+                    Set<Object> originalRecommendedValueSet = new HashSet<>(originalRecommendedValues);
+                    Iterator<Object> it = recommendedValues.iterator();
+                    while (it.hasNext()) {
+                        Object o = it.next();
+                        if (!originalRecommendedValueSet.contains(o)) {
+                            it.remove();
+                        }
+                    }
+                }
+                config.recommendedValues(recommendedValues);
+                config.visible(key.recommender.visible(name, parsed));
+            } catch (ConfigException e) {
+                config.addErrorMessage(e.getMessage());
+            }
+        }
+
+        configs.put(name, config);
+        for (String dependent: key.dependents) {
+            validate(dependent, parsed, configs);
+        }
+    }
+
+    public static String convertToString(Object parsedValue, org.apache.kafka.common.config.ConfigDef.Type type) {
+        if (parsedValue == null) {
+            return null;
+        }
+
+        if (type == null) {
+            return parsedValue.toString();
+        }
+
+        switch (type) {
+            case BOOLEAN:
+            case SHORT:
+            case INT:
+            case LONG:
+            case DOUBLE:
+            case STRING:
+            case PASSWORD:
+                return parsedValue.toString();
+            case LIST:
+                List<?> valueList = (List<?>) parsedValue;
+                return Utils.join(valueList, ",");
+            case CLASS:
+                Class<?> clazz = (Class<?>) parsedValue;
+                return clazz.getCanonicalName();
+            default:
+                throw new IllegalStateException("Unknown type.");
+        }
     }
 
     private Object parseType(String name, Object value, Type type) {
@@ -117,7 +398,7 @@ public class ConfigDef {
                     if (value instanceof Class)
                         return (Class<?>) value;
                     else if (value instanceof String)
-                        return Class.forName(trimmed, true, Utils.getContextOrKafkaClassLoader());
+                        return Class.forName(trimmed, true, com.creditease.dbus.heartbeat.distributed.utils.Utils.getClassLoader());
                     else
                         throw new ConfigException(name, value, "Expected a Class instance or class name.");
                 default:
@@ -280,6 +561,133 @@ public class ConfigDef {
         public String toString() {
             return "[" + StringUtils.join(validStrings, ", ") + "]";
         }
+    }
+
+    protected List<String> headers() {
+        return Arrays.asList("Name", "Description", "Type", "Default", "Valid Values", "Importance");
+    }
+
+    protected String getConfigValue(ConfigKey key, String headerName) {
+        switch (headerName) {
+            case "Name":
+                return key.name;
+            case "Description":
+                return key.documentation;
+            case "Type":
+                return key.type.toString().toLowerCase(Locale.ROOT);
+            case "Default":
+                if (key.hasDefault()) {
+                    if (key.defaultValue == null)
+                        return "null";
+                    else if (key.type == Type.STRING && key.defaultValue.toString().isEmpty())
+                        return "\"\"";
+                    else
+                        return key.defaultValue.toString();
+                } else
+                    return "";
+            case "Valid Values":
+                return key.validator != null ? key.validator.toString() : "";
+            case "Importance":
+                return key.importance.toString().toLowerCase(Locale.ROOT);
+            default:
+                throw new RuntimeException("Can't find value for header '" + headerName + "' in " + key.name);
+        }
+    }
+
+    public String toHtmlTable() {
+        List<ConfigKey> configs = sortedConfigs();
+        StringBuilder b = new StringBuilder();
+        b.append("<table class=\"data-table\"><tbody>\n");
+        b.append("<tr>\n");
+        // print column headers
+        for (String headerName : headers()) {
+            b.append("<th>");
+            b.append(headerName);
+            b.append("</th>\n");
+        }
+        b.append("</tr>\n");
+        for (ConfigKey def : configs) {
+            b.append("<tr>\n");
+            // print column values
+            for (String headerName : headers()) {
+                b.append("<td>");
+                b.append(getConfigValue(def, headerName));
+                b.append("</td>");
+            }
+            b.append("</tr>\n");
+        }
+        b.append("</tbody></table>");
+        return b.toString();
+    }
+
+    /**
+     * Get the configs formatted with reStructuredText, suitable for embedding in Sphinx
+     * documentation.
+     */
+    public String toRst() {
+        List<ConfigKey> configs = sortedConfigs();
+        StringBuilder b = new StringBuilder();
+
+        for (ConfigKey def : configs) {
+            b.append("``");
+            b.append(def.name);
+            b.append("``\n");
+            for (String docLine : def.documentation.split("\n")) {
+                if (docLine.length() == 0) {
+                    continue;
+                }
+                b.append("  ");
+                b.append(docLine);
+                b.append("\n\n");
+            }
+            b.append("  * Type: ");
+            b.append(def.type.toString().toLowerCase(Locale.ROOT));
+            b.append("\n");
+            if (def.defaultValue != null) {
+                b.append("  * Default: ");
+                if (def.type == Type.STRING) {
+                    b.append("\"");
+                    b.append(def.defaultValue);
+                    b.append("\"");
+                } else {
+                    b.append(def.defaultValue);
+                }
+                b.append("\n");
+            }
+            b.append("  * Importance: ");
+            b.append(def.importance.toString().toLowerCase(Locale.ROOT));
+            b.append("\n\n");
+        }
+        return b.toString();
+    }
+
+    /**
+     * Get a list of configs sorted into "natural" order: listing required fields first, then
+     * ordering by importance, and finally by name.
+     */
+    protected List<ConfigKey> sortedConfigs() {
+        // sort first required fields, then by importance, then name
+        List<ConfigKey> configs = new ArrayList<>(this.configKeys.values());
+        Collections.sort(configs, new Comparator<ConfigKey>() {
+            public int compare(ConfigKey k1, ConfigKey k2) {
+                // first take anything with no default value
+                if (!k1.hasDefault() && k2.hasDefault()) {
+                    return -1;
+                } else if (!k2.hasDefault() && k1.hasDefault()) {
+                    return 1;
+                }
+
+                // then sort by importance
+                int cmp = k1.importance.compareTo(k2.importance);
+                if (cmp == 0) {
+                    // then sort in alphabetical order
+                    return k1.name.compareTo(k2.name);
+                } else {
+                    return cmp;
+                }
+            }
+        });
+        return configs;
     }
 
 }

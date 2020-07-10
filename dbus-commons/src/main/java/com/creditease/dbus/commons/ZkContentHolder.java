@@ -90,6 +90,8 @@ public class ZkContentHolder {
             }
             StringBuilder sb = new StringBuilder();
             zkContent = StringUtils.replace(zkContent, "\r", "");
+            boolean flag = false;
+            String kv = String.format("%s=%s", key, value);
             for (String line : zkContent.split("\n")) {
                 if (StringUtils.isBlank(line) || line.startsWith("#") || line.startsWith("!")) {
                     sb.append(line).append("\n");
@@ -103,9 +105,13 @@ public class ZkContentHolder {
                     String[] split = StringUtils.split(line, escape, 2);
                     if (split[0].trim().equals(key)) {
                         line = String.format("%s%s%s", key, escape, value);
+                        flag = true;
                     }
                     sb.append(line).append("\n");
                 }
+            }
+            if (!flag) {
+                sb.append(kv).append("\n");
             }
             setZkContent(config, sb.toString());
         } catch (Exception e) {
@@ -191,5 +197,5 @@ public class ZkContentHolder {
             propMap.put(config, content);
         }
     }
-    
+
 }

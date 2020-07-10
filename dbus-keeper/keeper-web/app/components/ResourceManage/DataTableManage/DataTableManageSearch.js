@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Button, Col, Form, Input, message, Popconfirm, Row, Select} from 'antd'
+import {Button, Col, Form, Input, message, Row, Select} from 'antd'
 import {FormattedMessage} from 'react-intl'
 import dateFormat from 'dateformat'
 // 导入样式
@@ -12,14 +12,14 @@ const Option = Select.Option
 
 @Form.create()
 export default class DataTableManageSearch extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
       selectDatasource: false
     }
   }
 
-  componentWillMount () {
+  componentWillMount() {
   }
 
   handleSearch = () => {
@@ -99,10 +99,10 @@ export default class DataTableManageSearch extends Component {
     onGetSchemaList(dsId)
   }
 
-  render () {
+  render() {
     const {getFieldDecorator} = this.props.form
     const {dataSourceIdTypeName, schemaList, onMoveTables} = this.props
-    const {onAllStart, onAllStop, onBatchFullPull,onAllDelete} = this.props
+    const {onAllStart, onAllStop, onBatchFullPull, onAllDelete} = this.props
     const {selectDatasource} = this.state
 
     const dataSource = [{
@@ -119,31 +119,29 @@ export default class DataTableManageSearch extends Component {
           <Row>
             <Col span={10} className={styles.formLeft}>
               {/*<FormItem>*/}
-                {/*<Button*/}
-                  {/*type="primary"*/}
-                  {/*icon="car"*/}
-                  {/*onClick={onMoveTables}*/}
-                {/*>*/}
-                  {/*<FormattedMessage*/}
-                    {/*id="app.components.resourceManage.dataTable.batchMoveTopoTables"*/}
-                    {/*defaultMessage="批量迁移"*/}
-                  {/*/>*/}
-                {/*</Button>*/}
+              {/*<Button*/}
+              {/*type="primary"*/}
+              {/*icon="car"*/}
+              {/*onClick={onMoveTables}*/}
+              {/*>*/}
+              {/*<FormattedMessage*/}
+              {/*id="app.components.resourceManage.dataTable.batchMoveTopoTables"*/}
+              {/*defaultMessage="批量迁移"*/}
+              {/*/>*/}
+              {/*</Button>*/}
               {/*</FormItem>*/}
               <FormItem>
-                <Popconfirm title={'该操作为异步执行,请求结果请查看全量历史,获取批量拉全量情况!'} onConfirm={onBatchFullPull}
-                            okText="Yes" cancelText="No">
-                  <Button
-                    type="primary"
-                    icon="export"
-                    size="large"
-                  >
-                    <FormattedMessage
-                      id="app.components.resourceManage.dataTable.batchFullPull"
-                      defaultMessage="批量拉全量"
-                    />
-                  </Button>
-                </Popconfirm>
+                <Button
+                  type="primary"
+                  icon="export"
+                  size="large"
+                  onClick={onBatchFullPull}
+                >
+                  <FormattedMessage
+                    id="app.components.resourceManage.dataTable.batchFullPull"
+                    defaultMessage="批量拉全量"
+                  />
+                </Button>
               </FormItem>
               <FormItem>
                 <Button

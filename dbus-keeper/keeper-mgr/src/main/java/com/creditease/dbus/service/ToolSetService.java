@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,6 +59,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -83,6 +84,8 @@ public class ToolSetService {
     private ConfigCenterService configCenterService;
     @Autowired
     private AutoDeployDataLineService autoDeployDataLineService;
+    @Autowired
+    private DataSourceService dataSourceService;
 
 
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -924,5 +927,39 @@ public class ToolSetService {
     public List<HashMap<String, String>> checkOgg() throws Exception {
         //ogg状态
         return autoDeployDataLineService.getOggReplicatStatus(this.getDataSourceByDsType("oracle"));
+    }
+
+    public String checkCanalFilter() {
+        List<DataSource> dataSources = getDataSourceByDsType("mysql");
+        StringBuffer stringBuffer = new StringBuffer();
+        for (DataSource dataSource : dataSources) {
+            String dsName = dataSource.getDsName();
+            JSONObject canalConf = null;
+            try {
+                canalConf = autoDeployDataLineService.getCanalConf(dsName);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            String host = canalConf.getString(KeeperConstants.HOST);
+            String port = canalConf.getString(KeeperConstants.PORT);
+            String user = canalConf.getString(KeeperConstants.USER);
+            String canalPath = canalConf.getString(KeeperConstants.CANAL_PATH);
+
+            // /app/dbus/canal/canal-1.1.4/canal-mysql_db73/conf/mysql_db73  canal.instance.filter.regex
+            String cmd = String.format("cat %s/canal-%s/conf/%s/instance.properties |grep 'canal.instance.filter.regex'", canalPath, dsName, dsName);
+            String result = SSHUtils.executeCommand(user, host, Integer.parseInt(port), env.getProperty("pubKeyPath"), cmd, false);
+            if (StringUtils.isNotBlank(result)) {
+                result = StringUtils.trim(StringUtils.split(result, "=")[1]);
+                List<String> filterNames = Arrays.asList(StringUtils.split(result, ","));
+                List<DataTable> tables = dataSourceService.getDataTablesByDsId(dataSource.getId());
+                List<String> names = tables.stream().map(table -> String.format("%s.%s", table.getSchemaName(), table.getPhysicalTableRegex())).collect(Collectors.toList());
+                for (String name : names) {
+                    if (!filterNames.contains(name)) {
+                        stringBuffer.append(dsName).append(".").append(name).append(",");
+                    }
+                }
+            }
+        }
+        return stringBuffer.toString();
     }
 }

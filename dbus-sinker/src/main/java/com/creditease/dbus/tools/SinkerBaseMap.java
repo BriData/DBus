@@ -101,7 +101,9 @@ public class SinkerBaseMap {
     private void initSinkerTables() throws Exception {
         Properties properties = zkHelper.getProperties(Constants.MYSQL_PROPERTIES_ROOT);
         List<SinkerTopologyTable> sinkerTopologyTables = DBHelper.querySinkerTables(properties, sinkerName);
-        this.sourceTopics = new ArrayList<>(sinkerTopologyTables.stream().map(table -> table.getTargetTopic()).collect(Collectors.toSet()));
+        ArrayList<String> list = new ArrayList<>(sinkerTopologyTables.stream().map(table -> table.getTargetTopic()).collect(Collectors.toSet()));
+        Collections.sort(list);
+        this.sourceTopics = list;
         this.tableNamespaces = sinkerTopologyTables.stream().map(table -> {
             String dsName = StringUtils.isNotBlank(table.getAlias()) ? table.getAlias() : table.getDsName();
             return String.format("%s.%s.%s", dsName, table.getSchemaName(), table.getTableName());

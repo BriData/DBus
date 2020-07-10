@@ -147,7 +147,7 @@ public class AutoDeployDataLineService {
         oggConf = oggConf != null ? oggConf : new JSONObject();
 
         if (StringUtils.isNotBlank(map.get(KeeperConstants.REPLICAT_NAME))) {
-            oggConf.put(KeeperConstants.REPLICAT_NAME, map.get(KeeperConstants.REPLICAT_NAME));
+            oggConf.put(KeeperConstants.REPLICAT_NAME, map.get(KeeperConstants.REPLICAT_NAME).toLowerCase());
         }
         if (StringUtils.isNotBlank(map.get(KeeperConstants.TRAIL_NAME))) {
             oggConf.put(KeeperConstants.TRAIL_NAME, map.get(KeeperConstants.TRAIL_NAME));
@@ -502,10 +502,6 @@ public class AutoDeployDataLineService {
         return 0;
     }
 
-    /**
-     * @param map
-     * @return
-     */
     public int deleteOracleSchema(String dsName, String schemaName) throws Exception {
         JSONObject oggConf = getOggConf(dsName);
         String host = oggConf.getString(KeeperConstants.HOST);

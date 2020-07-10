@@ -116,7 +116,7 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
                 DBusConsumerRecord<String, byte[]> consumerRecord = new DBusConsumerRecord(record);
                 String key = bildNSKey(consumerRecord);
                 if (!inner.tableNamespaces.contains(key)) {
-                    logger.info("[ignore] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
+                    logger.debug("[ignore] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), record.key(), record.serializedValueSize());
                     continue;
                 }
                 msgQueueMgr.addMessage(consumerRecord);
@@ -150,9 +150,11 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
                 DBusConsumerRecord<String, byte[]> consumerRecord = emitDataList.getDataList().get(0);
                 String key = bildNSKey(consumerRecord);
                 collector.emit("dataStream", new Values(emitDataList.getDataList(), key), emitDataList.getDataList());
-                emitDataList.getDataList().forEach(record -> {
-                    logger.info("[emit] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), key, emitDataList.getSize());
-                });
+                if (logger.isDebugEnabled()) {
+                    emitDataList.getDataList().forEach(record -> {
+                        logger.debug("[emit] topic: {}, offset: {}, key: {}, size:{}", record.topic(), record.offset(), key, emitDataList.getSize());
+                    });
+                }
                 flowBytes += emitDataList.getSize();
                 emitDataListManager.remove(key);
             });
@@ -185,12 +187,12 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
                 // 标记处理失败,获取seek点
                 DBusConsumerRecord<String, byte[]> seekPoint = msgQueueMgr.failAndGetSeekPoint(record);
                 if (seekPoint != null) {
-                    logger.info("[fail] seek topic {topic:{},partition:{},offset:{}}", record.topic(), record.partition(), record.offset());
+                    logger.warn("[fail] seek topic {topic:{},partition:{},offset:{}}", record.topic(), record.partition(), record.offset());
                     consumer.seek(new TopicPartition(record.topic(), record.partition()), record.offset());
                 }
             });
         } else {
-            logger.info("[fail] receive fail message[{}]", msgId.getClass().getName());
+            logger.warn("[fail] receive fail message[{}]", msgId.getClass().getName());
         }
         super.fail(msgId);
     }
@@ -258,7 +260,7 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         int taskIndex = context.getThisTaskIndex();
         int spoutSize = context.getComponentTasks(context.getThisComponentId()).size();
         List<String> allTopics = inner.sourceTopics;
-        List<String> topicList = getResultTopics(allTopics, taskIndex, spoutSize);
+        List<String> topicList = getResultTopics(allTopics, spoutSize).get(taskIndex);
         logger.info("[kafka read spout] will init consumer with task index: {}, spout size: {}, topics: {} ", taskIndex, spoutSize, topicList);
         Properties properties = inner.zkHelper.loadSinkerConf(SinkerConstants.CONSUMER);
         properties.put("client.id", inner.sinkerName + "SinkerKafkaReadClient_" + taskIndex);
@@ -304,22 +306,23 @@ public class SinkerKafkaReadSpout extends BaseRichSpout {
         logger.info("[kafka read spout] init ctrl consumer success with task index: {}, topicPartitions: {} ", taskIndex, ctrlTopicPartitions);
     }
 
-    private List<String> getResultTopics(List<String> allTopics, int taskIndex, int spoutSize) {
-        if (allTopics.size() < spoutSize) {
-            throw new RuntimeException("topic number must more than spout size.");
-        }
-        //这里必须排序,不然每多个spout会分到重复的topic
-        Collections.sort(allTopics);
-        int size = allTopics.size() / spoutSize;
-        List<String> topicList = new ArrayList<>();
-        for (int j = 0; j < size && taskIndex * size + j < allTopics.size(); j++) {
-            topicList.add(allTopics.get(taskIndex * size + j));
-            int k = allTopics.size() % spoutSize;
-            if (taskIndex < k) {
-                topicList.add(allTopics.get(spoutSize * size + taskIndex));
+    public List<List<String>> getResultTopics(List<String> allTopics, int n) {
+        List<List<String>> result = new ArrayList<>();
+        int remainder = allTopics.size() % n;  //(先计算出余数)
+        int number = allTopics.size() / n;  //然后是商
+        int offset = 0;//偏移量
+        for (int i = 0; i < n; i++) {
+            List<String> value = null;
+            if (remainder > 0) {
+                value = allTopics.subList(i * number + offset, (i + 1) * number + offset + 1);
+                remainder--;
+                offset++;
+            } else {
+                value = allTopics.subList(i * number + offset, (i + 1) * number + offset);
             }
+            result.add(value);
         }
-        return topicList;
+        return result;
     }
 
     private void reloadComplete() {

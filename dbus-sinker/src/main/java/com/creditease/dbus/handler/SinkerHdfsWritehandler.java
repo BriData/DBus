@@ -78,7 +78,7 @@ public class SinkerHdfsWritehandler implements SinkerWriteHandler {
             if (outputStream == null) {
                 outputStream = sinkerConf.fileSystem.append(new Path(hdfsOutputStreamInfo.getFilePath()));
                 hdfsOutputStreamInfo.setOutputStream(outputStream);
-                logger.info("[write bolt] reopen hdfs output stream success.{}", hdfsOutputStreamInfo.getFilePath());
+                logger.debug("[write bolt] reopen hdfs output stream success.{}", hdfsOutputStreamInfo.getFilePath());
             }
             //超过hdfs文件块大小,需要切换文件
             if (outputStream.getPos() + value.length() > hdfsFileSize

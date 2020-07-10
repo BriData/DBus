@@ -579,6 +579,7 @@ export default class DataTableWrapper extends Component {
     Request(`${PROJECT_TABLE_BATCH_FULLPULL_API}`, {
       data: {
         outputTopic: values.topic,
+        hdfsRootPath: values.hdfsRootPath,
         isProject: false,
         ids: selectedRows.map(row => row.id)
       },

@@ -2,13 +2,24 @@
 
 package com.creditease.dbus.log.processor.bolt;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.commons.ControlType;
 import com.creditease.dbus.commons.DataType;
 import com.creditease.dbus.commons.DbusMessage;
 import com.creditease.dbus.commons.DbusMessageBuilder;
-import com.creditease.dbus.commons.log.processor.adapter.*;
+import com.creditease.dbus.commons.log.processor.adapter.LogDefaultAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.LogFilebeatAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.LogFlumeAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.LogStashAdapter;
+import com.creditease.dbus.commons.log.processor.adapter.LogUmsAdapter;
 import com.creditease.dbus.commons.log.processor.parse.Field;
 import com.creditease.dbus.commons.log.processor.parse.RuleGrammar;
 import com.creditease.dbus.commons.log.processor.rule.impl.Rules;
@@ -23,6 +34,7 @@ import com.creditease.dbus.log.processor.vo.RuleInfo;
 import com.creditease.dbus.log.processor.window.HeartBeatWindowInfo;
 import com.creditease.dbus.log.processor.window.StatWindowInfo;
 import com.google.common.base.Joiner;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.storm.task.OutputCollector;
@@ -34,8 +46,6 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 
 public class LogProcessorTransformBolt extends BaseRichBolt {
@@ -366,12 +376,27 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
         Map<String, String> umsidComputeUseFiledConfMap = null;
         String umsidComputeUseFiled = StringUtils.EMPTY;
         String umsidComputeUseFiledFmt = StringUtils.EMPTY;
+        /*if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
+                StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed"))) {
+            umsidComputeUseFiledConfMap = JSON.parseObject(inner.logProcessorConf.getProperty("umsid_compute_use_filed"), Map.class);
+            umsidComputeUseFiled = umsidComputeUseFiledConfMap.get(table);
+            umsidComputeUseFiledFmt = umsidComputeUseFiledConfMap.get(StringUtils.join(new String[]{table, umsidComputeUseFiled}, "_"));
+
+        }*/
+
+        boolean umsidComputeUseFiledTypeIsLong = false;
         if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
                 DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
                 StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed"))) {
             umsidComputeUseFiledConfMap = JSON.parseObject(inner.logProcessorConf.getProperty("umsid_compute_use_filed"), Map.class);
             umsidComputeUseFiled = umsidComputeUseFiledConfMap.get(table);
             umsidComputeUseFiledFmt = umsidComputeUseFiledConfMap.get(StringUtils.join(new String[]{table, umsidComputeUseFiled}, "_"));
+
+            if (umsidComputeUseFiledConfMap.containsKey(StringUtils.join(new String[]{table, umsidComputeUseFiled, "type"}, "_"))) {
+                umsidComputeUseFiledTypeIsLong = StringUtils.equalsIgnoreCase(umsidComputeUseFiledConfMap.get(StringUtils.join(new String[]{table, umsidComputeUseFiled, "type"}, "_")), "long");
+            }
+
         }
 
         int idx = 0;
@@ -416,13 +441,30 @@ public class LogProcessorTransformBolt extends BaseRichBolt {
                         builder.appendSchema(field.getName(), convertProcessorLogDataType(field.getType()), false);
                     values.add(field.getValue());
 
-                    if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                    /*if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
                             DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
                             StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed")) &&
                             StringUtils.isNotBlank(umsidComputeUseFiled) &&
                             StringUtils.isNotBlank(umsidComputeUseFiledFmt) &&
                             StringUtils.equals(field.getName(), umsidComputeUseFiled)) {
                         timeStamp = DateUtil.convertStrToLong4Date(String.valueOf(field.getValue()), umsidComputeUseFiledFmt);
+                    }*/
+
+                    if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                            DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
+                            StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed")) &&
+                            StringUtils.isNotBlank(umsidComputeUseFiled) &&
+                            StringUtils.isNotBlank(umsidComputeUseFiledFmt) &&
+                            !umsidComputeUseFiledTypeIsLong &&
+                            StringUtils.equals(field.getName(), umsidComputeUseFiled)) {
+                        timeStamp = DateUtil.convertStrToLong4Date(String.valueOf(field.getValue()), umsidComputeUseFiledFmt);
+                    } else if ((DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_FLUME) ||
+                            DbusDatasourceType.stringEqual(inner.logProcessorConf.getProperty("log.type"), DbusDatasourceType.LOG_JSON)) &&
+                            StringUtils.isNotBlank(inner.logProcessorConf.getProperty("umsid_compute_use_filed")) &&
+                            StringUtils.isNotBlank(umsidComputeUseFiled) &&
+                            umsidComputeUseFiledTypeIsLong &&
+                            StringUtils.equals(field.getName(), umsidComputeUseFiled)) {
+                        timeStamp = Long.valueOf(String.valueOf(field.getValue()));
                     }
 
                 }

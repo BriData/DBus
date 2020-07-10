@@ -100,6 +100,10 @@ public class EntryHeader implements Serializable {
         try {
             Properties properties = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE);
             String logFileNum = properties.getProperty(Constants.ConfigureKey.LOGFILE_NUM);
+            if (!StringUtils.equals(logFileNum, logFileSuffix)) {
+                // 更新最新的日志号到zk
+                ZkContentHolder.setProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.LOGFILE_NUM, logFileSuffix);
+            }
             if (StringUtils.isNotBlank(logFileNum)) {
                 long oldNum = Long.parseLong(logFileNum);
                 long currNum = Long.parseLong(logFileSuffix);
@@ -115,8 +119,6 @@ public class EntryHeader implements Serializable {
                     ControlMessageUtils.buildAndSendControlMessage(this.getClass().getName(), "DBus binlog报警", contents);
                 }
             }
-            // 更新最新的日志号到zk
-            ZkContentHolder.setProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.LOGFILE_NUM, logFileSuffix);
         } catch (Exception e) {
             throw new RuntimeException("处理日志文件偏移量失败", e);
         }
