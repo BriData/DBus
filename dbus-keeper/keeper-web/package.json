@@ -227,7 +227,7 @@
     "js-base64": "^2.4.3",
     "js-md5": "^0.7.3",
     "json-stringify-pretty-compact": "^1.0.4",
-    "lodash": "4.17.2",
+    "lodash": "4.17.19",
     "minimist": "1.2.0",
     "net": "^1.0.2",
     "particles": "^0.3.1",
