@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@
 
 package com.creditease.dbus.stream.mysql.appender.bolt.processor.dispatcher;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
 import com.creditease.dbus.commons.PropertiesHolder;
 import com.creditease.dbus.stream.common.Constants;
@@ -122,7 +121,7 @@ public class MdDefaultHandler implements BoltCommandHandler {
                 }
 
             } catch (Exception e) {
-                logger.warn("Dispatcher error! data:{}", JSON.toJSONString(entry), e);
+                logger.warn("Dispatcher error! {}", e.getMessage());
                 throw new RuntimeException(e);
             }
         }

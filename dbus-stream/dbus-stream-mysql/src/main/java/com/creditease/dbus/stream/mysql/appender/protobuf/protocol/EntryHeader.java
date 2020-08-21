@@ -70,8 +70,6 @@ public class EntryHeader implements Serializable {
 
         //计算pos
         String logFileSuffix = StringUtils.substringAfterLast(header.getLogfileName(), ".").replaceAll("\\D", "");
-        //binlog非正常状态处理
-        handleLogfile(logFileSuffix);
         //header.getLogfileOffset()  出现过负值
         //Long.MAX_VALUE为9223372036854775807，长度为19位，去除拼接后的logfilesuffix6位长度，留给logfileoffset的长度为13位
         //因此当header.getLogfileOffset()出现负值时，使用999999999999-header.getLogfileOffset()得到一个正数，这样也可避免
@@ -94,49 +92,6 @@ public class EntryHeader implements Serializable {
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         Date date = ts;
         tsTime = format.format(date);
-    }
-
-    private void handleLogfile(String logFileSuffix) {
-        try {
-            Properties properties = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE);
-            String logFileNum = properties.getProperty(Constants.ConfigureKey.LOGFILE_NUM);
-            if (!StringUtils.equals(logFileNum, logFileSuffix)) {
-                // 更新最新的日志号到zk
-                ZkContentHolder.setProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.LOGFILE_NUM, logFileSuffix);
-            }
-            if (StringUtils.isNotBlank(logFileNum)) {
-                long oldNum = Long.parseLong(logFileNum);
-                long currNum = Long.parseLong(logFileSuffix);
-                if (currNum < oldNum) {
-                    //日志文件号变小,报警提醒,添加日志偏移量补偿值
-                    addLogfile(currNum, oldNum);
-                } else if (currNum > oldNum + 1) {
-                    //日志文件号变大,并且出现跳跃,报警提醒,不处理
-                    String contents = String.format("datasource: %s, binlog status error, do nothing.\n" +
-                                    "[logfile.num] old: %s ,current: %s",
-                            Utils.getDatasource().getDsName(), oldNum, currNum);
-                    logger.warn(contents);
-                    ControlMessageUtils.buildAndSendControlMessage(this.getClass().getName(), "DBus binlog报警", contents);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("处理日志文件偏移量失败", e);
-        }
-    }
-
-    private void addLogfile(long currNum, long oldNum) throws Exception {
-        // +1的目的是防止最新的pos比历史的pos大
-        long oldCompensation = getLogFileNumCompensation();
-        long currCompensation = oldCompensation + oldNum - currNum + 1;
-        ZkContentHolder.setProperties(Constants.Properties.CONFIGURE, Constants.ConfigureKey.LOGFILE_NUM_COMPENSATION, String.valueOf(currCompensation));
-        String contents = String.format("datasource: %s binlog status error, add logfile.num.compensation success.\n" +
-                        "[logfile.num.compensation] old: %s , current: %s;" +
-                        "[logfile.num] old: %s ,current: %s",
-                Utils.getDatasource().getDsName(), oldCompensation, currCompensation, oldNum, currNum);
-        logger.warn(contents);
-        // 清空缓存获取最新的数据
-        PropertiesHolder.reload();
-        ControlMessageUtils.buildAndSendControlMessage(this.getClass().getName(), "DBus binlog报警", contents);
     }
 
     private long getLogFileNumCompensation() {

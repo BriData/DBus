@@ -57,7 +57,6 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
     private int maxAlarmCnt = 0;
     // 报警间隔, 超过alarm Ttl 可以再报
     private long alarmTtl = 0;
-    private Map<String, Map<String, String>> additionalConf = null;
 
     public CheckSinkerHeartBeatEvent(long interval) {
         super(interval);
@@ -107,7 +106,7 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
         nodes.forEach(monitorNodeVo -> monitorNodeManager.add(String.format("%s.%s.%s", monitorNodeVo.getDsName(), monitorNodeVo.getSchema(), monitorNodeVo.getTableName())));
         // 心跳超时补充配置
         this.heartBeatTimeoutConf = new HashMap<>();
-        additionalConf = hbConf.getHeartBeatTimeoutAdditional();
+        Map<String, Map<String, String>> additionalConf = hbConf.getHeartBeatTimeoutAdditional();
         if (additionalConf != null) {
             for (Map.Entry<String, Map<String, String>> entry : additionalConf.entrySet()) {
                 HashMap<String, String> map = new HashMap<>();
@@ -116,9 +115,8 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
                 map.put("heartBeatTimeout", entry.getValue().get("heartBeatTimeout"));
                 heartBeatTimeoutConf.put(StringUtils.replace(entry.getKey(), "/", "."), map);
             }
-        } else {
-            additionalConf = new HashMap<>();
         }
+        LOG.info("[sinker] heartBeatTimeoutConf: {}", JSON.toJSONString(heartBeatTimeoutConf));
         // 最大报警次数
         maxAlarmCnt = hbConf.getMaxAlarmCnt();
         // 报警间隔, 超过alarm Ttl 可以再报
@@ -128,9 +126,15 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
     private void checkAlarmTime() {
         if ((System.currentTimeMillis() - lastCheckAlarmTime) > checkAlarmInterval) {
             long heartBeatTimeout = hbConf.getHeartBeatTimeout();
+            Set<String> excludeSchemas = getExcludeDbSchema(hbConf.getExcludeSchema());
             Map<String, SinkerMonitorNode> sinkerMonitorMap = monitorNodeManager.getSinkerMonitorMap();
             sinkerMonitorMap.forEach((key, sinkerMonitorNode) -> {
+                String schemaName = key.substring(0, key.lastIndexOf("."));
                 if (sinkerMonitorNode.isRunning()) {
+                    if (excludeSchemas.contains(schemaName.toLowerCase())) {
+                        LOG.info("[sinker] ignore schema {}", schemaName);
+                        return;
+                    }
                     boolean canFire = false;
                     //延迟时间 = 上一次sinker心跳延时时间 + 上次更新距离现在的时间差
                     long latencyMS = sinkerMonitorNode.getLatencyMS() + System.currentTimeMillis() - sinkerMonitorNode.getUpdateTime();
@@ -143,8 +147,9 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
                             return;
                         }
                         // 修正超时时间
-                        Map<String, String> map = additionalConf.get(key.substring(0, key.lastIndexOf(".")));
+                        Map<String, String> map = heartBeatTimeoutConf.get(key.substring(0, key.lastIndexOf(".")));
                         if (map != null && DateUtil.isCurrentTimeInInterval(map.get("startTime"), map.get("endTime"))) {
+                            LOG.info("[sinker] correct timeout {} -> {}", schemaName, Long.parseLong(map.get("heartBeatTimeout")));
                             if (latencyMS > Long.parseLong(map.get("heartBeatTimeout"))) {
                                 alarmNodes.put(key, sinkerMonitorNode);
                                 canFire = true;
@@ -156,7 +161,8 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
 
                         //处理报警节点计数
                         if (canFire) {
-                            LOG.info("[sinker] 表[{}]发生超时 ,超时时间:{},{}", key, DateUtil.diffDate(sinkerMonitorNode.getRealLatencyMS()), JSON.toJSONString(sinkerMonitorNode));
+                            LOG.info("[sinker] 表[{}]发生超时 ,超时时间:{},{}", key,
+                                    DateUtil.diffDate(sinkerMonitorNode.getRealLatencyMS()), JSON.toJSONString(sinkerMonitorNode));
                             if (maxAlarmCnt < sinkerMonitorNode.getAlarmCount()) {
                                 sinkerMonitorNode.setAlarmCount(sinkerMonitorNode.getTimeoutCnt() + 1);
                             } else {
@@ -182,11 +188,25 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
         }
     }
 
+    private Set<String> getExcludeDbSchema(String excludeSchema) {
+        String[] schema = StringUtils.split(excludeSchema.toLowerCase(), ",");
+        Set<String> schemaSet = new HashSet<String>();
+        schemaSet.addAll(Arrays.asList(schema));
+        return schemaSet;
+    }
+
     private void sendEmail(List<String> value) {
         String html = toHtml(value);
+        String table = value.get(0);
+        SinkerMonitorNode sinkerMonitorNode = alarmNodes.get(table);
+        long realLatencyMS = sinkerMonitorNode.getRealLatencyMS();
+        String timeout = DateUtil.diffHours(realLatencyMS);
+        String priority = realLatencyMS > 2700000 ? "1" : "3";
+
         String adminEmail = hbConf.getAdminEmail();
 
-        String subject = "DBus Sinker超时报警 ";
+        String schemaName = StringUtils.substring(table, 0, table.lastIndexOf("."));
+        String subject = String.format("%s-%s-SINKER", timeout, schemaName);
         String contents = MsgUtil.format(Constants.MAIL_SINKER_HEART_BEAT_NEW,
                 "超时报警",
                 DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
@@ -196,6 +216,7 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
         msg.setAddress(adminEmail);
         msg.setContents(contents);
         msg.setSubject(subject);
+        msg.setPriority(priority);
 
         msg.setHost(hbConf.getAlarmMailSMTPAddress());
         if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
@@ -212,49 +233,6 @@ public class CheckSinkerHeartBeatEvent extends AbstractEvent {
         Collections.sort(tables);
         StringBuilder html = new StringBuilder();
         tables.forEach(key -> {
-            SinkerMonitorNode sinkerMonitorNode = alarmNodes.get(key);
-            html.append("<tr bgcolor=\"#ffffff\">");
-            html.append("    <th align=\"left\">" + key + "</th>");
-            html.append("    <th align=\"right\">" + sinkerMonitorNode.getAlarmCount() + "</th>");
-            html.append("    <th align=\"right\">" + DateUtil.diffDate(sinkerMonitorNode.getRealLatencyMS()) + "</th>");
-            html.append("    <th align=\"right\">" + sinkerMonitorNode.getTimeoutCnt() + "</th>");
-            html.append("</tr>");
-        });
-        return html.toString();
-    }
-
-    private void sendEmail() {
-
-        String html = toHtml();
-        String adminEmail = hbConf.getAdminEmail();
-
-        String subject = "DBus Sinker超时报警 ";
-        String contents = MsgUtil.format(Constants.MAIL_SINKER_HEART_BEAT_NEW,
-                "超时报警",
-                DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
-                IMail.ENV,
-                MsgUtil.format(AlarmResultContainer.getInstance().html(), html));
-        Message msg = new Message();
-        msg.setAddress(adminEmail);
-        msg.setContents(contents);
-        msg.setSubject(subject);
-
-        msg.setHost(hbConf.getAlarmMailSMTPAddress());
-        if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
-            msg.setPort(Integer.valueOf(hbConf.getAlarmMailSMTPPort()));
-        msg.setUserName(hbConf.getAlarmMailUser());
-        msg.setPassword(hbConf.getAlarmMailPass());
-        msg.setFromAddress(hbConf.getAlarmSendEmail());
-
-        IMail mail = DBusMailFactory.build();
-        mail.send(msg);
-    }
-
-    public String toHtml() {
-        ArrayList<String> keys = new ArrayList<>(alarmNodes.keySet());
-        Collections.sort(keys);
-        StringBuilder html = new StringBuilder();
-        keys.forEach(key -> {
             SinkerMonitorNode sinkerMonitorNode = alarmNodes.get(key);
             html.append("<tr bgcolor=\"#ffffff\">");
             html.append("    <th align=\"left\">" + key + "</th>");

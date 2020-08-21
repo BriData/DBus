@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,6 +41,11 @@ public class Message {
     private String userName;
 
     private String password;
+
+    /**
+     * 指定邮件优先级 1：紧急 3：普通 5：缓慢
+     */
+    private String priority;
 
     public String getAddress() {
         return address;
@@ -104,5 +109,13 @@ public class Message {
 
     public void setFromAddress(String fromAddress) {
         this.fromAddress = fromAddress;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 }

@@ -31,5 +31,6 @@
   "alarmMailUser": "",
   "alarmMailPass": "",
   "adminUseEmail": "N",
-  "additionalNotify": {}
+  "additionalNotify": {},
+  "checkMysqlBinlogInterval": "600"
 }

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,6 @@
 
 package com.creditease.dbus.heartbeat.event.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.creditease.dbus.components.sms.DBusSmsFactory;
 import com.creditease.dbus.components.sms.ISms;
 import com.creditease.dbus.components.sms.SmsMessage;
@@ -64,6 +62,10 @@ public class CheckHeartBeatEvent extends AbstractEvent {
     private String dsNameWk = StringUtils.EMPTY;
 
     private String schemaNameWk = StringUtils.EMPTY;
+
+    private String timeout = null;
+
+    private String priority = null;
 
     public CheckHeartBeatEvent(long interval, CountDownLatch cdl) {
         super(interval, cdl);
@@ -325,6 +327,8 @@ public class CheckHeartBeatEvent extends AbstractEvent {
                         mail.send(msg);*/
                         html.append(check.html(DateUtil.diffDate(diffVal)));
                         emailAddress = email;
+                        timeout = StringUtils.isNotBlank(timeout) ? DateUtil.diffHours(diffVal) : "0";
+                        priority = diffVal > 2700000 ? "1" : "3";
                     }
                 }
                 LOG.warn(check.toString());
@@ -345,7 +349,7 @@ public class CheckHeartBeatEvent extends AbstractEvent {
 
     private void sendMasterSlaveTimeoutMail(MonitorNodeVo node, HeartBeatVo hbConf, FlowLineCheckResult result) {
         IMail mail = DBusMailFactory.build();
-        String subject = "DBus主备不同步报警 ";
+        String subject = String.format("%s-%s.%s不同步", result.getDiffDate(), dsNameWk, schemaNameWk);
         String contents = MsgUtil.format(Constants.MAIL_MASTER_SLAVE_DELAY,
                 "主备不同步报警", dsNameWk, schemaNameWk,
                 result.getDiffDate(), result.getMasterTime(), result.getSlaveTime(),
@@ -359,6 +363,9 @@ public class CheckHeartBeatEvent extends AbstractEvent {
         msg.setAddress(emailAddress);
         msg.setContents(contents);
         msg.setSubject(subject);
+        // 这里只要超过1小时就标记为重要
+        String priority = result.getDiffDate().contains("小时") || result.getDiffDate().contains("天") ? "1" : "3";
+        msg.setPriority(priority);
 
         msg.setHost(hbConf.getAlarmMailSMTPAddress());
         if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))
@@ -374,7 +381,7 @@ public class CheckHeartBeatEvent extends AbstractEvent {
 
     private void sendTimeoutMail(MonitorNodeVo node, HeartBeatVo hbConf, String flowLineCheckHtml) {
         IMail mail = DBusMailFactory.build();
-        String subject = "DBus超时报警 ";
+        String subject = String.format("%s-%s.%s超时", timeout, dsNameWk, schemaNameWk);
         String contents = MsgUtil.format(Constants.MAIL_HEART_BEAT_NEW,
                 "超时报警", dsNameWk, schemaNameWk,
                 DateUtil.convertLongToStr4Date(System.currentTimeMillis()),
@@ -389,6 +396,7 @@ public class CheckHeartBeatEvent extends AbstractEvent {
         msg.setAddress(emailAddress);
         msg.setContents(contents);
         msg.setSubject(subject);
+        msg.setPriority(priority);
 
         msg.setHost(hbConf.getAlarmMailSMTPAddress());
         if (StringUtils.isNotBlank(hbConf.getAlarmMailSMTPPort()))

@@ -30,9 +30,10 @@
         <module>dbus-sinker</module>
         <module>dbus-auto-check</module>
         <module>encoder-plugins</module>
+        <module>deployer</module>
+
         <!--0.6.1版本废弃dbus-mysql-extractor模块-->
         <!--<module>dbus-mysql-extractor</module>-->
-        <module>deployer</module>
     </modules>
 
     <!--这里配置的依赖，在子模块中可以有选择的引用-->

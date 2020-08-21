@@ -7,9 +7,9 @@
     <modules>
         <module>dbus-stream-common</module>
         <module>dbus-stream-oracle</module>
-        <module>dbus-stream-mongo</module>
+        <!--<module>dbus-stream-mongo</module>-->
         <module>dbus-stream-mysql</module>
-        <module>dbus-stream-db2</module>
+        <!--<module>dbus-stream-db2</module>-->
         <module>dbus-stream-main</module>
 
     </modules>
