@@ -7,16 +7,16 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}\conf_opensource</directory>
-            <outputDirectory>\conf_opensource</outputDirectory>
+            <directory>${project.basedir}/conf_opensource</directory>
+            <outputDirectory>/conf_opensource</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}\lib</directory>
-            <outputDirectory>\lib</outputDirectory>
+            <directory>${project.basedir}/lib</directory>
+            <outputDirectory>/lib</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}\sh</directory>
-            <outputDirectory>\</outputDirectory>
+            <directory>${project.basedir}/sh</directory>
+            <outputDirectory>/</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
     </fileSets>

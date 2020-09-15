@@ -18,7 +18,7 @@ import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.Watcher;
 
-public class ZkUtils {
+public class  ZkUtils {
 
     public String heartBeatRootPath = "/dbus/heartbeat";
     public String leaderPath = heartBeatRootPath + "/leader";

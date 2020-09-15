@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,6 +45,7 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.creditease.dbus.stream.common.Constants.ConfigureKey.STORM_MESSAGE_TIMEOUT;
 import static com.creditease.dbus.stream.common.Constants.ConfigureKey.TOPOLOGY_WORKER_CHILDOPTS;
 
 
@@ -218,6 +219,11 @@ public class DispatcherAppenderTopology {
         return PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, TOPOLOGY_WORKER_CHILDOPTS);
     }
 
+    private int getMessageTimeout() {
+        String pro = PropertiesHolder.getProperties(Constants.Properties.CONFIGURE, STORM_MESSAGE_TIMEOUT);
+        return StringUtils.isBlank(pro) ? 120 : Integer.parseInt(pro);
+    }
+
     private void start(StormTopology topology, boolean runAsLocal) throws Exception {
 
         Config conf = new Config();
@@ -258,7 +264,7 @@ public class DispatcherAppenderTopology {
         int MaxSpoutPending = getConfigureValueWithDefault(Constants.ConfigureKey.MAX_SPOUT_PENDING, 50);
         conf.setMaxSpoutPending(MaxSpoutPending);
         //设置任务在多久之内没处理完成，则这个任务处理失败
-        conf.setMessageTimeoutSecs(120);
+        conf.setMessageTimeoutSecs(getMessageTimeout());
 
         String opts = getWorkerChildopts();
         if (opts != null && opts.trim().length() > 0) {

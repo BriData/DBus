@@ -76,6 +76,7 @@ public class Constants {
         /**  */
         public static final String META_FETCHER_EXCEPTION_STRATEGY = "meta.fetcher.exception.strategy";
         public static final String TOPOLOGY_WORKER_CHILDOPTS = "topology.worker.childopts"; // eg:-Xmx16g
+        public static final String STORM_MESSAGE_TIMEOUT = "storm.message.timeout";
 
         /**
          * 配置mysql版本生成ums namespace是否包含分表，1为输出 0为不输出
