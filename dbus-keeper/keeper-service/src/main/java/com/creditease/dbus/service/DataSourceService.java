@@ -63,6 +63,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -268,7 +269,7 @@ public class DataSourceService {
             } else if (dsType.equals(DbusDatasourceType.MYSQL)
                     || dsType.equals(DbusDatasourceType.ORACLE)
                     || dsType.equals(DbusDatasourceType.DB2)
-                    ) {
+            ) {
                 SourceFetcher fetcher = SourceFetcher.getFetcher(map);
                 int temp = fetcher.fetchSource(map);
                 return temp;
@@ -408,7 +409,7 @@ public class DataSourceService {
 
     public String searchDatasourceExist(String ip, int port) throws Exception {
         String param = getIpByHostName(ip) + ":" + port;
-        String dsName = null;
+        ArrayList<String> dsNames = new ArrayList<>();
         List<DataSource> dataSources = mapper.selectAll();
         List<DataSource> dataSourceList = dataSources.stream().filter(dataSource -> dataSource.getDsType().equals("mysql")
                 || dataSource.getDsType().equals("oracle")).collect(Collectors.toList());
@@ -417,17 +418,13 @@ public class DataSourceService {
                 String master = getDbRealAddress(dataSource.getMasterUrl(), dataSource.getDsType());
                 String slave = getDbRealAddress(dataSource.getSlaveUrl(), dataSource.getDsType());
                 if (master.contains(param) || slave.contains(param)) {
-                    if (dsName != null) {
-                        dsName += ",";
-                    } else {
-                        dsName = dataSource.getDsName();
-                    }
+                    dsNames.add(dataSource.getDsName());
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
         }
-        return dsName;
+        return CollectionUtils.isEmpty(dsNames) ? null : dsNames.stream().collect(Collectors.joining(","));
     }
 
     private String getDbRealAddress(String url, String dsType) throws Exception {
