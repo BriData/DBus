@@ -48,6 +48,7 @@ public class DeleteLine {
         CanalUtils.exec("./" + canalName + "/bin/stop.sh");
         CanalUtils.exec("rm -r " + canalName);
         CanalUtils.exec("rm " + dsName + ".log");
+        CanalUtils.exec("rm " + dsName + "_canal" + ".log");
     }
 
     private static void parseCommandArgs(String[] args) throws Exception {
