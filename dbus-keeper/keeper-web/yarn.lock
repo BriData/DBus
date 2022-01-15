@@ -7915,7 +7915,16 @@ shallowequal@^1.0.1:
   version "1.0.2"
   resolved "http://registry.npm.taobao.org/shallowequal/download/shallowequal-1.0.2.tgz#1561dbdefb8c01408100319085764da3fcf83f8f"
 
-shelljs@0.7.5, shelljs@^0.7.5:
+shelljs@0.8.5:
+  version "0.8.5"
+  resolved "https://registry.yarnpkg.com/shelljs/-/shelljs-0.8.5.tgz#de055408d8361bed66c669d2f000538ced8ee20c"
+  integrity sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==
+  dependencies:
+    glob "^7.0.0"
+    interpret "^1.0.0"
+    rechoir "^0.6.2"
+
+shelljs@^0.7.5:
   version "0.7.5"
   resolved "https://registry.yarnpkg.com/shelljs/-/shelljs-0.7.5.tgz#2eef7a50a21e1ccf37da00df767ec69e30ad0675"
   dependencies:
