@@ -55,12 +55,12 @@ mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=10.
 
 推荐从淘宝npm站点安装
 
-<https://npm.taobao.org/mirrors/node/v6.9.2/node-v6.9.2-x64.msi>
+<https://npmmirror.com/mirrors/node/v6.9.2/node-v6.9.2-x64.msi>
 
 下载后，推荐安装cnpm
 
 ```
-npm install -g cnpm --registry=https://registry.npm.taobao.org
+npm install -g cnpm --registry=https://registry.npmmirror.com
 ```
 
 
